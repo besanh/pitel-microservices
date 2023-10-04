@@ -33,10 +33,6 @@ message GetExampleByIdResponse {
 message ExampleResponseData {
   string id = 1;
   string example_name = 2;
-  string tenant_id = 3;
-  string gateway_id = 4;
-  int32 ccu = 5;
-  bool is_enabled = 6;
   google.protobuf.Timestamp created_at = 7;
   google.protobuf.Timestamp updated_at = 8;
 }

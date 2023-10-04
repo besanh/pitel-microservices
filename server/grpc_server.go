@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var allowedHeaders = map[string]struct{}{
@@ -58,6 +59,17 @@ func NewGRPCServer(port string) {
 		runtime.WithIncomingHeaderMatcher(handleMatchHeaders),
 		runtime.WithMetadata(handleMetadata),
 		runtime.WithErrorHandler(handleError),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
+			Marshaler: &runtime.JSONPb{
+				MarshalOptions: protojson.MarshalOptions{
+					UseProtoNames:   true,
+					EmitUnpopulated: false,
+				},
+				UnmarshalOptions: protojson.UnmarshalOptions{
+					DiscardUnknown: true,
+				},
+			},
+		}),
 	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	// setting up a dial up for gRPC service by specifying endpoint/target url
