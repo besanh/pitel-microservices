@@ -19,7 +19,7 @@ import (
 )
 
 type GRPCExample struct {
-	pb.UnimplementedExampleServer
+	pb.UnimplementedExampleServiceServer
 }
 
 func NewGRPCExample() *GRPCExample {

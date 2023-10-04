@@ -50,7 +50,7 @@ func NewGRPCServer(port string) {
 			grpcMiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
 		),
 	)
-	pbExample.RegisterExampleServer(grpcServer, grpcService.NewGRPCExample())
+	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -61,7 +61,7 @@ func NewGRPCServer(port string) {
 	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	// setting up a dial up for gRPC service by specifying endpoint/target url
-	if err := pbExample.RegisterExampleHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err := pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 	// Creating a normal HTTP server

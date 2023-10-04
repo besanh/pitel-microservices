@@ -32,17 +32,17 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 var (
-	filter_Example_GetExamples_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_ExampleService_GetExamples_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Example_GetExamples_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ExampleService_GetExamples_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetExamplesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Example_GetExamples_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ExampleService_GetExamples_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -51,14 +51,14 @@ func request_Example_GetExamples_0(ctx context.Context, marshaler runtime.Marsha
 
 }
 
-func local_request_Example_GetExamples_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ExampleService_GetExamples_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetExamplesRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Example_GetExamples_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ExampleService_GetExamples_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -67,7 +67,7 @@ func local_request_Example_GetExamples_0(ctx context.Context, marshaler runtime.
 
 }
 
-func request_Example_GetExampleById_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ExampleService_GetExampleById_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetExampleByIdRequest
 	var metadata runtime.ServerMetadata
 
@@ -93,7 +93,7 @@ func request_Example_GetExampleById_0(ctx context.Context, marshaler runtime.Mar
 
 }
 
-func local_request_Example_GetExampleById_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ExampleService_GetExampleById_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetExampleByIdRequest
 	var metadata runtime.ServerMetadata
 
@@ -119,7 +119,7 @@ func local_request_Example_GetExampleById_0(ctx context.Context, marshaler runti
 
 }
 
-func request_Example_PostExample_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ExampleService_PostExample_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PostExampleRequest
 	var metadata runtime.ServerMetadata
 
@@ -136,7 +136,7 @@ func request_Example_PostExample_0(ctx context.Context, marshaler runtime.Marsha
 
 }
 
-func local_request_Example_PostExample_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ExampleService_PostExample_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PostExampleRequest
 	var metadata runtime.ServerMetadata
 
@@ -153,7 +153,7 @@ func local_request_Example_PostExample_0(ctx context.Context, marshaler runtime.
 
 }
 
-func request_Example_PutExample_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ExampleService_PutExample_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PutExampleRequest
 	var metadata runtime.ServerMetadata
 
@@ -187,7 +187,7 @@ func request_Example_PutExample_0(ctx context.Context, marshaler runtime.Marshal
 
 }
 
-func local_request_Example_PutExample_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ExampleService_PutExample_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq PutExampleRequest
 	var metadata runtime.ServerMetadata
 
@@ -221,7 +221,7 @@ func local_request_Example_PutExample_0(ctx context.Context, marshaler runtime.M
 
 }
 
-func request_Example_DeleteExample_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_ExampleService_DeleteExample_0(ctx context.Context, marshaler runtime.Marshaler, client ExampleServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteExampleRequest
 	var metadata runtime.ServerMetadata
 
@@ -247,7 +247,7 @@ func request_Example_DeleteExample_0(ctx context.Context, marshaler runtime.Mars
 
 }
 
-func local_request_Example_DeleteExample_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_ExampleService_DeleteExample_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq DeleteExampleRequest
 	var metadata runtime.ServerMetadata
 
@@ -273,13 +273,13 @@ func local_request_Example_DeleteExample_0(ctx context.Context, marshaler runtim
 
 }
 
-// RegisterExampleHandlerServer registers the http handlers for service Example to "mux".
-// UnaryRPC     :call ExampleServer directly.
+// RegisterExampleServiceHandlerServer registers the http handlers for service ExampleService to "mux".
+// UnaryRPC     :call ExampleServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterExampleHandlerFromEndpoint instead.
-func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ExampleServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterExampleServiceHandlerFromEndpoint instead.
+func RegisterExampleServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ExampleServiceServer) error {
 
-	mux.Handle("GET", pattern_Example_GetExamples_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ExampleService_GetExamples_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -287,12 +287,12 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pb.Example/GetExamples", runtime.WithHTTPPathPattern("/collection/v1/example"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.example.ExampleService/GetExamples", runtime.WithHTTPPathPattern("/collection/v1/example"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Example_GetExamples_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ExampleService_GetExamples_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -300,11 +300,11 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Example_GetExamples_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_GetExamples_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Example_GetExampleById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ExampleService_GetExampleById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -312,12 +312,12 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pb.Example/GetExampleById", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.example.ExampleService/GetExampleById", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Example_GetExampleById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ExampleService_GetExampleById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -325,11 +325,11 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Example_GetExampleById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_GetExampleById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Example_PostExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ExampleService_PostExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -337,12 +337,12 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pb.Example/PostExample", runtime.WithHTTPPathPattern("/collection/v1/example"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.example.ExampleService/PostExample", runtime.WithHTTPPathPattern("/collection/v1/example"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Example_PostExample_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ExampleService_PostExample_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -350,11 +350,11 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Example_PostExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_PostExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_Example_PutExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_ExampleService_PutExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -362,12 +362,12 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pb.Example/PutExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.example.ExampleService/PutExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Example_PutExample_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ExampleService_PutExample_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -375,11 +375,11 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Example_PutExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_PutExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_Example_DeleteExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ExampleService_DeleteExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -387,12 +387,12 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/pb.Example/DeleteExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.example.ExampleService/DeleteExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Example_DeleteExample_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ExampleService_DeleteExample_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -400,16 +400,16 @@ func RegisterExampleHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 			return
 		}
 
-		forward_Example_DeleteExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_DeleteExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterExampleHandlerFromEndpoint is same as RegisterExampleHandler but
+// RegisterExampleServiceHandlerFromEndpoint is same as RegisterExampleServiceHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterExampleHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterExampleServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.DialContext(ctx, endpoint, opts...)
 	if err != nil {
 		return err
@@ -429,129 +429,129 @@ func RegisterExampleHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeM
 		}()
 	}()
 
-	return RegisterExampleHandler(ctx, mux, conn)
+	return RegisterExampleServiceHandler(ctx, mux, conn)
 }
 
-// RegisterExampleHandler registers the http handlers for service Example to "mux".
+// RegisterExampleServiceHandler registers the http handlers for service ExampleService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterExampleHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterExampleHandlerClient(ctx, mux, NewExampleClient(conn))
+func RegisterExampleServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterExampleServiceHandlerClient(ctx, mux, NewExampleServiceClient(conn))
 }
 
-// RegisterExampleHandlerClient registers the http handlers for service Example
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ExampleClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ExampleClient"
+// RegisterExampleServiceHandlerClient registers the http handlers for service ExampleService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ExampleServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ExampleServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ExampleClient" to call the correct interceptors.
-func RegisterExampleHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ExampleClient) error {
+// "ExampleServiceClient" to call the correct interceptors.
+func RegisterExampleServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ExampleServiceClient) error {
 
-	mux.Handle("GET", pattern_Example_GetExamples_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ExampleService_GetExamples_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pb.Example/GetExamples", runtime.WithHTTPPathPattern("/collection/v1/example"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.example.ExampleService/GetExamples", runtime.WithHTTPPathPattern("/collection/v1/example"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Example_GetExamples_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ExampleService_GetExamples_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Example_GetExamples_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_GetExamples_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Example_GetExampleById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_ExampleService_GetExampleById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pb.Example/GetExampleById", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.example.ExampleService/GetExampleById", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Example_GetExampleById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ExampleService_GetExampleById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Example_GetExampleById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_GetExampleById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_Example_PostExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ExampleService_PostExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pb.Example/PostExample", runtime.WithHTTPPathPattern("/collection/v1/example"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.example.ExampleService/PostExample", runtime.WithHTTPPathPattern("/collection/v1/example"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Example_PostExample_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ExampleService_PostExample_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Example_PostExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_PostExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_Example_PutExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_ExampleService_PutExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pb.Example/PutExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.example.ExampleService/PutExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Example_PutExample_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ExampleService_PutExample_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Example_PutExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_PutExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_Example_DeleteExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_ExampleService_DeleteExample_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/pb.Example/DeleteExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.example.ExampleService/DeleteExample", runtime.WithHTTPPathPattern("/collection/v1/example/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Example_DeleteExample_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ExampleService_DeleteExample_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Example_DeleteExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ExampleService_DeleteExample_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -559,25 +559,25 @@ func RegisterExampleHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 }
 
 var (
-	pattern_Example_GetExamples_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"collection", "v1", "example"}, ""))
+	pattern_ExampleService_GetExamples_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"collection", "v1", "example"}, ""))
 
-	pattern_Example_GetExampleById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"collection", "v1", "example", "id"}, ""))
+	pattern_ExampleService_GetExampleById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"collection", "v1", "example", "id"}, ""))
 
-	pattern_Example_PostExample_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"collection", "v1", "example"}, ""))
+	pattern_ExampleService_PostExample_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"collection", "v1", "example"}, ""))
 
-	pattern_Example_PutExample_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"collection", "v1", "example", "id"}, ""))
+	pattern_ExampleService_PutExample_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"collection", "v1", "example", "id"}, ""))
 
-	pattern_Example_DeleteExample_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"collection", "v1", "example", "id"}, ""))
+	pattern_ExampleService_DeleteExample_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"collection", "v1", "example", "id"}, ""))
 )
 
 var (
-	forward_Example_GetExamples_0 = runtime.ForwardResponseMessage
+	forward_ExampleService_GetExamples_0 = runtime.ForwardResponseMessage
 
-	forward_Example_GetExampleById_0 = runtime.ForwardResponseMessage
+	forward_ExampleService_GetExampleById_0 = runtime.ForwardResponseMessage
 
-	forward_Example_PostExample_0 = runtime.ForwardResponseMessage
+	forward_ExampleService_PostExample_0 = runtime.ForwardResponseMessage
 
-	forward_Example_PutExample_0 = runtime.ForwardResponseMessage
+	forward_ExampleService_PutExample_0 = runtime.ForwardResponseMessage
 
-	forward_Example_DeleteExample_0 = runtime.ForwardResponseMessage
+	forward_ExampleService_DeleteExample_0 = runtime.ForwardResponseMessage
 )

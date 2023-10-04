@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Example_GetExamples_FullMethodName    = "/pb.Example/GetExamples"
-	Example_GetExampleById_FullMethodName = "/pb.Example/GetExampleById"
-	Example_PostExample_FullMethodName    = "/pb.Example/PostExample"
-	Example_PutExample_FullMethodName     = "/pb.Example/PutExample"
-	Example_DeleteExample_FullMethodName  = "/pb.Example/DeleteExample"
+	ExampleService_GetExamples_FullMethodName    = "/proto.example.ExampleService/GetExamples"
+	ExampleService_GetExampleById_FullMethodName = "/proto.example.ExampleService/GetExampleById"
+	ExampleService_PostExample_FullMethodName    = "/proto.example.ExampleService/PostExample"
+	ExampleService_PutExample_FullMethodName     = "/proto.example.ExampleService/PutExample"
+	ExampleService_DeleteExample_FullMethodName  = "/proto.example.ExampleService/DeleteExample"
 )
 
-// ExampleClient is the client API for Example service.
+// ExampleServiceClient is the client API for ExampleService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type ExampleClient interface {
+type ExampleServiceClient interface {
 	GetExamples(ctx context.Context, in *GetExamplesRequest, opts ...grpc.CallOption) (*GetExamplesResponse, error)
 	GetExampleById(ctx context.Context, in *GetExampleByIdRequest, opts ...grpc.CallOption) (*GetExampleByIdResponse, error)
 	PostExample(ctx context.Context, in *PostExampleRequest, opts ...grpc.CallOption) (*PostExampleResponse, error)
@@ -37,63 +37,63 @@ type ExampleClient interface {
 	DeleteExample(ctx context.Context, in *DeleteExampleRequest, opts ...grpc.CallOption) (*DeleteExampleResponse, error)
 }
 
-type exampleClient struct {
+type exampleServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewExampleClient(cc grpc.ClientConnInterface) ExampleClient {
-	return &exampleClient{cc}
+func NewExampleServiceClient(cc grpc.ClientConnInterface) ExampleServiceClient {
+	return &exampleServiceClient{cc}
 }
 
-func (c *exampleClient) GetExamples(ctx context.Context, in *GetExamplesRequest, opts ...grpc.CallOption) (*GetExamplesResponse, error) {
+func (c *exampleServiceClient) GetExamples(ctx context.Context, in *GetExamplesRequest, opts ...grpc.CallOption) (*GetExamplesResponse, error) {
 	out := new(GetExamplesResponse)
-	err := c.cc.Invoke(ctx, Example_GetExamples_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ExampleService_GetExamples_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *exampleClient) GetExampleById(ctx context.Context, in *GetExampleByIdRequest, opts ...grpc.CallOption) (*GetExampleByIdResponse, error) {
+func (c *exampleServiceClient) GetExampleById(ctx context.Context, in *GetExampleByIdRequest, opts ...grpc.CallOption) (*GetExampleByIdResponse, error) {
 	out := new(GetExampleByIdResponse)
-	err := c.cc.Invoke(ctx, Example_GetExampleById_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ExampleService_GetExampleById_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *exampleClient) PostExample(ctx context.Context, in *PostExampleRequest, opts ...grpc.CallOption) (*PostExampleResponse, error) {
+func (c *exampleServiceClient) PostExample(ctx context.Context, in *PostExampleRequest, opts ...grpc.CallOption) (*PostExampleResponse, error) {
 	out := new(PostExampleResponse)
-	err := c.cc.Invoke(ctx, Example_PostExample_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ExampleService_PostExample_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *exampleClient) PutExample(ctx context.Context, in *PutExampleRequest, opts ...grpc.CallOption) (*PutExampleResponse, error) {
+func (c *exampleServiceClient) PutExample(ctx context.Context, in *PutExampleRequest, opts ...grpc.CallOption) (*PutExampleResponse, error) {
 	out := new(PutExampleResponse)
-	err := c.cc.Invoke(ctx, Example_PutExample_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ExampleService_PutExample_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *exampleClient) DeleteExample(ctx context.Context, in *DeleteExampleRequest, opts ...grpc.CallOption) (*DeleteExampleResponse, error) {
+func (c *exampleServiceClient) DeleteExample(ctx context.Context, in *DeleteExampleRequest, opts ...grpc.CallOption) (*DeleteExampleResponse, error) {
 	out := new(DeleteExampleResponse)
-	err := c.cc.Invoke(ctx, Example_DeleteExample_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ExampleService_DeleteExample_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ExampleServer is the server API for Example service.
-// All implementations should embed UnimplementedExampleServer
+// ExampleServiceServer is the server API for ExampleService service.
+// All implementations should embed UnimplementedExampleServiceServer
 // for forward compatibility
-type ExampleServer interface {
+type ExampleServiceServer interface {
 	GetExamples(context.Context, *GetExamplesRequest) (*GetExamplesResponse, error)
 	GetExampleById(context.Context, *GetExampleByIdRequest) (*GetExampleByIdResponse, error)
 	PostExample(context.Context, *PostExampleRequest) (*PostExampleResponse, error)
@@ -101,153 +101,153 @@ type ExampleServer interface {
 	DeleteExample(context.Context, *DeleteExampleRequest) (*DeleteExampleResponse, error)
 }
 
-// UnimplementedExampleServer should be embedded to have forward compatible implementations.
-type UnimplementedExampleServer struct {
+// UnimplementedExampleServiceServer should be embedded to have forward compatible implementations.
+type UnimplementedExampleServiceServer struct {
 }
 
-func (UnimplementedExampleServer) GetExamples(context.Context, *GetExamplesRequest) (*GetExamplesResponse, error) {
+func (UnimplementedExampleServiceServer) GetExamples(context.Context, *GetExamplesRequest) (*GetExamplesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExamples not implemented")
 }
-func (UnimplementedExampleServer) GetExampleById(context.Context, *GetExampleByIdRequest) (*GetExampleByIdResponse, error) {
+func (UnimplementedExampleServiceServer) GetExampleById(context.Context, *GetExampleByIdRequest) (*GetExampleByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExampleById not implemented")
 }
-func (UnimplementedExampleServer) PostExample(context.Context, *PostExampleRequest) (*PostExampleResponse, error) {
+func (UnimplementedExampleServiceServer) PostExample(context.Context, *PostExampleRequest) (*PostExampleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostExample not implemented")
 }
-func (UnimplementedExampleServer) PutExample(context.Context, *PutExampleRequest) (*PutExampleResponse, error) {
+func (UnimplementedExampleServiceServer) PutExample(context.Context, *PutExampleRequest) (*PutExampleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PutExample not implemented")
 }
-func (UnimplementedExampleServer) DeleteExample(context.Context, *DeleteExampleRequest) (*DeleteExampleResponse, error) {
+func (UnimplementedExampleServiceServer) DeleteExample(context.Context, *DeleteExampleRequest) (*DeleteExampleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteExample not implemented")
 }
 
-// UnsafeExampleServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to ExampleServer will
+// UnsafeExampleServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ExampleServiceServer will
 // result in compilation errors.
-type UnsafeExampleServer interface {
-	mustEmbedUnimplementedExampleServer()
+type UnsafeExampleServiceServer interface {
+	mustEmbedUnimplementedExampleServiceServer()
 }
 
-func RegisterExampleServer(s grpc.ServiceRegistrar, srv ExampleServer) {
-	s.RegisterService(&Example_ServiceDesc, srv)
+func RegisterExampleServiceServer(s grpc.ServiceRegistrar, srv ExampleServiceServer) {
+	s.RegisterService(&ExampleService_ServiceDesc, srv)
 }
 
-func _Example_GetExamples_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ExampleService_GetExamples_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetExamplesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExampleServer).GetExamples(ctx, in)
+		return srv.(ExampleServiceServer).GetExamples(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Example_GetExamples_FullMethodName,
+		FullMethod: ExampleService_GetExamples_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExampleServer).GetExamples(ctx, req.(*GetExamplesRequest))
+		return srv.(ExampleServiceServer).GetExamples(ctx, req.(*GetExamplesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Example_GetExampleById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ExampleService_GetExampleById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetExampleByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExampleServer).GetExampleById(ctx, in)
+		return srv.(ExampleServiceServer).GetExampleById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Example_GetExampleById_FullMethodName,
+		FullMethod: ExampleService_GetExampleById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExampleServer).GetExampleById(ctx, req.(*GetExampleByIdRequest))
+		return srv.(ExampleServiceServer).GetExampleById(ctx, req.(*GetExampleByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Example_PostExample_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ExampleService_PostExample_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PostExampleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExampleServer).PostExample(ctx, in)
+		return srv.(ExampleServiceServer).PostExample(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Example_PostExample_FullMethodName,
+		FullMethod: ExampleService_PostExample_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExampleServer).PostExample(ctx, req.(*PostExampleRequest))
+		return srv.(ExampleServiceServer).PostExample(ctx, req.(*PostExampleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Example_PutExample_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ExampleService_PutExample_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PutExampleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExampleServer).PutExample(ctx, in)
+		return srv.(ExampleServiceServer).PutExample(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Example_PutExample_FullMethodName,
+		FullMethod: ExampleService_PutExample_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExampleServer).PutExample(ctx, req.(*PutExampleRequest))
+		return srv.(ExampleServiceServer).PutExample(ctx, req.(*PutExampleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Example_DeleteExample_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ExampleService_DeleteExample_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteExampleRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ExampleServer).DeleteExample(ctx, in)
+		return srv.(ExampleServiceServer).DeleteExample(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Example_DeleteExample_FullMethodName,
+		FullMethod: ExampleService_DeleteExample_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExampleServer).DeleteExample(ctx, req.(*DeleteExampleRequest))
+		return srv.(ExampleServiceServer).DeleteExample(ctx, req.(*DeleteExampleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Example_ServiceDesc is the grpc.ServiceDesc for Example service.
+// ExampleService_ServiceDesc is the grpc.ServiceDesc for ExampleService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Example_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.Example",
-	HandlerType: (*ExampleServer)(nil),
+var ExampleService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.example.ExampleService",
+	HandlerType: (*ExampleServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetExamples",
-			Handler:    _Example_GetExamples_Handler,
+			Handler:    _ExampleService_GetExamples_Handler,
 		},
 		{
 			MethodName: "GetExampleById",
-			Handler:    _Example_GetExampleById_Handler,
+			Handler:    _ExampleService_GetExampleById_Handler,
 		},
 		{
 			MethodName: "PostExample",
-			Handler:    _Example_PostExample_Handler,
+			Handler:    _ExampleService_PostExample_Handler,
 		},
 		{
 			MethodName: "PutExample",
-			Handler:    _Example_PutExample_Handler,
+			Handler:    _ExampleService_PutExample_Handler,
 		},
 		{
 			MethodName: "DeleteExample",
-			Handler:    _Example_DeleteExample_Handler,
+			Handler:    _ExampleService_DeleteExample_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

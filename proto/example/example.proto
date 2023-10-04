@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package pb;
+package proto.example;
 
 option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
 
@@ -83,15 +83,14 @@ message DeleteExampleResponse {
   google.protobuf.Struct data = 3;
 }
 
-service Example {
+service ExampleService {
   rpc GetExamples(GetExamplesRequest) returns (GetExamplesResponse) {
     option (google.api.http) = {
       get : "/collection/v1/example"
     };
   };
 
-  rpc GetExampleById(GetExampleByIdRequest)
-      returns (GetExampleByIdResponse) {
+  rpc GetExampleById(GetExampleByIdRequest) returns (GetExampleByIdResponse) {
     option (google.api.http) = {
       get : "/collection/v1/example/{id}"
     };
