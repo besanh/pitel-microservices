@@ -9,7 +9,7 @@ type Param struct {
 }
 
 func (p *Param) BuildQuery() string {
-	if len(p.Key) < 1 || len(p.Value) < 1 {
+	if len(p.Key) < 1 || len(p.Value) < 1 || p.Value == "%%" {
 		return ""
 	} else if len(p.Operator) < 1 {
 		p.Operator = "="
