@@ -59,6 +59,18 @@ func ParseInt(s string) int {
 }
 
 func ParseAnyToString(value any) (string, error) {
+	ref := reflect.ValueOf(value)
+	if ref.Kind() == reflect.String {
+		return value.(string), nil
+	} else if InArray(ref.Kind(), []reflect.Kind{reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64}) {
+		return fmt.Sprintf("%d", value), nil
+	} else if InArray(ref.Kind(), []reflect.Kind{reflect.Float32, reflect.Float64}) {
+		return fmt.Sprintf("%f", value), nil
+	} else if ref.Kind() == reflect.Bool {
+		return fmt.Sprintf("%t", value), nil
+	} else if ref.Kind() == reflect.Slice {
+		return fmt.Sprintf("%v", value), nil
+	}
 	bytes, err := json.Marshal(value)
 	if err != nil {
 		return "", err
