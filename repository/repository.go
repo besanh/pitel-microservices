@@ -19,10 +19,26 @@ func CreateTable(ctx context.Context, db sqlclient.ISqlClientConn, entity any) (
 
 func InitRepositories() {
 	ExampleRepo = NewExample()
+	PluginConfigRepo = NewPluginConfig()
+	RecipientConfigRepo = NewRecipientConfig()
+	BalanceConfigRepo = NewBalanceConfig()
+	TemplateBssRepo = NewTemplateBss()
 }
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.Example)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.PluginConfig)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.RecipientConfig)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.BalanceConfig)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.TemplateBss)(nil)); err != nil {
 		log.Error(err)
 	}
 }

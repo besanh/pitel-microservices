@@ -38,7 +38,7 @@ func (c *Example) GetExamples(ctx context.Context, authUser *model.AuthUser, que
 		// Value:    authUser.TenantId,
 		// Operator: "=",
 	})
-	examples, total, err = repository.ExampleRepo.SelectByQuery(ctx, dbConn, queryParams, limit, offset)
+	examples, total, err = repository.ExampleRepo.GetByQuery(ctx, dbConn, queryParams, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return
@@ -52,7 +52,7 @@ func (c *Example) GetExampleById(ctx context.Context, authUser *model.AuthUser, 
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return
 	}
-	example, err := repository.ExampleRepo.FindById(ctx, dbConn, id)
+	example, err := repository.ExampleRepo.GetById(ctx, dbConn, id)
 	if err != nil {
 		log.Error(err)
 		return
@@ -87,7 +87,7 @@ func (c *Example) PutExample(ctx context.Context, authUser *model.AuthUser, id s
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return
 	}
-	exampleExist, err := repository.ExampleRepo.FindById(ctx, dbConn, id)
+	exampleExist, err := repository.ExampleRepo.GetById(ctx, dbConn, id)
 	if err != nil {
 		log.Error(err)
 		return
@@ -110,7 +110,7 @@ func (c *Example) DeleteExampleById(ctx context.Context, authUser *model.AuthUse
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return
 	}
-	exampleExist, err := repository.ExampleRepo.FindById(ctx, dbConn, id)
+	exampleExist, err := repository.ExampleRepo.GetById(ctx, dbConn, id)
 	if err != nil {
 		log.Error(err)
 		return

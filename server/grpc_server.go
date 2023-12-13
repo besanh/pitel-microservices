@@ -15,7 +15,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	pbBalanceConfig "github.com/tel4vn/fins-microservices/gen/proto/balance_config"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
+	pbPluginConfig "github.com/tel4vn/fins-microservices/gen/proto/plugin_config"
+	pbRecipientConfig "github.com/tel4vn/fins-microservices/gen/proto/recipient_config"
+	pbTemplateBss "github.com/tel4vn/fins-microservices/gen/proto/template_bss"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 
 	authMiddleware "github.com/tel4vn/fins-microservices/middleware/auth"
@@ -52,6 +56,10 @@ func NewGRPCServer(port string) {
 		),
 	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
+	pbPluginConfig.RegisterPluginConfigServer(grpcServer, grpcService.NewGRPCPluginConfig())
+	pbRecipientConfig.RegisterRecipientConfigServer(grpcServer, grpcService.NewGRPCRecipientConfig())
+	pbBalanceConfig.RegisterBalanceConfigServer(grpcServer, grpcService.NewGRPCBalanceConfig())
+	pbTemplateBss.RegisterTemplateBssServer(grpcServer, grpcService.NewGRPCTemplateBss())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -76,9 +84,24 @@ func NewGRPCServer(port string) {
 	if err := pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbPluginConfig.RegisterPluginConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	// if err := routingConfig.RegisterRoutingConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	// 	log.Fatal(err)
+	// }
+	if err := pbRecipientConfig.RegisterRecipientConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbBalanceConfig.RegisterBalanceConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbTemplateBss.RegisterTemplateBssHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	httpServer.Group("collection/*{grpc_gateway}").Any("", gin.WrapH(mux))
+	httpServer.Group("bss/*{grpc_gateway}").Any("", gin.WrapH(mux))
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

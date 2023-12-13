@@ -10,12 +10,12 @@ import (
 )
 
 type IRepo[T model.Model] interface {
-	FindById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*T, error)
+	GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*T, error)
 	Insert(ctx context.Context, db sqlclient.ISqlClientConn, entity T) error
 	Update(ctx context.Context, db sqlclient.ISqlClientConn, entity T) error
 	Delete(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
 	CreateTable(ctx context.Context, db sqlclient.ISqlClientConn) (err error)
-	SelectByQuery(ctx context.Context, db sqlclient.ISqlClientConn, params []model.Param, limit int, offset int) (entries *[]T, total int, err error)
+	GetByQuery(ctx context.Context, db sqlclient.ISqlClientConn, params []model.Param, limit int, offset int) (entries *[]T, total int, err error)
 }
 
 type Repo[T model.Model] struct {
@@ -36,7 +36,7 @@ func (r *Repo[T]) CreateTable(ctx context.Context, db sqlclient.ISqlClientConn) 
 	return
 }
 
-func (r *Repo[T]) FindById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (entity *T, err error) {
+func (r *Repo[T]) GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (entity *T, err error) {
 	entity = new(T)
 	err = db.GetDB().NewSelect().
 		Model(entity).
@@ -76,7 +76,7 @@ func (r *Repo[T]) Delete(ctx context.Context, db sqlclient.ISqlClientConn, id st
 	return
 }
 
-func (r *Repo[T]) SelectByQuery(ctx context.Context, db sqlclient.ISqlClientConn, params []model.Param, limit int, offset int) (entries *[]T, total int, err error) {
+func (r *Repo[T]) GetByQuery(ctx context.Context, db sqlclient.ISqlClientConn, params []model.Param, limit int, offset int) (entries *[]T, total int, err error) {
 	entries = new([]T)
 	query := db.GetDB().NewSelect().
 		Model(entries).

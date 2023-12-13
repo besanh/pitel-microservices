@@ -111,8 +111,8 @@ func ParseHeaderToUserDev(ctx context.Context) *model.AuthUser {
 		Services:         []string{},
 		DatabaseName:     "dev_fins_collection",
 		DatabasePort:     5432,
-		DatabaseHost:     "42.96.44.195",
-		DatabaseUser:     "tel4vnDBAdmin",
-		DatabasePassword: "Tel4vn@PsWrd#202399",
+		DatabaseHost:     "103.56.162.66",
+		DatabaseUser:     "fins_api",
+		DatabasePassword: "FinS#1D1B1#!2023",
 	}
 }
