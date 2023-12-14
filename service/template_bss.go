@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -41,12 +42,19 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 	if total > 0 {
 		return errors.New("template code is existed")
 	}
+
+	partitionContents, checkWrongFormat := util.GetPartitionContentTemplate(data.Content)
+	if checkWrongFormat {
+		return errors.New("content wrong format")
+	}
+	joinPart := util.GetJoinPartTemplate(partitionContents)
 	templateBss := model.TemplateBss{
 		Base:         model.InitBase(),
 		TemplateName: data.TemplateName,
 		TemplateCode: data.TemplateCode,
 		TemplateType: data.TemplateType,
 		Content:      data.Content,
+		Partition:    joinPart,
 		Status:       data.Status,
 	}
 
@@ -113,10 +121,17 @@ func (s *TemplateBss) PutTemplateBssById(ctx context.Context, authUser *model.Au
 		return err
 	}
 
+	partitionContents, checkWrongFormat := util.GetPartitionContentTemplate(data.Content)
+	if checkWrongFormat {
+		return errors.New("content wrong format")
+	}
+	joinPart := util.GetJoinPartTemplate(partitionContents)
+
 	templateBssExist.TemplateName = data.TemplateName
 	templateBssExist.TemplateCode = data.TemplateCode
 	templateBssExist.TemplateType = data.TemplateType
 	templateBssExist.Content = data.Content
+	templateBssExist.Partition = joinPart
 	templateBssExist.Status = data.Status
 
 	if err = repository.TemplateBssRepo.Update(ctx, dbCon, *templateBssExist); err != nil {

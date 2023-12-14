@@ -14,7 +14,8 @@ type TemplateBss struct {
 	TemplateName  string `json:"template_name" bun:"template_name,type:text,notnull"`
 	TemplateCode  string `json:"template_code" bun:"template_code,type:text,notnull"`
 	TemplateType  string `json:"template_type" bun:"template_type,type:text,notnull"`
-	Content       string `json:"content" bun:"content,type:text"`
+	Content       string `json:"content" bun:"content,type:text,notnull"`
+	Partition     string `json:"partition" bun:"partition,type:text"`
 	Status        bool   `json:"status" bun:"status,type:boolean"`
 }
 
@@ -23,7 +24,8 @@ type TemplateBssView struct {
 	TemplateName  string `json:"template_name" bun:"template_name,type:text,notnull"`
 	TemplateCode  string `json:"template_code" bun:"template_code,type:text,notnull"`
 	TemplateType  string `json:"template_type" bun:"template_type,type:text,notnull"`
-	Content       string `json:"content" bun:"content,type:text"`
+	Content       string `json:"content" bun:"content,type:text,notnull"`
+	Partition     string `json:"partition" bun:"partition,type:text"`
 	Status        bool   `json:"status" bun:"status,type:boolean"`
 }
 
