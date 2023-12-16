@@ -51,6 +51,13 @@ func (s *RecipientConfig) InsertRecipientConfig(ctx context.Context, authUser *m
 	}
 	recipientConfig := []model.RecipientConfig{}
 	for _, val := range data.Recipient {
+		if data.Provider == "abenla" && !slices.Contains[[]string](constants.ROLE_ABELA, val) {
+			return fmt.Errorf("recipient %s with provider %s not support", val, data.Provider)
+		} else if data.Provider == "incom" && !slices.Contains[[]string](constants.ROLE_INCOM, val) {
+			return fmt.Errorf("recipient %s with provider %s not support", val, data.Provider)
+		} else if data.Provider == "zalo" && !slices.Contains[[]string](constants.ROLE_FPT, val) {
+			return fmt.Errorf("recipient %s with provider %s not support", val, data.Provider)
+		}
 		filter := model.RecipientConfigFilter{
 			Provider:      []string{data.Provider},
 			RecipientType: []string{data.RecipientType},

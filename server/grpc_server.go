@@ -19,6 +19,7 @@ import (
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	pbPluginConfig "github.com/tel4vn/fins-microservices/gen/proto/plugin_config"
 	pbRecipientConfig "github.com/tel4vn/fins-microservices/gen/proto/recipient_config"
+	pbRoutingConfig "github.com/tel4vn/fins-microservices/gen/proto/routing_config"
 	pbTemplateBss "github.com/tel4vn/fins-microservices/gen/proto/template_bss"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 
@@ -60,6 +61,7 @@ func NewGRPCServer(port string) {
 	pbRecipientConfig.RegisterRecipientConfigServer(grpcServer, grpcService.NewGRPCRecipientConfig())
 	pbBalanceConfig.RegisterBalanceConfigServer(grpcServer, grpcService.NewGRPCBalanceConfig())
 	pbTemplateBss.RegisterTemplateBssServer(grpcServer, grpcService.NewGRPCTemplateBss())
+	pbRoutingConfig.RegisterRoutingConfigServer(grpcServer, grpcService.NewGRPCRoutingConfig())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -97,6 +99,9 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err := pbTemplateBss.RegisterTemplateBssHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbRoutingConfig.RegisterRoutingConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 	// Creating a normal HTTP server

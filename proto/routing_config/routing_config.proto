@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package proto.routing_config;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message RoutingConfigBodyRequest {
+    string routing_name = 1;
+    string routing_type = 2;
+    string brand_name = 3;
+    RoutingFlow routing_flow = 4;
+    RoutingOption routing_option = 5;
+    bool status = 6;
+}
+
+message RoutingConfigRequest {
+    int32 limit = 1;
+    int32 offset  = 2;
+    string routing_name = 3;
+    repeated string routing_type = 4;
+    string brand_name = 5;
+    string status = 6;
+}
+
+message RoutingConfigPutRequest {
+    string id = 1;
+    string routing_name = 2;
+    string routing_type = 3;
+    string brand_name = 4;
+    RoutingFlow routing_flow = 5;
+    RoutingOption routing_option = 6;
+    bool status = 7;
+}
+
+message RoutingFlow {
+    string flow_type = 1;
+    string flow_uuid = 2;
+}
+
+message RoutingOption {
+    Incom incom = 1;
+    Abenla abenla = 2;
+    Fpt fpt = 3;
+}
+
+message Incom {
+    string username = 1;
+    string password = 2;
+    string api_url = 3;
+    repeated string webhook_url = 4;
+    int32 max_attempts = 5;
+    string signature = 6;
+    bool status = 7;
+}
+
+message Abenla {
+    string username = 1;
+    string password = 2;
+    string api_url = 3;
+    string service_type_id = 4;
+    repeated string webhook_url = 5;
+    int32 max_attempts = 6;
+    string signature = 7;
+    bool status = 8;
+}
+
+message Fpt {
+    string client_id = 1;
+    string client_secret = 2;
+    string api_url = 3;
+    repeated string webhook_url = 4;
+    int32 max_attempts = 5;
+    string signature = 6;
+    bool status = 7;
+}
+
+message RoutingConfigResponse {
+    string code = 1;
+    string message = 2;
+    repeated google.protobuf.Struct data = 3;
+    int32 total = 4;
+}
+
+message RoutingConfigByIdRequest {
+    string id = 1;
+}
+
+message RoutingConfigByIdResponse {
+    string code = 1;
+    string message = 2;
+    google.protobuf.Struct data = 3;
+}
+
+message RoutingConfigResponseData {
+    string id = 1;
+}
+
+service RoutingConfig {
+    rpc PostRoutingConfig(RoutingConfigBodyRequest) returns (RoutingConfigByIdResponse) {
+        option (google.api.http) = {
+            post : "/bss/v1/routing-config",
+            body : "*"
+        };
+    }
+    rpc GetRoutingConfigs(RoutingConfigRequest) returns (RoutingConfigResponse) {
+        option (google.api.http) = {
+            get: "/bss/v1/routing-config",
+        };
+    }
+    rpc GetRoutingConfigById(RoutingConfigByIdRequest) returns (RoutingConfigByIdResponse) {
+        option (google.api.http) = {
+            get: "/bss/v1/routing-config/{id}",
+        };
+    }
+    rpc PutRoutingConfigById(RoutingConfigPutRequest) returns (RoutingConfigByIdResponse) {
+        option (google.api.http) = {
+            put: "/bss/v1/routing-config/{id}",
+            body: "*"
+        };
+    }
+    rpc DeleteRoutingConfigById(RoutingConfigByIdRequest) returns (RoutingConfigByIdResponse) {
+        option (google.api.http) = {
+            delete: "/bss/v1/routing-config/{id}",
+        };
+    }
+}

@@ -23,6 +23,7 @@ func InitRepositories() {
 	RecipientConfigRepo = NewRecipientConfig()
 	BalanceConfigRepo = NewBalanceConfig()
 	TemplateBssRepo = NewTemplateBss()
+	RoutingConfigRepo = NewRoutingConfig()
 }
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
@@ -39,6 +40,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.TemplateBss)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.RoutingConfig)(nil)); err != nil {
 		log.Error(err)
 	}
 }

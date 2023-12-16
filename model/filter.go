@@ -31,3 +31,10 @@ type TemplateBssFilter struct {
 	Content      string       `json:"content"`
 	Status       sql.NullBool `json:"status"`
 }
+
+type RoutingConfigFilter struct {
+	RoutingName string       `json:"routing_name"`
+	RoutingType []string     `json:"routing_type"`
+	Brandname   string       `json:"brand_name"`
+	Status      sql.NullBool `json:"status"`
+}
