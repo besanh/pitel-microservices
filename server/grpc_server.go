@@ -17,6 +17,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/response"
 	pbBalanceConfig "github.com/tel4vn/fins-microservices/gen/proto/balance_config"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
+	pbInboxMarketing "github.com/tel4vn/fins-microservices/gen/proto/inbox_marketing"
 	pbPluginConfig "github.com/tel4vn/fins-microservices/gen/proto/plugin_config"
 	pbRecipientConfig "github.com/tel4vn/fins-microservices/gen/proto/recipient_config"
 	pbRoutingConfig "github.com/tel4vn/fins-microservices/gen/proto/routing_config"
@@ -62,6 +63,7 @@ func NewGRPCServer(port string) {
 	pbBalanceConfig.RegisterBalanceConfigServer(grpcServer, grpcService.NewGRPCBalanceConfig())
 	pbTemplateBss.RegisterTemplateBssServer(grpcServer, grpcService.NewGRPCTemplateBss())
 	pbRoutingConfig.RegisterRoutingConfigServer(grpcServer, grpcService.NewGRPCRoutingConfig())
+	pbInboxMarketing.RegisterInboxMarketingServiceServer(grpcServer, grpcService.NewGRPCInboxMarketing())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -89,9 +91,9 @@ func NewGRPCServer(port string) {
 	if err := pbPluginConfig.RegisterPluginConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	// if err := routingConfig.RegisterRoutingConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if err := pbInboxMarketing.RegisterInboxMarketingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 	if err := pbRecipientConfig.RegisterRecipientConfigHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}

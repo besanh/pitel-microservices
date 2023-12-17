@@ -12,7 +12,7 @@ import (
 type (
 	ITemplateBss interface {
 		IRepo[model.TemplateBss]
-		GetTemplateBsses(ctx context.Context, db sqlclient.ISqlClientConn, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBssView, err error)
+		GetTemplateBsses(ctx context.Context, db sqlclient.ISqlClientConn, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error)
 	}
 	TemplateBss struct {
 		Repo[model.TemplateBss]
@@ -25,8 +25,8 @@ func NewTemplateBss() ITemplateBss {
 	return &TemplateBss{}
 }
 
-func (repo *TemplateBss) GetTemplateBsses(ctx context.Context, db sqlclient.ISqlClientConn, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBssView, err error) {
-	result = new([]model.TemplateBssView)
+func (repo *TemplateBss) GetTemplateBsses(ctx context.Context, db sqlclient.ISqlClientConn, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error) {
+	result = new([]model.TemplateBss)
 	query := db.GetDB().NewSelect().
 		Model(result)
 	if len(filter.TemplateName) > 0 {

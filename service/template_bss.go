@@ -14,7 +14,7 @@ type (
 	ITemplateBss interface {
 		InsertTemplateBss(ctx context.Context, authUser *model.AuthUser, data model.TemplateBssBodyRequest) error
 		GetTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.TemplateBss, err error)
-		GetTemplateBsses(ctx context.Context, authUser *model.AuthUser, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBssView, err error)
+		GetTemplateBsses(ctx context.Context, authUser *model.AuthUser, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error)
 		DeleteTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 		PutTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string, data model.TemplateBssBodyRequest) (err error)
 	}
@@ -66,7 +66,7 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 	return nil
 }
 
-func (s *TemplateBss) GetTemplateBsses(ctx context.Context, authUser *model.AuthUser, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBssView, err error) {
+func (s *TemplateBss) GetTemplateBsses(ctx context.Context, authUser *model.AuthUser, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error) {
 	dbCon, err := GetDBConnOfUser(*authUser)
 	if err != nil {
 		return 0, nil, err

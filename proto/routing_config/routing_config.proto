@@ -39,7 +39,7 @@ message RoutingConfigPutRequest {
 
 message RoutingFlow {
     string flow_type = 1;
-    string flow_uuid = 2;
+    repeated string flow_uuid = 2;
 }
 
 message RoutingOption {

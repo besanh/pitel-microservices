@@ -103,7 +103,7 @@ func (g *GRPCTemplateBss) GetTemplateBsses(ctx context.Context, request *pb.Temp
 	var data []*structpb.Struct
 	if total > 0 {
 		for _, val := range *templateBsses {
-			item := model.TemplateBssView{}
+			item := model.TemplateBss{}
 			if err := util.ParseAnyToAny(val, &item); err != nil {
 				log.Error(err)
 				result = &pb.TemplateBssResponse{

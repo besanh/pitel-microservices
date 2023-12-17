@@ -121,3 +121,11 @@ func GenerateRandomString(n int) string {
 	}
 	return string(b)
 }
+
+func ParseToAnyArray(value []string) []any {
+	result := make([]any, 0)
+	for _, v := range value {
+		result = append(result, v)
+	}
+	return result
+}

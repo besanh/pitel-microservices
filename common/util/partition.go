@@ -83,6 +83,55 @@ func GetPartitionContentTemplate(templateContent string) ([]model.PartitionTempl
 }
 
 func CheckPatternKeyTemplate(templateKey string) bool {
-	r, _ := regexp.Compile("^[a-zA-Z][a-zA-Z0-9_]+$")
+	r, _ := regexp.Compile("^[a-zA-Z][a-zA-Z0-9_/-:]+$")
 	return r.MatchString(templateKey)
+}
+
+func CheckTemplate(templateContent string, isContent bool) (templateContentNew string, keys []string, ok bool) {
+	countLeftDelimiter := 0
+	wrongFormat := false
+
+	RightDelimiter := strings.Split(templateContent, "}}")
+	lengthRightDelimiter := len(RightDelimiter)
+
+	for _, elem := range RightDelimiter {
+		leftDelimiter := strings.Split(elem, "{{")
+		if len(leftDelimiter) == 1 {
+			bodyTemplate := leftDelimiter[0]
+			if bodyTemplate != "" {
+				keys = append(keys, "")
+				templateContentNew += bodyTemplate
+			}
+		} else if len(leftDelimiter) == 2 {
+			countLeftDelimiter++
+			keyTemplate := leftDelimiter[1]
+			keys = append(keys, keyTemplate)
+			if !isContent {
+				checkFormat := CheckPatternKeyTemplate(keyTemplate)
+				if !checkFormat {
+					wrongFormat = true
+					break
+				} else {
+					bodyTemplate := leftDelimiter[0]
+					templateContentNew += bodyTemplate
+				}
+			} else {
+				bodyTemplate := leftDelimiter[0]
+				templateContentNew += bodyTemplate
+			}
+		} else {
+			wrongFormat = true
+			break
+		}
+	}
+
+	// the number of '{{' should be equal to '}}'. Otherwise wrong format
+	if lengthRightDelimiter != countLeftDelimiter+1 {
+		ok = true
+	}
+	if wrongFormat {
+		return "", keys, true
+	} else {
+		return templateContentNew, keys, false
+	}
 }

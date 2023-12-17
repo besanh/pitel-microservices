@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	validator "github.com/bufbuild/protovalidate-go"
+	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -220,4 +221,8 @@ func ServiceUnavailableMsg(msg any) (int, any) {
 		"code":    http.StatusText(http.StatusServiceUnavailable),
 		"message": msg,
 	}
+}
+
+func ResponseXml(field, val string) (int, any) {
+	return http.StatusOK, gin.H{field: val}
 }

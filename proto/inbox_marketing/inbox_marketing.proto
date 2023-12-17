@@ -1,0 +1,32 @@
+syntax="proto3";
+
+package proto.inbox_marketing.inbox_marketing;
+
+option go_package = "github.com/micro/micro/v3/proto/inbox_marketing";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message InboxMarketingRequestRequest {
+    string routing_config = 1;
+    string phone_number = 2;
+    string template = 3;
+    string content = 4;
+}
+
+message InboxMarketingResponse {
+    string code = 1;
+    string message = 2;
+    google.protobuf.Struct data = 3;
+}
+
+service InboxMarketingService {
+    rpc SendInboxMarketing(InboxMarketingRequestRequest) returns (InboxMarketingResponse) {
+        option (google.api.http) = {
+            post: "/bss/v1/inbox-marketing/send",
+            body: "*",
+        };
+    }
+}

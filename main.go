@@ -4,7 +4,10 @@ import (
 	"io"
 	"path/filepath"
 
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/env"
+	"github.com/tel4vn/fins-microservices/common/queue"
+	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/internal/redis"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	authMdw "github.com/tel4vn/fins-microservices/middleware/auth"
@@ -24,6 +27,7 @@ type Config struct {
 	AAA_Adress string
 	LogLevel   string
 	LogFile    string
+	ES         string
 }
 
 var config Config
@@ -70,6 +74,25 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+	queue.RMQ = queue.NewRMQ(queue.Rcfg{
+		Address:  env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
+		Password: env.GetStringENV("REDIS_PASSWORD", ""),
+		DB:       9,
+	})
+	esCfg := elasticsearch.Config{
+		Username:              env.GetStringENV("ES_USERNAME", "elastic"),
+		Password:              env.GetStringENV("ES_PASSWORD", "tel4vnEs2021"),
+		Host:                  []string{env.GetStringENV("ES_HOST", "http://113.164.246.12:9200")},
+		MaxRetries:            10,
+		ResponseHeaderTimeout: 60,
+		RetryStatuses:         []int{502, 503, 504},
+	}
+	repository.ESClient = elasticsearch.NewElasticsearchClient(esCfg)
+	repository.ES = elasticsearch.NewES(esCfg)
+	repository.ES.Ping()
+
+	cache.MCache = cache.NewMemCache()
+
 	// goauth.GoAuthClient = goauth.NewGoAuth(redis.Redis.GetClient())
 	// authMdw.SetupGoGuardian()
 	authMdw.AuthMdw = authMdw.NewGatewayAuthMiddleware(env.GetStringENV("ENV", "dev"))
@@ -87,6 +110,8 @@ func main() {
 
 	// Init Repositories
 	repository.InitRepositories()
+	// Init ES
+	repository.InitEsRepositories()
 
 	// Init services
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)

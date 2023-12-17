@@ -9,20 +9,18 @@ import (
 
 type RoutingConfig struct {
 	*Base
-	bun.BaseModel `bun:"table:bss_routing_config,alias:brc"`
+	bun.BaseModel `bun:"table:routing_config,alias:brc"`
 	RoutingName   string        `json:"routing_name" bun:"routing_name,type:text,notnull"`
 	RoutingType   string        `json:"routing_type" bun:"routing_type,type:text,notnull"` // sms,zns,...
-	Brandname     string        `json:"brand_name" bun:"brand_name,type:text"`
 	RoutingFlow   RoutingFlow   `json:"routing_flow" bun:"routing_flow,type:text,notnull"`
 	RoutingOption RoutingOption `json:"routing_option" bun:"routing_option,type:text,notnull"`
 	Status        bool          `json:"status" bun:"status,type:boolean"`
 }
 
 type RoutingConfigView struct {
-	bun.BaseModel `bun:"table:bss_routing_config,alias:brc"`
+	bun.BaseModel `bun:"table:routing_config,alias:brc"`
 	RoutingName   string        `json:"routing_name" bun:"routing_name,type:text,notnull"`
 	RoutingType   string        `json:"routing_type" bun:"routing_type,type:text,notnull"` // sms,zns,...
-	Brandname     string        `json:"brand_name" bun:"brand_name,type:text"`
 	RoutingFlow   RoutingFlow   `json:"routing_flow" bun:"routing_flow,type:text,notnull"`
 	RoutingOption RoutingOption `json:"routing_option" bun:"routing_option,type:text,notnull"`
 	Status        bool          `json:"status" bun:"status,type:boolean"`
@@ -30,8 +28,8 @@ type RoutingConfigView struct {
 
 // Link to table recipient_Routing or balance Routing to control flow send data
 type RoutingFlow struct {
-	FLowType string `json:"flow_type"` // table recipient or balance
-	FlowUuid string `json:"flow_uuid"`
+	FlowType string   `json:"flow_type"` // table recipient or balance
+	FlowUuid []string `json:"flow_uuid"`
 }
 
 // Include account info connected with external plugin
@@ -59,6 +57,7 @@ type Abenla struct {
 	WebhookUrl    []string `json:"webhook_url" bun:"webhook_url,type:text"`
 	MaxAttempts   int      `json:"max_attempts" bun:"max_attempts,type:text"`
 	Signature     string   `json:"signature" bun:"signature,type:text"`
+	Brandname     string   `json:"brand_name" bun:"brand_name,type:text"`
 	Status        bool     `json:"status" bun:"status"`
 }
 
@@ -80,30 +79,30 @@ func (r *RoutingConfig) Validate() (err error) {
 		return errors.New("routing type is required")
 	}
 
-	if !slices.Contains[[]string]([]string{"recipient", "balance"}, r.RoutingFlow.FLowType) {
+	if !slices.Contains[[]string]([]string{"recipient", "balance"}, r.RoutingFlow.FlowType) {
 		return errors.New("routing flow is invalid")
 	}
 	if len(r.RoutingFlow.FlowUuid) < 1 {
 		return errors.New("routing flow uuid is required")
 	}
 
-	isCheckRoutingOptionEnable := 0
+	// isCheckRoutingOptionEnable := 0
 
-	if r.RoutingOption.Incom.Status {
-		isCheckRoutingOptionEnable += 1
-	}
-	if r.RoutingOption.Abenla.Status {
-		isCheckRoutingOptionEnable += 1
-	}
-	if r.RoutingOption.Fpt.Status {
-		isCheckRoutingOptionEnable += 1
-	}
+	// if r.RoutingOption.Incom.Status {
+	// 	isCheckRoutingOptionEnable += 1
+	// }
+	// if r.RoutingOption.Abenla.Status {
+	// 	isCheckRoutingOptionEnable += 1
+	// }
+	// if r.RoutingOption.Fpt.Status {
+	// 	isCheckRoutingOptionEnable += 1
+	// }
 
-	if isCheckRoutingOptionEnable > 1 {
-		return errors.New("only one routing option is enable")
-	} else if isCheckRoutingOptionEnable == 0 {
-		return errors.New("routing option is required")
-	}
+	// if isCheckRoutingOptionEnable > 1 {
+	// 	return errors.New("only one routing option is enable")
+	// } else if isCheckRoutingOptionEnable == 0 {
+	// 	return errors.New("routing option is required")
+	// }
 
 	if r.RoutingOption.Incom.Status {
 		if len(r.RoutingOption.Incom.Username) < 1 {

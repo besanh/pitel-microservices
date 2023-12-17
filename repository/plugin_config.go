@@ -13,6 +13,7 @@ type (
 	IPluginConfig interface {
 		IRepo[model.PluginConfig]
 		GetPluginConfigs(ctx context.Context, db sqlclient.ISqlClientConn, filter model.PluginConfigFilter, limit, offset int) (int, *[]model.PluginConfigView, error)
+		GetExternalPluginConfigByUsernameOrSignature(ctx context.Context, db sqlclient.SqlClientConn, username, signature string) (*model.PluginConfig, error)
 	}
 	PluginConfig struct {
 		Repo[model.PluginConfig]
@@ -46,4 +47,27 @@ func (repo *PluginConfig) GetPluginConfigs(ctx context.Context, db sqlclient.ISq
 	}
 
 	return total, result, nil
+}
+
+func (repo *PluginConfig) GetExternalPluginConfigByUsernameOrSignature(ctx context.Context, db sqlclient.SqlClientConn, username, signature string) (*model.PluginConfig, error) {
+	result := new(model.PluginConfig)
+	query := db.GetDB().NewSelect().
+		Model(result)
+	if len(username) > 0 {
+		query.Where("username = ?", username)
+	}
+	if len(signature) > 0 {
+		query.Where("signature = ?", signature)
+	}
+
+	query.Where("status = true").
+		Limit(1)
+	err := query.Scan(ctx)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
 }
