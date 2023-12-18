@@ -12,6 +12,8 @@ import (
 
 const MAX_LIMIT = 50_000
 
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+
 func ParseLimit(limit any) int {
 	var val = 10
 	var err error
@@ -111,8 +113,6 @@ func InArray(item any, array any) bool {
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
-
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
 func GenerateRandomString(n int) string {
 	b := make([]rune, n)

@@ -23,7 +23,9 @@ import (
 )
 
 const (
-	INFO_ROUTING = "info_routing"
+	INFO_ROUTING                   = "info_routing"
+	INFO_EXTERNAL_PLUGIN_CONNECT   = "INFO_EXTERNAL_PLUGIN_CONNECT"
+	EXPIRE_EXTERNAL_PLUGIN_CONNECT = 1 * time.Minute
 
 	// token
 	ABENLA_TOKEN            = "abenla_token"
@@ -127,22 +129,30 @@ func HandlePushRMQ(ctx context.Context, index, docId string, authUser *model.Aut
 	return nil
 }
 
-func GetAccessTokenFpt(ctx context.Context, dbCon sqlclient.ISqlClientConn) (token string, err error) {
-	plugin, err := GetExternalPluginConnectFromCache(ctx, dbCon, "fpt")
+func GetAccessTokenFpt(ctx context.Context, routingConfig model.RoutingConfig) (token string, err error) {
+	// plugin, err := GetExternalPluginConnectFromCache(ctx, dbCon, "fpt")
+	// if err != nil {
+	// 	return "", err
+	// } else if plugin == nil {
+	// 	return "", errors.New("external plugin connect not found")
+	// }
+	tokenCache, err := cacheUtil.MCache.Get(INFO_EXTERNAL_PLUGIN_CONNECT + "_" + routingConfig.Id)
 	if err != nil {
 		return "", err
+	} else if tokenCache != nil {
+		return tokenCache.(string), nil
 	}
 	hasher := md5.New()
 	hasher.Write([]byte(uuid.NewString()))
 
 	body := map[string]any{
-		"client_id":     plugin.Config.FptConfig.ClientId,
-		"client_sercet": plugin.Config.FptConfig.ClientSercet,
-		"scope":         plugin.Config.FptConfig.Scope,
+		"client_id":     routingConfig.RoutingOption.Fpt.ClientId,
+		"client_sercet": routingConfig.RoutingOption.Fpt.ClientSecret,
+		"scope":         routingConfig.RoutingOption.Fpt.Scope,
 		"session_id":    hex.EncodeToString(hasher.Sum(nil)),
-		"grant_type":    "client_credentials",
+		"grant_type":    routingConfig.RoutingOption.Fpt.GrantType,
 	}
-	url := fmt.Sprintf(plugin.Config.FptConfig.Api)
+	url := fmt.Sprintf(routingConfig.RoutingOption.Fpt.ApiAuthUrl)
 	res, err := httpUtil.Post(url, body)
 	if err != nil {
 		log.Error(err)

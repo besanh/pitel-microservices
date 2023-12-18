@@ -51,32 +51,38 @@ message RoutingOption {
 message Incom {
     string username = 1;
     string password = 2;
-    string api_url = 3;
-    repeated string webhook_url = 4;
-    int32 max_attempts = 5;
-    string signature = 6;
-    bool status = 7;
-}
-
-message Abenla {
-    string username = 1;
-    string password = 2;
-    string api_url = 3;
-    string service_type_id = 4;
-    repeated string webhook_url = 5;
+    string api_auth_url = 3;
+    string api_send_message_url = 4;
+    string webhook_url = 5;
     int32 max_attempts = 6;
     string signature = 7;
     bool status = 8;
 }
 
+message Abenla {
+    string username = 1;
+    string password = 2;
+    string api_auth_url = 3;
+    string api_send_message_url = 4;
+    string service_type_id = 5;
+    string webhook_url = 6;
+    int32 max_attempts = 7;
+    string signature = 8;
+    bool status = 9;
+}
+
 message Fpt {
     string client_id = 1;
     string client_secret = 2;
-    string api_url = 3;
-    repeated string webhook_url = 4;
-    int32 max_attempts = 5;
-    string signature = 6;
-    bool status = 7;
+    string scope = 3;
+    string grant_type = 4;
+    string brand_name = 5;
+    string api_auth_url = 6;
+    string api_send_message_url = 7;
+    string webhook_url = 8;
+    int32 max_attempts = 9;
+    string signature = 10;
+    bool status = 11;
 }
 
 message RoutingConfigResponse {

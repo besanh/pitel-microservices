@@ -28,14 +28,17 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 	}
 	dataUpdate := map[string]any{}
 
-	_, result, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
+	_, result, resultErr, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
 	if err != nil {
+		res.Status = "error"
+		if resultErr != nil {
+			res.Code = resultErr.Err
+			res.Message = resultErr.ErrorDescription
+		}
+
 		return res, err
 	}
-	// Id      string `json:"id"`
-	// Status  string `json:"status"`
-	// Message string `json:"message"`
-	// Code    int    `json:"code"`
+
 	// Find in ES to avoid 404 not found
 	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, inboxMarketingBasic.TenantId, authUser.DatabaseEsIndex, inboxMarketingBasic.Id)
 	if err != nil {
@@ -43,12 +46,7 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 	} else if len(dataExist.Id) < 1 {
 		return res, errors.New("log is not exist")
 	}
-	// MessageId string `json:"MessageId"`
-	// Phone     string `json:"Phone"`
-	// BrandName string `json:"BrandName"`
-	// Message   string `json:"Message"`
-	// PartnerId string `json:"PartnerId"`
-	// Telco     string `json:"Telco"`
+
 	var telcoId int
 	telcoId, _ = strconv.Atoi(constants.MAP_NETWORK_FPT[result.Telco])
 	inboxMarketing.TelcoId = telcoId

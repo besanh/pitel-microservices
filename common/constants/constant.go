@@ -63,6 +63,48 @@ var (
 		"6": "i-telecom",
 	}
 
+	STANDARD_CODE = map[string]string{
+		"0":  "0",  // error internal
+		"1":  "1",  // success
+		"2":  "2",  // fail
+		"3":  "3",  // wrong phone
+		"4":  "4",  // account expire, abenla
+		"5":  "5",  // amount zero, abenla
+		"6":  "6",  // message have not price, abenla
+		"7":  "7",  // can not sent, abenla
+		"8":  "8",  // dnc, abenla
+		"9":  "9",  // wrong brandname, abenla
+		"10": "10", // wrong parameter,incom
+		"11": "11", // out of quota,incom
+		"12": "12", // wrong template code, incom
+		"13": "13", // wrong route rule, incom
+		"14": "14", // channel route rule wrong, incom
+		"15": "15", // request khong hop le, fpt
+		"16": "16", // client khong duoc phep truy cap, fpt
+		"17": "17", // scope khong hop le, fpt
+		"18": "18", // loi server, fpt
+		"19": "19", // server tam thoi khong xl cac request tu client, fpt
+		"20": "20", // sai client_id hoac secret, fpt
+		"21": "21", // scope khong du quyen truy cap, fpt
+		"22": "22", // access token khong hop le, fpt
+		"23": "23", // access token het han, fpt
+		"24": "24", // cac tham so truyen vao khong hop le, fpt
+		"25": "25", // khong ho tro loai hinh cap quyen, fpt
+		"26": "26", // so tin nhan vuo qua han muc, fpt
+		"27": "27", // tn trung trong 5p, fpt
+		"28": "28", // het han muc tn, fpt
+		"29": "29", // chua cau hinh han muc tn, fpt
+		"30": "30", // brandname chưa kích hoạt hoặc bị khoá, fpt
+		"31": "31", // loi khong xac dinh, fpt
+		"32": "32", // brandme chua duoc dang ky vs nha mang, fpt
+		"33": "33", // loi service cua nha mang, fpt
+		"34": "34", // do dai tin nhan vuot qua quy dinh cua nha mang, fpt
+		"35": "35", // template chua dk hoac sai so vs template, fpt
+		"36": "36", // noi dung chua tu khoa bi chan, fpt
+		"37": "37", // noi dung chua tieng Viet khi ma hoa(huong Viettel bank), fpt
+		"38": "38", // khong the giai ma, tn khong duoc ma hoa
+	}
+
 	// Match with MAP_NETWORK
 	MAP_NETWORK_FPT = map[string]string{
 		"viettel": "3",
@@ -74,13 +116,17 @@ var (
 	}
 
 	// Status
-	STATUS = map[string]string{
-		// incom
+	STATUS_INCOM = map[string]string{
 		"success":    "success",
 		"fail":       "fail",
 		"processing": "processing",
+	}
 
-		// abenla
+	ABENLA_CODE = map[string]string{
+		"3": "3", // success
+		"4": "4",
+	}
+	STATUS_ABENLA = map[string]string{
 		"sent_fail":          "sent_fail",
 		"account_expired":    "account_expired",
 		"wrong_phone_number": "wrong_phone_number",

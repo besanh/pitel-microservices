@@ -46,7 +46,7 @@ func (g *GRPCInboxMarketing) SendInboxMarketing(ctx context.Context, request *pb
 		return result, nil
 	}
 
-	message, err := service.NewInboxMarketing().SendInboxMarketing(ctx, authUser, payload)
+	statusCode, message, err := service.NewInboxMarketing().SendInboxMarketing(ctx, authUser, payload)
 	if err != nil {
 		log.Error(err)
 		result = &pb.InboxMarketingResponse{
@@ -57,7 +57,7 @@ func (g *GRPCInboxMarketing) SendInboxMarketing(ctx context.Context, request *pb
 	}
 
 	result = &pb.InboxMarketingResponse{
-		Code:    "OK",
+		Code:    statusCode,
 		Message: message,
 	}
 

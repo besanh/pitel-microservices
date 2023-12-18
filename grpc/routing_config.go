@@ -40,7 +40,7 @@ func (g *GRPCRoutingConfig) PostRoutingConfig(ctx context.Context, request *pb.R
 		}
 		return result, err
 	}
-	log.Info("payload -->", payload)
+	// log.Info("payload -->", payload)
 
 	if err := payload.Validate(); err != nil {
 		log.Error(err)

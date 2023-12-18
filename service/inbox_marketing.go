@@ -20,7 +20,7 @@ import (
 
 type (
 	IInboxMarketing interface {
-		SendInboxMarketing(ctx context.Context, authUser *model.AuthUser, data model.InboxMarketingRequest) (message string, err error)
+		SendInboxMarketing(ctx context.Context, authUser *model.AuthUser, data model.InboxMarketingRequest) (statusCode, message string, err error)
 		// HandleUpdateStatusMessCurrentday()
 		GetReportInboxMarketing(ctx context.Context, authUser *model.AuthUser, filter model.InboxMarketingFilter, limit, offset int) (total int, result []model.InboxMarketingLogReport, err error)
 		PostExportReportInboxMarketing(ctx context.Context, authUser *model.AuthUser, fileType string, filter model.InboxMarketingFilter) (int, any)
@@ -41,18 +41,18 @@ func NewInboxMarketing() IInboxMarketing {
 	return &InboxMarketing{}
 }
 
-func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model.AuthUser, data model.InboxMarketingRequest) (message string, err error) {
+func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model.AuthUser, data model.InboxMarketingRequest) (statusCode, message string, err error) {
 	dbCon, err := GetDBConnOfUser(*authUser)
 	if err != nil {
-		return err.Error(), errors.New(response.ERR_EMPTY_CONN)
+		return response.ERR_EMPTY_CONN, err.Error(), errors.New(response.ERR_EMPTY_CONN)
 	}
 
 	routingConfig, err := common.GetInfoPlugin(ctx, dbCon, authUser, data.RoutingConfig)
 	if err != nil {
 		log.Error(err)
-		return "get rounting info error", err
+		return response.ERR_DATA_INVALID, "get rounting info error", err
 	} else if len(routingConfig.RoutingName) < 1 {
-		return "routing not found in system", errors.New("routing not found in system")
+		return response.ERR_DATA_INVALID, "routing not found in system", errors.New("routing not found in system")
 	}
 
 	// Force foreign phone numbers for abenla
@@ -65,16 +65,16 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 	keysContent, keysTemplate, err := common.HandleCheckContentMatchTemplate(ctx, dbCon, authUser, data.Template, data.Content)
 	if err != nil {
 		log.Error(err)
-		return "check content match template error", err
+		return response.ERR_DATA_INVALID, "check content match template error", err
 	} else if len(keysContent) != len(keysTemplate) {
-		return err.Error(), errors.New("content not match template")
+		return response.ERR_DATA_INVALID, err.Error(), errors.New("content not match template")
 	}
 
 	// Check connection to plugin
 	err = common.CheckConnectionWithExternalPlugin(ctx, *routingConfig)
 	if err != nil {
 		log.Error(err)
-		return "check connection error", err
+		return response.ERR_DATA_INVALID, "check connection error", err
 	}
 
 	plugin := ""
@@ -124,7 +124,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		tmpByte, err := json.Marshal(tmp)
 		if err != nil {
 			log.Error(err)
-			return err.Error(), err
+			return response.ERR_DATA_INVALID, err.Error(), err
 		}
 		listParam = append(listParam, tmpByte...)
 		inboxMarketing.Message = data.Content
@@ -137,162 +137,100 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 				routeRule, err := common.HandleGetRouteRule(ctx, dbCon, val)
 				if err != nil {
 					log.Error(err)
-					return err.Error(), err
+					return response.ERR_DATA_INVALID, err.Error(), err
 				}
 				routeRules = append(routeRules, routeRule)
 			}
 		}
 		if len(routeRules) < 1 {
-			return err.Error(), errors.New("route rule not found")
+			return response.ERR_DATA_INVALID, err.Error(), errors.New("route rule not found")
 		}
 		inboxMarketing.RouteRule = routeRules
-		// inboxMarketing.RouteRule = routingConfig.RoutingOption.Incom.RouteRule
 	} else if plugin == "fpt" {
 		_ = keysContent
 		_ = keysTemplate
 	}
 
-	tmpBytes := []byte{}
-	if plugin == "abenla" {
-		// log
-		auditLogModel := model.LogInboxMarketing{
-			TenantId:          authUser.TenantId,
-			BusinessUnitId:    authUser.BusinessUnitId,
-			UserId:            authUser.UserId,
-			Username:          authUser.Username,
-			Services:          authUser.Services,
-			Id:                docId,
-			RoutingConfigUuid: routingConfig.Id,
-			ExternalMessageId: smsGuid,
-			Channel:           "sms",
-			Status:            "",
-			Quantity:          0,
-			TelcoId:           0,
-			IsChargedZns:      false,
-			IsCheck:           false,
-			Code:              0,
-			CountAction:       1,
-			UpdatedBy:         authUser.UserId,
-		}
-		auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
-		if err != nil {
-			log.Error(err)
-			return err.Error(), err
-		}
-		inboxMarketing.Log = append(inboxMarketing.Log, auditLog)
-		tmpBytes, err = json.Marshal(inboxMarketing)
-		if err != nil {
-			log.Error(err)
-			return err.Error(), err
-		}
-	} else if plugin == "incom" {
-		// log
-		auditLogModel := model.LogInboxMarketing{
-			TenantId:          authUser.TenantId,
-			BusinessUnitId:    authUser.BusinessUnitId,
-			UserId:            authUser.UserId,
-			Username:          authUser.Username,
-			Services:          authUser.Services,
-			Id:                docId,
-			RoutingConfigUuid: routingConfig.Id,
-			ExternalMessageId: "",
-			Status:            "",
-			Quantity:          0,
-			TelcoId:           0,
-			IsChargedZns:      false,
-			IsCheck:           false,
-			Code:              0,
-			CountAction:       1,
-			UpdatedBy:         authUser.UserId,
-		}
-		auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
-		if err != nil {
-			log.Error(err)
-			return err.Error(), err
-		}
-		inboxMarketing.Log = append(inboxMarketing.Log, auditLog)
-		tmpBytes, err = json.Marshal(inboxMarketing)
-		if err != nil {
-			log.Error(err)
-			return err.Error(), err
-		}
+	auditLogModel := model.LogInboxMarketing{
+		TenantId:          authUser.TenantId,
+		BusinessUnitId:    authUser.BusinessUnitId,
+		UserId:            authUser.UserId,
+		Username:          authUser.Username,
+		Services:          authUser.Services,
+		Id:                docId,
+		RoutingConfigUuid: routingConfig.Id,
+		Status:            "",
+		Quantity:          0,
+		TelcoId:           0,
+		IsChargedZns:      false,
+		IsCheck:           false,
+		Code:              0,
+		CountAction:       1,
+		UpdatedBy:         authUser.UserId,
+	}
+	if plugin == "abenla" || plugin == "fpt" {
+		auditLogModel.ExternalMessageId = smsGuid
 	}
 
-	// Push rabbitmq
-	// err = common.HandlePushRMQ(ctx, index, docId, pluginInfo, tmpBytes)
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return response.ServiceUnavailableMsg(err)
-	// }
-	// Sleep to rmq write to es
-	// time.Sleep(2 * time.Second)
+	auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
+	if err != nil {
+		log.Error(err)
+		return response.ERR_DATA_INVALID, err.Error(), err
+	}
+	inboxMarketing.Log = append(inboxMarketing.Log, auditLog)
+	tmpBytes, err := json.Marshal(inboxMarketing)
+	if err != nil {
+		log.Error(err)
+		return response.ERR_DATA_INVALID, err.Error(), err
+	}
+
 	esDoc := map[string]any{}
 	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		log.Error(err)
-		return err.Error(), err
+		return response.ERR_DATA_INVALID, err.Error(), err
 	}
 	if err := repository.ESRepo.InsertLog(ctx, authUser.TenantId, authUser.DatabaseEsIndex, docId, esDoc); err != nil {
 		log.Error(err)
-		return err.Error(), err
+		return response.ERR_DATA_INVALID, err.Error(), err
 	}
 
+	inboxMarketingBasic := model.InboxMarketingBasic{
+		TenantId:       authUser.TenantId,
+		BusinessUnitId: authUser.BusinessUnitId,
+		UserId:         authUser.UserId,
+		Username:       authUser.Username,
+		Services:       authUser.Services,
+		DocId:          docId,
+		Index:          authUser.DatabaseEsIndex,
+		UpdatedBy:      authUser.UserId,
+	}
 	// Check pool to delivery for channel or delivery to plugin immediately
 	if plugin == "abenla" {
-		inboxMarketingBasic := model.InboxMarketingBasic{
-			TenantId:          authUser.TenantId,
-			BusinessUnitId:    authUser.BusinessUnitId,
-			UserId:            authUser.UserId,
-			Username:          authUser.Username,
-			Services:          authUser.Services,
-			ExternalMessageId: smsGuid,
-			DocId:             docId,
-			Index:             authUser.DatabaseEsIndex,
-			UpdatedBy:         authUser.UserId,
-		}
+		inboxMarketingBasic.ExternalMessageId = smsGuid
 		_, err := HandleMainInboxMarketingAbenla(ctx, authUser, inboxMarketingBasic, *routingConfig, inboxMarketing, data)
 		if err != nil {
 			log.Error(err)
-			return err.Error(), err
+			return response.ERR_DATA_INVALID, err.Error(), err
 		}
 
-		return err.Error(), err
+		return response.ERR_DATA_INVALID, err.Error(), err
 	} else if plugin == "incom" {
-		inboxMarketingBasic := model.InboxMarketingBasic{
-			TenantId:       authUser.TenantId,
-			BusinessUnitId: authUser.BusinessUnitId,
-			UserId:         authUser.UserId,
-			Username:       authUser.Username,
-			Services:       authUser.Services,
-			DocId:          docId,
-			Index:          authUser.DatabaseEsIndex,
-			UpdatedBy:      authUser.UserId,
-		}
 		res, err := HandleMainInboxMarketingIncom(ctx, dbCon, inboxMarketingBasic, *routingConfig, authUser, inboxMarketing, data)
 		if err != nil {
 			log.Error(err)
-			return err.Error(), err
+			return response.ERR_DATA_INVALID, err.Error(), err
 		}
 
 		if res.Code < 1 {
-			return res.Status, nil
+			return response.ERR_DATA_INVALID, res.Status, nil
 		} else {
-			return res.Status, nil
+			return "OK", res.Status, nil
 		}
 	} else if plugin == "fpt" {
-		inboxMarketingBasic := model.InboxMarketingBasic{
-			TenantId:       authUser.TenantId,
-			BusinessUnitId: authUser.BusinessUnitId,
-			UserId:         authUser.UserId,
-			Username:       authUser.Username,
-			Services:       authUser.Services,
-			DocId:          docId,
-			Index:          authUser.DatabaseEsIndex,
-			UpdatedBy:      authUser.UserId,
-		}
-		accessToken, err := common.GetAccessTokenFpt(ctx, dbCon)
+		accessToken, err := common.GetAccessTokenFpt(ctx, *routingConfig)
 		if err != nil {
 			log.Error(err)
-			return "access token error", err
+			return response.ERR_DATA_INVALID, "access token error", err
 		}
 		hasher := md5.New()
 		hasher.Write([]byte(routingConfig.RoutingOption.Fpt.ClientSecret))
@@ -304,14 +242,15 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		res, err := HandleMainInboxMarketingFpt(ctx, authUser, inboxMarketingBasic, *routingConfig, inboxMarketing, data, fpt)
 		if err != nil {
 			log.Error(err)
+			return response.ERR_DATA_INVALID, err.Error(), err
 		}
 		if res.Code < 1 {
-			return res.Status, nil
+			return response.ERR_DATA_INVALID, res.Status, nil
 		} else {
-			return res.Status, nil
+			return "OK", res.Status, nil
 		}
 	}
-	return err.Error(), err
+	return response.ERR_DATA_INVALID, err.Error(), err
 }
 
 // func (s *InboxMarketing) HandleUpdateStatusMessCurrentday() {

@@ -64,8 +64,10 @@ type Abenla struct {
 }
 
 type Fpt struct {
-	ClientId          string `json:"client_id" bun:"client_id"`
-	ClientSecret      string `json:"client_secret" bun:"client_secret"`
+	ClientId          string `json:"client_id" bun:"client_id,type:text"`
+	ClientSecret      string `json:"client_secret" bun:"client_secret,type:text"`
+	Scope             string `json:"scope" bun:"scope,type:text"`
+	GrantType         string `json:"grant_type" bun:"grant_type,type:text"`
 	ApiAuthUrl        string `json:"api_auth_url" bun:"api_auth_url,type:text"`
 	ApiSendMessageUrl string `json:"api_send_message_url" bun:"api_send_message_url,type:text"`
 	WebhookUrl        string `json:"webhook_url" bun:"webhook_url,type:text"`
@@ -153,6 +155,15 @@ func (r *RoutingConfig) Validate() (err error) {
 		}
 		if len(r.RoutingOption.Fpt.ApiSendMessageUrl) < 1 {
 			return errors.New("fpt api send message url is required")
+		}
+		if len(r.RoutingOption.Fpt.BrandName) < 1 {
+			return errors.New("fpt brand name is required")
+		}
+		if len(r.RoutingOption.Fpt.Scope) < 1 {
+			return errors.New("fpt scope is required")
+		}
+		if len(r.RoutingOption.Fpt.GrantType) < 1 {
+			return errors.New("fpt grant type is required")
 		}
 	}
 
