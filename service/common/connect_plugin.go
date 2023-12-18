@@ -75,7 +75,7 @@ func CheckConnectionWithExternalPlugin(ctx context.Context, routingConfig model.
 			client.SetTLSClientConfig(&tls.Config{
 				InsecureSkipVerify: true,
 			})
-			url := routingConfig.RoutingOption.Abenla.ApiUrl + "/api/CheckConnection"
+			url := routingConfig.RoutingOption.Abenla.ApiAuthUrl
 			res, err := client.R().
 				SetHeader("Content-Type", "application/json").
 				SetQueryParams(params).
@@ -127,7 +127,7 @@ func HandlePushRMQ(ctx context.Context, index, docId string, authUser *model.Aut
 	return nil
 }
 
-func GetAccessTokenFpt(ctx context.Context, dbCon *sqlclient.SqlClientConn) (token string, err error) {
+func GetAccessTokenFpt(ctx context.Context, dbCon sqlclient.ISqlClientConn) (token string, err error) {
 	plugin, err := GetExternalPluginConnectFromCache(ctx, dbCon, "fpt")
 	if err != nil {
 		return "", err
@@ -148,7 +148,7 @@ func GetAccessTokenFpt(ctx context.Context, dbCon *sqlclient.SqlClientConn) (tok
 		log.Error(err)
 		return "", err
 	} else if res.StatusCode() != http.StatusOK {
-		loginResponse := model.FptGetTokenResponseError{}
+		loginResponse := model.FptResponseError{}
 		err = json.Unmarshal([]byte(res.Body()), &loginResponse)
 		if err != nil {
 			log.Error(err)

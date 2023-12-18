@@ -129,3 +129,11 @@ func ParseToAnyArray(value []string) []any {
 	}
 	return result
 }
+
+func TimeToString(valueTime time.Time) string {
+	return TimeToStringLayout(valueTime, "2006-01-02 15:04:05")
+}
+
+func TimeToStringLayout(valueTime time.Time, layout string) string {
+	return valueTime.Format(layout)
+}

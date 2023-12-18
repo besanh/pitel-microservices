@@ -226,3 +226,12 @@ func ServiceUnavailableMsg(msg any) (int, any) {
 func ResponseXml(field, val string) (int, any) {
 	return http.StatusOK, gin.H{field: val}
 }
+
+func Created(data map[string]any) (int, any) {
+	result := map[string]any{
+		"code":    http.StatusCreated,
+		"message": "SUCCESS",
+	}
+
+	return http.StatusCreated, result
+}

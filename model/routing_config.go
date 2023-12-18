@@ -40,35 +40,39 @@ type RoutingOption struct {
 }
 
 type Incom struct {
-	Username    string   `json:"username" bun:"username"`
-	Password    string   `json:"password" bun:"password"`
-	ApiUrl      string   `json:"api_url" bun:"api_url"`
-	WebhookUrl  []string `json:"webhook_url" bun:"webhook_url,type:text"`
-	MaxAttempts int      `json:"max_attempts" bun:"max_attempts,type:text"`
-	Signature   string   `json:"signature" bun:"signature,type:text"`
-	Status      bool     `json:"status" bun:"status"`
+	Username          string `json:"username" bun:"username"`
+	Password          string `json:"password" bun:"password"`
+	ApiAuthUrl        string `json:"api_auth_url" bun:"api_auth_url,type:text"`
+	ApiSendMessageUrl string `json:"api_send_message_url" bun:"api_send_message_url,type:text"`
+	WebhookUrl        string `json:"webhook_url" bun:"webhook_url,type:text"`
+	MaxAttempts       int    `json:"max_attempts" bun:"max_attempts,type:text"`
+	Signature         string `json:"signature" bun:"signature,type:text"`
+	Status            bool   `json:"status" bun:"status"`
 }
 
 type Abenla struct {
-	Username      string   `json:"username" bun:"username"`
-	Password      string   `json:"password" bun:"password"`
-	ApiUrl        string   `json:"api_url" bun:"api_url"`
-	ServiceTypeId string   `json:"service_type_id" bun:"service_type_id"`
-	WebhookUrl    []string `json:"webhook_url" bun:"webhook_url,type:text"`
-	MaxAttempts   int      `json:"max_attempts" bun:"max_attempts,type:text"`
-	Signature     string   `json:"signature" bun:"signature,type:text"`
-	Brandname     string   `json:"brand_name" bun:"brand_name,type:text"`
-	Status        bool     `json:"status" bun:"status"`
+	Username          string `json:"username" bun:"username"`
+	Password          string `json:"password" bun:"password"`
+	ApiAuthUrl        string `json:"api_auth_url" bun:"api_auth_url,type:text"`
+	ApiSendMessageUrl string `json:"api_send_message_url" bun:"api_send_message_url,type:text"`
+	ServiceTypeId     string `json:"service_type_id" bun:"service_type_id"`
+	WebhookUrl        string `json:"webhook_url" bun:"webhook_url,type:text"`
+	MaxAttempts       int    `json:"max_attempts" bun:"max_attempts,type:text"`
+	Signature         string `json:"signature" bun:"signature,type:text"`
+	Brandname         string `json:"brand_name" bun:"brand_name,type:text"`
+	Status            bool   `json:"status" bun:"status"`
 }
 
 type Fpt struct {
-	ClientId     string   `json:"client_id" bun:"client_id"`
-	ClientSecret string   `json:"client_secret" bun:"client_secret"`
-	ApiUrl       string   `json:"api_url" bun:"api_url"`
-	WebhookUrl   []string `json:"webhook_url" bun:"webhook_url,type:text"`
-	MaxAttempts  int      `json:"max_attempts" bun:"max_attempts,type:text"`
-	Signature    string   `json:"signature" bun:"signature,type:text"`
-	Status       bool     `json:"status" bun:"status"`
+	ClientId          string `json:"client_id" bun:"client_id"`
+	ClientSecret      string `json:"client_secret" bun:"client_secret"`
+	ApiAuthUrl        string `json:"api_auth_url" bun:"api_auth_url,type:text"`
+	ApiSendMessageUrl string `json:"api_send_message_url" bun:"api_send_message_url,type:text"`
+	WebhookUrl        string `json:"webhook_url" bun:"webhook_url,type:text"`
+	MaxAttempts       int    `json:"max_attempts" bun:"max_attempts,type:text"`
+	Signature         string `json:"signature" bun:"signature,type:text"`
+	BrandName         string `json:"brand_name" bun:"brand_name,type:text"`
+	Status            bool   `json:"status" bun:"status"`
 }
 
 func (r *RoutingConfig) Validate() (err error) {
@@ -111,8 +115,11 @@ func (r *RoutingConfig) Validate() (err error) {
 		if len(r.RoutingOption.Incom.Password) < 1 {
 			return errors.New("incom password is required")
 		}
-		if len(r.RoutingOption.Incom.ApiUrl) < 1 {
+		if len(r.RoutingOption.Incom.ApiAuthUrl) < 1 {
 			return errors.New("incom api url is required")
+		}
+		if len(r.RoutingOption.Incom.ApiSendMessageUrl) < 1 {
+			return errors.New("incom api send message url is required")
 		}
 	}
 
@@ -123,8 +130,11 @@ func (r *RoutingConfig) Validate() (err error) {
 		if len(r.RoutingOption.Abenla.Password) < 1 {
 			return errors.New("abenla password is required")
 		}
-		if len(r.RoutingOption.Abenla.ApiUrl) < 1 {
-			return errors.New("abenla api url is required")
+		if len(r.RoutingOption.Abenla.ApiAuthUrl) < 1 {
+			return errors.New("abenla api auth url is required")
+		}
+		if len(r.RoutingOption.Abenla.ApiSendMessageUrl) < 1 {
+			return errors.New("abenla api send message url is required")
 		}
 		if len(r.RoutingOption.Abenla.ServiceTypeId) < 1 {
 			return errors.New("abenla service type id is required")
@@ -138,8 +148,11 @@ func (r *RoutingConfig) Validate() (err error) {
 		if len(r.RoutingOption.Fpt.ClientSecret) < 1 {
 			return errors.New("fpt client secret is required")
 		}
-		if len(r.RoutingOption.Fpt.ApiUrl) < 1 {
+		if len(r.RoutingOption.Fpt.ApiAuthUrl) < 1 {
 			return errors.New("fpt api url is required")
+		}
+		if len(r.RoutingOption.Fpt.ApiSendMessageUrl) < 1 {
+			return errors.New("fpt api send message url is required")
 		}
 	}
 

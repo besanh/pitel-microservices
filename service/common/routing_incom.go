@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -23,7 +22,7 @@ func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig mo
 	resultInternal := model.ResponseInboxMarketing{}
 	result := model.IncomSendMessageResponse{}
 
-	url := routingConfig.RoutingOption.Incom.ApiUrl
+	url := routingConfig.RoutingOption.Incom.ApiSendMessageUrl
 	if len(url) < 1 {
 		return 0, resultInternal, errors.New("api url is empty")
 	}
@@ -87,7 +86,7 @@ func HandleGetStatusMessage(ctx context.Context, dbCon sqlclient.ISqlClientConn,
 	client.SetTLSClientConfig(&tls.Config{
 		InsecureSkipVerify: true,
 	})
-	url := fmt.Sprintf("%s/api/OmniReport/GetStatusOmni", routingConfig.RoutingOption.Incom.ApiUrl)
+	url := routingConfig.RoutingOption.Incom.WebhookUrl
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(body).

@@ -2,9 +2,14 @@ package common
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
 
 	cacheUtil "github.com/tel4vn/fins-microservices/common/cache"
+	httpUtil "github.com/tel4vn/fins-microservices/common/http"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -32,4 +37,35 @@ func GetExternalPluginConnectFromCache(ctx context.Context, dbCon sqlclient.ISql
 		}
 		return externalPluginConnect, nil
 	}
+}
+
+func HandleDeliveryMessageFpt(ctx context.Context, id string, routingConfig model.RoutingConfig, inboxMarketingRequest model.InboxMarketingRequest, fpt model.FptRequireRequest) (int, *model.FptSendMessageResponse, error) {
+	body := map[string]any{
+		"access_token": fpt.AccessToken,
+		"session_id":   fpt.SessionId,
+		"BrandName":    routingConfig.RoutingOption.Fpt.BrandName,
+		"Phone":        inboxMarketingRequest.PhoneNumber,
+		"Message":      inboxMarketingRequest.Content,
+		"RequestId":    id,
+	}
+	url := fmt.Sprintf(routingConfig.RoutingOption.Fpt.ApiSendMessageUrl)
+	res, err := httpUtil.Post(url, body)
+	if err != nil {
+		log.Error(err)
+		return 0, nil, err
+	} else if res.StatusCode() != http.StatusOK {
+		resErr := model.FptResponseError{}
+		err = json.Unmarshal([]byte(res.Body()), &resErr)
+		if err != nil {
+			log.Error(err)
+			return 0, nil, err
+		}
+	}
+	resSuccess := model.FptSendMessageResponse{}
+	err = json.Unmarshal([]byte(res.Body()), &resSuccess)
+	if err != nil {
+		log.Error(err)
+		return 0, &resSuccess, err
+	}
+	return res.StatusCode(), &resSuccess, nil
 }

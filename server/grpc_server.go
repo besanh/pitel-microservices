@@ -162,6 +162,10 @@ func handleMetadata(ctx context.Context, r *http.Request) metadata.MD {
 	md["database_port"] = r.Header.Get("X-Database-Port")
 	md["database_user"] = r.Header.Get("X-Database-User")
 	md["database_password"] = r.Header.Get("X-Database-Password")
+	md["database_es_host"] = r.Header.Get("X-Database-Es-Host")
+	md["database_es_user"] = r.Header.Get("X-Database-Es-User")
+	md["database_es_password"] = r.Header.Get("X-Database-Es-Password")
+	md["database_es_index"] = r.Header.Get("X-Database-Es-Index")
 	return metadata.New(md)
 }
 

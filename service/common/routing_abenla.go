@@ -16,11 +16,11 @@ import (
 
 func HandleDeliveryMessageAbenla(ctx context.Context, id string, routingConfig model.RoutingConfig, inboxMarketingRequest model.InboxMarketingRequest) (int, model.AbenlaSendMessageResponse, error) {
 	result := model.AbenlaSendMessageResponse{}
-	url := routingConfig.RoutingOption.Abenla.ApiUrl
+	url := routingConfig.RoutingOption.Abenla.ApiSendMessageUrl
 	if len(url) < 1 {
 		return 0, result, errors.New("api url is empty")
 	}
-	url += "/api/SendSms"
+	// url += "/api/SendSms"
 	hasher := md5.New()
 	hasher.Write([]byte(routingConfig.RoutingOption.Abenla.Password))
 	var serviceTypeId int

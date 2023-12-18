@@ -17,7 +17,11 @@ func InitServices() {
 }
 
 // MAP TENANT_ID SQL_CONN
-var MapDBConn map[string]sqlclient.ISqlClientConn
+var (
+	MapDBConn        map[string]sqlclient.ISqlClientConn
+	ERR_EMPTY_CONN   = errors.New("empty_conn")
+	ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
+)
 
 type DBConfig struct {
 	Host     string
@@ -62,9 +66,6 @@ func NewDBConn(tenantId string, config DBConfig) (dbConn sqlclient.ISqlClientCon
 	MapDBConn[tenantId] = dbConn
 	return
 }
-
-var ERR_EMPTY_CONN = errors.New("empty_conn")
-var ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
 
 func GetDBConnOfUser(user model.AuthUser) (dbConn sqlclient.ISqlClientConn, err error) {
 	if len(user.DatabaseHost) < 1 {

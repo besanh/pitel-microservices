@@ -1,5 +1,10 @@
 package model
 
+type FptRequireRequest struct {
+	AccessToken string `json:"access_token"`
+	SessionId   string `json:"session_id"`
+}
+
 type FptGetTokenResponseSuccess struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   string `json:"expires_in"`
@@ -7,7 +12,7 @@ type FptGetTokenResponseSuccess struct {
 	Scope       string `json:"scope"`
 }
 
-type FptGetTokenResponseError struct {
+type FptResponseError struct {
 	Err              int    `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }

@@ -117,6 +117,11 @@ func main() {
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.InitServices()
 
+	// s1 := gocron.NewScheduler(time.UTC)
+	// s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
+	// s1.Every(1).Minute().Do(service.NewInboxMarketing)
+	// s1.StartAsync()
+
 	// Run gRPC server
 	server.NewGRPCServer(config.gRPCPort)
 }
