@@ -27,6 +27,7 @@ func InitRepositories() {
 	BalanceConfigRepo = NewBalanceConfig()
 	TemplateBssRepo = NewTemplateBss()
 	RoutingConfigRepo = NewRoutingConfig()
+	ExternalPluginConnectRepo = NewExternalPluginConnect()
 }
 
 func InitEsRepositories() {
@@ -51,6 +52,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.RoutingConfig)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ExternalPluginConnect)(nil)); err != nil {
 		log.Error(err)
 	}
 }

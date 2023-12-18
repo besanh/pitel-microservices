@@ -191,8 +191,8 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 	// Update id to ES
 	inboxMarketing.ExternalMessageId = result.Id
 	inboxMarketing.Status = result.Status
-	if len(constants.RouteRule[inboxMarketing.RouteRule[0]]) > 0 {
-		inboxMarketing.ChannelHook = constants.RouteRule[inboxMarketing.RouteRule[0]]
+	if len(constants.ROUTERULE[inboxMarketing.RouteRule[0]]) > 0 {
+		inboxMarketing.ChannelHook = constants.ROUTERULE[inboxMarketing.RouteRule[0]]
 	}
 	countAction := inboxMarketing.CountAction + 1
 	// log

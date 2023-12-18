@@ -7,9 +7,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	cacheUtil "github.com/tel4vn/fins-microservices/common/cache"
+	httpUtil "github.com/tel4vn/fins-microservices/common/http"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -120,4 +125,44 @@ func HandlePushRMQ(ctx context.Context, index, docId string, authUser *model.Aut
 	}
 
 	return nil
+}
+
+func GetAccessTokenFpt(ctx context.Context, dbCon *sqlclient.SqlClientConn) (token string, err error) {
+	plugin, err := GetExternalPluginConnectFromCache(ctx, dbCon, "fpt")
+	if err != nil {
+		return "", err
+	}
+	hasher := md5.New()
+	hasher.Write([]byte(uuid.NewString()))
+
+	body := map[string]any{
+		"client_id":     plugin.Config.FptConfig.ClientId,
+		"client_sercet": plugin.Config.FptConfig.ClientSercet,
+		"scope":         plugin.Config.FptConfig.Scope,
+		"session_id":    hex.EncodeToString(hasher.Sum(nil)),
+		"grant_type":    "client_credentials",
+	}
+	url := fmt.Sprintf(plugin.Config.FptConfig.Api)
+	res, err := httpUtil.Post(url, body)
+	if err != nil {
+		log.Error(err)
+		return "", err
+	} else if res.StatusCode() != http.StatusOK {
+		loginResponse := model.FptGetTokenResponseError{}
+		err = json.Unmarshal([]byte(res.Body()), &loginResponse)
+		if err != nil {
+			log.Error(err)
+			return "", err
+		}
+	}
+	loginResponse := model.FptGetTokenResponseSuccess{}
+	err = json.Unmarshal([]byte(res.Body()), &loginResponse)
+	if err != nil {
+		log.Error(err)
+		return "", err
+	}
+	if err := cacheUtil.MCache.SetTTL(FPT_TOKEN, loginResponse.AccessToken, 5*time.Minute); err != nil {
+		log.Error(err)
+	}
+	return loginResponse.AccessToken, nil
 }

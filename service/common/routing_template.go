@@ -56,6 +56,9 @@ func handleMatchMessageWithTemplate(content string, template string) (keysConten
 	if ok {
 		return keysContent, keys, false
 	}
+	if keysContent[len(keysContent)-1] == "" {
+		keysContent = keysContent[:len(keysContent)-1]
+	}
 	if keys[len(keys)-1] == "" {
 		keys = keys[:len(keys)-1]
 	}

@@ -36,14 +36,14 @@ var (
 	}
 
 	// Incom
-	RouteRule = map[string]string{
+	ROUTERULE = map[string]string{
 		"1": "zns",
 		"2": "autocall",
 		"3": "sms",
 	}
 
 	// Network incom
-	MapNetwork = map[string]string{
+	MAP_NETWORK = map[string]string{
 		"0":  "0", // foreign
 		"1":  "1", // mobifone: mobifone
 		"2":  "2", // vinaphone: vinaphone
@@ -53,7 +53,7 @@ var (
 		"14": "6", // i-telecom: i-telecom
 	}
 
-	Networks = map[string]string{
+	NETWORKS = map[string]string{
 		"0": "foreign",
 		"1": "mobifone",
 		"2": "vinaphone",
@@ -64,7 +64,7 @@ var (
 	}
 
 	// Status
-	Status = map[string]string{
+	STATUS = map[string]string{
 		// incom
 		"success":    "success",
 		"fail":       "fail",
@@ -80,4 +80,8 @@ var (
 		"deny_phone_number":  "deny_phone_number",
 		"wrong_sender_name":  "wrong_sender_name",
 	}
+
+	// External plugin connect
+	EXTERNAL_PLUGIN_CONNECT_TYPE = []string{"incom", "abenla", "fpt"}
+	SCOPE_FPT                    = []string{"send_brandname_otp", "send_brandname"}
 )

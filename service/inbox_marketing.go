@@ -145,8 +145,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		inboxMarketing.RouteRule = routeRules
 		// inboxMarketing.RouteRule = routingConfig.RoutingOption.Incom.RouteRule
 	} else if plugin == "fpt" {
-		_ = keysContent
-		_ = keysTemplate
+
 	}
 
 	tmpBytes := []byte{}
