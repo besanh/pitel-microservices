@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package proto.plugin_config.plugin_config;
+package proto.plugin_config;
 
 option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
 

@@ -115,7 +115,7 @@ func RegisterPluginConfigHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.plugin_config.plugin_config.PluginConfig/PostPluginConfig", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.plugin_config.PluginConfig/PostPluginConfig", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -140,7 +140,7 @@ func RegisterPluginConfigHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.plugin_config.plugin_config.PluginConfig/GetPluginConfigs", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.plugin_config.PluginConfig/GetPluginConfigs", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -204,7 +204,7 @@ func RegisterPluginConfigHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.plugin_config.plugin_config.PluginConfig/PostPluginConfig", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.plugin_config.PluginConfig/PostPluginConfig", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -226,7 +226,7 @@ func RegisterPluginConfigHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.plugin_config.plugin_config.PluginConfig/GetPluginConfigs", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.plugin_config.PluginConfig/GetPluginConfigs", runtime.WithHTTPPathPattern("/bss/v1/plugin-config"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

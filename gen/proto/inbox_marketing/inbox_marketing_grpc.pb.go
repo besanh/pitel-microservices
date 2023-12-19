@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	InboxMarketingService_SendInboxMarketing_FullMethodName = "/proto.inbox_marketing.inbox_marketing.InboxMarketingService/SendInboxMarketing"
+	InboxMarketingService_SendInboxMarketing_FullMethodName = "/proto.inbox_marketing.InboxMarketingService/SendInboxMarketing"
 )
 
 // InboxMarketingServiceClient is the client API for InboxMarketingService service.
@@ -94,7 +94,7 @@ func _InboxMarketingService_SendInboxMarketing_Handler(srv interface{}, ctx cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var InboxMarketingService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.inbox_marketing.inbox_marketing.InboxMarketingService",
+	ServiceName: "proto.inbox_marketing.InboxMarketingService",
 	HandlerType: (*InboxMarketingServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

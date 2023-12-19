@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/constants"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 	"github.com/tel4vn/fins-microservices/service/common"
@@ -28,27 +29,22 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 	}
 	dataUpdate := map[string]any{}
 
-	_, result, resultErr, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
+	_, result, resultFpt, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
 	if err != nil {
-		res.Status = "error"
-		if resultErr != nil {
-			res.Code = resultErr.Err
-			res.Message = resultErr.ErrorDescription
-		}
-
-		return res, err
+		log.Error(err)
+		return *result, err
 	}
 
 	// Find in ES to avoid 404 not found
-	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, inboxMarketingBasic.TenantId, authUser.DatabaseEsIndex, inboxMarketingBasic.Id)
+	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, inboxMarketingBasic.TenantId, authUser.DatabaseEsIndex, inboxMarketingBasic.DocId)
 	if err != nil {
-		return res, err
+		return *result, err
 	} else if len(dataExist.Id) < 1 {
-		return res, errors.New("log is not exist")
+		return *result, errors.New("log is not exist")
 	}
 
 	var telcoId int
-	telcoId, _ = strconv.Atoi(constants.MAP_NETWORK_FPT[result.Telco])
+	telcoId, _ = strconv.Atoi(constants.MAP_NETWORK_FPT[resultFpt.Telco])
 	inboxMarketing.TelcoId = telcoId
 	// log
 	auditLogModel := model.LogInboxMarketing{
@@ -57,9 +53,9 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 		UserId:            authUser.UserId,
 		Username:          authUser.Username,
 		Services:          authUser.Services,
-		Id:                result.PartnerId,
+		Id:                inboxMarketing.Id,
 		RoutingConfigUuid: routingConfig.Id,
-		ExternalMessageId: result.MessageId,
+		ExternalMessageId: resultFpt.MessageId,
 		Status:            "",
 		Quantity:          0,
 		TelcoId:           0,

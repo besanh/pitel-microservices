@@ -212,7 +212,6 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 			log.Error(err)
 			return response.ERR_DATA_INVALID, err.Error(), err
 		}
-
 		return response.ERR_DATA_INVALID, err.Error(), err
 	} else if plugin == "incom" {
 		res, err := HandleMainInboxMarketingIncom(ctx, dbCon, inboxMarketingBasic, *routingConfig, authUser, inboxMarketing, data)
@@ -220,17 +219,14 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 			log.Error(err)
 			return response.ERR_DATA_INVALID, err.Error(), err
 		}
-
-		if res.Code < 1 {
-			return response.ERR_DATA_INVALID, res.Status, nil
-		} else {
-			return "OK", res.Status, nil
-		}
+		return res.Status, res.Message, nil
 	} else if plugin == "fpt" {
 		accessToken, err := common.GetAccessTokenFpt(ctx, *routingConfig)
 		if err != nil {
 			log.Error(err)
-			return response.ERR_DATA_INVALID, "access token error", err
+			return response.ERR_DATA_INVALID, err.Error(), err
+		} else if accessToken == "" {
+			return response.ERR_DATA_INVALID, err.Error(), errors.New("access token not found")
 		}
 		hasher := md5.New()
 		hasher.Write([]byte(routingConfig.RoutingOption.Fpt.ClientSecret))
@@ -244,11 +240,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 			log.Error(err)
 			return response.ERR_DATA_INVALID, err.Error(), err
 		}
-		if res.Code < 1 {
-			return response.ERR_DATA_INVALID, res.Status, nil
-		} else {
-			return "OK", res.Status, nil
-		}
+		return res.Status, res.Message, nil
 	}
 	return response.ERR_DATA_INVALID, err.Error(), err
 }

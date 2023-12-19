@@ -33,7 +33,7 @@ type IncomConfig struct {
 type FptConfig struct {
 	GrantType    string `json:"grant_type" bun:"grant_type"`
 	ClientId     string `json:"client_id" bun:"client_id"`
-	ClientSercet string `json:"client_sercet" bun:"client_sercet"`
+	ClientSercet string `json:"client_secret" bun:"client_secret"`
 	Scope        string `json:"scope" bun:"scope,type:text"`
 	SessionId    string `json:"session_id" bun:"session_id"`
 	Api          string `json:"api" bun:"api"`
@@ -74,7 +74,7 @@ func (r *ExternalPluginConnect) Validate() error {
 			return errors.New("client_id is missing")
 		}
 		if len(r.Config.FptConfig.ClientSercet) < 1 {
-			return errors.New("client_sercet is missing")
+			return errors.New("client_secret is missing")
 		}
 		if len(r.Config.FptConfig.Scope) < 1 {
 			return errors.New("scope is missing")

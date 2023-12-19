@@ -137,3 +137,12 @@ func TimeToString(valueTime time.Time) string {
 func TimeToStringLayout(valueTime time.Time, layout string) string {
 	return valueTime.Format(layout)
 }
+
+func InArrayContains(item string, array []string) bool {
+	for _, v := range array {
+		if strings.Contains(item, v) {
+			return true
+		}
+	}
+	return false
+}

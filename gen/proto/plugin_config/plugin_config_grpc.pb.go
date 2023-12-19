@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	PluginConfig_PostPluginConfig_FullMethodName = "/proto.plugin_config.plugin_config.PluginConfig/PostPluginConfig"
-	PluginConfig_GetPluginConfigs_FullMethodName = "/proto.plugin_config.plugin_config.PluginConfig/GetPluginConfigs"
+	PluginConfig_PostPluginConfig_FullMethodName = "/proto.plugin_config.PluginConfig/PostPluginConfig"
+	PluginConfig_GetPluginConfigs_FullMethodName = "/proto.plugin_config.PluginConfig/GetPluginConfigs"
 )
 
 // PluginConfigClient is the client API for PluginConfig service.
@@ -127,7 +127,7 @@ func _PluginConfig_GetPluginConfigs_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PluginConfig_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.plugin_config.plugin_config.PluginConfig",
+	ServiceName: "proto.plugin_config.PluginConfig",
 	HandlerType: (*PluginConfigServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

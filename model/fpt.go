@@ -7,7 +7,7 @@ type FptRequireRequest struct {
 
 type FptGetTokenResponseSuccess struct {
 	AccessToken string `json:"access_token"`
-	ExpiresIn   string `json:"expires_in"`
+	ExpiresIn   int    `json:"expires_in"`
 	TokenType   string `json:"token_type"`
 	Scope       string `json:"scope"`
 }
@@ -32,7 +32,7 @@ type FptSendMessageResponse struct {
 	Phone     string `json:"Phone"`
 	BrandName string `json:"BrandName"`
 	Message   string `json:"Message"`
-	PartnerId string `json:"PartnerId"`
+	PartnerId string `json:"PartnerId"` // id tel4vn->fpt
 	Telco     string `json:"Telco"`
 }
 

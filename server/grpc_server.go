@@ -19,6 +19,7 @@ import (
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	pbExternalPluginConnect "github.com/tel4vn/fins-microservices/gen/proto/external_plugin"
 	pbInboxMarketing "github.com/tel4vn/fins-microservices/gen/proto/inbox_marketing"
+	pbInboxMarketingIncom "github.com/tel4vn/fins-microservices/gen/proto/inbox_marketing_incom"
 	pbPluginConfig "github.com/tel4vn/fins-microservices/gen/proto/plugin_config"
 	pbRecipientConfig "github.com/tel4vn/fins-microservices/gen/proto/recipient_config"
 	pbRoutingConfig "github.com/tel4vn/fins-microservices/gen/proto/routing_config"
@@ -58,6 +59,11 @@ func NewGRPCServer(port string) {
 			grpcMiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
 		),
 	)
+	grpcServerWebhook := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(authMiddleware.GRPCAuthInterceptor, grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
+		),
+	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
 	pbPluginConfig.RegisterPluginConfigServer(grpcServer, grpcService.NewGRPCPluginConfig())
 	pbRecipientConfig.RegisterRecipientConfigServer(grpcServer, grpcService.NewGRPCRecipientConfig())
@@ -66,6 +72,7 @@ func NewGRPCServer(port string) {
 	pbRoutingConfig.RegisterRoutingConfigServer(grpcServer, grpcService.NewGRPCRoutingConfig())
 	pbInboxMarketing.RegisterInboxMarketingServiceServer(grpcServer, grpcService.NewGRPCInboxMarketing())
 	pbExternalPluginConnect.RegisterExternalPluginConnectServiceServer(grpcServer, grpcService.NewGRPCExternalPluginConnect())
+	pbInboxMarketingIncom.RegisterIncomServiceServer(grpcServerWebhook, grpcService.NewGRPCInboxMarketingIncom())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -109,6 +116,9 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err := pbExternalPluginConnect.RegisterExternalPluginConnectServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbInboxMarketingIncom.RegisterIncomServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 	// Creating a normal HTTP server
@@ -166,6 +176,7 @@ func handleMetadata(ctx context.Context, r *http.Request) metadata.MD {
 	md["database_es_user"] = r.Header.Get("X-Database-Es-User")
 	md["database_es_password"] = r.Header.Get("X-Database-Es-Password")
 	md["database_es_index"] = r.Header.Get("X-Database-Es-Index")
+	md["x_signature_incom"] = r.Header.Get("X-Signature-Incom")
 	return metadata.New(md)
 }
 

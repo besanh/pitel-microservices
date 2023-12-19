@@ -1,6 +1,6 @@
 syntax="proto3";
 
-package proto.inbox_marketing.inbox_marketing;
+package proto.inbox_marketing;
 
 option go_package = "github.com/micro/micro/v3/proto/inbox_marketing";
 

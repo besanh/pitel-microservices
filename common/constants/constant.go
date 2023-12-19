@@ -64,45 +64,89 @@ var (
 	}
 
 	STANDARD_CODE = map[string]string{
-		"0":  "0",  // error internal
-		"1":  "1",  // success
-		"2":  "2",  // fail
-		"3":  "3",  // wrong phone
-		"4":  "4",  // account expire, abenla
-		"5":  "5",  // amount zero, abenla
-		"6":  "6",  // message have not price, abenla
-		"7":  "7",  // can not sent, abenla
-		"8":  "8",  // dnc, abenla
-		"9":  "9",  // wrong brandname, abenla
-		"10": "10", // wrong parameter,incom
-		"11": "11", // out of quota,incom
-		"12": "12", // wrong template code, incom
-		"13": "13", // wrong route rule, incom
-		"14": "14", // channel route rule wrong, incom
-		"15": "15", // request khong hop le, fpt
-		"16": "16", // client khong duoc phep truy cap, fpt
-		"17": "17", // scope khong hop le, fpt
-		"18": "18", // loi server, fpt
-		"19": "19", // server tam thoi khong xl cac request tu client, fpt
-		"20": "20", // sai client_id hoac secret, fpt
-		"21": "21", // scope khong du quyen truy cap, fpt
-		"22": "22", // access token khong hop le, fpt
-		"23": "23", // access token het han, fpt
-		"24": "24", // cac tham so truyen vao khong hop le, fpt
-		"25": "25", // khong ho tro loai hinh cap quyen, fpt
-		"26": "26", // so tin nhan vuo qua han muc, fpt
-		"27": "27", // tn trung trong 5p, fpt
-		"28": "28", // het han muc tn, fpt
-		"29": "29", // chua cau hinh han muc tn, fpt
-		"30": "30", // brandname chưa kích hoạt hoặc bị khoá, fpt
-		"31": "31", // loi khong xac dinh, fpt
-		"32": "32", // brandme chua duoc dang ky vs nha mang, fpt
-		"33": "33", // loi service cua nha mang, fpt
-		"34": "34", // do dai tin nhan vuot qua quy dinh cua nha mang, fpt
-		"35": "35", // template chua dk hoac sai so vs template, fpt
-		"36": "36", // noi dung chua tu khoa bi chan, fpt
-		"37": "37", // noi dung chua tieng Viet khi ma hoa(huong Viettel bank), fpt
-		"38": "38", // khong the giai ma, tn khong duoc ma hoa
+		"1": "1", // success
+		"2": "2", // error internal
+		"3": "3", // fail
+		"4": "4", // wrong phone
+	}
+
+	STANDARD_CODE_INCOM_TO_TEL4VN = map[string]string{
+		"1":  "5",  // success
+		"-1": "6",  // PhoneNumber Wrong Format, incom
+		"-2": "7",  // wrong parameter,incom
+		"-3": "8",  // out of quota,incom
+		"-6": "9",  // wrong template code, incom
+		"-8": "10", // wrong route rule, incom
+		"-9": "11", // channel route rule wrong, incom
+	}
+
+	STANDARD_CODE_ABENLA_TO_TEL4VN = map[string]string{
+		"100": "12", // other, abenla
+		"101": "13", // user not exist, abenla
+		"102": "14", // wron password, abenla
+		"103": "15", // account deactivated, abenla
+		"104": "16", // can not access, abenla
+		"105": "17", // account is zero, abenla
+		"106": "18", // success, abenla
+		"107": "19", // wrong sign, abenla
+		"108": "20", // wrong brandname, abenla
+		"109": "21", // exceed sms, abenla
+		"110": "22", // send sms fail, abenla
+		"111": "23", // wrong service type, abenla
+		"112": "24", // expire request, abenla
+		"113": "25", // not has aes key, abenla
+		"114": "26", // process fail, abenla
+		"115": "27", // record not exist, abenla
+		"116": "28", // record existed, abenla
+		"117": "29", // blacklist keyword, abenla
+		"118": "30", // wrong template, abenla
+		"119": "31", // wrong caller or scriptId, abenla
+		"120": "32", // caller and script id blocked, abenal
+		"201": "33", // pending, abenla
+		"203": "34", // sent success, abenla
+		"204": "35", // sent fail, abenla
+		"212": "36", // wait result, abenla
+	}
+
+	STANDARD_CODE_FPT_TO_TEL4VN = map[string]string{
+		"1001": "37", // request khong hop le, fpt
+		"1002": "38", // client khong duoc phep truy cap, fpt
+		"1005": "39", // scope khong hop le, fpt
+		"1006": "40", // loi server, fpt
+		"1007": "41", // server tam thoi khong xl cac request tu client, fpt
+		"1008": "42", // sai client_id hoac secret, fpt
+		"1010": "43", // scope khong du quyen truy cap, fpt
+		"1011": "44", // access token khong hop le, fpt
+		"1013": "45", // access token het han, fpt
+		"1014": "46", // cac tham so truyen vao khong hop le, fpt
+		"1015": "47", // khong ho tro loai hinh cap quyen, fpt
+		"1016": "48", // so tin nhan vuo qua han muc, fpt
+		"2501": "49", // tn trung trong 5p, fpt
+		"1":    "50", // tn trung trong 5p, fpt
+		"2502": "51", // het han muc tn, fpt
+		"2503": "52", // chua cau hinh han muc tn, fpt
+		"2504": "53", // brandname chua kich hoat hoac bi khoa, fpt
+		"54":   "54", // brandname chua kich hoat hoac bi khoa, fpt
+		"2505": "55", // sdt bi chan, fpt
+		"-11":  "56", // sdt bi chan, fpt
+		"2506": "57", // loi khong xac dinh, fpt
+		"2507": "58", // loi service, fpt
+		"2":    "59", // brandname chua dk vs nha mang, fpt
+		"-8":   "60", // brandname chua dk vs nha mang, fpt
+		"3":    "61", // loi service nha mang, fpt
+		"4":    "62", // do dai tn vuot qua QD cua nha mang, fpt
+		"-14":  "63", // do dai tn vuot qua QD cua nha mang, fpt
+		"901":  "64", // do dai tn vuot qua QD cua nha mang, fpt
+		"5":    "65", // noi dung tn sai template hoac template chua dk, fpt
+		"-20":  "66", // noi dung tn sai template hoac template chua dk, fpt
+		"55":   "67", // noi dung tn sai template hoac template chua dk, fpt
+		"6":    "68", // noi dung tn co keyword bi chan, fpt
+		"-18":  "69", // noi dung tn co keyword bi chan, fpt
+		"7":    "70", // noi dung tn co Unicode khi ma hoa(viettel), fpt
+		"8":    "71", // khong the giai ma, tn khong duoc ma hoa(viettel), fpt
+		"53":   "72", // sai sdt, fpt
+		"-10":  "73", // sai sdt, fpt
+		"902":  "74", // sai sdt, fpt
 	}
 
 	// Match with MAP_NETWORK
@@ -116,10 +160,10 @@ var (
 	}
 
 	// Status
-	STATUS_INCOM = map[string]string{
-		"success":    "success",
-		"fail":       "fail",
-		"processing": "processing",
+	STATUS = map[string]string{
+		"success":    "Success",
+		"fail":       "Fail",
+		"processing": "Processing",
 	}
 
 	ABENLA_CODE = map[string]string{
@@ -137,8 +181,48 @@ var (
 		"wrong_sender_name":  "wrong_sender_name",
 	}
 
-	// Status fpt
-	STATUS_FPT = map[int]string{
+	// Message incom
+	MESSAGE_STATUS_INCOM = map[int]string{
+		1:  "Success",
+		-1: "PhoneNumber Wrong Format",
+		-2: "Wrong Format Parameter",
+		-3: "Out of message trial",
+		-6: "Can't find template with templatecode",
+		-8: "Wrong routerule",
+		-9: "Channel XXXXX in routerule was wrong",
+	}
+
+	// Message abenla
+	MESSAGE_STATUS_ABENLA = map[int]string{
+		100: "Other",
+		101: "User not exist",
+		102: "Wrong password",
+		103: "Account deactivated",
+		104: "Can not access",
+		105: "Account is zero",
+		106: "Success",
+		107: "Wrong sign",
+		108: "Wrong brandname",
+		109: "Exceed sms",
+		110: "Send sms fail",
+		111: "Wrong service type",
+		112: "Expire request",
+		113: "Not has aes key",
+		114: "Process fail",
+		115: "Record not exist",
+		116: "Record existed",
+		117: "Blacklist keyword",
+		118: "Wrong template",
+		119: "Wrong caller or scriptId",
+		120: "Caller and script id blocked",
+		201: "Pending",
+		203: "Sent success",
+		204: "Sent fail",
+		212: "Wait result",
+	}
+
+	// Message fpt
+	MESSAGE_STATUS_FPT = map[int]string{
 		1001: "Request không hợp lệ",
 		1002: "Client không được phép truy cập",
 		1005: "Các scope không hợp lệ",

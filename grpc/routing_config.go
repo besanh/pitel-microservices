@@ -172,7 +172,7 @@ func (g *GRPCRoutingConfig) GetRoutingConfigById(ctx context.Context, request *p
 	return result, nil
 }
 
-func (g *GRPCBalanceConfig) PutRoutingConfigById(ctx context.Context, request *pb.RoutingConfigPutRequest) (result *pb.RoutingConfigByIdResponse, err error) {
+func (g *GRPCRoutingConfig) PutRoutingConfigById(ctx context.Context, request *pb.RoutingConfigPutRequest) (result *pb.RoutingConfigByIdResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)

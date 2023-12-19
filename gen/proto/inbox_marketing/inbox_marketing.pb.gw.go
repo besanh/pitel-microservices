@@ -79,7 +79,7 @@ func RegisterInboxMarketingServiceHandlerServer(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.inbox_marketing.inbox_marketing.InboxMarketingService/SendInboxMarketing", runtime.WithHTTPPathPattern("/bss/v1/inbox-marketing/send"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.inbox_marketing.InboxMarketingService/SendInboxMarketing", runtime.WithHTTPPathPattern("/bss/v1/inbox-marketing/send"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -143,7 +143,7 @@ func RegisterInboxMarketingServiceHandlerClient(ctx context.Context, mux *runtim
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.inbox_marketing.inbox_marketing.InboxMarketingService/SendInboxMarketing", runtime.WithHTTPPathPattern("/bss/v1/inbox-marketing/send"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.inbox_marketing.InboxMarketingService/SendInboxMarketing", runtime.WithHTTPPathPattern("/bss/v1/inbox-marketing/send"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

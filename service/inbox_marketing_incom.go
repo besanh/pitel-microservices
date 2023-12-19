@@ -163,39 +163,17 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 	_, result, err := common.HandleDeliveryMessageIncom(ctx, inboxMarketingBasic.DocId, routingConfig, template.TemplateCode, inboxMarketing, inboxMarketingRequest)
 	if err != nil {
 		return res, err
-	} else {
-		// currently incom return status: string number, code: string status
-		// status < 1 => error
-		res.Message = result.Message
-		res.Code = result.Code
-		if res.Code < 1 {
-			res.Message = result.Status
-			if len(res.Message) < 1 {
-				res.Message = "something went wrong. please check again"
-			}
-			return res, errors.New(res.Message)
-		}
 	}
-	// Send to hook
-	// if len(pluginInfo.WebhookUrl) > 0 {
-	// 	dataHook := model.WebhookSendData{
-	// 		Id:     inboxMarketingBasic.DocId,
-	// 		Status: result.Status,
-	// 	}
-	// 	errArr := common.HandleWebhook(ctxBg, pluginInfo, dataHook)
-	// 	if len(errArr) > 0 {
-	// 		return res, err
-	// 	}
-	// }
 
 	// Update id to ES
 	inboxMarketing.ExternalMessageId = result.Id
-	inboxMarketing.Status = result.Status
+	// inboxMarketing.Status = result.Status
 	if len(constants.ROUTERULE[inboxMarketing.RouteRule[0]]) > 0 {
 		inboxMarketing.ChannelHook = constants.ROUTERULE[inboxMarketing.RouteRule[0]]
 	}
 	countAction := inboxMarketing.CountAction + 1
 	// log
+	code, _ := strconv.Atoi(result.Code)
 	auditLogModel := model.LogInboxMarketing{
 		TenantId:          authUser.TenantId,
 		BusinessUnitId:    authUser.BusinessUnitId,
@@ -211,7 +189,7 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 		TelcoId:           0,
 		IsChargedZns:      false,
 		IsCheck:           false,
-		Code:              result.Code,
+		Code:              code,
 		CountAction:       countAction,
 		UpdatedBy:         inboxMarketingBasic.UpdatedBy,
 	}

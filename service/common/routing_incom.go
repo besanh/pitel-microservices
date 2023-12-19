@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/tel4vn/fins-microservices/common/constants"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
@@ -19,12 +20,14 @@ import (
 
 func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig model.RoutingConfig, templateCode string, inboxMarketing model.InboxMarketingLogInfo, inboxMarketingRequest model.InboxMarketingRequest) (int, model.ResponseInboxMarketing, error) {
 	inboxMarketing.RouteRule = removeDuplicateValues(inboxMarketing.RouteRule)
-	resultInternal := model.ResponseInboxMarketing{}
+	resultStandard := model.ResponseInboxMarketing{}
 	result := model.IncomSendMessageResponse{}
 
 	url := routingConfig.RoutingOption.Incom.ApiSendMessageUrl
 	if len(url) < 1 {
-		return 0, resultInternal, errors.New("api url is empty")
+		resultStandard.Code = "3" // fail
+		resultStandard.Message = constants.STATUS["fail"]
+		return 0, resultStandard, errors.New("api url is empty")
 	}
 	// url += "/api/OmniMessage/SendMessage"
 
@@ -46,38 +49,19 @@ func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig mo
 		SetBody(body).
 		Post(url)
 	if err != nil {
-		resultInternal.Status = strings.ToLower(result.Code)
-		var status int
-		var err error
-		if len(result.Status) > 0 {
-			status, err = strconv.Atoi(result.Status)
-		}
-		resultInternal.Code = status
-
-		return res.StatusCode(), resultInternal, err
+		resultStandard := HandleMapResponsePlugin("incom", 0, result)
+		return res.StatusCode(), resultStandard, err
 	}
 	var r interface{}
 	if err := json.Unmarshal(res.Body(), &r); err != nil {
-		resultInternal.Status = strings.ToLower(result.Code)
-		var status int
-		var err error
-		if len(result.Status) > 0 {
-			status, err = strconv.Atoi(result.Status)
-		}
-		resultInternal.Code = status
-
-		return res.StatusCode(), resultInternal, err
+		resultStandard := HandleMapResponsePlugin("incom", 0, result)
+		return res.StatusCode(), resultStandard, err
 	}
 	if err := util.ParseAnyToAny(r, &result); err != nil {
-		return res.StatusCode(), resultInternal, err
+		return res.StatusCode(), resultStandard, err
 	}
-
-	resultInternal.Id = result.IdOmniMess
-	resultInternal.Status = strings.ToLower(result.Code)
-	status, _ := strconv.Atoi(result.Status)
-	resultInternal.Code = status
-
-	return res.StatusCode(), resultInternal, nil
+	resultStandard = HandleMapResponsePlugin("fpt", 0, result)
+	return res.StatusCode(), resultStandard, nil
 }
 
 func HandleGetStatusMessage(ctx context.Context, dbCon sqlclient.ISqlClientConn, authUser *model.AuthUser, routingConfig model.RoutingConfig, docId string, body model.IncomBodyStatus) (model.InboxMarketingLogInfo, error) {

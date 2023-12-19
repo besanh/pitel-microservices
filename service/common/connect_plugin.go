@@ -130,13 +130,7 @@ func HandlePushRMQ(ctx context.Context, index, docId string, authUser *model.Aut
 }
 
 func GetAccessTokenFpt(ctx context.Context, routingConfig model.RoutingConfig) (token string, err error) {
-	// plugin, err := GetExternalPluginConnectFromCache(ctx, dbCon, "fpt")
-	// if err != nil {
-	// 	return "", err
-	// } else if plugin == nil {
-	// 	return "", errors.New("external plugin connect not found")
-	// }
-	tokenCache, err := cacheUtil.MCache.Get(INFO_EXTERNAL_PLUGIN_CONNECT + "_" + routingConfig.Id)
+	tokenCache, err := cacheUtil.MCache.Get(FPT_TOKEN + "_" + routingConfig.Id)
 	if err != nil {
 		return "", err
 	} else if tokenCache != nil {
@@ -147,7 +141,7 @@ func GetAccessTokenFpt(ctx context.Context, routingConfig model.RoutingConfig) (
 
 	body := map[string]any{
 		"client_id":     routingConfig.RoutingOption.Fpt.ClientId,
-		"client_sercet": routingConfig.RoutingOption.Fpt.ClientSecret,
+		"client_secret": routingConfig.RoutingOption.Fpt.ClientSecret,
 		"scope":         routingConfig.RoutingOption.Fpt.Scope,
 		"session_id":    hex.EncodeToString(hasher.Sum(nil)),
 		"grant_type":    routingConfig.RoutingOption.Fpt.GrantType,
@@ -164,6 +158,7 @@ func GetAccessTokenFpt(ctx context.Context, routingConfig model.RoutingConfig) (
 			log.Error(err)
 			return "", err
 		}
+		return loginResponse.ErrorDescription, errors.New(loginResponse.ErrorDescription)
 	}
 	loginResponse := model.FptGetTokenResponseSuccess{}
 	err = json.Unmarshal([]byte(res.Body()), &loginResponse)
@@ -171,8 +166,9 @@ func GetAccessTokenFpt(ctx context.Context, routingConfig model.RoutingConfig) (
 		log.Error(err)
 		return "", err
 	}
-	if err := cacheUtil.MCache.SetTTL(FPT_TOKEN, loginResponse.AccessToken, 5*time.Minute); err != nil {
+	if err := cacheUtil.MCache.SetTTL(FPT_TOKEN+"_"+routingConfig.Id, loginResponse.AccessToken, EXPIRE_EXTERNAL_ROUTING); err != nil {
 		log.Error(err)
+		return "", err
 	}
 	return loginResponse.AccessToken, nil
 }

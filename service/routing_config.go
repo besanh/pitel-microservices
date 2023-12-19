@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -151,10 +152,12 @@ func (s *RoutingConfig) PutRoutingConfigById(ctx context.Context, authUser *mode
 		}
 	}
 
-	if err := util.ParseAnyToAny(data, routingConfigExist); err != nil {
-		log.Error(err)
-		return err
-	}
+	routingConfigExist.UpdatedAt = time.Now()
+	routingConfigExist.RoutingName = data.RoutingName
+	routingConfigExist.RoutingType = data.RoutingType
+	routingConfigExist.RoutingFlow = data.RoutingFlow
+	routingConfigExist.RoutingOption = data.RoutingOption
+	routingConfigExist.Status = data.Status
 
 	if err := repository.RoutingConfigRepo.Update(ctx, dbCon, *routingConfigExist); err != nil {
 		log.Error(err)

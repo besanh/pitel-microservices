@@ -2,7 +2,9 @@ package common
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -35,34 +37,50 @@ import (
 // 	}
 // }
 
-func HandleDeliveryMessageFpt(ctx context.Context, id string, routingConfig model.RoutingConfig, inboxMarketingRequest model.InboxMarketingRequest, fpt model.FptRequireRequest) (int, *model.FptSendMessageResponse, *model.FptResponseError, error) {
+func HandleDeliveryMessageFpt(ctx context.Context, id string, routingConfig model.RoutingConfig, inboxMarketingRequest model.InboxMarketingRequest, fpt model.FptRequireRequest) (int, *model.ResponseInboxMarketing, *model.FptSendMessageResponse, error) {
+	resultStandard := model.ResponseInboxMarketing{}
 	body := map[string]any{
 		"access_token": fpt.AccessToken,
 		"session_id":   fpt.SessionId,
 		"BrandName":    routingConfig.RoutingOption.Fpt.BrandName,
 		"Phone":        inboxMarketingRequest.PhoneNumber,
-		"Message":      inboxMarketingRequest.Content,
+		"Message":      base64.StdEncoding.EncodeToString([]byte(inboxMarketingRequest.Content)),
 		"RequestId":    id,
 	}
 	url := fmt.Sprintf(routingConfig.RoutingOption.Fpt.ApiSendMessageUrl)
 	res, err := httpUtil.Post(url, body)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, nil, err
+		resultStandard = HandleMapResponsePlugin("fpt", 0, res)
+		return 0, &resultStandard, nil, err
 	} else if res.StatusCode() != http.StatusOK {
 		resErr := model.FptResponseError{}
 		err = json.Unmarshal([]byte(res.Body()), &resErr)
 		if err != nil {
 			log.Error(err)
-			return 0, nil, &resErr, err
+			resultStandard = HandleMapResponsePlugin("fpt", 0, resErr)
+			return 0, &resultStandard, nil, err
 		}
-		return 0, nil, nil, err
+		resultStandard = HandleMapResponsePlugin("fpt", 0, resErr)
+		return 0, &resultStandard, nil, errors.New(resErr.ErrorDescription)
 	}
 	resSuccess := model.FptSendMessageResponse{}
 	err = json.Unmarshal([]byte(res.Body()), &resSuccess)
 	if err != nil {
 		log.Error(err)
-		return 0, &resSuccess, nil, err
+		resultStandard = HandleMapResponsePlugin("fpt", 0, resSuccess)
+		return 0, &resultStandard, nil, err
 	}
-	return res.StatusCode(), &resSuccess, nil, nil
+	var a any
+	if err := json.Unmarshal([]byte(res.Body()), &a); err != nil {
+		log.Error(err)
+		resultStandard = HandleMapResponsePlugin("fpt", 0, resSuccess)
+		return 0, &resultStandard, nil, err
+	}
+	if len(resSuccess.MessageId) < 1 {
+		resultStandard = HandleMapResponsePlugin("fpt", 0, resSuccess)
+		return 0, &resultStandard, nil, err
+	}
+	resultStandard = HandleMapResponsePlugin("fpt", 200, resSuccess)
+	return res.StatusCode(), &resultStandard, &resSuccess, nil
 }
