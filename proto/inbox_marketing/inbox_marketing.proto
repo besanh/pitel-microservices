@@ -18,8 +18,9 @@ message InboxMarketingRequestRequest {
 
 message InboxMarketingResponse {
     string code = 1;
-    string message = 2;
-    google.protobuf.Struct data = 3;
+    string status = 2;
+    string message = 3;
+    google.protobuf.Struct data = 4;
 }
 
 service InboxMarketingService {

@@ -78,7 +78,7 @@ func (s *RecipientConfig) InsertRecipientConfig(ctx context.Context, authUser *m
 			Priority:      data.Priority,
 			Provider:      data.Provider,
 			Status:        data.Status,
-			CreatedBy:     authUser.Username,
+			CreatedBy:     authUser.UserId,
 		}
 		recipientConfig = append(recipientConfig, recipientConfigTmp)
 	}

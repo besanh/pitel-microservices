@@ -51,36 +51,36 @@ func HandleDeliveryMessageFpt(ctx context.Context, id string, routingConfig mode
 	res, err := httpUtil.Post(url, body)
 	if err != nil {
 		log.Error(err)
-		resultStandard = HandleMapResponsePlugin("fpt", 0, res)
+		resultStandard = HandleMapResponsePlugin("fpt", id, 0, res)
 		return 0, &resultStandard, nil, err
 	} else if res.StatusCode() != http.StatusOK {
 		resErr := model.FptResponseError{}
 		err = json.Unmarshal([]byte(res.Body()), &resErr)
 		if err != nil {
 			log.Error(err)
-			resultStandard = HandleMapResponsePlugin("fpt", 0, resErr)
+			resultStandard = HandleMapResponsePlugin("fpt", id, 0, resErr)
 			return 0, &resultStandard, nil, err
 		}
-		resultStandard = HandleMapResponsePlugin("fpt", 0, resErr)
+		resultStandard = HandleMapResponsePlugin("fpt", id, 0, resErr)
 		return 0, &resultStandard, nil, errors.New(resErr.ErrorDescription)
 	}
 	resSuccess := model.FptSendMessageResponse{}
 	err = json.Unmarshal([]byte(res.Body()), &resSuccess)
 	if err != nil {
 		log.Error(err)
-		resultStandard = HandleMapResponsePlugin("fpt", 0, resSuccess)
+		resultStandard = HandleMapResponsePlugin("fpt", id, 0, resSuccess)
 		return 0, &resultStandard, nil, err
 	}
-	var a any
-	if err := json.Unmarshal([]byte(res.Body()), &a); err != nil {
+	var tmp any
+	if err := json.Unmarshal([]byte(res.Body()), &tmp); err != nil {
 		log.Error(err)
-		resultStandard = HandleMapResponsePlugin("fpt", 0, resSuccess)
+		resultStandard = HandleMapResponsePlugin("fpt", id, 0, resSuccess)
 		return 0, &resultStandard, nil, err
 	}
 	if len(resSuccess.MessageId) < 1 {
-		resultStandard = HandleMapResponsePlugin("fpt", 0, resSuccess)
+		resultStandard = HandleMapResponsePlugin("fpt", id, 0, resSuccess)
 		return 0, &resultStandard, nil, err
 	}
-	resultStandard = HandleMapResponsePlugin("fpt", 200, resSuccess)
+	resultStandard = HandleMapResponsePlugin("fpt", id, 200, resSuccess)
 	return res.StatusCode(), &resultStandard, &resSuccess, nil
 }

@@ -17,30 +17,30 @@ const (
 	EXPIRE_TEMPLATE = 30 * time.Minute
 )
 
-func HandleCheckContentMatchTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, authUser *model.AuthUser, templateUuid, content string) ([]string, []string, error) {
+func HandleCheckContentMatchTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, authUser *model.AuthUser, templateUuid, content string) (*model.TemplateBss, []string, []string, error) {
 	templateCache, err := cacheUtil.MCache.Get(INFO_TEMPLATE + "_" + templateUuid)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	} else if templateCache != nil {
 		template := templateCache.(*model.TemplateBss)
 		keysContent, keysTemplate, ok := handleMatchMessageWithTemplate(content, template.Content)
 		if !ok {
-			return nil, nil, errors.New("content not match template")
+			return nil, nil, nil, errors.New("content not match template")
 		}
-		return keysContent, keysTemplate, nil
+		return template, keysContent, keysTemplate, nil
 	} else {
 		template, err := repository.TemplateBssRepo.GetById(ctx, dbCon, templateUuid)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		keysContent, keysTemplate, ok := handleMatchMessageWithTemplate(content, template.Content)
 		if !ok {
-			return nil, nil, errors.New("content not match template")
+			return nil, nil, nil, errors.New("content not match template")
 		}
 		if err := cacheUtil.MCache.SetTTL(INFO_TEMPLATE+"_"+templateUuid, template, EXPIRE_TEMPLATE); err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
-		return keysContent, keysTemplate, nil
+		return template, keysContent, keysTemplate, nil
 	}
 }
 

@@ -44,30 +44,26 @@ func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model
 	}
 
 	if data.RoutingFlow.FlowType == "recipient" {
-		for _, val := range data.RoutingFlow.FlowUuid {
-			ok, err := common.CheckRecipientExist(ctx, dbCon, val)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			if !ok {
-				log.Error(errors.New("recipient config is exist"))
-				return errors.New("recipient config is exist")
-			}
+		ok, err := common.CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if !ok {
+			log.Error(errors.New("recipient config is exist"))
+			return errors.New("recipient config is exist")
 		}
 	}
 
 	if data.RoutingFlow.FlowType == "balance" {
-		for _, val := range data.RoutingFlow.FlowUuid {
-			ok, err := common.CheckBalanceExist(ctx, dbCon, val)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			if !ok {
-				log.Error(errors.New("balance config is exist"))
-				return errors.New("balance config is exist")
-			}
+		ok, err := common.CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if !ok {
+			log.Error(errors.New("balance config is exist"))
+			return errors.New("balance config is exist")
 		}
 	}
 
@@ -125,30 +121,26 @@ func (s *RoutingConfig) PutRoutingConfigById(ctx context.Context, authUser *mode
 	}
 
 	if data.RoutingFlow.FlowType == "recipient" {
-		for _, val := range data.RoutingFlow.FlowUuid {
-			ok, err := common.CheckRecipientExist(ctx, dbCon, val)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			if !ok {
-				log.Error(errors.New("recipient config is exist"))
-				return errors.New("recipient config is exist")
-			}
+		ok, err := common.CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if !ok {
+			log.Error(errors.New("recipient config is exist"))
+			return errors.New("recipient config is exist")
 		}
 	}
 
 	if data.RoutingFlow.FlowType == "balance" {
-		for _, val := range data.RoutingFlow.FlowUuid {
-			ok, err := common.CheckBalanceExist(ctx, dbCon, val)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			if !ok {
-				log.Error(errors.New("balance config is exist"))
-				return errors.New("balance config is exist")
-			}
+		ok, err := common.CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if !ok {
+			log.Error(errors.New("balance config is exist"))
+			return errors.New("balance config is exist")
 		}
 	}
 

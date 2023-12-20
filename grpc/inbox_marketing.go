@@ -32,6 +32,7 @@ func (g *GRPCInboxMarketing) SendInboxMarketing(ctx context.Context, request *pb
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		result = &pb.InboxMarketingResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DATA_INVALID].Code,
+			Status:  "failed",
 			Message: err.Error(),
 		}
 		return result, err
@@ -41,24 +42,26 @@ func (g *GRPCInboxMarketing) SendInboxMarketing(ctx context.Context, request *pb
 		log.Error(err)
 		result = &pb.InboxMarketingResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DATA_INVALID].Code,
+			Status:  "failed",
 			Message: err.Error(),
 		}
 		return result, nil
 	}
 
-	statusCode, message, err := service.NewInboxMarketing().SendInboxMarketing(ctx, authUser, payload)
+	res, err := service.NewInboxMarketing().SendInboxMarketing(ctx, authUser, payload)
 	if err != nil {
-		log.Error(err)
 		result = &pb.InboxMarketingResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DATA_INVALID].Code,
-			Message: message,
+			Status:  res.Status,
+			Message: res.Message,
 		}
 		return result, nil
 	}
 
 	result = &pb.InboxMarketingResponse{
-		Code:    statusCode,
-		Message: message,
+		Code:    res.Code,
+		Status:  res.Status,
+		Message: res.Message,
 	}
 
 	return result, nil

@@ -28,8 +28,8 @@ type RoutingConfigView struct {
 
 // Link to table recipient_Routing or balance Routing to control flow send data
 type RoutingFlow struct {
-	FlowType string   `json:"flow_type"` // table recipient or balance
-	FlowUuid []string `json:"flow_uuid"`
+	FlowType string `json:"flow_type"` // table recipient or balance
+	FlowUuid string `json:"flow_uuid"`
 }
 
 // Include account info connected with external plugin

@@ -36,18 +36,19 @@ func (r *InboxMarketingRequest) Validate() error {
 }
 
 type InboxMarketingLog struct {
-	bun.BaseModel     `bun:"inbox_marketing_log,alias:iml"`
-	Id                string          `json:"id" bun:"id,type: uuid, default: uuid_generate_v4()"`
-	TenantId          string          `json:"tenant_id" bun:"tenant_id,type:text,notnull"`
-	BusinessUnitId    string          `json:"business_unit_id" bun:"business_unit_id,type:text,notnull"`
-	UserId            string          `json:"user_id" bun:"user_id,type:text,notnull"`
-	Username          string          `json:"username" bun:"username,type:text,notnull"`
-	Services          []string        `json:"services" bun:"services,type:text"`
+	bun.BaseModel  `bun:"inbox_marketing_log,alias:iml"`
+	Id             string `json:"id" bun:"id,type: uuid, default: uuid_generate_v4()"`
+	TenantId       string `json:"tenant_id" bun:"tenant_id,type:text,notnull"`
+	BusinessUnitId string `json:"business_unit_id" bun:"business_unit_id,type:text,notnull"`
+	UserId         string `json:"user_id" bun:"user_id,type:text,notnull"`
+	Username       string `json:"username" bun:"username,type:text,notnull"`
+	// Services          []string        `json:"services" bun:"services,type:text"`
 	RoutingConfigUuid string          `json:"routing_config_uuid" bun:"routing_config_uuid,type:text"`
 	FlowType          string          `json:"flow_type" bun:"flow_type,type:text"`
 	FlowUuid          string          `json:"flow_uuid" bun:"flow_uuid,type:text"`
 	ExternalMessageId string          `json:"external_message_id" bun:"external_message_id,type:text"`
 	CampaignUuid      string          `json:"campaign_uuid" bun:"campaign_uuid,type:text"`
+	CampaignName      string          `json:"campaign_name" bun:"campaign_name,type:text"`
 	Plugin            string          `json:"plugin" bun:"plugin,type:text,notnull"`
 	ChannelHook       string          `json:"channel_hook" bun:"channel_hook,type:text"`
 	StatusHook        string          `json:"status_hook" bun:"status_hook,type:text"`
@@ -56,6 +57,7 @@ type InboxMarketingLog struct {
 	Message           string          `json:"message" bun:"message,type:text"`
 	ListParam         json.RawMessage `json:"list_param" bun:"list_param,type:text"`
 	SendTime          string          `json:"send_time" bun:"send_time,type:text"`
+	TemplateUuid      string          `json:"template_uuid" bun:"template_uuid"`
 	TemplateCode      string          `json:"template_code" bun:"template_code,type:text"`
 	Channel           string          `json:"channel" bun:"channel,type:text"`
 	Status            string          `json:"status" bun:"status,type:text"`
@@ -78,18 +80,19 @@ type InboxMarketingLog struct {
 
 type InboxMarketingLogInfo struct {
 	*Base
-	bun.BaseModel     `bun:"inbox_marketing_log,alias:iml"`
-	Id                string          `json:"id" bun:"id"`
-	TenantId          string          `json:"tenant_id" bun:"tenant_id"`
-	BusinessUnitId    string          `json:"business_unit_id" bun:"business_unit_id"`
-	UserId            string          `json:"user_id" bun:"user_id"`
-	Username          string          `json:"username" bun:"username"`
-	Services          []string        `json:"services" bun:"services"`
+	bun.BaseModel  `bun:"inbox_marketing_log,alias:iml"`
+	Id             string `json:"id" bun:"id"`
+	TenantId       string `json:"tenant_id" bun:"tenant_id"`
+	BusinessUnitId string `json:"business_unit_id" bun:"business_unit_id"`
+	UserId         string `json:"user_id" bun:"user_id"`
+	Username       string `json:"username" bun:"username"`
+	// Services          []string        `json:"services" bun:"services"`
 	RoutingConfigUuid string          `json:"routing_config_uuid" bun:"routing_config_uuid"`
 	FlowType          string          `json:"flow_type" bun:"flow_type"`
 	FlowUuid          string          `json:"flow_uuid" bun:"flow_uuid"`
 	ExternalMessageId string          `json:"external_message_id" bun:"external_message_id"`
 	CampaignUuid      string          `json:"campaign_uuid" bun:"campaign_uuid"`
+	CampaignName      string          `json:"campaign_name" bun:"campaign_name"`
 	Plugin            string          `json:"plugin" bun:"plugin"`
 	ChannelHook       string          `json:"channel_hook" bun:"channel_hook"`
 	StatusHook        string          `json:"status_hook" bun:"status_hook"`
@@ -97,6 +100,7 @@ type InboxMarketingLogInfo struct {
 	PhoneNumber       string          `json:"phone_number" bun:"phone_number"`
 	Message           string          `json:"message" bun:"message"`
 	ListParam         json.RawMessage `json:"list_param" bun:"list_param"`
+	TemplateUuid      string          `json:"template_uuid" bun:"template_uuid"`
 	TemplateCode      string          `json:"template_code" bun:"template_code"`
 	Channel           string          `json:"channel" bun:"channel"`
 	Status            string          `json:"status" bun:"status"`
@@ -119,19 +123,22 @@ type InboxMarketingLogInfo struct {
 }
 
 type InboxMarketingLogReport struct {
-	Id                string          `json:"id"`
-	TenantId          string          `json:"tenant_id"`
-	BusinessUnitId    string          `json:"business_unit_id"`
-	UserId            string          `json:"user_id"`
-	Username          string          `json:"username"`
-	Services          []string        `json:"services"`
+	Id             string `json:"id"`
+	TenantId       string `json:"tenant_id"`
+	BusinessUnitId string `json:"business_unit_id"`
+	UserId         string `json:"user_id"`
+	Username       string `json:"username"`
+	// Services          []string        `json:"services"`
 	RoutingConfigUuid string          `json:"routing_config_uuid"`
 	FlowType          string          `json:"flow_type"`
 	FlowUuid          string          `json:"flow_uuid"`
 	ExternalMessageId string          `json:"external_message_id"`
+	CampaignUuid      string          `json:"campaign_uuid"`
+	CampaignName      string          `json:"campaign_name"`
 	PhoneNumber       string          `json:"phone_number"`
 	Message           string          `json:"message"`
 	ListParam         json.RawMessage `json:"list_param"`
+	TemplateUuid      string          `json:"template_uuid"`
 	TemplateCode      string          `json:"template_code"`
 	Channel           string          `json:"channel"`
 	Status            string          `json:"status"`
@@ -149,11 +156,11 @@ type InboxMarketingLogReport struct {
 }
 
 type ResponseInboxMarketing struct {
-	Id      string `json:"id"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Code    string `json:"code"`
-	// Quantity int `json:"quantity"`
+	Id       string `json:"id"`
+	Status   string `json:"status"`
+	Message  string `json:"message"`
+	Code     string `json:"code"`
+	Quantity int    `json:"quantity"`
 }
 
 type InboxMarketingBasic struct {

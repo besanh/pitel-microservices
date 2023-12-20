@@ -24,11 +24,7 @@ func NewInboxMarketingFpt() IInboxMarketingFpt {
 }
 
 func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, inboxMarketingBasic model.InboxMarketingBasic, routingConfig model.RoutingConfig, inboxMarketing model.InboxMarketingLogInfo, inboxMarketingRequest model.InboxMarketingRequest, fpt model.FptRequireRequest) (model.ResponseInboxMarketing, error) {
-	res := model.ResponseInboxMarketing{
-		Id: inboxMarketingBasic.DocId,
-	}
 	dataUpdate := map[string]any{}
-
 	_, result, resultFpt, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
 	if err != nil {
 		log.Error(err)
@@ -46,6 +42,7 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 	var telcoId int
 	telcoId, _ = strconv.Atoi(constants.MAP_NETWORK_FPT[resultFpt.Telco])
 	inboxMarketing.TelcoId = telcoId
+	inboxMarketing.ExternalMessageId = resultFpt.MessageId
 	// log
 	auditLogModel := model.LogInboxMarketing{
 		TenantId:          authUser.TenantId,
@@ -56,7 +53,7 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 		Id:                inboxMarketing.Id,
 		RoutingConfigUuid: routingConfig.Id,
 		ExternalMessageId: resultFpt.MessageId,
-		Status:            "",
+		Status:            result.Status,
 		Quantity:          0,
 		TelcoId:           0,
 		IsChargedZns:      false,
@@ -67,24 +64,22 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 	}
 	auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
-		return res, err
+		return *result, err
 	}
 	inboxMarketing.Log = append(inboxMarketing.Log, auditLog)
 	inboxMarketing.UpdatedAt = time.Now()
 
 	tmpBytesUpdate, err := json.Marshal(inboxMarketing)
 	if err != nil {
-		return res, err
+		return *result, err
 	}
 	if err := json.Unmarshal(tmpBytesUpdate, &dataUpdate); err != nil {
-		return res, err
+		return *result, err
 	}
 
 	if err := repository.ESRepo.UpdateDocById(ctx, inboxMarketingBasic.Index, inboxMarketingBasic.DocId, dataUpdate); err != nil {
-		return res, err
+		return *result, err
 	}
 
-	res.Status = result.Message
-
-	return res, nil
+	return *result, nil
 }

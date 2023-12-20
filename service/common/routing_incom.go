@@ -19,18 +19,17 @@ import (
 )
 
 func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig model.RoutingConfig, templateCode string, inboxMarketing model.InboxMarketingLogInfo, inboxMarketingRequest model.InboxMarketingRequest) (int, model.ResponseInboxMarketing, error) {
-	inboxMarketing.RouteRule = removeDuplicateValues(inboxMarketing.RouteRule)
 	resultStandard := model.ResponseInboxMarketing{}
 	result := model.IncomSendMessageResponse{}
 
 	url := routingConfig.RoutingOption.Incom.ApiSendMessageUrl
 	if len(url) < 1 {
 		resultStandard.Code = "3" // fail
-		resultStandard.Message = constants.STATUS["fail"]
+		resultStandard.Message = constants.MESSAGE_TEL4VN["fail"]
 		return 0, resultStandard, errors.New("api url is empty")
 	}
-	// url += "/api/OmniMessage/SendMessage"
 
+	inboxMarketing.RouteRule = removeDuplicateValues(inboxMarketing.RouteRule)
 	body := map[string]any{
 		"username":     routingConfig.RoutingOption.Incom.Username,
 		"password":     routingConfig.RoutingOption.Incom.Password,
@@ -49,18 +48,19 @@ func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig mo
 		SetBody(body).
 		Post(url)
 	if err != nil {
-		resultStandard := HandleMapResponsePlugin("incom", 0, result)
+		resultStandard := HandleMapResponsePlugin("incom", id, 0, result)
 		return res.StatusCode(), resultStandard, err
 	}
 	var r interface{}
 	if err := json.Unmarshal(res.Body(), &r); err != nil {
-		resultStandard := HandleMapResponsePlugin("incom", 0, result)
+		resultStandard := HandleMapResponsePlugin("incom", id, 0, result)
 		return res.StatusCode(), resultStandard, err
 	}
 	if err := util.ParseAnyToAny(r, &result); err != nil {
 		return res.StatusCode(), resultStandard, err
 	}
-	resultStandard = HandleMapResponsePlugin("fpt", 0, result)
+	resultStandard = HandleMapResponsePlugin("incom", id, 0, result)
+
 	return res.StatusCode(), resultStandard, nil
 }
 
@@ -101,11 +101,6 @@ func HandleGetStatusMessage(ctx context.Context, dbCon sqlclient.ISqlClientConn,
 	logExist.IsCheck = true
 	logExist.UpdatedAt = time.Now()
 	logExist.Quantity, _ = strconv.Atoi(result.MtCount)
-
-	// Map network
-	// telcoTmp := util.MapNetworkPlugin(result.TelcoId)
-	// telco, _ := strconv.Atoi(telcoTmp)
-	// logExist.TelcoId = telco
 
 	logExist.IsChargedZns = false
 	if result.Ischarged == "True" || result.Ischarged == "true" {

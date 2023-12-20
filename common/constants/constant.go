@@ -160,7 +160,7 @@ var (
 	}
 
 	// Status
-	STATUS = map[string]string{
+	MESSAGE_TEL4VN = map[string]string{
 		"success":    "Success",
 		"fail":       "Fail",
 		"processing": "Processing",
@@ -182,7 +182,7 @@ var (
 	}
 
 	// Message incom
-	MESSAGE_STATUS_INCOM = map[int]string{
+	MESSAGE_INCOM = map[int]string{
 		1:  "Success",
 		-1: "PhoneNumber Wrong Format",
 		-2: "Wrong Format Parameter",
@@ -193,7 +193,7 @@ var (
 	}
 
 	// Message abenla
-	MESSAGE_STATUS_ABENLA = map[int]string{
+	MESSAGE_ABENLA = map[int]string{
 		100: "Other",
 		101: "User not exist",
 		102: "Wrong password",
@@ -222,7 +222,7 @@ var (
 	}
 
 	// Message fpt
-	MESSAGE_STATUS_FPT = map[int]string{
+	MESSAGE_FPT = map[int]string{
 		1001: "Request không hợp lệ",
 		1002: "Client không được phép truy cập",
 		1005: "Các scope không hợp lệ",

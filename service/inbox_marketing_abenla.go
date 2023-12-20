@@ -165,7 +165,8 @@ func HandleMainInboxMarketingAbenla(ctx context.Context, authUser *model.AuthUse
 		return res, errors.New("log is not exist")
 	}
 
-	inboxMarketing.Quantity = result.SmsPerMessage
+	inboxMarketing.Quantity = result.Quantity
+	code, _ := strconv.Atoi(result.Code)
 	// log
 	auditLogModel := model.LogInboxMarketing{
 		TenantId:          authUser.TenantId,
@@ -181,7 +182,7 @@ func HandleMainInboxMarketingAbenla(ctx context.Context, authUser *model.AuthUse
 		TelcoId:           0,
 		IsChargedZns:      false,
 		IsCheck:           false,
-		Code:              result.Code,
+		Code:              code,
 		CountAction:       2,
 		UpdatedBy:         inboxMarketingBasic.UpdatedBy,
 	}

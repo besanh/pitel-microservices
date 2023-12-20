@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"strconv"
 	"time"
 
@@ -14,13 +13,10 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func HandleDeliveryMessageAbenla(ctx context.Context, id string, routingConfig model.RoutingConfig, inboxMarketingRequest model.InboxMarketingRequest) (int, model.AbenlaSendMessageResponse, error) {
+func HandleDeliveryMessageAbenla(ctx context.Context, id string, routingConfig model.RoutingConfig, inboxMarketingRequest model.InboxMarketingRequest) (int, model.ResponseInboxMarketing, error) {
+	resultStandard := model.ResponseInboxMarketing{}
 	result := model.AbenlaSendMessageResponse{}
 	url := routingConfig.RoutingOption.Abenla.ApiSendMessageUrl
-	if len(url) < 1 {
-		return 0, result, errors.New("api url is empty")
-	}
-	// url += "/api/SendSms"
 	hasher := md5.New()
 	hasher.Write([]byte(routingConfig.RoutingOption.Abenla.Password))
 	var serviceTypeId int
@@ -55,12 +51,13 @@ func HandleDeliveryMessageAbenla(ctx context.Context, id string, routingConfig m
 		SetQueryParams(params).
 		Get(url)
 	if err != nil {
-		return res.StatusCode(), result, err
+		resultStandard := HandleMapResponsePlugin("abenla", id, 0, result)
+		return res.StatusCode(), resultStandard, err
 	}
 
 	if err := json.Unmarshal(res.Body(), &result); err != nil {
-		return res.StatusCode(), result, err
+		return res.StatusCode(), resultStandard, err
 	}
-
-	return res.StatusCode(), result, nil
+	resultStandard = HandleMapResponsePlugin("abenla", id, 0, result)
+	return res.StatusCode(), resultStandard, nil
 }
