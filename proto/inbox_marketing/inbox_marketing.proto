@@ -9,11 +9,42 @@ import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 import "buf/validate/validate.proto";
 
-message InboxMarketingRequestRequest {
+message InboxMarketingBodyRequest {
     string routing_config = 1;
     string phone_number = 2;
     string template = 3;
     string content = 4;
+}
+
+message InboxMarketingRequest {
+    string tenant_id = 1;
+    string business_unit_id = 2;
+    string user_id = 3;
+    string username = 4;
+    repeated string sevices = 5;
+    string routing_config_uuid = 6;
+    repeated string plugin = 7;
+    string phone_number = 8;
+    string message = 9;
+    repeated string template_uuid = 10;
+    string template_code = 11;
+    repeated string channel = 12;
+    repeated string status = 13;
+    repeated string error_code = 14;
+    string quantity = 15;
+    repeated int32 telco_id = 16;
+    repeated string route_rule = 17;
+    repeated int32 service_type_id = 18;
+    string send_time = 19;
+    string ext = 20;
+    string is_charged_zns = 21;
+    string code = 22;
+    string count_action = 23;
+    repeated string campaign_uuid = 24;
+    string start_time = 25;
+    string end_time = 26;
+    int32 limit = 27;
+    int32 offset = 28;
 }
 
 message InboxMarketingResponse {
@@ -23,11 +54,23 @@ message InboxMarketingResponse {
     google.protobuf.Struct data = 4;
 }
 
+message InboxMarketingStructResponse {
+    string code = 1;
+    string message = 2;
+    repeated google.protobuf.Struct data = 3;
+    int32 total = 4;
+}
+
 service InboxMarketingService {
-    rpc SendInboxMarketing(InboxMarketingRequestRequest) returns (InboxMarketingResponse) {
+    rpc SendInboxMarketing(InboxMarketingBodyRequest) returns (InboxMarketingResponse) {
         option (google.api.http) = {
             post: "/bss/v1/inbox-marketing/send",
             body: "*",
+        };
+    }
+    rpc ReportInboxMarketing(InboxMarketingRequest) returns (InboxMarketingStructResponse) {
+        option (google.api.http) = {
+            get: "/bss/v1/inbox-marketing/report",
         };
     }
 }

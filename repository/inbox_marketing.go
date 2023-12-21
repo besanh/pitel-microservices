@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
@@ -284,9 +283,6 @@ func (repo *InboxMarketingES) GetReport(ctx context.Context, tenantId, index str
 	if len(filter.RoutingConfigUuid) > 0 {
 		filters = append(filters, elasticsearch.MatchQuery("routing_config_uuid", filter.RoutingConfigUuid))
 	}
-	if len(filter.Id) > 0 {
-		filters = append(filters, elasticsearch.MatchQuery("id", filter.Id))
-	}
 	if len(filter.Message) > 0 {
 		filters = append(filters, elasticsearch.MatchQuery("message", filter.Message))
 	}
@@ -299,7 +295,7 @@ func (repo *InboxMarketingES) GetReport(ctx context.Context, tenantId, index str
 	if len(filter.ServiceTypeId) > 0 {
 		serviceTypes := []string{}
 		for _, serviceId := range filter.ServiceTypeId {
-			telco := strconv.Itoa(serviceId)
+			telco := fmt.Sprintf("%d", serviceId)
 			serviceTypes = append(serviceTypes, telco)
 		}
 		filters = append(filters, elasticsearch.TermsQuery("service_type_id", util.ParseToAnyArray(serviceTypes)...))
@@ -310,7 +306,7 @@ func (repo *InboxMarketingES) GetReport(ctx context.Context, tenantId, index str
 	if len(filter.TelcoId) > 0 {
 		telcos := []string{}
 		for _, telcoId := range filter.TelcoId {
-			telco := strconv.Itoa(telcoId)
+			telco := fmt.Sprintf("%d", telcoId)
 			telcos = append(telcos, telco)
 		}
 		filters = append(filters, elasticsearch.TermsQuery("telco_id.keyword", util.ParseToAnyArray(telcos)...))

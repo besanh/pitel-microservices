@@ -220,6 +220,17 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		res.Message = err.Error()
 		return res, err
 	}
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, authUser.DatabaseEsIndex, authUser.TenantId); err != nil {
+		log.Error(err)
+		res.Message = err.Error()
+		return res, err
+	} else if !isExisted {
+		if err := repository.ESRepo.CreateAlias(ctx, authUser.DatabaseEsIndex, authUser.TenantId); err != nil {
+			log.Error(err)
+			res.Message = err.Error()
+			return res, err
+		}
+	}
 	if err := repository.ESRepo.InsertLog(ctx, authUser.TenantId, authUser.DatabaseEsIndex, docId, esDoc); err != nil {
 		log.Error(err)
 		res.Message = err.Error()

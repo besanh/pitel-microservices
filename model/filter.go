@@ -1,6 +1,8 @@
 package model
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type BalanceConfigFilter struct {
 	Weight      []string     `json:"weight"`
@@ -40,7 +42,6 @@ type RoutingConfigFilter struct {
 }
 
 type InboxMarketingFilter struct {
-	Id                string       `json:"id"`
 	TenantId          string       `json:"tenant_id"`
 	BusinessUnitId    string       `json:"business_unit_id"`
 	UserId            string       `json:"user_id"`
@@ -50,14 +51,15 @@ type InboxMarketingFilter struct {
 	Plugin            []string     `json:"plugin" bun:"plugin,array"`
 	PhoneNumber       string       `json:"phone_number"`
 	Message           string       `json:"message"`
+	TemplateUuid      []string     `json:"template_uuid"`
 	TemplateCode      string       `json:"template_code"`
 	Channel           []string     `json:"channel"`
 	Status            []string     `json:"status"`
 	ErrorCode         []string     `json:"error_code"`
 	Quantity          string       `json:"quantity"`
-	TelcoId           []int        `json:"telco_id"`
+	TelcoId           []int32      `json:"telco_id"`
 	RouteRule         []string     `json:"route_rule"`
-	ServiceTypeId     []int        `json:"service_type_id"`
+	ServiceTypeId     []int32      `json:"service_type_id"`
 	SendTime          string       `json:"send_time"`
 	Ext               string       `json:"ext"`
 	IsChargedZns      sql.NullBool `json:"is_charged_zns"`

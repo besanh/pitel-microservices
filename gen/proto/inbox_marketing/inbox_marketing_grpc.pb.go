@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	InboxMarketingService_SendInboxMarketing_FullMethodName = "/proto.inbox_marketing.InboxMarketingService/SendInboxMarketing"
+	InboxMarketingService_SendInboxMarketing_FullMethodName   = "/proto.inbox_marketing.InboxMarketingService/SendInboxMarketing"
+	InboxMarketingService_ReportInboxMarketing_FullMethodName = "/proto.inbox_marketing.InboxMarketingService/ReportInboxMarketing"
 )
 
 // InboxMarketingServiceClient is the client API for InboxMarketingService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InboxMarketingServiceClient interface {
-	SendInboxMarketing(ctx context.Context, in *InboxMarketingRequestRequest, opts ...grpc.CallOption) (*InboxMarketingResponse, error)
+	SendInboxMarketing(ctx context.Context, in *InboxMarketingBodyRequest, opts ...grpc.CallOption) (*InboxMarketingResponse, error)
+	ReportInboxMarketing(ctx context.Context, in *InboxMarketingRequest, opts ...grpc.CallOption) (*InboxMarketingStructResponse, error)
 }
 
 type inboxMarketingServiceClient struct {
@@ -37,9 +39,18 @@ func NewInboxMarketingServiceClient(cc grpc.ClientConnInterface) InboxMarketingS
 	return &inboxMarketingServiceClient{cc}
 }
 
-func (c *inboxMarketingServiceClient) SendInboxMarketing(ctx context.Context, in *InboxMarketingRequestRequest, opts ...grpc.CallOption) (*InboxMarketingResponse, error) {
+func (c *inboxMarketingServiceClient) SendInboxMarketing(ctx context.Context, in *InboxMarketingBodyRequest, opts ...grpc.CallOption) (*InboxMarketingResponse, error) {
 	out := new(InboxMarketingResponse)
 	err := c.cc.Invoke(ctx, InboxMarketingService_SendInboxMarketing_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inboxMarketingServiceClient) ReportInboxMarketing(ctx context.Context, in *InboxMarketingRequest, opts ...grpc.CallOption) (*InboxMarketingStructResponse, error) {
+	out := new(InboxMarketingStructResponse)
+	err := c.cc.Invoke(ctx, InboxMarketingService_ReportInboxMarketing_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,15 +61,19 @@ func (c *inboxMarketingServiceClient) SendInboxMarketing(ctx context.Context, in
 // All implementations should embed UnimplementedInboxMarketingServiceServer
 // for forward compatibility
 type InboxMarketingServiceServer interface {
-	SendInboxMarketing(context.Context, *InboxMarketingRequestRequest) (*InboxMarketingResponse, error)
+	SendInboxMarketing(context.Context, *InboxMarketingBodyRequest) (*InboxMarketingResponse, error)
+	ReportInboxMarketing(context.Context, *InboxMarketingRequest) (*InboxMarketingStructResponse, error)
 }
 
 // UnimplementedInboxMarketingServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedInboxMarketingServiceServer struct {
 }
 
-func (UnimplementedInboxMarketingServiceServer) SendInboxMarketing(context.Context, *InboxMarketingRequestRequest) (*InboxMarketingResponse, error) {
+func (UnimplementedInboxMarketingServiceServer) SendInboxMarketing(context.Context, *InboxMarketingBodyRequest) (*InboxMarketingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendInboxMarketing not implemented")
+}
+func (UnimplementedInboxMarketingServiceServer) ReportInboxMarketing(context.Context, *InboxMarketingRequest) (*InboxMarketingStructResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportInboxMarketing not implemented")
 }
 
 // UnsafeInboxMarketingServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -73,7 +88,7 @@ func RegisterInboxMarketingServiceServer(s grpc.ServiceRegistrar, srv InboxMarke
 }
 
 func _InboxMarketingService_SendInboxMarketing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InboxMarketingRequestRequest)
+	in := new(InboxMarketingBodyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -85,7 +100,25 @@ func _InboxMarketingService_SendInboxMarketing_Handler(srv interface{}, ctx cont
 		FullMethod: InboxMarketingService_SendInboxMarketing_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InboxMarketingServiceServer).SendInboxMarketing(ctx, req.(*InboxMarketingRequestRequest))
+		return srv.(InboxMarketingServiceServer).SendInboxMarketing(ctx, req.(*InboxMarketingBodyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InboxMarketingService_ReportInboxMarketing_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InboxMarketingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InboxMarketingServiceServer).ReportInboxMarketing(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InboxMarketingService_ReportInboxMarketing_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InboxMarketingServiceServer).ReportInboxMarketing(ctx, req.(*InboxMarketingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -100,6 +133,10 @@ var InboxMarketingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendInboxMarketing",
 			Handler:    _InboxMarketingService_SendInboxMarketing_Handler,
+		},
+		{
+			MethodName: "ReportInboxMarketing",
+			Handler:    _InboxMarketingService_ReportInboxMarketing_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
