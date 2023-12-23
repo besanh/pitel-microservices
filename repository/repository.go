@@ -4,11 +4,14 @@ import (
 	"context"
 
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 )
 
 var DBConn sqlclient.ISqlClientConn
+var ES elasticsearch.IESClient
+var ESClient elasticsearch.IElasticsearchClient
 
 func CreateTable(ctx context.Context, db sqlclient.ISqlClientConn, entity any) (err error) {
 	_, err = db.GetDB().NewCreateTable().Model(entity).
@@ -19,6 +22,8 @@ func CreateTable(ctx context.Context, db sqlclient.ISqlClientConn, entity any) (
 
 func InitRepositories() {
 	ExampleRepo = NewExample()
+	RoutingConfigRepo = NewRoutingConfig()
+	InboxMarketingESRepo = NewInboxMarketingES()
 }
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {

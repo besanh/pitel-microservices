@@ -1,0 +1,35 @@
+syntax="proto3";
+
+package proto.incom;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message IncomBodyRequest {
+    string IdOmniMess = 1;
+    string Status = 2;
+    string Channel = 3;
+    string ErrorCode = 4;
+    float MtCount = 5;
+    float TelcoId = 6;
+    string IsCharged = 7;
+}
+
+message IncomBodyResponse {
+    string code = 1;
+    string message = 2;
+    google.protobuf.Struct data = 3;
+}
+
+service IncomService {
+    rpc IncomWebhook(IncomBodyRequest) returns (IncomBodyResponse) {
+        option (google.api.http) = {
+            post: "/bss/v1/incom/hook"
+            body: "*"
+        };
+    }
+}

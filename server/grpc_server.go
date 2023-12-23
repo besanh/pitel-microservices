@@ -9,13 +9,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	apiv1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
+	pbWebhookIncom "github.com/tel4vn/fins-microservices/gen/proto/incom"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 
 	authMiddleware "github.com/tel4vn/fins-microservices/middleware/auth"
@@ -51,7 +52,13 @@ func NewGRPCServer(port string) {
 			grpcMiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
 		),
 	)
+	grpcServerWebhook := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(authMiddleware.GRPCAuthInterceptor, grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
+		),
+	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
+	pbWebhookIncom.RegisterIncomServiceServer(grpcServerWebhook, grpcService.NewGRPCIncom())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -78,7 +85,7 @@ func NewGRPCServer(port string) {
 	}
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	httpServer.Group("collection/*{grpc_gateway}").Any("", gin.WrapH(mux))
+	apiv1.NewAbenlaWebhook(httpServer)
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)
@@ -127,6 +134,11 @@ func handleMetadata(ctx context.Context, r *http.Request) metadata.MD {
 	md["database_port"] = r.Header.Get("X-Database-Port")
 	md["database_user"] = r.Header.Get("X-Database-User")
 	md["database_password"] = r.Header.Get("X-Database-Password")
+	md["database_es_host"] = r.Header.Get("X-Database-Es-Host")
+	md["database_es_user"] = r.Header.Get("X-Database-Es-User")
+	md["database_es_password"] = r.Header.Get("X-Database-Es-Password")
+	md["database_es_index"] = r.Header.Get("X-Database-Es-Index")
+	md["x_signature"] = r.Header.Get("X-Signature")
 	return metadata.New(md)
 }
 

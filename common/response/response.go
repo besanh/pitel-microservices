@@ -2,8 +2,10 @@ package response
 
 import (
 	"errors"
+	"net/http"
 
 	validator "github.com/bufbuild/protovalidate-go"
+	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -15,6 +17,8 @@ const (
 	ERR_EMPTY_CONN        = "empty connection"
 	ERR_EXAMPLE_NOT_FOUND = "campaign not found"
 	ERR_EXAMPLE_INVALID   = "campaign is invalid"
+	ERR_DATA_NOT_FOUND    = "data not found"
+	ERR_DATA_INVALID      = "data is invalid"
 )
 
 var MAP_ERR_RESPONSE = map[string]struct {
@@ -100,4 +104,8 @@ func HandleValidatorPBError(err error) (isString bool, val any) {
 		}
 	}
 	return
+}
+
+func ResponseXml(field, val string) (int, any) {
+	return http.StatusOK, gin.H{field: val}
 }
