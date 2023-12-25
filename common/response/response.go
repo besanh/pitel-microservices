@@ -109,3 +109,23 @@ func HandleValidatorPBError(err error) (isString bool, val any) {
 func ResponseXml(field, val string) (int, any) {
 	return http.StatusOK, gin.H{field: val}
 }
+
+func BadRequestMsg(msg any) (int, any) {
+	return http.StatusBadRequest, map[string]any{
+		"error":   http.StatusText(http.StatusBadRequest),
+		"code":    http.StatusBadRequest,
+		"content": msg,
+	}
+}
+
+func ServiceUnavailableMsg(msg any) (int, any) {
+	return http.StatusServiceUnavailable, map[string]any{
+		"error":   http.StatusText(http.StatusServiceUnavailable),
+		"code":    http.StatusText(http.StatusServiceUnavailable),
+		"message": msg,
+	}
+}
+
+func OK(data any) (int, any) {
+	return http.StatusOK, data
+}

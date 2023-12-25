@@ -23,7 +23,11 @@ func CreateTable(ctx context.Context, db sqlclient.ISqlClientConn, entity any) (
 func InitRepositories() {
 	ExampleRepo = NewExample()
 	RoutingConfigRepo = NewRoutingConfig()
+}
+
+func InitRepositoriesES() {
 	InboxMarketingESRepo = NewInboxMarketingES()
+	ESRepo = NewES()
 }
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {

@@ -18,7 +18,9 @@ type (
 	IAbenla interface {
 		AbenlaWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookReceiveSmsStatus) (int, any)
 	}
-	Abenla struct{}
+	Abenla struct {
+		Index string
+	}
 )
 
 const (
@@ -29,8 +31,10 @@ const (
 
 var AbenlaService IAbenla
 
-func NewAbenla() IAbenla {
-	return &Abenla{}
+func NewAbenla(index string) IAbenla {
+	return &Abenla{
+		Index: index,
+	}
 }
 
 func (s *Abenla) AbenlaWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookReceiveSmsStatus) (int, any) {
@@ -56,7 +60,7 @@ func (s *Abenla) AbenlaWebhook(ctx context.Context, routingConfigUuid string, da
 		routingConfig = *routing
 	}
 
-	logExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, "", "", data.SmsGuid)
+	logExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, data.SmsGuid)
 	if err != nil {
 		log.Error(err)
 		return response.ResponseXml("Status", statusCode)

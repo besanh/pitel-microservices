@@ -26,3 +26,10 @@ type ElasticsearchInboxMarketingResponse struct {
 		} `json:"hits"`
 	} `json:"hits"`
 }
+
+type ElasticsearchConnect struct {
+	DatabaseEsHost     string `json:"database_es_host"`
+	DatabaseEsUser     string `js:"database_es_user"`
+	DatabaseEsPassword string `json:"database_es_password"`
+	DatabaseEsIndex    string `json:"database_es_index"`
+}

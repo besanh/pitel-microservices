@@ -16,8 +16,8 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
-	pbWebhookIncom "github.com/tel4vn/fins-microservices/gen/proto/incom"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
+	"github.com/tel4vn/fins-microservices/service"
 
 	authMiddleware "github.com/tel4vn/fins-microservices/middleware/auth"
 	"golang.org/x/net/http2"
@@ -45,20 +45,14 @@ func isHeaderAllowed(s string) (string, bool) {
 	return s, false
 }
 
-func NewGRPCServer(port string) {
+func NewGRPCServer(port string, esIndex string) {
 	// Setup gRPC
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
 		),
 	)
-	grpcServerWebhook := grpc.NewServer(
-		grpc.UnaryInterceptor(
-			grpcMiddleware.ChainUnaryServer(authMiddleware.GRPCAuthInterceptor, grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
-		),
-	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
-	pbWebhookIncom.RegisterIncomServiceServer(grpcServerWebhook, grpcService.NewGRPCIncom())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -85,7 +79,9 @@ func NewGRPCServer(port string) {
 	}
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	apiv1.NewAbenlaWebhook(httpServer)
+	apiv1.NewAbenlaWebhook(httpServer, service.NewAbenla(esIndex))
+	apiv1.NewIncomWebhook(httpServer, service.NewIncom(esIndex))
+	apiv1.NewFptWebhook(httpServer, service.NewFptWebhook(esIndex))
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

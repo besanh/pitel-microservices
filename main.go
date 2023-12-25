@@ -30,6 +30,7 @@ type Config struct {
 }
 
 var config Config
+var esIndex string
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -114,13 +115,15 @@ func main() {
 
 	// Init Repositories
 	repository.InitRepositories()
+	repository.InitRepositoriesES()
 
 	// Init services
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.InitServices()
 
+	esIndex = env.GetStringENV("es_index", "pitel_bss_inbox_marketing")
 	// Run gRPC server
-	server.NewGRPCServer(config.gRPCPort)
+	server.NewGRPCServer(config.gRPCPort, esIndex)
 }
 
 func setAppLogger(cfg Config, file *os.File) {

@@ -18,6 +18,7 @@ type Config struct {
 	RetryStatuses         []int
 	MaxRetries            int
 	ResponseHeaderTimeout int
+	Index                 string
 }
 
 type Response struct {

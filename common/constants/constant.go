@@ -51,6 +51,14 @@ var (
 		"11": "4", // gtel: gtel
 		"12": "5", // vietnamobile: vietnamobile
 		"14": "6", // i-telecom: i-telecom
+
+		// fpt
+		"viettel":   "3",
+		"vinaphone": "2",
+		"mobifone":  "1",
+		"VNM":       "5",
+		"Gtel":      "4",
+		"Itelecom":  "6",
 	}
 
 	NETWORKS = map[string]string{

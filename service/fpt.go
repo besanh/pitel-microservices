@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -17,89 +16,90 @@ import (
 )
 
 type (
-	IIncom interface {
-		IncomWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookIncom) (int, any)
+	IFpt interface {
+		FptWebhook(ctx context.Context, routingConfigUuid string, data model.FptWebhook) (int, any)
 	}
-	IncomWebhook struct {
+	FptWebhook struct {
 		Index string
 	}
 )
 
-const (
-	HOOK_INCOM                     = "hook_incom"
-	INFO_ROUTING                   = "info_routing"
-	INFO_EXTERNAL_PLUGIN_CONNECT   = "INFO_EXTERNAL_PLUGIN_CONNECT"
-	EXPIRE_EXTERNAL_PLUGIN_CONNECT = 1 * time.Minute
-
-	// token
-	ABENLA_TOKEN            = "abenla_token"
-	INCOM_TOKEN             = "incom_token"
-	FPT_TOKEN               = "fpt_token"
-	EXPIRE_EXTERNAL_ROUTING = 1 * time.Minute
-	TTL_HOOK_INCOM          = 1 * time.Minute
+var (
+	HOOK_FPT     = "fpt"
+	TTL_HOOK_FPT = 1 * time.Minute
 )
 
-func NewIncom(index string) IIncom {
-	return &IncomWebhook{
+func NewFptWebhook(index string) IFpt {
+	return &FptWebhook{
 		Index: index,
 	}
 }
 
-func (s *IncomWebhook) IncomWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookIncom) (int, any) {
+func (s *FptWebhook) FptWebhook(ctx context.Context, routingConfigUuid string, data model.FptWebhook) (int, any) {
 	routingConfig := model.RoutingConfig{}
 	// Caching
 	routingConfigCache := cache.NewMemCache().Get(INFO_ROUTING + "_" + routingConfigUuid)
 	if routingConfigCache != nil {
 		routing, ok := routingConfigCache.(*model.RoutingConfig)
 		if !ok {
-			return response.ServiceUnavailableMsg("routing not found in system")
+			log.Info("routing not found in system")
+			return response.OK(map[string]any{
+				"status": 0,
+			})
 		}
 		routingConfig = *routing
 	} else {
 		routing, err := repository.RoutingConfigRepo.GetRoutingConfigById(ctx, routingConfigUuid)
 		if err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg("routing invalid")
+			return response.OK(map[string]any{
+				"status": 0,
+			})
 		} else if routing == nil {
-			return response.ServiceUnavailableMsg("routing not found in system")
+			log.Info("routing not found in system")
+			return response.OK(map[string]any{
+				"status": 0,
+			})
 		}
 		cache.NewMemCache().Set(INFO_ROUTING+"_"+routingConfigUuid, routingConfig, EXPIRE_EXTERNAL_ROUTING)
 		routingConfig = *routing
 	}
 
-	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, data.IdOmniMess)
+	externalMessageId := strconv.Itoa(data.SmsId)
+	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, externalMessageId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return response.OK(map[string]any{
+			"status": 0,
+		})
 	} else if len(logWebhookExist.Id) < 1 {
-		return response.ServiceUnavailableMsg(data.IdOmniMess + " is not exist")
+		log.Error("message not found in system")
+		return response.OK(map[string]any{
+			"status": 0,
+		})
 	}
 
 	// Map network
-	telcoTmp := strconv.Itoa(data.TelcoId)
-	telcoId := util.MapNetworkPlugin(telcoTmp)
+	telcoId := util.MapNetworkPlugin(data.Telco)
 	telcoStr, _ := strconv.Atoi(telcoId)
 
-	logWebhookExist.StatusHook = strings.ToLower(data.Status)
-	channel := strings.ToLower(data.Channel)
-	logWebhookExist.ChannelHook = strings.ReplaceAll(channel, "brandnamesms", "sms")
-	logWebhookExist.ErrorCode = data.ErrorCode
-	logWebhookExist.Quantity = data.Quantity
+	logWebhookExist.StatusHook = common.MapStatusFpt(data.Status)
+	logWebhookExist.ChannelHook = "sms"
+	logWebhookExist.ErrorCode = data.Error
+	logWebhookExist.Quantity = data.MtCount
 	logWebhookExist.TelcoId = telcoStr
-	logWebhookExist.IsChargedZns = data.IsChargedZns
 
 	auditLogModel := model.LogInboxMarketing{
 		Id:                logWebhookExist.Id,
 		RoutingConfigUuid: logWebhookExist.RoutingConfigUuid,
-		ExternalMessageId: data.IdOmniMess,
+		ExternalMessageId: externalMessageId,
 		Plugin:            logWebhookExist.Plugin,
-		Status:            data.Status,
+		Status:            common.MapStatusFpt(data.Status),
 		ChannelHook:       logWebhookExist.ChannelHook,
 		ErrorCodeHook:     logWebhookExist.ErrorCodeHook,
 		TelcoId:           telcoStr,
-		IsChargedZns:      data.IsChargedZns,
-		Quantity:          data.Quantity,
-		Channel:           data.Channel,
+		Quantity:          data.MtCount,
+		Channel:           "sms",
 		IsCheck:           logWebhookExist.IsCheck,
 		Code:              0,
 		CountAction:       logWebhookExist.CountAction + 1,
@@ -107,7 +107,9 @@ func (s *IncomWebhook) IncomWebhook(ctx context.Context, routingConfigUuid strin
 	logAction, err := common.HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return response.OK(map[string]any{
+			"status": 0,
+		})
 	}
 	logWebhookExist.Log = append(logWebhookExist.Log, logAction)
 
@@ -115,22 +117,28 @@ func (s *IncomWebhook) IncomWebhook(ctx context.Context, routingConfigUuid strin
 	tmpByte, err := json.Marshal(logWebhookExist)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return response.OK(map[string]any{
+			"status": 0,
+		})
 	}
 	if err := json.Unmarshal(tmpByte, &esDoc); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return response.OK(map[string]any{
+			"status": 0,
+		})
 	}
 
 	if err := repository.ESRepo.UpdateDocById(ctx, s.Index, logWebhookExist.Id, esDoc); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return response.OK(map[string]any{
+			"status": 0,
+		})
 	}
 
 	// Set cache
-	cache.NewMemCache().Set(HOOK_INCOM+"_"+routingConfigUuid, routingConfig, TTL_HOOK_INCOM)
+	cache.NewMemCache().Set(HOOK_FPT+"_"+routingConfigUuid, routingConfig, TTL_HOOK_FPT)
 
 	return response.OK(map[string]any{
-		"message": "success",
+		"status": 1,
 	})
 }

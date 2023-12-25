@@ -12,8 +12,8 @@ import (
 
 type (
 	IInboxMarketingES interface {
-		GetDocById(ctx context.Context, tenantId, index, id string) (*model.InboxMarketingLogInfo, error)
-		GetDocByRoutingExternalMessageId(ctx context.Context, tenantId, index, externalMessageId string) (*model.InboxMarketingLogInfo, error)
+		GetDocById(ctx context.Context, index, id string) (*model.InboxMarketingLogInfo, error)
+		GetDocByRoutingExternalMessageId(ctx context.Context, index, externalMessageId string) (*model.InboxMarketingLogInfo, error)
 	}
 	InboxMarketingES struct{}
 )
@@ -24,12 +24,9 @@ func NewInboxMarketingES() IInboxMarketingES {
 	return &InboxMarketingES{}
 }
 
-func (repo *InboxMarketingES) GetDocByRoutingExternalMessageId(ctx context.Context, tenantId, index, externalMessageId string) (*model.InboxMarketingLogInfo, error) {
+func (repo *InboxMarketingES) GetDocByRoutingExternalMessageId(ctx context.Context, index, externalMessageId string) (*model.InboxMarketingLogInfo, error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
-	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
-	}
 	filters = append(filters, elasticsearch.MatchQuery("external_message_id", externalMessageId))
 
 	boolQuery := map[string]any{
@@ -95,13 +92,9 @@ func (repo *InboxMarketingES) GetDocByRoutingExternalMessageId(ctx context.Conte
 	return &result, nil
 }
 
-func (repo *InboxMarketingES) GetDocById(ctx context.Context, tenantId, index, id string) (*model.InboxMarketingLogInfo, error) {
+func (repo *InboxMarketingES) GetDocById(ctx context.Context, index, id string) (*model.InboxMarketingLogInfo, error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
-	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+tenantId))
-		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
-	}
 	filters = append(filters, elasticsearch.MatchQuery("_id", id))
 
 	boolQuery := map[string]any{
