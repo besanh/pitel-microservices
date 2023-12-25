@@ -262,7 +262,6 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		res, err := HandleMainInboxMarketingIncom(ctx, dbCon, inboxMarketingBasic, *routingConfig, authUser, inboxMarketing, data)
 		if err != nil {
 			log.Error(err)
-			res.Message = err.Error()
 			return res, err
 		}
 		return res, nil

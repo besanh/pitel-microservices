@@ -139,9 +139,11 @@ func HandleMainInboxMarketingAbenla(ctx context.Context, authUser *model.AuthUse
 	}
 	dataUpdate := map[string]any{}
 
-	_, result, err := common.HandleDeliveryMessageAbenla(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest)
+	statusCode, result, err := common.HandleDeliveryMessageAbenla(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest)
 	if err != nil {
 		return res, err
+	} else if statusCode != 200 {
+		return result, errors.New(result.Message)
 	}
 
 	// Send to hook

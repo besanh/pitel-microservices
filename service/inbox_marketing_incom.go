@@ -160,9 +160,11 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 	if err != nil {
 		return res, err
 	}
-	_, result, err := common.HandleDeliveryMessageIncom(ctx, inboxMarketingBasic.DocId, routingConfig, template.TemplateCode, inboxMarketing, inboxMarketingRequest)
+	statusCode, result, err := common.HandleDeliveryMessageIncom(ctx, inboxMarketingBasic.DocId, routingConfig, template.TemplateCode, inboxMarketing, inboxMarketingRequest)
 	if err != nil {
 		return res, err
+	} else if statusCode != 200 {
+		return result, errors.New(result.Message)
 	}
 
 	// Update id to ES
@@ -211,9 +213,7 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 		return res, err
 	}
 
-	res.Status = result.Status
-
-	return res, err
+	return result, err
 }
 
 func GetTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, id string) (*model.TemplateBss, error) {

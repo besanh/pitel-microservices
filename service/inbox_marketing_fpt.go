@@ -25,10 +25,12 @@ func NewInboxMarketingFpt() IInboxMarketingFpt {
 
 func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, inboxMarketingBasic model.InboxMarketingBasic, routingConfig model.RoutingConfig, inboxMarketing model.InboxMarketingLogInfo, inboxMarketingRequest model.InboxMarketingRequest, fpt model.FptRequireRequest) (model.ResponseInboxMarketing, error) {
 	dataUpdate := map[string]any{}
-	_, result, resultFpt, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
+	statusCode, result, resultFpt, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
 	if err != nil {
 		log.Error(err)
 		return *result, err
+	} else if statusCode != 200 {
+		return *result, errors.New(result.Message)
 	}
 
 	// Find in ES to avoid 404 not found
