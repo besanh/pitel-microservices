@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	CODE_ABENLA_SUCESS = []string{"106"}
-	CODE_INCOM_SUCCESS = []string{"1"}
+	CODE_ABENLA_Success = []string{"106"}
+	CODE_INCOM_SUCCESS  = []string{"1"}
 )
 
 func HandleMapResponsePlugin(plugin string, id string, statusCode int, res any) model.ResponseInboxMarketing {
@@ -39,8 +39,8 @@ func HandleMapResponsePlugin(plugin string, id string, statusCode int, res any) 
 			resStandard.Message = constants.MESSAGE_TEL4VN["fail"]
 		}
 
-		if slices.Contains[[]string](CODE_ABENLA_SUCESS, code) {
-			resStandard.Status = "Sucess"
+		if slices.Contains[[]string](CODE_ABENLA_Success, code) {
+			resStandard.Status = "Success"
 		} else {
 			resStandard.Status = "Fail"
 		}
@@ -68,7 +68,7 @@ func HandleMapResponsePlugin(plugin string, id string, statusCode int, res any) 
 		}
 
 		if slices.Contains[[]string](CODE_INCOM_SUCCESS, resIncom.Status) {
-			resStandard.Status = "Sucess"
+			resStandard.Status = "Success"
 		} else {
 			resStandard.Status = "Fail"
 		}
