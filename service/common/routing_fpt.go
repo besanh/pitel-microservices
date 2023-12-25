@@ -83,9 +83,9 @@ func HandleDeliveryMessageFpt(ctx context.Context, id string, routingConfig mode
 	}
 	resultStandard = HandleMapResponsePlugin("fpt", id, 200, resSuccess)
 	statusCode := 0
-	if resultStandard.Status == "success" {
+	if resultStandard.Status == "Success" {
 		statusCode = 200
-	} else if resultStandard.Status == "fail" {
+	} else if resultStandard.Status == "Fail" {
 		statusCode = 400
 	}
 	return statusCode, &resultStandard, &resSuccess, nil
