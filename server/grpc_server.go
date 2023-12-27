@@ -79,9 +79,7 @@ func NewGRPCServer(port string, esIndex string) {
 	}
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	apiv1.NewAbenlaWebhook(httpServer, service.NewAbenla(esIndex))
-	apiv1.NewIncomWebhook(httpServer, service.NewIncom(esIndex))
-	apiv1.NewFptWebhook(httpServer, service.NewFptWebhook(esIndex))
+	apiv1.NewWebhook(httpServer, service.NewWebhook(esIndex))
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

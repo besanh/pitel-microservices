@@ -39,13 +39,7 @@ const (
 	TTL_HOOK_INCOM          = 1 * time.Minute
 )
 
-func NewIncom(index string) IIncom {
-	return &IncomWebhook{
-		Index: index,
-	}
-}
-
-func (s *IncomWebhook) IncomWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookIncom) (int, any) {
+func (s *Webhook) IncomWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookIncom) (int, any) {
 	routingConfig := model.RoutingConfig{}
 	// Caching
 	routingConfigCache := cache.NewMemCache().Get(INFO_ROUTING + "_" + routingConfigUuid)

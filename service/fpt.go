@@ -29,13 +29,7 @@ var (
 	TTL_HOOK_FPT = 1 * time.Minute
 )
 
-func NewFptWebhook(index string) IFpt {
-	return &FptWebhook{
-		Index: index,
-	}
-}
-
-func (s *FptWebhook) FptWebhook(ctx context.Context, routingConfigUuid string, data model.FptWebhook) (int, any) {
+func (s *Webhook) FptWebhook(ctx context.Context, routingConfigUuid string, data model.FptWebhook) (int, any) {
 	routingConfig := model.RoutingConfig{}
 	// Caching
 	routingConfigCache := cache.NewMemCache().Get(INFO_ROUTING + "_" + routingConfigUuid)
