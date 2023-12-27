@@ -31,13 +31,7 @@ const (
 
 var AbenlaService IAbenla
 
-func NewAbenla(index string) IAbenla {
-	return &Abenla{
-		Index: index,
-	}
-}
-
-func (s *Abenla) AbenlaWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookReceiveSmsStatus) (int, any) {
+func (s *Webhook) AbenlaWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookReceiveSmsStatus) (int, any) {
 	statusCode := "1"
 	routingConfig := model.RoutingConfig{}
 	// Caching
