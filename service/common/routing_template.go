@@ -18,10 +18,8 @@ const (
 )
 
 func HandleCheckContentMatchTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, authUser *model.AuthUser, templateUuid, content string) (*model.TemplateBss, []string, []string, error) {
-	templateCache, err := cacheUtil.MCache.Get(INFO_TEMPLATE + "_" + templateUuid)
-	if err != nil {
-		return nil, nil, nil, err
-	} else if templateCache != nil {
+	templateCache := cacheUtil.NewMemCache().Get(INFO_TEMPLATE + "_" + templateUuid)
+	if templateCache != nil {
 		template := templateCache.(*model.TemplateBss)
 		keysContent, keysTemplate, ok := handleMatchMessageWithTemplate(content, template.Content)
 		if !ok {
@@ -37,9 +35,7 @@ func HandleCheckContentMatchTemplate(ctx context.Context, dbCon sqlclient.ISqlCl
 		if !ok {
 			return nil, nil, nil, errors.New("content not match template")
 		}
-		if err := cacheUtil.MCache.SetTTL(INFO_TEMPLATE+"_"+templateUuid, template, EXPIRE_TEMPLATE); err != nil {
-			return nil, nil, nil, err
-		}
+		cacheUtil.NewMemCache().Set(INFO_TEMPLATE+"_"+templateUuid, template, EXPIRE_TEMPLATE)
 		return template, keysContent, keysTemplate, nil
 	}
 }

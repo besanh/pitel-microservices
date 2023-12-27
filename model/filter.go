@@ -48,7 +48,7 @@ type InboxMarketingFilter struct {
 	Username          string       `json:"username"`
 	Services          []string     `json:"services"`
 	RoutingConfigUuid string       `json:"routing_config_uuid"`
-	Plugin            []string     `json:"plugin" bun:"plugin,array"`
+	Plugin            []string     `json:"plugin"`
 	PhoneNumber       string       `json:"phone_number"`
 	Message           string       `json:"message"`
 	TemplateUuid      []string     `json:"template_uuid"`

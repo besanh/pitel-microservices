@@ -184,10 +184,10 @@ var (
 	// Message incom
 	MESSAGE_INCOM = map[int]string{
 		1:  "Success",
-		-1: "PhoneNumber Wrong Format",
+		-1: "Phone Number Wrong Format",
 		-2: "Wrong Format Parameter",
 		-3: "Out of message trial",
-		-6: "Can't find template with templatecode",
+		-6: "Can't find template with template code",
 		-8: "Wrong routerule",
 		-9: "Channel XXXXX in routerule was wrong",
 	}

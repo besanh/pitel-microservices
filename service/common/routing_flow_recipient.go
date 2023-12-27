@@ -27,10 +27,8 @@ func CheckRecipientExist(ctx context.Context, dbConn sqlclient.ISqlClientConn, i
 
 // Get route rule from recipient config
 func HandleGetRouteRule(ctx context.Context, dbConn sqlclient.ISqlClientConn, recipientId string) (routeRules string, err error) {
-	recipientConfigCache, err := cacheUtil.MCache.Get(INFO_RECIPIENT + "_" + recipientId)
-	if err != nil {
-		return "", err
-	} else if recipientConfigCache != nil {
+	recipientConfigCache := cacheUtil.NewMemCache().Get(INFO_RECIPIENT + "_" + recipientId)
+	if recipientConfigCache != nil {
 		recipientConfig := recipientConfigCache.(*model.RecipientConfig)
 		if recipientConfig.Provider == "incom" {
 			routeRules = routingIncomRoutRule(recipientConfig.RecipientType)
@@ -44,9 +42,7 @@ func HandleGetRouteRule(ctx context.Context, dbConn sqlclient.ISqlClientConn, re
 		if recipientConfig.Provider == "incom" {
 			routeRules = routingIncomRoutRule(recipientConfig.RecipientType)
 		}
-		if err := cacheUtil.MCache.SetTTL(INFO_RECIPIENT+"_"+recipientId, recipientConfig, EXPIRE_RECIPIENT); err != nil {
-			return "", err
-		}
+		cacheUtil.NewMemCache().Set(INFO_RECIPIENT+"_"+recipientId, recipientConfig, EXPIRE_RECIPIENT)
 		return routeRules, nil
 	}
 }

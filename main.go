@@ -91,7 +91,7 @@ func init() {
 	repository.ES = elasticsearch.NewES(esCfg)
 	repository.ES.Ping()
 
-	cache.MCache = cache.NewMemCache()
+	cache.NewMemCache()
 
 	// goauth.GoAuthClient = goauth.NewGoAuth(redis.Redis.GetClient())
 	// authMdw.SetupGoGuardian()

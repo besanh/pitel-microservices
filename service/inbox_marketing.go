@@ -306,10 +306,8 @@ func (s *InboxMarketing) GetReportInboxMarketing(ctx context.Context, authUser *
 
 func handleCheckNetworkWithRecipient(ctx context.Context, dbCon sqlclient.ISqlClientConn, network string, recipientUuid string) bool {
 	var ok bool
-	recipientConfigCache, err := cache.MCache.Get(RECIPIENT_NETWORK + "_" + recipientUuid)
-	if err != nil {
-		return false
-	} else if recipientConfigCache != nil {
+	recipientConfigCache := cache.NewMemCache().Get(RECIPIENT_NETWORK + "_" + recipientUuid)
+	if recipientConfigCache != nil {
 		recipientConfig := recipientConfigCache.(*model.RecipientConfig)
 		if recipientConfig.Recipient == network {
 			ok = true
@@ -324,10 +322,7 @@ func handleCheckNetworkWithRecipient(ctx context.Context, dbCon sqlclient.ISqlCl
 			if recipientConfig.Recipient == network {
 				ok = true
 			}
-			if err := cache.MCache.SetTTL(RECIPIENT_NETWORK+"_"+recipientUuid, recipientConfig, common.EXPIRE_RECIPIENT); err != nil {
-				log.Error(err)
-				return false
-			}
+			cache.NewMemCache().Set(RECIPIENT_NETWORK+"_"+recipientUuid, recipientConfig, common.EXPIRE_RECIPIENT)
 			return ok
 		}
 		return !ok
