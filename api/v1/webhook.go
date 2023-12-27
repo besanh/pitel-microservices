@@ -22,9 +22,9 @@ func NewWebhook(r *gin.Engine, webhookService service.IWebhook) {
 	handler := &Webhook{
 		webhook: webhookService,
 	}
-	Group := r.Group("bss/v1")
+	Group := r.Group("bss/v1/webhook")
 	{
-		Group.POST("{plugin}/webhook/:routing_config", handler.WebhookData)
+		Group.POST("{plugin}/:routing_config", handler.WebhookData)
 	}
 }
 
