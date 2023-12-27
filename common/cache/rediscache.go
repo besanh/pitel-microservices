@@ -5,43 +5,46 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 )
 
-type RedisCache struct {
-	cache *redis.Client
-}
+type (
+	IRedisCache interface {
+		Set(key string, value any, ttl time.Duration)
+		Get(key string) any
+	}
+	RedisCache struct {
+		client *redis.Client
+	}
+)
 
 func NewRedisCache(client *redis.Client) IRedisCache {
 	return &RedisCache{
-		cache: client,
+		client: client,
 	}
 }
 
-var ctx = context.Background()
+const (
+	REDIS_KEEP_TTL = redis.KeepTTL
+)
 
-func (c *RedisCache) Set(key string, value any) error {
-	_, err := c.cache.Set(ctx, key, value, redis.KeepTTL).Result()
-	return err
-}
-
-func (c *RedisCache) SetTTL(key string, value any, ttl time.Duration) error {
-	_, err := c.cache.Set(ctx, key, value, ttl).Result()
-	return err
-}
-
-func (c *RedisCache) Get(key string) (string, error) {
-	value, err := c.cache.Get(ctx, key).Result()
-	if err == redis.Nil {
-		return "", nil
+func (r *RedisCache) Set(key string, value any, ttl time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	val, _ := util.ParseAnyToString(value)
+	if _, err := r.client.Set(ctx, key, val, ttl).Result(); err != nil {
+		log.Error(err)
 	}
-	return value, err
 }
 
-func (c *RedisCache) Close() {
-	c.cache.Close()
-}
-
-func (c *RedisCache) Del(key string) error {
-	_, err := c.cache.Del(ctx, key).Result()
-	return err
+func (r *RedisCache) Get(key string) any {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	val, err := r.client.Get(ctx, key).Result()
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
+	return val
 }

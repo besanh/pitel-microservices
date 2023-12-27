@@ -1,49 +1,54 @@
 package cache
 
 import (
+	"context"
 	"time"
 
-	"github.com/jellydator/ttlcache/v2"
+	"github.com/jellydator/ttlcache/v3"
+	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 )
 
-type MemCache struct {
-	ttlCache ttlcache.SimpleCache
-}
+type (
+	IMemCache interface {
+		Set(key string, value any, ttl time.Duration)
+		Get(key string) any
+	}
+	MemCache struct {
+		*ttlcache.Cache[string, any]
+	}
+)
+
+const (
+	DEFAULT_TTL = ttlcache.DefaultTTL
+)
 
 func NewMemCache() IMemCache {
-	cache := ttlcache.NewCache()
-	cache.SkipTTLExtensionOnHit(true)
-	return &MemCache{
-		ttlCache: cache,
+	service := &MemCache{}
+	cache := ttlcache.New(
+		ttlcache.WithTTL[string, any](30 * time.Minute),
+	)
+	cache.OnInsertion(func(ctx context.Context, item *ttlcache.Item[string, any]) {
+		log.Infof("memcache: inserted %s, expires at %s", item.Key(), item.ExpiresAt())
+	})
+	cache.OnEviction(func(ctx context.Context, reason ttlcache.EvictionReason, item *ttlcache.Item[string, any]) {
+		if reason == ttlcache.EvictionReasonCapacityReached {
+			val, _ := util.ParseAnyToString(item.Value())
+			log.Infof("memcache: removed %s, value: %v", item.Key(), val)
+		}
+	})
+	service.Cache = cache
+	return service
+}
+
+func (s *MemCache) Set(key string, value any, ttl time.Duration) {
+	s.Cache.Set(key, value, ttl)
+}
+
+func (s *MemCache) Get(key string) any {
+	val := s.Cache.Get(key)
+	if val == nil {
+		return nil
 	}
-}
-
-func (c *MemCache) Set(key string, value any) error {
-	err := c.ttlCache.Set(key, value)
-	return err
-}
-
-func (c *MemCache) Del(key string) error {
-	err := c.ttlCache.Remove(key)
-	return err
-}
-
-func (c *MemCache) SetTTL(key string, value any, ttl time.Duration) error {
-	err := c.ttlCache.SetWithTTL(key, value, ttl)
-	return err
-}
-
-func (c *MemCache) Get(key string) (any, error) {
-	value, err := c.ttlCache.Get(key)
-	if err == ttlcache.ErrNotFound {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	} else {
-		return value, nil
-	}
-}
-
-func (c *MemCache) Close() {
-	c.ttlCache.Close()
+	return val.Value()
 }

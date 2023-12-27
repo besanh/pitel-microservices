@@ -36,23 +36,13 @@ func NewInboxMarketingIncom() IInboxMarketingIncom {
 }
 
 func (s *InboxMarketingIncom) WebhookReceiveStatus(ctx context.Context, routingConfig *model.RoutingConfig, authUser *model.AuthUser, pluginId string, data model.WebhookIncom) error {
-	// Caching
-	_, err := cache.MCache.Get(pluginId)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
 	// Check signature
 	// pluginInfo, err := repository.ExternalPluginRepo.GetExternalPluginByIdOrPlugin(ctx, "", pluginId, "")
 	// if err != nil {
 	// 	log.Error(err)
 	// 	return response.ServiceUnavailableMsg(err.Error())
 	// }
-	if err := cache.MCache.SetTTL(HOOK_INCOM+"_"+pluginId, pluginId, TTL_HOOK_INCOM); err != nil {
-		log.Error(err)
-		return err
-	}
+	cache.NewMemCache().Set(HOOK_INCOM+"_"+pluginId, pluginId, TTL_HOOK_INCOM)
 	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, authUser.TenantId, authUser.DatabaseEsIndex, data.IdOmniMess)
 	if err != nil {
 		log.Error(err)
@@ -135,10 +125,7 @@ func (s *InboxMarketingIncom) WebhookReceiveStatus(ctx context.Context, routingC
 	}
 
 	// Set cache
-	if err := cache.MCache.SetTTL(HOOK_INCOM+"_"+pluginId, pluginId, TTL_HOOK_INCOM); err != nil {
-		log.Error(err)
-		return err
-	}
+	cache.NewMemCache().Set(HOOK_INCOM+"_"+pluginId, pluginId, TTL_HOOK_INCOM)
 
 	return nil
 }
@@ -160,9 +147,11 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 	if err != nil {
 		return res, err
 	}
-	_, result, err := common.HandleDeliveryMessageIncom(ctx, inboxMarketingBasic.DocId, routingConfig, template.TemplateCode, inboxMarketing, inboxMarketingRequest)
+	statusCode, result, err := common.HandleDeliveryMessageIncom(ctx, inboxMarketingBasic.DocId, routingConfig, template.TemplateCode, inboxMarketing, inboxMarketingRequest)
 	if err != nil {
 		return res, err
+	} else if statusCode != 200 {
+		return result, errors.New(result.Message)
 	}
 
 	// Update id to ES
@@ -211,16 +200,12 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 		return res, err
 	}
 
-	res.Status = result.Status
-
-	return res, err
+	return result, err
 }
 
 func GetTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, id string) (*model.TemplateBss, error) {
-	templateCache, err := cache.MCache.Get(common.INFO_TEMPLATE + "_" + id)
-	if err != nil {
-		return nil, err
-	} else if templateCache != nil {
+	templateCache := cache.NewMemCache().Get(common.INFO_TEMPLATE + "_" + id)
+	if templateCache != nil {
 		template := templateCache.(*model.TemplateBss)
 		return template, nil
 	} else {
@@ -228,9 +213,7 @@ func GetTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, id string)
 		if err != nil {
 			return nil, err
 		}
-		if err := cache.MCache.SetTTL(common.INFO_TEMPLATE+"_"+id, template, common.EXPIRE_TEMPLATE); err != nil {
-			return nil, err
-		}
+		cache.NewMemCache().Set(common.INFO_TEMPLATE+"_"+id, template, common.EXPIRE_TEMPLATE)
 		return template, nil
 	}
 }

@@ -35,10 +35,8 @@ const (
 )
 
 func GetInfoPlugin(ctx context.Context, db sqlclient.ISqlClientConn, authUser *model.AuthUser, routingConfigUuid string) (*model.RoutingConfig, error) {
-	routingConfigCache, err := cacheUtil.MCache.Get(INFO_ROUTING + "_" + routingConfigUuid)
-	if err != nil {
-		return nil, err
-	} else if routingConfigCache != nil {
+	routingConfigCache := cacheUtil.NewMemCache().Get(INFO_ROUTING + "_" + routingConfigUuid)
+	if routingConfigCache != nil {
 		routing := routingConfigCache.(*model.RoutingConfig)
 		return routing, nil
 	} else {
@@ -48,9 +46,7 @@ func GetInfoPlugin(ctx context.Context, db sqlclient.ISqlClientConn, authUser *m
 		} else if routingConfig == nil {
 			return nil, errors.New("routing not found in system")
 		}
-		if err := cacheUtil.MCache.SetTTL(INFO_ROUTING+"_"+routingConfigUuid, routingConfig, EXPIRE_EXTERNAL_ROUTING); err != nil {
-			return nil, err
-		}
+		cacheUtil.NewMemCache().Set(INFO_ROUTING+"_"+routingConfigUuid, routingConfig, EXPIRE_EXTERNAL_ROUTING)
 		return routingConfig, nil
 	}
 }
@@ -58,10 +54,8 @@ func GetInfoPlugin(ctx context.Context, db sqlclient.ISqlClientConn, authUser *m
 func CheckConnectionWithExternalPlugin(ctx context.Context, routingConfig model.RoutingConfig) error {
 	params := map[string]string{}
 	if routingConfig.RoutingOption.Abenla.Status {
-		connectionAlive, err := cacheUtil.MCache.Get(ABENLA_TOKEN)
-		if err != nil {
-			return err
-		} else if connectionAlive != nil {
+		connectionAlive := cacheUtil.NewMemCache().Get(ABENLA_TOKEN)
+		if connectionAlive != nil {
 			return nil
 		} else {
 			if len(routingConfig.RoutingOption.Abenla.Username) > 0 {
@@ -92,9 +86,7 @@ func CheckConnectionWithExternalPlugin(ctx context.Context, routingConfig model.
 			if result.Code != 106 {
 				return errors.New(result.Message)
 			}
-			if err := cacheUtil.MCache.SetTTL(ABENLA_TOKEN, result, EXPIRE_EXTERNAL_ROUTING); err != nil {
-				return err
-			}
+			cacheUtil.NewMemCache().Set(ABENLA_TOKEN, result, EXPIRE_EXTERNAL_ROUTING)
 
 			return nil
 		}
@@ -130,10 +122,8 @@ func HandlePushRMQ(ctx context.Context, index, docId string, authUser *model.Aut
 }
 
 func GetAccessTokenFpt(ctx context.Context, routingConfig model.RoutingConfig) (token string, err error) {
-	tokenCache, err := cacheUtil.MCache.Get(FPT_TOKEN + "_" + routingConfig.Id)
-	if err != nil {
-		return "", err
-	} else if tokenCache != nil {
+	tokenCache := cacheUtil.NewMemCache().Get(FPT_TOKEN + "_" + routingConfig.Id)
+	if tokenCache != nil {
 		return tokenCache.(string), nil
 	}
 	hasher := md5.New()
@@ -166,9 +156,6 @@ func GetAccessTokenFpt(ctx context.Context, routingConfig model.RoutingConfig) (
 		log.Error(err)
 		return "", err
 	}
-	if err := cacheUtil.MCache.SetTTL(FPT_TOKEN+"_"+routingConfig.Id, loginResponse.AccessToken, EXPIRE_EXTERNAL_ROUTING); err != nil {
-		log.Error(err)
-		return "", err
-	}
+	cacheUtil.NewMemCache().Set(FPT_TOKEN+"_"+routingConfig.Id, loginResponse.AccessToken, EXPIRE_EXTERNAL_ROUTING)
 	return loginResponse.AccessToken, nil
 }

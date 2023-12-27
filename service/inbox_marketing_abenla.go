@@ -32,13 +32,6 @@ func NewInboxMarketingAbenla() IInboxMarketingLogAbenla {
 }
 
 func (s *InboxMarketingAbenla) WebhookReceiveSmsStatus(ctx context.Context, authUser *model.AuthUser, routingConfig model.RoutingConfig, data model.WebhookReceiveSmsStatus) (int, any) {
-	// Caching
-	_, err := cache.MCache.Get(SIGNATURE + "_" + routingConfig.Id)
-	if err != nil {
-		log.Error(err)
-		return response.ResponseXml("Status", "1")
-	}
-
 	// Check signature
 	// pluginInfo, err := repository.PluginConfigRepo.GetExternalPluginConfigByUsernameOrSignature(ctx, dbCon, "", data.SercretSign)
 	// if err != nil {
@@ -125,10 +118,7 @@ func (s *InboxMarketingAbenla) WebhookReceiveSmsStatus(ctx context.Context, auth
 	}
 
 	// Set cache
-	if err := cache.MCache.SetTTL(SIGNATURE+"_"+routingConfig.Id, routingConfig.RoutingOption.Abenla.Signature, TTL); err != nil {
-		log.Error(err)
-		return response.ResponseXml("Status", "1")
-	}
+	cache.NewMemCache().Set(SIGNATURE+"_"+routingConfig.Id, routingConfig.RoutingOption.Abenla.Signature, TTL)
 
 	return response.ResponseXml("Status", "2")
 }
@@ -139,9 +129,11 @@ func HandleMainInboxMarketingAbenla(ctx context.Context, authUser *model.AuthUse
 	}
 	dataUpdate := map[string]any{}
 
-	_, result, err := common.HandleDeliveryMessageAbenla(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest)
+	statusCode, result, err := common.HandleDeliveryMessageAbenla(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest)
 	if err != nil {
 		return res, err
+	} else if statusCode != 200 {
+		return result, errors.New(result.Message)
 	}
 
 	// Send to hook

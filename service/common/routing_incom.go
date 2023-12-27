@@ -51,7 +51,7 @@ func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig mo
 		resultStandard := HandleMapResponsePlugin("incom", id, 0, result)
 		return res.StatusCode(), resultStandard, err
 	}
-	var r interface{}
+	var r any
 	if err := json.Unmarshal(res.Body(), &r); err != nil {
 		resultStandard := HandleMapResponsePlugin("incom", id, 0, result)
 		return res.StatusCode(), resultStandard, err
@@ -60,8 +60,13 @@ func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig mo
 		return res.StatusCode(), resultStandard, err
 	}
 	resultStandard = HandleMapResponsePlugin("incom", id, 0, result)
-
-	return res.StatusCode(), resultStandard, nil
+	statusCode := 0
+	if resultStandard.Status == "Success" {
+		statusCode = 200
+	} else if resultStandard.Status == "Fail" {
+		statusCode = 400
+	}
+	return statusCode, resultStandard, err
 }
 
 func HandleGetStatusMessage(ctx context.Context, dbCon sqlclient.ISqlClientConn, authUser *model.AuthUser, routingConfig model.RoutingConfig, docId string, body model.IncomBodyStatus) (model.InboxMarketingLogInfo, error) {

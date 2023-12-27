@@ -59,5 +59,11 @@ func HandleDeliveryMessageAbenla(ctx context.Context, id string, routingConfig m
 		return res.StatusCode(), resultStandard, err
 	}
 	resultStandard = HandleMapResponsePlugin("abenla", id, 0, result)
-	return res.StatusCode(), resultStandard, nil
+	statusCode := 0
+	if resultStandard.Status == "Success" {
+		statusCode = 200
+	} else if resultStandard.Status == "Fail" {
+		statusCode = 400
+	}
+	return statusCode, resultStandard, nil
 }
