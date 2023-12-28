@@ -20,7 +20,6 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
@@ -58,10 +57,10 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		return res, errors.New(response.ERR_EMPTY_CONN)
 	}
 
-	routingConfig, err := common.GetInfoPlugin(ctx, dbCon, authUser, data.RoutingConfig)
+	routingConfig, err := GetInfoPlugin(ctx, dbCon, authUser, data.RoutingConfig)
 	if err != nil {
 		log.Error(err)
-		res.Message = "get rounting info error"
+		res.Message = "get routing info error"
 		return res, err
 	} else if len(routingConfig.RoutingName) < 1 {
 		res.Message = "routing not found in system"
@@ -76,7 +75,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 	}
 
 	// Handle content match template
-	template, keysContent, keysTemplate, err := common.HandleCheckContentMatchTemplate(ctx, dbCon, authUser, data.Template, data.Content)
+	template, keysContent, keysTemplate, err := HandleCheckContentMatchTemplate(ctx, dbCon, authUser, data.Template, data.Content)
 	if err != nil {
 		log.Error(err)
 		res.Message = "check content match template error"
@@ -87,7 +86,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 	}
 
 	// Check connection to plugin
-	err = common.CheckConnectionWithExternalPlugin(ctx, *routingConfig)
+	err = CheckConnectionWithExternalPlugin(ctx, *routingConfig)
 	if err != nil {
 		log.Error(err)
 		res.Message = "check connection error"
@@ -158,7 +157,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		// Get rout rule from flow_uuid
 		routeRules := []string{}
 		if routingConfig.RoutingFlow.FlowType == "recipient" {
-			routeRule, err := common.HandleGetRouteRule(ctx, dbCon, routingConfig.RoutingFlow.FlowUuid)
+			routeRule, err := HandleGetRouteRule(ctx, dbCon, routingConfig.RoutingFlow.FlowUuid)
 			if err != nil {
 				log.Error(err)
 				res.Message = err.Error()
@@ -200,7 +199,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		auditLogModel.ExternalMessageId = smsGuid
 	}
 
-	auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
+	auditLog, err := HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
 		log.Error(err)
 		res.Message = err.Error()
@@ -220,18 +219,18 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		res.Message = err.Error()
 		return res, err
 	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, authUser.DatabaseEsIndex, authUser.TenantId); err != nil {
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, authUser.TenantId); err != nil {
 		log.Error(err)
 		res.Message = err.Error()
 		return res, err
 	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, authUser.DatabaseEsIndex, authUser.TenantId); err != nil {
+		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, authUser.TenantId); err != nil {
 			log.Error(err)
 			res.Message = err.Error()
 			return res, err
 		}
 	}
-	if err := repository.ESRepo.InsertLog(ctx, authUser.TenantId, authUser.DatabaseEsIndex, docId, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, authUser.TenantId, ES_INDEX, docId, esDoc); err != nil {
 		log.Error(err)
 		res.Message = err.Error()
 		return res, err
@@ -244,7 +243,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		Username:       authUser.Username,
 		Services:       authUser.Services,
 		DocId:          docId,
-		Index:          authUser.DatabaseEsIndex,
+		Index:          ES_INDEX,
 		UpdatedBy:      authUser.UserId,
 	}
 	// Check pool to delivery for channel or delivery to plugin immediately
@@ -266,7 +265,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 		}
 		return res, nil
 	} else if plugin == "fpt" {
-		accessToken, err := common.GetAccessTokenFpt(ctx, *routingConfig)
+		accessToken, err := GetAccessTokenFpt(ctx, *routingConfig)
 		if err != nil {
 			log.Error(err)
 			res.Message = err.Error()
@@ -295,7 +294,7 @@ func (s *InboxMarketing) SendInboxMarketing(ctx context.Context, authUser *model
 }
 
 func (s *InboxMarketing) GetReportInboxMarketing(ctx context.Context, authUser *model.AuthUser, filter model.InboxMarketingFilter, limit, offset int) (total int, result []model.InboxMarketingLogReport, err error) {
-	total, data, err := repository.InboxMarketingESRepo.GetReport(ctx, authUser.TenantId, authUser.DatabaseEsIndex, limit, offset, filter)
+	total, data, err := repository.InboxMarketingESRepo.GetReport(ctx, authUser.TenantId, ES_INDEX, limit, offset, filter)
 	if err != nil {
 		log.Error(err)
 		return 0, nil, err
@@ -322,7 +321,7 @@ func handleCheckNetworkWithRecipient(ctx context.Context, dbCon sqlclient.ISqlCl
 			if recipientConfig.Recipient == network {
 				ok = true
 			}
-			cache.NewMemCache().Set(RECIPIENT_NETWORK+"_"+recipientUuid, recipientConfig, common.EXPIRE_RECIPIENT)
+			cache.NewMemCache().Set(RECIPIENT_NETWORK+"_"+recipientUuid, recipientConfig, EXPIRE_RECIPIENT)
 			return ok
 		}
 		return !ok

@@ -16,7 +16,6 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
@@ -43,7 +42,7 @@ func (s *InboxMarketingIncom) WebhookReceiveStatus(ctx context.Context, routingC
 	// 	return response.ServiceUnavailableMsg(err.Error())
 	// }
 	cache.NewMemCache().Set(HOOK_INCOM+"_"+pluginId, pluginId, TTL_HOOK_INCOM)
-	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, authUser.TenantId, authUser.DatabaseEsIndex, data.IdOmniMess)
+	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, authUser.TenantId, ES_INDEX, data.IdOmniMess)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -85,7 +84,7 @@ func (s *InboxMarketingIncom) WebhookReceiveStatus(ctx context.Context, routingC
 		Code:              0,
 		CountAction:       logWebhookExist.CountAction + 1,
 	}
-	logAction, err := common.HandleAuditLogInboxMarketing(auditLogModel)
+	logAction, err := HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -102,7 +101,7 @@ func (s *InboxMarketingIncom) WebhookReceiveStatus(ctx context.Context, routingC
 			TelcoId:      telcoStr,
 			IsChargedZns: data.IsChargedZns,
 		}
-		errArr := common.HandleWebhook(ctx, *routingConfig, dataHook)
+		errArr := HandleWebhook(ctx, *routingConfig, dataHook)
 		if len(errArr) > 0 {
 			return errors.New("send hook error")
 		}
@@ -119,7 +118,7 @@ func (s *InboxMarketingIncom) WebhookReceiveStatus(ctx context.Context, routingC
 		return err
 	}
 
-	if err := repository.ESRepo.UpdateDocById(ctx, authUser.DatabaseEsIndex, logWebhookExist.Id, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, logWebhookExist.Id, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -137,7 +136,7 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 	dataUpdate := map[string]any{}
 	time.Sleep(3 * time.Second)
 	// Find in ES to avoid 404 not found
-	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, authUser.TenantId, authUser.DatabaseEsIndex, inboxMarketingBasic.DocId)
+	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, authUser.TenantId, ES_INDEX, inboxMarketingBasic.DocId)
 	if err != nil {
 		return res, err
 	} else if len(dataExist.Id) < 1 {
@@ -147,7 +146,7 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 	if err != nil {
 		return res, err
 	}
-	statusCode, result, err := common.HandleDeliveryMessageIncom(ctx, inboxMarketingBasic.DocId, routingConfig, template.TemplateCode, inboxMarketing, inboxMarketingRequest)
+	statusCode, result, err := HandleDeliveryMessageIncom(ctx, inboxMarketingBasic.DocId, routingConfig, template.TemplateCode, inboxMarketing, inboxMarketingRequest)
 	if err != nil {
 		return res, err
 	} else if statusCode != 200 {
@@ -182,7 +181,7 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 		CountAction:       countAction,
 		UpdatedBy:         inboxMarketingBasic.UpdatedBy,
 	}
-	auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
+	auditLog, err := HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
 		return res, err
 	}
@@ -204,7 +203,7 @@ func HandleMainInboxMarketingIncom(ctx context.Context, dbCon sqlclient.ISqlClie
 }
 
 func GetTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, id string) (*model.TemplateBss, error) {
-	templateCache := cache.NewMemCache().Get(common.INFO_TEMPLATE + "_" + id)
+	templateCache := cache.NewMemCache().Get(INFO_TEMPLATE + "_" + id)
 	if templateCache != nil {
 		template := templateCache.(*model.TemplateBss)
 		return template, nil
@@ -213,7 +212,7 @@ func GetTemplate(ctx context.Context, dbCon sqlclient.ISqlClientConn, id string)
 		if err != nil {
 			return nil, err
 		}
-		cache.NewMemCache().Set(common.INFO_TEMPLATE+"_"+id, template, common.EXPIRE_TEMPLATE)
+		cache.NewMemCache().Set(INFO_TEMPLATE+"_"+id, template, EXPIRE_TEMPLATE)
 		return template, nil
 	}
 }

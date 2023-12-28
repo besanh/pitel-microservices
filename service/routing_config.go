@@ -10,7 +10,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
@@ -44,7 +43,7 @@ func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model
 	}
 
 	if data.RoutingFlow.FlowType == "recipient" {
-		ok, err := common.CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		ok, err := CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -56,7 +55,7 @@ func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model
 	}
 
 	if data.RoutingFlow.FlowType == "balance" {
-		ok, err := common.CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		ok, err := CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -121,7 +120,7 @@ func (s *RoutingConfig) PutRoutingConfigById(ctx context.Context, authUser *mode
 	}
 
 	if data.RoutingFlow.FlowType == "recipient" {
-		ok, err := common.CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		ok, err := CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -133,7 +132,7 @@ func (s *RoutingConfig) PutRoutingConfigById(ctx context.Context, authUser *mode
 	}
 
 	if data.RoutingFlow.FlowType == "balance" {
-		ok, err := common.CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
+		ok, err := CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
 			return err

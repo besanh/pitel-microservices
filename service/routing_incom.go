@@ -1,4 +1,4 @@
-package common
+package service
 
 import (
 	"context"
@@ -89,7 +89,7 @@ func HandleGetStatusMessage(ctx context.Context, dbCon sqlclient.ISqlClientConn,
 		return model.InboxMarketingLogInfo{}, err
 	}
 	log.Info("HandleGetStatusMessage", *result)
-	logExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, authUser.TenantId, authUser.DatabaseEsIndex, docId)
+	logExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, authUser.TenantId, ES_INDEX, docId)
 	if err != nil {
 		return model.InboxMarketingLogInfo{}, err
 	} else if len(logExist.Id) < 1 {

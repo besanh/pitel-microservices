@@ -12,7 +12,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
@@ -40,7 +39,7 @@ func (s *InboxMarketingAbenla) WebhookReceiveSmsStatus(ctx context.Context, auth
 	// }
 
 	// Update ES
-	logExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, authUser.TenantId, authUser.DatabaseEsIndex, data.SmsGuid)
+	logExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, authUser.TenantId, ES_INDEX, data.SmsGuid)
 	if err != nil {
 		log.Error(err)
 		return response.ResponseXml("Status", "1")
@@ -61,7 +60,7 @@ func (s *InboxMarketingAbenla) WebhookReceiveSmsStatus(ctx context.Context, auth
 		Code:              0,
 		CountAction:       logExist.CountAction + 1,
 	}
-	logAction, err := common.HandleAuditLogInboxMarketing(auditLogModel)
+	logAction, err := HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
 		log.Error(err)
 		return response.ResponseXml("Status", "1")
@@ -75,7 +74,7 @@ func (s *InboxMarketingAbenla) WebhookReceiveSmsStatus(ctx context.Context, auth
 			Id:     data.SmsGuid,
 			Status: status,
 		}
-		errArr := common.HandleWebhook(ctx, routingConfig, dataHook)
+		errArr := HandleWebhook(ctx, routingConfig, dataHook)
 		if len(errArr) > 0 {
 			log.Error(err)
 			return response.ResponseXml("Status", "1")
@@ -112,7 +111,7 @@ func (s *InboxMarketingAbenla) WebhookReceiveSmsStatus(ctx context.Context, auth
 		log.Error(err)
 		return response.ResponseXml("Status", "1")
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, authUser.DatabaseEsIndex, logExist.Id, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, logExist.Id, esDoc); err != nil {
 		log.Error(err)
 		return response.ResponseXml("Status", "1")
 	}
@@ -129,7 +128,7 @@ func HandleMainInboxMarketingAbenla(ctx context.Context, authUser *model.AuthUse
 	}
 	dataUpdate := map[string]any{}
 
-	statusCode, result, err := common.HandleDeliveryMessageAbenla(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest)
+	statusCode, result, err := HandleDeliveryMessageAbenla(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest)
 	if err != nil {
 		return res, err
 	} else if statusCode != 200 {
@@ -150,7 +149,7 @@ func HandleMainInboxMarketingAbenla(ctx context.Context, authUser *model.AuthUse
 	// }
 
 	// Find in ES to avoid 404 not found
-	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, inboxMarketingBasic.TenantId, authUser.DatabaseEsIndex, inboxMarketingBasic.Id)
+	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, inboxMarketingBasic.TenantId, ES_INDEX, inboxMarketingBasic.Id)
 	if err != nil {
 		return res, err
 	} else if len(dataExist.Id) < 1 {
@@ -178,7 +177,7 @@ func HandleMainInboxMarketingAbenla(ctx context.Context, authUser *model.AuthUse
 		CountAction:       2,
 		UpdatedBy:         inboxMarketingBasic.UpdatedBy,
 	}
-	auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
+	auditLog, err := HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
 		return res, err
 	}

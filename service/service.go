@@ -21,6 +21,12 @@ var (
 	MapDBConn        map[string]sqlclient.ISqlClientConn
 	ERR_EMPTY_CONN   = errors.New("empty_conn")
 	ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
+
+	// ES
+	ES_HOST     = "https://es.dev.fins.vn"
+	ES_USERNAME = "elastic"
+	ES_PASSWORD = "FinS##TEL4VN##ES#!2324"
+	ES_INDEX    = "pitel_bss_inbox_marketing"
 )
 
 type DBConfig struct {
