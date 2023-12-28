@@ -13,12 +13,9 @@ type (
 		IncomWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookIncom) (int, any)
 	}
 	Webhook struct {
-		Index string
 	}
 )
 
-func NewWebhook(index string) IWebhook {
-	return &Webhook{
-		Index: index,
-	}
+func NewWebhook() IWebhook {
+	return &Webhook{}
 }

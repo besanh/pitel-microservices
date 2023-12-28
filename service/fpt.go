@@ -60,7 +60,7 @@ func (s *Webhook) FptWebhook(ctx context.Context, routingConfigUuid string, data
 	}
 
 	externalMessageId := strconv.Itoa(data.SmsId)
-	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, externalMessageId)
+	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, externalMessageId)
 	if err != nil {
 		log.Error(err)
 		return response.OK(map[string]any{
@@ -122,7 +122,7 @@ func (s *Webhook) FptWebhook(ctx context.Context, routingConfigUuid string, data
 		})
 	}
 
-	if err := repository.ESRepo.UpdateDocById(ctx, s.Index, logWebhookExist.Id, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, logWebhookExist.Id, esDoc); err != nil {
 		log.Error(err)
 		return response.OK(map[string]any{
 			"status": 0,

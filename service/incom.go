@@ -61,7 +61,7 @@ func (s *Webhook) IncomWebhook(ctx context.Context, routingConfigUuid string, da
 		routingConfig = *routing
 	}
 
-	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, data.IdOmniMess)
+	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, data.IdOmniMess)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -77,6 +77,7 @@ func (s *Webhook) IncomWebhook(ctx context.Context, routingConfigUuid string, da
 	logWebhookExist.StatusHook = strings.ToLower(data.Status)
 	channel := strings.ToLower(data.Channel)
 	logWebhookExist.ChannelHook = strings.ReplaceAll(channel, "brandnamesms", "sms")
+	logWebhookExist.StatusHook = strings.ToLower(data.Status)
 	logWebhookExist.ErrorCode = data.ErrorCode
 	logWebhookExist.Quantity = data.Quantity
 	logWebhookExist.TelcoId = telcoStr
@@ -116,7 +117,7 @@ func (s *Webhook) IncomWebhook(ctx context.Context, routingConfigUuid string, da
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	if err := repository.ESRepo.UpdateDocById(ctx, s.Index, logWebhookExist.Id, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, logWebhookExist.Id, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}

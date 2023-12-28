@@ -121,9 +121,8 @@ func main() {
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.InitServices()
 
-	esIndex = env.GetStringENV("es_index", "pitel_bss_inbox_marketing")
 	// Run gRPC server
-	server.NewGRPCServer(config.gRPCPort, esIndex)
+	server.NewGRPCServer(config.gRPCPort)
 }
 
 func setAppLogger(cfg Config, file *os.File) {

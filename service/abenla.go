@@ -54,7 +54,7 @@ func (s *Webhook) AbenlaWebhook(ctx context.Context, routingConfigUuid string, d
 		routingConfig = *routing
 	}
 
-	logExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, data.SmsGuid)
+	logExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, data.SmsGuid)
 	if err != nil {
 		log.Error(err)
 		return response.ResponseXml("Status", statusCode)
