@@ -13,10 +13,12 @@ import (
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	v1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
+	"github.com/tel4vn/fins-microservices/service"
 
 	authMiddleware "github.com/tel4vn/fins-microservices/middleware/auth"
 	"golang.org/x/net/http2"
@@ -79,6 +81,7 @@ func NewGRPCServer(port string) {
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
 	httpServer.Group("collection/*{grpc_gateway}").Any("", gin.WrapH(mux))
+	v1.NewOtt(httpServer, service.NewOtt())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

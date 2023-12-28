@@ -2,10 +2,13 @@ package auth
 
 import (
 	"context"
+	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -111,8 +114,27 @@ func ParseHeaderToUserDev(ctx context.Context) *model.AuthUser {
 		Services:         []string{},
 		DatabaseName:     "dev_fins_collection",
 		DatabasePort:     5432,
-		DatabaseHost:     "42.96.44.195",
-		DatabaseUser:     "tel4vnDBAdmin",
-		DatabasePassword: "Tel4vn@PsWrd#202399",
+		DatabaseHost:     "103.56.162.66",
+		DatabaseUser:     "fins_api",
+		DatabasePassword: "FinS#1D1B1#!2023",
 	}
+}
+
+// Authorization unary interceptor function to handle authorize per RPC call
+func GRPCAuthInterceptor(ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (interface{}, error) {
+	log.Infof("method name: %s", info.FullMethod)
+	start := time.Now()
+	if util.InArrayContains(info.FullMethod, []string{"proto.inbox_marketing_incom"}) {
+		ctx = context.WithValue(ctx, AUTHENTICATED, true)
+	}
+	h, err := handler(ctx, req)
+	logrus.WithFields(logrus.Fields{
+		"method":  info.FullMethod,
+		"latency": time.Since(start).Microseconds(),
+		"error":   err,
+	}).Info("gRPC Request")
+	return h, err
 }

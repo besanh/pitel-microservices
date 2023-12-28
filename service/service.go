@@ -17,7 +17,15 @@ func InitServices() {
 }
 
 // MAP TENANT_ID SQL_CONN
-var MapDBConn map[string]sqlclient.ISqlClientConn
+var (
+	MapDBConn map[string]sqlclient.ISqlClientConn
+
+	// ES
+	ES_HOST     = "https://es.dev.fins.vn"
+	ES_USERNAME = "elastic"
+	ES_PASSWORD = "FinS##TEL4VN##ES#!2324"
+	ES_INDEX    = "pitel_bss_chat"
+)
 
 type DBConfig struct {
 	Host     string

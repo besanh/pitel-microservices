@@ -12,6 +12,8 @@ import (
 
 const MAX_LIMIT = 50_000
 
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+
 func ParseLimit(limit any) int {
 	var val = 10
 	var err error
@@ -59,18 +61,6 @@ func ParseInt(s string) int {
 }
 
 func ParseAnyToString(value any) (string, error) {
-	ref := reflect.ValueOf(value)
-	if ref.Kind() == reflect.String {
-		return value.(string), nil
-	} else if InArray(ref.Kind(), []reflect.Kind{reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64}) {
-		return fmt.Sprintf("%d", value), nil
-	} else if InArray(ref.Kind(), []reflect.Kind{reflect.Float32, reflect.Float64}) {
-		return fmt.Sprintf("%f", value), nil
-	} else if ref.Kind() == reflect.Bool {
-		return fmt.Sprintf("%t", value), nil
-	} else if ref.Kind() == reflect.Slice {
-		return fmt.Sprintf("%v", value), nil
-	}
 	bytes, err := json.Marshal(value)
 	if err != nil {
 		return "", err
@@ -124,12 +114,35 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
-
 func GenerateRandomString(n int) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+func ParseToAnyArray(value []string) []any {
+	result := make([]any, 0)
+	for _, v := range value {
+		result = append(result, v)
+	}
+	return result
+}
+
+func TimeToString(valueTime time.Time) string {
+	return TimeToStringLayout(valueTime, "2006-01-02 15:04:05")
+}
+
+func TimeToStringLayout(valueTime time.Time, layout string) string {
+	return valueTime.Format(layout)
+}
+
+func InArrayContains(item string, array []string) bool {
+	for _, v := range array {
+		if strings.Contains(item, v) {
+			return true
+		}
+	}
+	return false
 }
