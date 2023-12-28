@@ -107,20 +107,16 @@ func GetFirstOfSlices(s []string) string {
 // DATABASE_PASSWORD = Tel4vn@PsWrd#202399
 func ParseHeaderToUserDev(ctx context.Context) *model.AuthUser {
 	return &model.AuthUser{
-		TenantId:           "8d264455-956c-4450-9338-673748fc07aa",
-		BusinessUnitId:     "d7ee56b1-dc9d-4e23-9847-9c99c6361137",
-		UserId:             "4755c226-f404-4df9-9b4c-27fddf7d1418",
-		Username:           "fins_dev",
-		Services:           []string{},
-		DatabaseName:       "dev_fins_collection",
-		DatabasePort:       5432,
-		DatabaseHost:       "103.56.162.66",
-		DatabaseUser:       "fins_api",
-		DatabasePassword:   "FinS#1D1B1#!2023",
-		DatabaseEsHost:     "http://113.164.246.12:9200",
-		DatabaseEsUser:     "elastic",
-		DatabaseEsPassword: "tel4vnEs2021",
-		DatabaseEsIndex:    "pitel_bss_inbox_marketing",
+		TenantId:         "8d264455-956c-4450-9338-673748fc07aa",
+		BusinessUnitId:   "d7ee56b1-dc9d-4e23-9847-9c99c6361137",
+		UserId:           "4755c226-f404-4df9-9b4c-27fddf7d1418",
+		Username:         "fins_dev",
+		Services:         []string{},
+		DatabaseName:     "dev_fins_collection",
+		DatabasePort:     5432,
+		DatabaseHost:     "103.56.162.66",
+		DatabaseUser:     "fins_api",
+		DatabasePassword: "FinS#1D1B1#!2023",
 	}
 }
 

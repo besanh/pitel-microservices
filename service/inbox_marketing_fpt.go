@@ -11,7 +11,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
@@ -25,7 +24,7 @@ func NewInboxMarketingFpt() IInboxMarketingFpt {
 
 func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, inboxMarketingBasic model.InboxMarketingBasic, routingConfig model.RoutingConfig, inboxMarketing model.InboxMarketingLogInfo, inboxMarketingRequest model.InboxMarketingRequest, fpt model.FptRequireRequest) (model.ResponseInboxMarketing, error) {
 	dataUpdate := map[string]any{}
-	statusCode, result, resultFpt, err := common.HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
+	statusCode, result, resultFpt, err := HandleDeliveryMessageFpt(ctx, inboxMarketingBasic.DocId, routingConfig, inboxMarketingRequest, fpt)
 	if err != nil {
 		log.Error(err)
 		return *result, err
@@ -34,7 +33,7 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 	}
 
 	// Find in ES to avoid 404 not found
-	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, inboxMarketingBasic.TenantId, authUser.DatabaseEsIndex, inboxMarketingBasic.DocId)
+	dataExist, err := repository.InboxMarketingESRepo.GetDocById(ctx, inboxMarketingBasic.TenantId, ES_INDEX, inboxMarketingBasic.DocId)
 	if err != nil {
 		return *result, err
 	} else if len(dataExist.Id) < 1 {
@@ -64,7 +63,7 @@ func HandleMainInboxMarketingFpt(ctx context.Context, authUser *model.AuthUser, 
 		CountAction:       2,
 		UpdatedBy:         inboxMarketingBasic.UpdatedBy,
 	}
-	auditLog, err := common.HandleAuditLogInboxMarketing(auditLogModel)
+	auditLog, err := HandleAuditLogInboxMarketing(auditLogModel)
 	if err != nil {
 		return *result, err
 	}

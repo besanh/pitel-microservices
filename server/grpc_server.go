@@ -59,11 +59,6 @@ func NewGRPCServer(port string) {
 			grpcMiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
 		),
 	)
-	grpcServerWebhook := grpc.NewServer(
-		grpc.UnaryInterceptor(
-			grpcMiddleware.ChainUnaryServer(authMiddleware.GRPCAuthInterceptor, grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
-		),
-	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
 	pbPluginConfig.RegisterPluginConfigServer(grpcServer, grpcService.NewGRPCPluginConfig())
 	pbRecipientConfig.RegisterRecipientConfigServer(grpcServer, grpcService.NewGRPCRecipientConfig())
@@ -72,7 +67,6 @@ func NewGRPCServer(port string) {
 	pbRoutingConfig.RegisterRoutingConfigServer(grpcServer, grpcService.NewGRPCRoutingConfig())
 	pbInboxMarketing.RegisterInboxMarketingServiceServer(grpcServer, grpcService.NewGRPCInboxMarketing())
 	pbExternalPluginConnect.RegisterExternalPluginConnectServiceServer(grpcServer, grpcService.NewGRPCExternalPluginConnect())
-	pbInboxMarketingIncom.RegisterIncomServiceServer(grpcServerWebhook, grpcService.NewGRPCInboxMarketingIncom())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 

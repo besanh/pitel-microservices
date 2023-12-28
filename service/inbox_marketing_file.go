@@ -16,7 +16,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -27,7 +26,7 @@ type ResponseExportFile struct {
 }
 
 func (s *InboxMarketing) PostExportReportInboxMarketing(ctx context.Context, authUser *model.AuthUser, fileType string, filter model.InboxMarketingFilter) (int, any) {
-	total, _, err := repository.InboxMarketingESRepo.GetReport(ctx, authUser.TenantId, authUser.DatabaseEsIndex, -1, 0, filter)
+	total, _, err := repository.InboxMarketingESRepo.GetReport(ctx, authUser.TenantId, ES_INDEX, -1, 0, filter)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -37,15 +36,15 @@ func (s *InboxMarketing) PostExportReportInboxMarketing(ctx context.Context, aut
 	timeStr := util.TimeToStringLayout(time.Now(), "2006_01_02_15_04_05")
 	exportName := "Report_Inbox_Marketing_" + timeStr + "." + fileType
 	exportMap := []string{exportName, util.TimeToString(time.Now()), "", "0", "In Progress", authUser.TenantId, "inbox_marketing"}
-	if err := common.SetExportValue(authUser.TenantId, exportName, exportMap); err != nil {
+	if err := SetExportValue(authUser.TenantId, exportName, exportMap); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	switch fileType {
 	case "csv":
-		go s.generateCSVReportInboxMarketing(authUser.TenantId, authUser.DatabaseEsIndex, exportName, exportMap, filter)
+		go s.generateCSVReportInboxMarketing(authUser.TenantId, ES_INDEX, exportName, exportMap, filter)
 	case "xlsx":
-		go s.generateExcelReportInboxMarketing(authUser.TenantId, authUser.DatabaseEsIndex, exportName, exportMap, filter)
+		go s.generateExcelReportInboxMarketing(authUser.TenantId, ES_INDEX, exportName, exportMap, filter)
 	}
 
 	return response.Created(map[string]any{
@@ -73,7 +72,7 @@ func (s *InboxMarketing) generateCSVReportInboxMarketing(tenantId, index, export
 		log.Error(errExport)
 		exportMap[3] = util.TimeToString(time.Now())
 		exportMap[4] = "Error"
-		if err := common.SetExportValue(tenantId, exportName, exportMap); err != nil {
+		if err := SetExportValue(tenantId, exportName, exportMap); err != nil {
 			log.Error(err)
 			return
 		}
@@ -99,7 +98,7 @@ func (s *InboxMarketing) generateCSVReportInboxMarketing(tenantId, index, export
 	exportMap[2] = util.TimeToString(time.Now())
 	exportMap[3] = fmt.Sprintf("%d", total)
 	exportMap[4] = "Done"
-	if err := common.SetExportValue(tenantId, exportName, exportMap); err != nil {
+	if err := SetExportValue(tenantId, exportName, exportMap); err != nil {
 		log.Error(err)
 		return
 	}
@@ -139,7 +138,7 @@ func (s *InboxMarketing) generateExcelReportInboxMarketing(tenantId, index, expo
 	exportMap[2] = util.TimeToString(time.Now())
 	exportMap[3] = fmt.Sprintf("%d", total)
 	exportMap[4] = "Done"
-	if err := common.SetExportValue(tenantId, exportName, exportMap); err != nil {
+	if err := SetExportValue(tenantId, exportName, exportMap); err != nil {
 		log.Error(err)
 		return
 	}
@@ -152,7 +151,7 @@ func (s *InboxMarketing) handleProcessDataExcelize(tenantId, index, exportName s
 	if err != nil {
 		exportMap[2] = util.TimeToString(time.Now())
 		exportMap[4] = "Error"
-		if err := common.SetExportValue(tenantId, exportName, exportMap); err != nil {
+		if err := SetExportValue(tenantId, exportName, exportMap); err != nil {
 			log.Error(err)
 			return nil, total, err
 		}
@@ -178,7 +177,7 @@ func (s *InboxMarketing) handleProcessDataExcelize(tenantId, index, exportName s
 		if err != nil {
 			exportMap[3] = util.TimeToString(time.Now())
 			exportMap[4] = "Error"
-			if err := common.SetExportValue(tenantId, exportName, exportMap); err != nil {
+			if err := SetExportValue(tenantId, exportName, exportMap); err != nil {
 				log.Error(err)
 				return nil, total, err
 			}
@@ -191,7 +190,7 @@ func (s *InboxMarketing) handleProcessDataExcelize(tenantId, index, exportName s
 		percentComplete := (float64(filter.Offset) / float64(total)) * 100
 		exportMap[3] = fmt.Sprintf("%d", total)
 		exportMap[4] = "In Progress (" + fmt.Sprintf("%.2f", percentComplete) + "%)"
-		if err := common.SetExportValue(tenantId, exportName, exportMap); err != nil {
+		if err := SetExportValue(tenantId, exportName, exportMap); err != nil {
 			log.Error(err)
 			return nil, total, err
 		}

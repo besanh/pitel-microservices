@@ -1,4 +1,4 @@
-package common
+package service
 
 import (
 	"context"
@@ -105,15 +105,15 @@ func HandlePushRMQ(ctx context.Context, index, docId string, authUser *model.Aut
 	if err != nil {
 		return err
 	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, authUser.DatabaseEsIndex, authUser.TenantId); err != nil {
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, authUser.TenantId); err != nil {
 		return err
 	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, authUser.DatabaseEsIndex, authUser.TenantId); err != nil {
+		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, authUser.TenantId); err != nil {
 			return err
 		}
 	}
 
-	_, err = repository.ESRepo.CreateDocRabbitMQ(ctx, authUser.DatabaseEsIndex, authUser.TenantId, authUser.TenantId, docId, esDoc)
+	_, err = repository.ESRepo.CreateDocRabbitMQ(ctx, ES_INDEX, authUser.TenantId, authUser.TenantId, docId, esDoc)
 	if err != nil {
 		return err
 	}
