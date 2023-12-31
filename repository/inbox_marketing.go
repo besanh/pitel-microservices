@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/tel4vn/fins-microservices/common/util"
-	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
+	elasticsearch "github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/model"
 )
 
@@ -64,7 +64,7 @@ func (repo *InboxMarketingES) GetDocById(ctx context.Context, tenantId, index, i
 	if err != nil {
 		return nil, err
 	}
-	client := ES.GetClient()
+	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
 		client.Search.WithIndex(index),
@@ -135,7 +135,7 @@ func (repo *InboxMarketingES) GetDocByRoutingExternalMessageId(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-	client := ES.GetClient()
+	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
 		client.Search.WithIndex(index),
@@ -217,7 +217,7 @@ func (repo *InboxMarketingES) GetLogCurrentDay(ctx context.Context, index, plugi
 	if err != nil {
 		return 0, nil, err
 	}
-	client := ES.GetClient()
+	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
 		client.Search.WithIndex(index),
@@ -362,7 +362,7 @@ func (repo *InboxMarketingES) GetReport(ctx context.Context, tenantId, index str
 	if err != nil {
 		return 0, nil, err
 	}
-	client := ES.GetClient()
+	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
 		client.Search.WithIndex(index),
