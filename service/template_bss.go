@@ -12,7 +12,7 @@ import (
 
 type (
 	ITemplateBss interface {
-		InsertTemplateBss(ctx context.Context, authUser *model.AuthUser, data model.TemplateBssBodyRequest) error
+		InsertTemplateBss(ctx context.Context, authUser *model.AuthUser, data model.TemplateBssBodyRequest) (string, error)
 		GetTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.TemplateBss, err error)
 		GetTemplateBsses(ctx context.Context, authUser *model.AuthUser, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error)
 		DeleteTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
@@ -25,10 +25,10 @@ func NewTemplateBss() ITemplateBss {
 	return &TemplateBss{}
 }
 
-func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.AuthUser, data model.TemplateBssBodyRequest) error {
+func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.AuthUser, data model.TemplateBssBodyRequest) (string, error) {
 	dbCon, err := GetDBConnOfUser(*authUser)
 	if err != nil {
-		return err
+		return "", err
 	}
 	filter := model.TemplateBssFilter{
 		TemplateCode: []string{data.TemplateCode},
@@ -37,15 +37,15 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 	total, _, err := repository.TemplateBssRepo.GetTemplateBsses(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return err
+		return "", err
 	}
 	if total > 0 {
-		return errors.New("template code is existed")
+		return "", errors.New("template code is existed")
 	}
 
 	partitionContents, checkWrongFormat := util.GetPartitionContentTemplate(data.Content)
 	if checkWrongFormat {
-		return errors.New("content wrong format")
+		return "", errors.New("content wrong format")
 	}
 	joinPart := util.GetJoinPartTemplate(partitionContents)
 	templateBss := model.TemplateBss{
@@ -60,10 +60,10 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 
 	if err := repository.TemplateBssRepo.Insert(ctx, dbCon, templateBss); err != nil {
 		log.Error(err)
-		return err
+		return "", err
 	}
 
-	return nil
+	return templateBss.Base.GetId(), nil
 }
 
 func (s *TemplateBss) GetTemplateBsses(ctx context.Context, authUser *model.AuthUser, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error) {

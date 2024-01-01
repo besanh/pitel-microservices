@@ -51,7 +51,7 @@ func (g *GRPCTemplateBss) PostTemplateBss(ctx context.Context, request *pb.Templ
 		return result, nil
 	}
 
-	err = service.NewTemplateBss().InsertTemplateBss(ctx, authUser, payload)
+	id, err := service.NewTemplateBss().InsertTemplateBss(ctx, authUser, payload)
 	if err != nil {
 		log.Error(err)
 		result = &pb.TemplateBssByIdResponse{
@@ -64,6 +64,7 @@ func (g *GRPCTemplateBss) PostTemplateBss(ctx context.Context, request *pb.Templ
 	result = &pb.TemplateBssByIdResponse{
 		Code:    "OK",
 		Message: "success",
+		Id:      id,
 	}
 
 	return result, nil

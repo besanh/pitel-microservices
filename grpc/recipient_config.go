@@ -26,7 +26,7 @@ func NewGRPCRecipientConfig() *GRPCRecipientConfig {
 	return &GRPCRecipientConfig{}
 }
 
-func (s *GRPCRecipientConfig) PostRecipientConfig(ctx context.Context, req *pb.RecipientConfigBodyRequest) (result *pb.RecipientConfigResponse, err error) {
+func (s *GRPCRecipientConfig) PostRecipientConfig(ctx context.Context, req *pb.RecipientConfigBodyRequest) (result *pb.RecipientConfigByIdResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -34,7 +34,7 @@ func (s *GRPCRecipientConfig) PostRecipientConfig(ctx context.Context, req *pb.R
 
 	var payload model.RecipientConfigRequest
 	if err := util.ParseAnyToAny(req, &payload); err != nil {
-		result = &pb.RecipientConfigResponse{
+		result = &pb.RecipientConfigByIdResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DATA_INVALID].Code,
 			Message: err.Error(),
 		}
@@ -44,25 +44,27 @@ func (s *GRPCRecipientConfig) PostRecipientConfig(ctx context.Context, req *pb.R
 
 	if err := payload.Validate(); err != nil {
 		log.Error(err)
-		result = &pb.RecipientConfigResponse{
+		result = &pb.RecipientConfigByIdResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DATA_INVALID].Code,
 			Message: err.Error(),
 		}
 		return result, nil
 	}
 
-	if err := service.NewRecipientConfig().InsertRecipientConfig(ctx, authUser, payload); err != nil {
+	id, err := service.NewRecipientConfig().InsertRecipientConfig(ctx, authUser, payload)
+	if err != nil {
 		log.Error(err)
-		result = &pb.RecipientConfigResponse{
+		result = &pb.RecipientConfigByIdResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DATA_INVALID].Code,
 			Message: err.Error(),
 		}
 		return result, nil
 	}
 
-	result = &pb.RecipientConfigResponse{
+	result = &pb.RecipientConfigByIdResponse{
 		Code:    "OK",
 		Message: "success",
+		Id:      id,
 	}
 	return result, nil
 }

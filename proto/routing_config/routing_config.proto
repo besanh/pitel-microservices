@@ -100,6 +100,7 @@ message RoutingConfigByIdResponse {
     string code = 1;
     string message = 2;
     google.protobuf.Struct data = 3;
+    string id = 4;
 }
 
 message RoutingConfigResponseData {
