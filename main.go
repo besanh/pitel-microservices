@@ -94,8 +94,6 @@ func init() {
 		RetryStatuses:         []int{502, 503, 504},
 	}
 	repository.ESClient = elasticsearch.NewElasticsearchClient(esCfg)
-	repository.ES = elasticsearch.NewES(esCfg)
-	repository.ES.Ping()
 
 	cache.NewMemCache()
 	// goauth.GoAuthClient = goauth.NewGoAuth(redis.Redis.GetClient())

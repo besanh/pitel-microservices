@@ -48,7 +48,7 @@ func (repo *InboxMarketingES) GetDocByRoutingExternalMessageId(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-	client := ES.GetClient()
+	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
 		client.Search.WithIndex(index),
@@ -126,7 +126,7 @@ func (repo *InboxMarketingES) GetDocById(ctx context.Context, index, id string) 
 	if err != nil {
 		return nil, err
 	}
-	client := ES.GetClient()
+	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
 		client.Search.WithIndex(index),

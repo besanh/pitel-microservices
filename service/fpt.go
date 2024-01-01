@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -29,36 +28,7 @@ var (
 	TTL_HOOK_FPT = 1 * time.Minute
 )
 
-func (s *Webhook) FptWebhook(ctx context.Context, routingConfigUuid string, data model.FptWebhook) (int, any) {
-	routingConfig := model.RoutingConfig{}
-	// Caching
-	routingConfigCache := cache.NewMemCache().Get(INFO_ROUTING + "_" + routingConfigUuid)
-	if routingConfigCache != nil {
-		routing, ok := routingConfigCache.(*model.RoutingConfig)
-		if !ok {
-			log.Info("routing not found in system")
-			return response.OK(map[string]any{
-				"status": 0,
-			})
-		}
-		routingConfig = *routing
-	} else {
-		routing, err := repository.RoutingConfigRepo.GetRoutingConfigById(ctx, routingConfigUuid)
-		if err != nil {
-			log.Error(err)
-			return response.OK(map[string]any{
-				"status": 0,
-			})
-		} else if routing == nil {
-			log.Info("routing not found in system")
-			return response.OK(map[string]any{
-				"status": 0,
-			})
-		}
-		cache.NewMemCache().Set(INFO_ROUTING+"_"+routingConfigUuid, routingConfig, EXPIRE_EXTERNAL_ROUTING)
-		routingConfig = *routing
-	}
-
+func (s *Webhook) FptWebhook(ctx context.Context, data model.FptWebhook) (int, any) {
 	externalMessageId := strconv.Itoa(data.SmsId)
 	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, externalMessageId)
 	if err != nil {
@@ -128,9 +98,6 @@ func (s *Webhook) FptWebhook(ctx context.Context, routingConfigUuid string, data
 			"status": 0,
 		})
 	}
-
-	// Set cache
-	cache.NewMemCache().Set(HOOK_FPT+"_"+routingConfigUuid, routingConfig, TTL_HOOK_FPT)
 
 	return response.OK(map[string]any{
 		"status": 1,

@@ -1,14 +1,16 @@
 package elasticsearch
 
 import (
-	"context"
+	"bytes"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
-	"strings"
-	"time"
 
-	elastic "github.com/olivere/elastic/v7"
+	"github.com/elastic/go-elasticsearch/esapi"
+	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	log "github.com/sirupsen/logrus"
+	"github.com/tel4vn/fins-microservices/common/util"
 )
 
 type Config struct {
@@ -18,7 +20,6 @@ type Config struct {
 	RetryStatuses         []int
 	MaxRetries            int
 	ResponseHeaderTimeout int
-	Index                 string
 }
 
 type Response struct {
@@ -28,39 +29,41 @@ type Response struct {
 }
 
 type IElasticsearchClient interface {
-	GetClient() *elastic.Client
+	GetClient() *elasticsearch.Client
 }
 
-type ElasticsearchClient struct {
+type elasticsearchClient struct {
 	config Config
-	client *elastic.Client
+	client *elasticsearch.Client
 }
 
 func NewElasticsearchClient(config Config) IElasticsearchClient {
-	es := &ElasticsearchClient{
+	es := &elasticsearchClient{
 		config: config,
 	}
 	if err := es.Connect(); err != nil {
 		log.Fatal(err)
 		return nil
 	}
-	if err := es.Ping(); err != nil {
-		log.Fatal(err)
+	_, err := es.GetClient().Ping()
+	if err != nil {
+		log.Fatal("Elasticsearch connection failed")
 		return nil
+	} else {
+		log.Info("Elasticsearch connection successful")
 	}
 	return es
 }
 
-func (e *ElasticsearchClient) Connect() error {
-	client, err := elastic.NewClient(
-		elastic.SetBasicAuth(e.config.Username, e.config.Password),
-		elastic.SetURL(strings.Join(e.config.Host[:], ",")),
-		elastic.SetSniff(false),
-		elastic.SetRetryStatusCodes(e.config.RetryStatuses...),
-		elastic.SetMaxRetries(e.config.MaxRetries),
-		elastic.SetHealthcheck(true),
-		elastic.SetHealthcheckInterval(time.Duration(e.config.ResponseHeaderTimeout)*time.Second),
-		elastic.SetHealthcheckTimeout(time.Duration(e.config.ResponseHeaderTimeout)*time.Second),
+func (e *elasticsearchClient) Connect() error {
+	client, err := elasticsearch.NewClient(
+		elasticsearch.Config{
+			Addresses:     e.config.Host,
+			Username:      e.config.Username,
+			Password:      e.config.Password,
+			RetryOnStatus: e.config.RetryStatuses,
+			MaxRetries:    e.config.MaxRetries,
+		},
 	)
 	if err != nil {
 		return err
@@ -69,19 +72,178 @@ func (e *ElasticsearchClient) Connect() error {
 	return nil
 }
 
-func (e *ElasticsearchClient) GetClient() *elastic.Client {
+func (e *elasticsearchClient) GetClient() *elasticsearch.Client {
 	return e.client
 }
-
-func (e *ElasticsearchClient) Ping() error {
-	for _, hostUrl := range e.config.Host {
-		info, code, err := e.client.Ping(hostUrl).Do(context.Background())
-		if err != nil {
-			return err
-		} else if code != 200 {
-			return errors.New("elasticsearch ping fail")
-		}
-		log.Infof("Elasticsearch returned with code %d and version %s", code, info.Version.Number)
+func ParseAnyToAny(value any, dest any) error {
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(bytes, dest); err != nil {
+		return err
 	}
 	return nil
+}
+
+func DecodeAny(value io.Reader, dest any) error {
+	if err := json.NewDecoder(value).Decode(dest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func EncodeAny(value any) (bytes.Buffer, error) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(value); err != nil {
+		return buf, err
+	}
+	return buf, nil
+}
+
+func RangeQuery(field string, from, to any) map[string]any {
+	return map[string]any{
+		"range": map[string]any{
+			field: map[string]any{
+				"from":          from,
+				"to":            to,
+				"include_lower": true,
+				"include_upper": true,
+			},
+		},
+	}
+}
+func MatchQuery(field string, value any) map[string]any {
+	return map[string]any{
+		"match": map[string]any{
+			field: value,
+		},
+	}
+}
+
+func TermQuery(field string, value any) map[string]any {
+	return map[string]any{
+		"term": map[string]any{
+			field: map[string]any{
+				"value": value,
+			},
+		},
+	}
+}
+
+func TermsQuery(field string, values ...any) map[string]any {
+	arr := make([]any, 0)
+	if len(values) > 0 {
+		arr = append(arr, values...)
+	}
+	return map[string]any{
+		"terms": map[string]any{
+			field: arr,
+		},
+	}
+}
+
+func WildcardQuery(field string, value any) map[string]any {
+	return map[string]any{
+		"wildcard": map[string]any{
+			field: map[string]any{
+				"value": value,
+			},
+		},
+	}
+}
+
+func ShouldQuery(queries ...map[string]any) map[string]any {
+	return map[string]any{
+		"should": queries,
+	}
+}
+
+func BoolQuery(queries ...map[string]any) map[string]any {
+	query := map[string]any{
+		"bool": map[string]any{},
+	}
+	if len(queries) == 1 {
+		query["bool"] = queries[0]
+	} else if len(queries) > 1 {
+		var clauses []any
+		for _, subQuery := range queries {
+			clauses = append(clauses, subQuery)
+		}
+		query["bool"] = clauses
+	}
+	return query
+}
+
+func MustQuery(queries ...map[string]any) map[string]any {
+	query := map[string]any{
+		"must": map[string]any{},
+	}
+	if len(queries) == 1 {
+		query["must"] = queries[0]
+	} else if len(queries) > 1 {
+		var clauses []any
+		for _, subQuery := range queries {
+			clauses = append(clauses, subQuery)
+		}
+		query["must"] = clauses
+	}
+	return query
+}
+
+func Order(field string, isAsc bool) map[string]any {
+	order := "asc"
+	if !isAsc {
+		order = "desc"
+	}
+	return map[string]any{
+		field: map[string]any{
+			"order": order,
+		},
+	}
+}
+
+func ParseSearchResponse(response *esapi.Response) (*SearchReponse, error) {
+	if response.IsError() {
+		var e map[string]any
+		if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
+			return nil, err
+		} else {
+			typeErr, _ := e["error"].(map[string]any)["type"]
+			reason, _ := e["error"].(map[string]any)["reason"]
+			return nil, errors.New(util.ParseString(typeErr) + ":" + util.ParseString(reason))
+		}
+	}
+	result := SearchReponse{}
+	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+		return &result, err
+	}
+	return &result, nil
+}
+
+type SearchReponse struct {
+	Took     int  `json:"took"`
+	TimedOut bool `json:"timed_out"`
+	Shards   struct {
+		Total      int `json:"total"`
+		Successful int `json:"successful"`
+		Skipped    int `json:"skipped"`
+		Failed     int `json:"failed"`
+	} `json:"_shards"`
+	Hits struct {
+		Total struct {
+			Value    int    `json:"value"`
+			Relation string `json:"relation"`
+		} `json:"total"`
+		MaxScore interface{} `json:"max_score"`
+		Hits     []struct {
+			Index   string      `json:"_index"`
+			Type    string      `json:"_type"`
+			ID      string      `json:"_id"`
+			Score   interface{} `json:"_score"`
+			Routing string      `json:"_routing"`
+			Source  any         `json:"_source"`
+			Sort    []string    `json:"sort"`
+		} `json:"hits"`
+	} `json:"hits"`
 }
