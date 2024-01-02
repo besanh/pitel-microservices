@@ -13,8 +13,7 @@ const (
 
 func ValidHeader() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var header string
-		header = ctx.GetHeader("ICOMNI-Signature")
+		header := ctx.GetHeader("ICOMNI-Signature")
 		if len(header) > 0 {
 		} else if len(ctx.GetHeader("Authorization")) > 0 {
 			header = ctx.GetHeader("Authorization")
