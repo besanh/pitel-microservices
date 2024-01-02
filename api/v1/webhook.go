@@ -35,19 +35,35 @@ func (handler *Webhook) WebhookData(ctx *gin.Context) {
 		return
 	}
 	if ctx.Param("plugin") == "fpt" {
-		fpt := model.FptWebhook{}
-		if err := ctx.ShouldBindJSON(&fpt); err != nil {
+		jsonBody := make(map[string]any)
+		if err := ctx.ShouldBindJSON(&jsonBody); err != nil {
+			log.Error(err)
 			ctx.JSON(response.BadRequestMsg(err.Error()))
 			return
 		}
-		log.Info("webhook fpt", fpt)
+		log.Info("webhook fpt", jsonBody)
+
+		smsId, _ := jsonBody["smsId"].(int)
+		status, _ := jsonBody["Status"].(int)
+		telco, _ := jsonBody["Telco"].(string)
+		errorCode, _ := jsonBody["Error"].(string)
+		quantityTmp, _ := jsonBody["Quantity"].(int)
+		quantity := int(quantityTmp)
+		fpt := model.FptWebhook{
+			SmsId:   smsId,
+			Status:  status,
+			Telco:   telco,
+			Error:   errorCode,
+			MtCount: quantity,
+		}
+		log.Info("webhook fpt2", fpt)
 
 		code, result := handler.webhook.FptWebhook(ctx, fpt)
-
 		ctx.JSON(code, result)
 	} else if ctx.Param("plugin") == "incom" {
 		jsonBody := make(map[string]any)
 		if err := ctx.ShouldBindJSON(&jsonBody); err != nil {
+			log.Error(err)
 			ctx.JSON(response.BadRequestMsg(err))
 			return
 		}
@@ -76,7 +92,6 @@ func (handler *Webhook) WebhookData(ctx *gin.Context) {
 		}
 
 		code, result := handler.webhook.IncomWebhook(ctx, incomData)
-
 		ctx.JSON(code, result)
 	} else if ctx.Param("plugin") == "abenla" {
 		smsGuid := ctx.Query("SMSGUID")
