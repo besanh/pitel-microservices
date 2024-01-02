@@ -51,7 +51,7 @@ func (g *GRPCRoutingConfig) PostRoutingConfig(ctx context.Context, request *pb.R
 		return result, nil
 	}
 
-	err = service.NewRoutingConfig().InsertRoutingConfig(ctx, authUser, payload)
+	id, err := service.NewRoutingConfig().InsertRoutingConfig(ctx, authUser, payload)
 	if err != nil {
 		log.Error(err)
 		result = &pb.RoutingConfigByIdResponse{
@@ -64,6 +64,7 @@ func (g *GRPCRoutingConfig) PostRoutingConfig(ctx context.Context, request *pb.R
 	result = &pb.RoutingConfigByIdResponse{
 		Code:    "OK",
 		Message: "success",
+		Id:      id,
 	}
 
 	return result, nil

@@ -10,7 +10,7 @@ import "google/protobuf/struct.proto";
 import "buf/validate/validate.proto";
 
 message RecipientConfigBodyRequest {
-    repeated string recipient = 1;
+    string recipient = 1;
     string recipient_type = 2;
     string provider = 3;
     string priority = 4;
@@ -50,10 +50,11 @@ message RecipientConfigByIdResponse {
     string code = 1;
     string message = 2;
     google.protobuf.Struct data = 3;
+    string id = 4;
 }
 
 service RecipientConfig {
-    rpc PostRecipientConfig (RecipientConfigBodyRequest) returns (RecipientConfigResponse) {
+    rpc PostRecipientConfig (RecipientConfigBodyRequest) returns (RecipientConfigByIdResponse) {
         option (google.api.http) = {
             post : "/bss/v1/recipient-config",
             body: "*"

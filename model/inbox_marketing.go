@@ -36,13 +36,13 @@ func (r *InboxMarketingRequest) Validate() error {
 }
 
 type InboxMarketingLog struct {
-	bun.BaseModel  `bun:"inbox_marketing_log,alias:iml"`
-	Id             string `json:"id" bun:"id,type: uuid, default: uuid_generate_v4()"`
-	TenantId       string `json:"tenant_id" bun:"tenant_id,type:text,notnull"`
-	BusinessUnitId string `json:"business_unit_id" bun:"business_unit_id,type:text,notnull"`
-	UserId         string `json:"user_id" bun:"user_id,type:text,notnull"`
-	Username       string `json:"username" bun:"username,type:text,notnull"`
-	// Services          []string        `json:"services" bun:"services,type:text"`
+	bun.BaseModel     `bun:"inbox_marketing_log,alias:iml"`
+	Id                string          `json:"id" bun:"id,type: uuid, default: uuid_generate_v4()"`
+	TenantId          string          `json:"tenant_id" bun:"tenant_id,type:text,notnull"`
+	BusinessUnitId    string          `json:"business_unit_id" bun:"business_unit_id,type:text,notnull"`
+	UserId            string          `json:"user_id" bun:"user_id,type:text,notnull"`
+	Username          string          `json:"username" bun:"username,type:text,notnull"`
+	Services          []string        `json:"services" bun:"services,type:text"`
 	RoutingConfigUuid string          `json:"routing_config_uuid" bun:"routing_config_uuid,type:text"`
 	FlowType          string          `json:"flow_type" bun:"flow_type,type:text"`
 	FlowUuid          string          `json:"flow_uuid" bun:"flow_uuid,type:text"`

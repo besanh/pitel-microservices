@@ -127,7 +127,7 @@ func GRPCAuthInterceptor(ctx context.Context,
 	handler grpc.UnaryHandler) (interface{}, error) {
 	log.Infof("method name: %s", info.FullMethod)
 	start := time.Now()
-	if util.InArrayContains(info.FullMethod, []string{"proto.inbox_marketing_incom"}) {
+	if util.InArrayContains(info.FullMethod, []string{"proto.inbox_marketing_incom", "proto.inbox_marketing_abenla", "proto.inbox_marketing_fpt"}) {
 		ctx = context.WithValue(ctx, AUTHENTICATED, true)
 	}
 	h, err := handler(ctx, req)

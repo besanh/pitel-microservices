@@ -81,15 +81,13 @@ func init() {
 	})
 	esCfg := elasticsearch.Config{
 		Username:              env.GetStringENV("ES_USERNAME", "elastic"),
-		Password:              env.GetStringENV("ES_PASSWORD", "tel4vnEs2021"),
-		Host:                  []string{env.GetStringENV("ES_HOST", "http://113.164.246.12:9200")},
+		Password:              env.GetStringENV("ES_PASSWORD", "FinS##TEL4VN##ES#!2324"),
+		Host:                  []string{env.GetStringENV("ES_HOST", "https://es.dev.fins.vn")},
 		MaxRetries:            10,
 		ResponseHeaderTimeout: 60,
 		RetryStatuses:         []int{502, 503, 504},
 	}
 	repository.ESClient = elasticsearch.NewElasticsearchClient(esCfg)
-	repository.ES = elasticsearch.NewES(esCfg)
-	repository.ES.Ping()
 
 	cache.NewMemCache()
 

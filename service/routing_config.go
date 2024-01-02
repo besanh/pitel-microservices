@@ -14,7 +14,7 @@ import (
 
 type (
 	IRoutingConfig interface {
-		InsertRoutingConfig(ctx context.Context, authUser *model.AuthUser, data model.RoutingConfig) error
+		InsertRoutingConfig(ctx context.Context, authUser *model.AuthUser, data model.RoutingConfig) (string, error)
 		GetRoutingConfigs(ctx context.Context, authUser *model.AuthUser, filter model.RoutingConfigFilter, limit, offset int) (total int, result *[]model.RoutingConfigView, err error)
 		GetRoutingConfigById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.RoutingConfig, err error)
 		PutRoutingConfigById(ctx context.Context, authUser *model.AuthUser, id string, data model.RoutingConfig) error
@@ -27,30 +27,29 @@ func NewRoutingConfig() IRoutingConfig {
 	return &RoutingConfig{}
 }
 
-func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model.AuthUser, data model.RoutingConfig) error {
-	dbCon, err := GetDBConnOfUser(*authUser)
-	if err == ERR_EMPTY_CONN {
-		return errors.New(response.ERR_EMPTY_CONN)
-	}
-
+func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model.AuthUser, data model.RoutingConfig) (string, error) {
 	routingConfig := model.RoutingConfig{
 		Base: model.InitBase(),
+	}
+	dbCon, err := GetDBConnOfUser(*authUser)
+	if err == ERR_EMPTY_CONN {
+		return routingConfig.Base.GetId(), errors.New(response.ERR_EMPTY_CONN)
 	}
 
 	if err := util.ParseAnyToAny(data, &routingConfig); err != nil {
 		log.Error(err)
-		return err
+		return routingConfig.Base.GetId(), err
 	}
 
 	if data.RoutingFlow.FlowType == "recipient" {
 		ok, err := CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
-			return err
+			return routingConfig.Base.GetId(), err
 		}
 		if !ok {
 			log.Error(errors.New("recipient config is exist"))
-			return errors.New("recipient config is exist")
+			return "", errors.New("recipient config is exist")
 		}
 	}
 
@@ -58,20 +57,20 @@ func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model
 		ok, err := CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
-			return err
+			return routingConfig.Base.GetId(), err
 		}
 		if !ok {
 			log.Error(errors.New("balance config is exist"))
-			return errors.New("balance config is exist")
+			return routingConfig.Base.GetId(), errors.New("balance config is exist")
 		}
 	}
 
 	if err := repository.RoutingConfigRepo.Insert(ctx, dbCon, routingConfig); err != nil {
 		log.Error(err)
-		return err
+		return routingConfig.Base.GetId(), err
 	}
 
-	return nil
+	return routingConfig.Base.GetId(), nil
 }
 
 func (s *RoutingConfig) GetRoutingConfigs(ctx context.Context, authUser *model.AuthUser, filter model.RoutingConfigFilter, limit, offset int) (total int, result *[]model.RoutingConfigView, err error) {

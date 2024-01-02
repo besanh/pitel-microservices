@@ -31,28 +31,30 @@ func NewES() IElasticsearch {
 }
 
 func (repo *Elasticsearch) CheckAliasExist(ctx context.Context, index, alias string) (bool, error) {
-	res, err := ESClient.GetClient().Aliases().
-		Index(index).
-		Do(ctx)
+	idx := index
+	if len(alias) > 0 {
+		idx += "_" + alias
+	}
+	res, err := esapi.IndicesExistsAliasRequest.Do(esapi.IndicesExistsAliasRequest{
+		Index: []string{idx},
+	}, ctx, ESClient.GetClient().Transport)
 	if err != nil {
 		return false, err
-	}
-	if len(res.Indices) > 0 {
-		indices := res.Indices[index]
-		if indices.HasAlias(index + "_" + alias) {
-			return true, nil
-		} else {
-			return false, nil
-		}
+	} else if res.StatusCode == 200 {
+		return true, nil
 	}
 	return false, nil
 }
 
 func (repo *Elasticsearch) CreateAlias(ctx context.Context, index, alias string) error {
-	_, err := ESClient.GetClient().Alias().Action().
-		Add(index, index+"_"+alias).
-		Do(ctx)
-	return err
+	_, err := esapi.IndicesPutAliasRequest.Do(esapi.IndicesPutAliasRequest{
+		Index: []string{index},
+		Name:  index + "_" + alias,
+	}, ctx, ESClient.GetClient().Transport)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (repo *Elasticsearch) CreateAliasRabbitMQ(ctx context.Context, index, alias string) (bool, error) {
@@ -108,7 +110,7 @@ func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, docId
 		Body:       bytes.NewReader(bdy),
 		Refresh:    "true",
 	}
-	res, err := req.Do(ctx, ES.GetClient())
+	res, err := req.Do(ctx, ESClient.GetClient())
 	if err != nil {
 		return err
 	}
@@ -132,7 +134,7 @@ func (repo *Elasticsearch) UpdateDocById(ctx context.Context, index, docId strin
 		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, bdy))),
 		Refresh:    "true",
 	}
-	res, err := req.Do(ctx, ES.GetClient())
+	res, err := req.Do(ctx, ESClient.GetClient())
 	if err != nil {
 		return err
 	}

@@ -30,7 +30,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RecipientConfigClient interface {
-	PostRecipientConfig(ctx context.Context, in *RecipientConfigBodyRequest, opts ...grpc.CallOption) (*RecipientConfigResponse, error)
+	PostRecipientConfig(ctx context.Context, in *RecipientConfigBodyRequest, opts ...grpc.CallOption) (*RecipientConfigByIdResponse, error)
 	GetRecipientConfigs(ctx context.Context, in *RecipientConfigRequest, opts ...grpc.CallOption) (*RecipientConfigResponse, error)
 	GetRecipientConfigById(ctx context.Context, in *RecipientConfigByIdRequest, opts ...grpc.CallOption) (*RecipientConfigByIdResponse, error)
 	PutRecipientConfigById(ctx context.Context, in *RecipientConfigPutRequest, opts ...grpc.CallOption) (*RecipientConfigByIdResponse, error)
@@ -45,8 +45,8 @@ func NewRecipientConfigClient(cc grpc.ClientConnInterface) RecipientConfigClient
 	return &recipientConfigClient{cc}
 }
 
-func (c *recipientConfigClient) PostRecipientConfig(ctx context.Context, in *RecipientConfigBodyRequest, opts ...grpc.CallOption) (*RecipientConfigResponse, error) {
-	out := new(RecipientConfigResponse)
+func (c *recipientConfigClient) PostRecipientConfig(ctx context.Context, in *RecipientConfigBodyRequest, opts ...grpc.CallOption) (*RecipientConfigByIdResponse, error) {
+	out := new(RecipientConfigByIdResponse)
 	err := c.cc.Invoke(ctx, RecipientConfig_PostRecipientConfig_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (c *recipientConfigClient) DeleteRecipientConfigById(ctx context.Context, i
 // All implementations should embed UnimplementedRecipientConfigServer
 // for forward compatibility
 type RecipientConfigServer interface {
-	PostRecipientConfig(context.Context, *RecipientConfigBodyRequest) (*RecipientConfigResponse, error)
+	PostRecipientConfig(context.Context, *RecipientConfigBodyRequest) (*RecipientConfigByIdResponse, error)
 	GetRecipientConfigs(context.Context, *RecipientConfigRequest) (*RecipientConfigResponse, error)
 	GetRecipientConfigById(context.Context, *RecipientConfigByIdRequest) (*RecipientConfigByIdResponse, error)
 	PutRecipientConfigById(context.Context, *RecipientConfigPutRequest) (*RecipientConfigByIdResponse, error)
@@ -105,7 +105,7 @@ type RecipientConfigServer interface {
 type UnimplementedRecipientConfigServer struct {
 }
 
-func (UnimplementedRecipientConfigServer) PostRecipientConfig(context.Context, *RecipientConfigBodyRequest) (*RecipientConfigResponse, error) {
+func (UnimplementedRecipientConfigServer) PostRecipientConfig(context.Context, *RecipientConfigBodyRequest) (*RecipientConfigByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostRecipientConfig not implemented")
 }
 func (UnimplementedRecipientConfigServer) GetRecipientConfigs(context.Context, *RecipientConfigRequest) (*RecipientConfigResponse, error) {
