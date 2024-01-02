@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -18,7 +17,7 @@ import (
 
 type (
 	IIncom interface {
-		IncomWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookIncom) (int, any)
+		IncomWebhook(ctx context.Context, data model.WebhookIncom) (int, any)
 	}
 	IncomWebhook struct {
 		Index string
@@ -39,29 +38,8 @@ const (
 	TTL_HOOK_INCOM          = 1 * time.Minute
 )
 
-func (s *Webhook) IncomWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookIncom) (int, any) {
-	routingConfig := model.RoutingConfig{}
-	// Caching
-	routingConfigCache := cache.NewMemCache().Get(INFO_ROUTING + "_" + routingConfigUuid)
-	if routingConfigCache != nil {
-		routing, ok := routingConfigCache.(*model.RoutingConfig)
-		if !ok {
-			return response.ServiceUnavailableMsg("routing not found in system")
-		}
-		routingConfig = *routing
-	} else {
-		routing, err := repository.RoutingConfigRepo.GetRoutingConfigById(ctx, routingConfigUuid)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg("routing invalid")
-		} else if routing == nil {
-			return response.ServiceUnavailableMsg("routing not found in system")
-		}
-		cache.NewMemCache().Set(INFO_ROUTING+"_"+routingConfigUuid, routingConfig, EXPIRE_EXTERNAL_ROUTING)
-		routingConfig = *routing
-	}
-
-	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, data.IdOmniMess)
+func (s *Webhook) IncomWebhook(ctx context.Context, data model.WebhookIncom) (int, any) {
+	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, data.IdOmniMess)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -77,6 +55,7 @@ func (s *Webhook) IncomWebhook(ctx context.Context, routingConfigUuid string, da
 	logWebhookExist.StatusHook = strings.ToLower(data.Status)
 	channel := strings.ToLower(data.Channel)
 	logWebhookExist.ChannelHook = strings.ReplaceAll(channel, "brandnamesms", "sms")
+	logWebhookExist.StatusHook = strings.ToLower(data.Status)
 	logWebhookExist.ErrorCode = data.ErrorCode
 	logWebhookExist.Quantity = data.Quantity
 	logWebhookExist.TelcoId = telcoStr
@@ -116,13 +95,10 @@ func (s *Webhook) IncomWebhook(ctx context.Context, routingConfigUuid string, da
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	if err := repository.ESRepo.UpdateDocById(ctx, s.Index, logWebhookExist.Id, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, logWebhookExist.Id, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-
-	// Set cache
-	cache.NewMemCache().Set(HOOK_INCOM+"_"+routingConfigUuid, routingConfig, TTL_HOOK_INCOM)
 
 	return response.OK(map[string]any{
 		"message": "success",

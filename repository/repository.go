@@ -10,7 +10,6 @@ import (
 )
 
 var DBConn sqlclient.ISqlClientConn
-var ES elasticsearch.IESClient
 var ESClient elasticsearch.IElasticsearchClient
 
 func CreateTable(ctx context.Context, db sqlclient.ISqlClientConn, entity any) (err error) {

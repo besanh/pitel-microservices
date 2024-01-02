@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/constants"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -24,7 +25,7 @@ func NewWebhook(r *gin.Engine, webhookService service.IWebhook) {
 	}
 	Group := r.Group("bss/v1/webhook")
 	{
-		Group.POST(":plugin/:routing_config", handler.WebhookData)
+		Group.POST(":plugin/:routing_config", api.ValidHeader(), handler.WebhookData)
 	}
 }
 
@@ -34,21 +35,17 @@ func (handler *Webhook) WebhookData(ctx *gin.Context) {
 		return
 	}
 	if ctx.Param("plugin") == "fpt" {
-		routingConfigUuid := ctx.GetHeader("Authorization")
-		log.Info(routingConfigUuid)
-
 		fpt := model.FptWebhook{}
 		if err := ctx.ShouldBindJSON(&fpt); err != nil {
 			ctx.JSON(response.BadRequestMsg(err.Error()))
 			return
 		}
+		log.Info("webhook fpt", fpt)
 
-		code, result := handler.webhook.FptWebhook(ctx, routingConfigUuid, fpt)
+		code, result := handler.webhook.FptWebhook(ctx, fpt)
 
 		ctx.JSON(code, result)
 	} else if ctx.Param("plugin") == "incom" {
-		routingConfigUuid := ctx.Param("routing_config")
-
 		jsonBody := make(map[string]any)
 		if err := ctx.ShouldBindJSON(&jsonBody); err != nil {
 			ctx.JSON(response.BadRequestMsg(err))
@@ -78,11 +75,10 @@ func (handler *Webhook) WebhookData(ctx *gin.Context) {
 			IsChargedZns: isChargedZns,
 		}
 
-		code, result := handler.webhook.IncomWebhook(ctx, routingConfigUuid, incomData)
+		code, result := handler.webhook.IncomWebhook(ctx, incomData)
 
 		ctx.JSON(code, result)
 	} else if ctx.Param("plugin") == "abenla" {
-		routingConfigUuid := ctx.Param("routing_config")
 		smsGuid := ctx.Query("SMSGUID")
 		smsStatusQuery := ctx.Query("SMSSTATUS")
 		smsStatus, _ := strconv.Atoi(smsStatusQuery)
@@ -94,7 +90,7 @@ func (handler *Webhook) WebhookData(ctx *gin.Context) {
 			SercretSign: secretSign,
 		}
 
-		code, result := handler.webhook.AbenlaWebhook(ctx, routingConfigUuid, data)
+		code, result := handler.webhook.AbenlaWebhook(ctx, data)
 		ctx.XML(code, result)
 	}
 }

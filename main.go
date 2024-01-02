@@ -94,8 +94,6 @@ func init() {
 		RetryStatuses:         []int{502, 503, 504},
 	}
 	repository.ESClient = elasticsearch.NewElasticsearchClient(esCfg)
-	repository.ES = elasticsearch.NewES(esCfg)
-	repository.ES.Ping()
 
 	cache.NewMemCache()
 	// goauth.GoAuthClient = goauth.NewGoAuth(redis.Redis.GetClient())
@@ -121,9 +119,8 @@ func main() {
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.InitServices()
 
-	esIndex = env.GetStringENV("es_index", "pitel_bss_inbox_marketing")
 	// Run gRPC server
-	server.NewGRPCServer(config.gRPCPort, esIndex)
+	server.NewGRPCServer(config.gRPCPort)
 }
 
 func setAppLogger(cfg Config, file *os.File) {

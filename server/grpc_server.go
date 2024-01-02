@@ -45,7 +45,7 @@ func isHeaderAllowed(s string) (string, bool) {
 	return s, false
 }
 
-func NewGRPCServer(port string, esIndex string) {
+func NewGRPCServer(port string) {
 	// Setup gRPC
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
@@ -79,7 +79,7 @@ func NewGRPCServer(port string, esIndex string) {
 	}
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	apiv1.NewWebhook(httpServer, service.NewWebhook(esIndex))
+	apiv1.NewWebhook(httpServer, service.NewWebhook())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

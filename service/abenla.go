@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
@@ -31,30 +30,9 @@ const (
 
 var AbenlaService IAbenla
 
-func (s *Webhook) AbenlaWebhook(ctx context.Context, routingConfigUuid string, data model.WebhookReceiveSmsStatus) (int, any) {
+func (s *Webhook) AbenlaWebhook(ctx context.Context, data model.WebhookReceiveSmsStatus) (int, any) {
 	statusCode := "1"
-	routingConfig := model.RoutingConfig{}
-	// Caching
-	routingConfigCache := cache.NewMemCache().Get(HOOK_ABENLA + "_" + data.SercretSign)
-	if routingConfigCache != nil {
-		routing, ok := routingConfigCache.(*model.RoutingConfig)
-		if !ok {
-			return response.ResponseXml("Status", statusCode)
-		}
-		routingConfig = *routing
-	} else {
-		routing, err := repository.RoutingConfigRepo.GetRoutingConfigById(ctx, data.SercretSign)
-		if err != nil {
-			log.Error(err)
-			return response.ResponseXml("Status", statusCode)
-		} else if routing == nil {
-			return response.ResponseXml("Status", statusCode)
-		}
-		cache.NewMemCache().Set(INFO_ROUTING+"_"+data.SercretSign, routingConfig, EXPIRE_EXTERNAL_ROUTING)
-		routingConfig = *routing
-	}
-
-	logExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, s.Index, data.SmsGuid)
+	logExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, data.SmsGuid)
 	if err != nil {
 		log.Error(err)
 		return response.ResponseXml("Status", statusCode)
@@ -116,9 +94,6 @@ func (s *Webhook) AbenlaWebhook(ctx context.Context, routingConfigUuid string, d
 		log.Error(err)
 		return response.ResponseXml("Status", statusCode)
 	}
-
-	// Set cache
-	cache.NewMemCache().Set(HOOK_ABENLA+"_"+data.SmsGuid, routingConfig, TTL_HOOK_ABENLA)
 
 	statusCode = "2"
 	return response.ResponseXml("Status", statusCode)

@@ -6,19 +6,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ValidHeader(incomSignature string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		token := c.GetHeader("ICOMNI-Signature")
-		if token != incomSignature {
-			c.JSON(
+const (
+	SIGNATURE = "d6wSGXochuK9v5V9dDPch1hsSeY0xpiMgHVJkATRsdjgnpUasG"
+)
+
+func ValidHeader() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		header := ctx.GetHeader("ICOMNI-Signature")
+		if len(header) > 0 {
+		} else if len(ctx.GetHeader("Authorization")) > 0 {
+			header = ctx.GetHeader("Authorization")
+		}
+		token := header
+		if token != SIGNATURE {
+			ctx.JSON(
 				http.StatusUnauthorized,
-				map[string]interface{}{
+				map[string]any{
 					"error": http.StatusText(http.StatusUnauthorized),
 				},
 			)
-			c.Abort()
+			ctx.Abort()
 			return
 		}
-		c.Next()
+
+		ctx.Next()
 	}
 }
