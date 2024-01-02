@@ -25,7 +25,7 @@ func NewWebhook(r *gin.Engine, webhookService service.IWebhook) {
 	}
 	Group := r.Group("bss/v1/webhook")
 	{
-		Group.POST(":plugin/:routing_config", api.ValidHeader(), handler.WebhookData)
+		Group.POST(":plugin", api.ValidHeader(), handler.WebhookData)
 	}
 }
 
