@@ -30,31 +30,34 @@ func NewRecipientConfig() IRecipientConfig {
 }
 
 func (s *RecipientConfig) InsertRecipientConfig(ctx context.Context, authUser *model.AuthUser, data model.RecipientConfigRequest) (string, error) {
+	recipientConfig := model.RecipientConfig{
+		Base: model.InitBase(),
+	}
 	dbCon, err := GetDBConnOfUser(*authUser)
 	if err == ERR_EMPTY_CONN {
-		return "", errors.New(response.ERR_EMPTY_CONN)
+		return recipientConfig.Base.GetId(), errors.New(response.ERR_EMPTY_CONN)
 	}
 	filter := model.PluginConfigFilter{
 		PluginName: []string{data.Provider},
 		PluginType: []string{data.RecipientType},
 	}
 	if !slices.Contains[[]string](constants.CHANNEL, data.RecipientType) {
-		return "", fmt.Errorf("recipient type %s not support", data.RecipientType)
+		return recipientConfig.Base.GetId(), fmt.Errorf("recipient type %s not support", data.RecipientType)
 	}
 	total, _, err := repository.PluginConfigRepo.GetPluginConfigs(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return "", err
+		return recipientConfig.Base.GetId(), err
 	}
 	if total < 0 {
-		return "", fmt.Errorf("provider %s not found", data.Provider)
+		return recipientConfig.Base.GetId(), fmt.Errorf("provider %s not found", data.Provider)
 	}
 	if data.Provider == "abenla" && !slices.Contains[[]string](constants.ROLE_ABELA, data.Recipient) {
-		return "", fmt.Errorf("recipient %s with provider %s not support", data.Recipient, data.Provider)
+		return recipientConfig.Base.GetId(), fmt.Errorf("recipient %s with provider %s not support", data.Recipient, data.Provider)
 	} else if data.Provider == "incom" && !slices.Contains[[]string](constants.ROLE_INCOM, data.Recipient) {
-		return "", fmt.Errorf("recipient %s with provider %s not support", data.Recipient, data.Provider)
+		return recipientConfig.Base.GetId(), fmt.Errorf("recipient %s with provider %s not support", data.Recipient, data.Provider)
 	} else if data.Provider == "zalo" && !slices.Contains[[]string](constants.ROLE_FPT, data.Recipient) {
-		return "", fmt.Errorf("recipient %s with provider %s not support", data.Recipient, data.Provider)
+		return recipientConfig.Base.GetId(), fmt.Errorf("recipient %s with provider %s not support", data.Recipient, data.Provider)
 	}
 	filterTmp := model.RecipientConfigFilter{
 		Provider:      []string{data.Provider},
@@ -64,20 +67,17 @@ func (s *RecipientConfig) InsertRecipientConfig(ctx context.Context, authUser *m
 	total, _, err = repository.RecipientConfigRepo.GetRecipientConfigs(ctx, dbCon, filterTmp, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return "", err
+		return recipientConfig.Base.GetId(), err
 	}
 	if total > 0 {
-		return "", fmt.Errorf("recipient %s with provider %s already exist", data.Recipient, data.Provider)
+		return recipientConfig.Base.GetId(), fmt.Errorf("recipient %s with provider %s already exist", data.Recipient, data.Provider)
 	}
-	recipientConfig := model.RecipientConfig{
-		Base:          model.InitBase(),
-		Recipient:     data.Recipient,
-		RecipientType: data.RecipientType,
-		Priority:      data.Priority,
-		Provider:      data.Provider,
-		Status:        data.Status,
-		CreatedBy:     authUser.UserId,
-	}
+	recipientConfig.Recipient = data.Recipient
+	recipientConfig.RecipientType = data.RecipientType
+	recipientConfig.Priority = data.Priority
+	recipientConfig.Provider = data.Provider
+	recipientConfig.Status = data.Status
+	recipientConfig.CreatedBy = authUser.UserId
 
 	if err := repository.RecipientConfigRepo.Insert(ctx, dbCon, recipientConfig); err != nil {
 		log.Error(err)

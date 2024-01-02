@@ -28,13 +28,12 @@ func NewRoutingConfig() IRoutingConfig {
 }
 
 func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model.AuthUser, data model.RoutingConfig) (string, error) {
-	dbCon, err := GetDBConnOfUser(*authUser)
-	if err == ERR_EMPTY_CONN {
-		return "", errors.New(response.ERR_EMPTY_CONN)
-	}
-
 	routingConfig := model.RoutingConfig{
 		Base: model.InitBase(),
+	}
+	dbCon, err := GetDBConnOfUser(*authUser)
+	if err == ERR_EMPTY_CONN {
+		return routingConfig.Base.GetId(), errors.New(response.ERR_EMPTY_CONN)
 	}
 
 	if err := util.ParseAnyToAny(data, &routingConfig); err != nil {
