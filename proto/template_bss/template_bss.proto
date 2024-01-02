@@ -12,9 +12,9 @@ import "buf/validate/validate.proto";
 message TemplateBssBodyRequest {
     string template_name = 1;
     string template_code = 2;
-    string template_type = 4;
-    string content = 5;
-    bool status = 6;
+    string template_type = 3;
+    string content = 4;
+    bool status = 5;
 }
 
 message TemplateBssRequest {
@@ -42,8 +42,9 @@ message TemplateBssPutRequest {
     string id = 1;
     string template_name = 2;
     string template_code = 3;
-    string content = 4;
-    bool status = 5;
+    string template_type = 4;
+    string content = 5;
+    bool status = 6;
 }
 
 message TemplateBssByIdResponse {
