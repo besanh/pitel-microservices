@@ -29,7 +29,8 @@ var (
 )
 
 func (s *Webhook) FptWebhook(ctx context.Context, data model.FptWebhook) (int, any) {
-	externalMessageId := strconv.Itoa(data.SmsId)
+	// externalMessageId := strconv.Itoa(data.SmsId)
+	externalMessageId := data.SmsId
 	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, externalMessageId)
 	if err != nil {
 		log.Error(err)
@@ -46,11 +47,12 @@ func (s *Webhook) FptWebhook(ctx context.Context, data model.FptWebhook) (int, a
 	// Map network
 	telcoId := util.MapNetworkPlugin(data.Telco)
 	telcoStr, _ := strconv.Atoi(telcoId)
+	mtCount, _ := strconv.Atoi(data.MtCount)
 
 	logWebhookExist.StatusHook = common.MapStatusFpt(data.Status)
 	logWebhookExist.ChannelHook = "sms"
 	logWebhookExist.ErrorCode = data.Error
-	logWebhookExist.Quantity = data.MtCount
+	logWebhookExist.Quantity = mtCount
 	logWebhookExist.TelcoId = telcoStr
 
 	auditLogModel := model.LogInboxMarketing{
@@ -62,7 +64,7 @@ func (s *Webhook) FptWebhook(ctx context.Context, data model.FptWebhook) (int, a
 		ChannelHook:       logWebhookExist.ChannelHook,
 		ErrorCodeHook:     logWebhookExist.ErrorCodeHook,
 		TelcoId:           telcoStr,
-		Quantity:          data.MtCount,
+		Quantity:          mtCount,
 		Channel:           "sms",
 		IsCheck:           logWebhookExist.IsCheck,
 		Code:              0,

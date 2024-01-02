@@ -43,12 +43,14 @@ func (handler *Webhook) WebhookData(ctx *gin.Context) {
 		}
 		log.Info("webhook fpt", jsonBody)
 
-		smsId, _ := jsonBody["smsId"].(int)
-		status, _ := jsonBody["Status"].(int)
-		telco, _ := jsonBody["Telco"].(string)
-		errorCode, _ := jsonBody["Error"].(string)
-		quantityTmp, _ := jsonBody["Quantity"].(int)
-		quantity := int(quantityTmp)
+		smsIdTmp, _ := jsonBody["smsid"].(float64)
+		smsId := strconv.FormatFloat(smsIdTmp, 'f', -1, 64)
+		statusTmp, _ := jsonBody["status"].(float64)
+		status := strconv.FormatFloat(statusTmp, 'f', -1, 64)
+		telco, _ := jsonBody["telco"].(string)
+		errorCode, _ := jsonBody["error"].(string)
+		quantityTmp, _ := jsonBody["mt_count"].(float64)
+		quantity := strconv.FormatFloat(quantityTmp, 'f', -1, 64)
 		fpt := model.FptWebhook{
 			SmsId:   smsId,
 			Status:  status,
