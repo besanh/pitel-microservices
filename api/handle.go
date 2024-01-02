@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,7 @@ func ValidHeader() gin.HandlerFunc {
 		if len(header) > 0 {
 		} else if len(ctx.GetHeader("Authorization")) > 0 {
 			header = ctx.GetHeader("Authorization")
+			header = strings.ReplaceAll(header, "Basic ", "")
 		}
 		token := header
 		if token != SIGNATURE {
