@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
 )
 
 type Config struct {
@@ -202,7 +203,9 @@ func (r *RabbitMQ) Publish(body interface{}) error {
 	if err := channel.Confirm(false); err != nil {
 		return errors.Wrap(err, "failed to put channel in confirmation mode")
 	}
-	if err := channel.Publish(
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := channel.PublishWithContext(ctx,
 		RabbitConnector.ExchangeName,
 		RabbitConnector.RoutingKey,
 		true,

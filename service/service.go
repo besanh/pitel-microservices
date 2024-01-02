@@ -10,6 +10,7 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"golang.org/x/time/rate"
 )
 
 func InitServices() {
@@ -27,13 +28,33 @@ var (
 	ES_INDEX    = "pitel_bss_chat"
 )
 
-type DBConfig struct {
-	Host     string
-	Port     int
-	Database string
-	Username string
-	Password string
-}
+type (
+	DBConfig struct {
+		Host     string
+		Port     int
+		Database string
+		Username string
+		Password string
+	}
+
+	Subscriber struct {
+		Id             string      `json:"id"`
+		TenantId       string      `json:"tenant_id"`
+		BusinessUnitId string      `json:"business_unit_id"`
+		UserId         string      `json:"user_id"`
+		Username       string      `json:"username"`
+		Services       []string    `json:"services"`
+		Message        chan []byte `json:"-"`
+		CloseSlow      func()      `json:"-"`
+	}
+
+	Subscribers struct {
+		SubscriberMessageBuffer int
+		PublishLimiter          *rate.Limiter
+		SubscribersMu           sync.Mutex
+		Subscribers             map[*Subscriber]struct{}
+	}
+)
 
 func NewDBConn(tenantId string, config DBConfig) (dbConn sqlclient.ISqlClientConn, err error) {
 	sqlClientConfig := sqlclient.SqlConfig{

@@ -16,6 +16,7 @@ import (
 	v1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	pbAuthSource "github.com/tel4vn/fins-microservices/gen/proto/auth_source"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
@@ -54,6 +55,7 @@ func NewGRPCServer(port string) {
 		),
 	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
+	pbAuthSource.RegisterAuthSourceServiceServer(grpcServer, grpcService.NewGRPCAuthSoure())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -78,10 +80,13 @@ func NewGRPCServer(port string) {
 	if err := pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbAuthSource.RegisterAuthSourceServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	httpServer.Group("collection/*{grpc_gateway}").Any("", gin.WrapH(mux))
-	v1.NewOtt(httpServer, service.NewOtt())
+	httpServer.Group("bss/*{grpc_gateway}").Any("", gin.WrapH(mux))
+	v1.NewWebSocket(httpServer, service.NewSubscriberService())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

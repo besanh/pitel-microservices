@@ -1,0 +1,43 @@
+syntax="proto3";
+
+package proto.auth_source;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message AuthSourceBodyRequest {
+    string source = 1;
+    string auth_url = 2;
+    Info info = 3;
+    bool status = 4;
+}
+
+message Info {
+    string info_type = 1;
+    string token = 2;
+    string username = 3;
+    string password = 4;
+}
+
+message AuthSourceResponse {
+    string code = 1;
+    string message = 2;
+    AuthSourceResponseData data = 3;
+}
+
+message AuthSourceResponseData {
+    string id = 1;
+}
+
+service AuthSourceService {
+    rpc PostAuthSource(AuthSourceBodyRequest) returns (AuthSourceResponse) {
+        option (google.api.http) = {
+            post : "/bss/v1/chat/auth-source",
+            body: "*"
+        };
+    };
+}

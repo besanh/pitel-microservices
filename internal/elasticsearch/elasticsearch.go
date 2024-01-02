@@ -1,10 +1,17 @@
-package elasticsearchsearch
+package elasticsearch
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 
+	"github.com/elastic/go-elasticsearch/esapi"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	log "github.com/sirupsen/logrus"
+	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/fins-microservices/model"
 )
 
 type Config struct {
@@ -66,12 +73,33 @@ func (e *elasticsearchClient) Connect() error {
 	return nil
 }
 
-// func (e *elasticsearchClient) Ping() error {
-// 	e.client.Ping()
-// }
-
 func (e *elasticsearchClient) GetClient() *elasticsearch.Client {
 	return e.client
+}
+func ParseAnyToAny(value any, dest any) error {
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(bytes, dest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DecodeAny(value io.Reader, dest any) error {
+	if err := json.NewDecoder(value).Decode(dest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func EncodeAny(value any) (bytes.Buffer, error) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(value); err != nil {
+		return buf, err
+	}
+	return buf, nil
 }
 
 func RangeQuery(field string, from, to any) map[string]any {
@@ -174,4 +202,22 @@ func Order(field string, isAsc bool) map[string]any {
 			"order": order,
 		},
 	}
+}
+
+func ParseSearchResponse(response *esapi.Response) (*model.SearchReponse, error) {
+	if response.IsError() {
+		var e map[string]any
+		if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
+			return nil, err
+		} else {
+			typeErr, _ := e["error"].(map[string]any)["type"]
+			reason, _ := e["error"].(map[string]any)["reason"]
+			return nil, errors.New(util.ParseString(typeErr) + ":" + util.ParseString(reason))
+		}
+	}
+	result := model.SearchReponse{}
+	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+		return &result, err
+	}
+	return &result, nil
 }

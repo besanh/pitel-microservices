@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 )
 
@@ -34,4 +35,12 @@ func (b *Base) SetUpdatedAt(t time.Time) {
 func (b *Base) SetCreatedAt(t time.Time) {
 	log.Infof("SetCreatedAt: %v", b)
 	b.CreatedAt = t
+}
+
+func InitBase() *Base {
+	return &Base{
+		Id:        uuid.NewString(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 }

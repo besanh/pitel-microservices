@@ -21,6 +21,7 @@ func CreateTable(ctx context.Context, db sqlclient.ISqlClientConn, entity any) (
 
 func InitRepositories() {
 	ExampleRepo = NewExample()
+	AuthSourceRepo = NewAuthSource()
 }
 
 func InitRepositoriesES() {
@@ -29,6 +30,9 @@ func InitRepositoriesES() {
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.Example)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.AuthSource)(nil)); err != nil {
 		log.Error(err)
 	}
 }

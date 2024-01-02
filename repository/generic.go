@@ -10,7 +10,7 @@ import (
 )
 
 type IRepo[T model.Model] interface {
-	FindById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*T, error)
+	GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*T, error)
 	Insert(ctx context.Context, db sqlclient.ISqlClientConn, entity T) error
 	Update(ctx context.Context, db sqlclient.ISqlClientConn, entity T) error
 	Delete(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
@@ -36,7 +36,7 @@ func (r *Repo[T]) CreateTable(ctx context.Context, db sqlclient.ISqlClientConn) 
 	return
 }
 
-func (r *Repo[T]) FindById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (entity *T, err error) {
+func (r *Repo[T]) GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (entity *T, err error) {
 	entity = new(T)
 	err = db.GetDB().NewSelect().
 		Model(entity).
