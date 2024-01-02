@@ -39,11 +39,13 @@ const (
 )
 
 func (s *Webhook) IncomWebhook(ctx context.Context, data model.WebhookIncom) (int, any) {
+	log.Info(ES_INDEX)
 	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, data.IdOmniMess)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	} else if len(logWebhookExist.Id) < 1 {
+		log.Info(data.IdOmniMess + " is not exist")
 		return response.ServiceUnavailableMsg(data.IdOmniMess + " is not exist")
 	}
 
