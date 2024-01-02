@@ -60,7 +60,7 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 
 	if err := repository.TemplateBssRepo.Insert(ctx, dbCon, templateBss); err != nil {
 		log.Error(err)
-		return "", err
+		return templateBss.Base.GetId(), err
 	}
 
 	return templateBss.Base.GetId(), nil

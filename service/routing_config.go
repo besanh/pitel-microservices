@@ -39,14 +39,14 @@ func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model
 
 	if err := util.ParseAnyToAny(data, &routingConfig); err != nil {
 		log.Error(err)
-		return "", err
+		return routingConfig.Base.GetId(), err
 	}
 
 	if data.RoutingFlow.FlowType == "recipient" {
 		ok, err := CheckRecipientExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
-			return "", err
+			return routingConfig.Base.GetId(), err
 		}
 		if !ok {
 			log.Error(errors.New("recipient config is exist"))
@@ -58,17 +58,17 @@ func (s *RoutingConfig) InsertRoutingConfig(ctx context.Context, authUser *model
 		ok, err := CheckBalanceExist(ctx, dbCon, data.RoutingFlow.FlowUuid)
 		if err != nil {
 			log.Error(err)
-			return "", err
+			return routingConfig.Base.GetId(), err
 		}
 		if !ok {
 			log.Error(errors.New("balance config is exist"))
-			return "", errors.New("balance config is exist")
+			return routingConfig.Base.GetId(), errors.New("balance config is exist")
 		}
 	}
 
 	if err := repository.RoutingConfigRepo.Insert(ctx, dbCon, routingConfig); err != nil {
 		log.Error(err)
-		return "", err
+		return routingConfig.Base.GetId(), err
 	}
 
 	return routingConfig.Base.GetId(), nil

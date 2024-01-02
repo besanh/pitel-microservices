@@ -81,7 +81,7 @@ func (s *RecipientConfig) InsertRecipientConfig(ctx context.Context, authUser *m
 
 	if err := repository.RecipientConfigRepo.Insert(ctx, dbCon, recipientConfig); err != nil {
 		log.Error(err)
-		return "", err
+		return recipientConfig.Base.GetId(), err
 	}
 
 	return recipientConfig.Base.GetId(), nil
