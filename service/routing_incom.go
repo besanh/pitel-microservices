@@ -48,18 +48,18 @@ func HandleDeliveryMessageIncom(ctx context.Context, id string, routingConfig mo
 		SetBody(body).
 		Post(url)
 	if err != nil {
-		resultStandard := HandleMapResponsePlugin("incom", id, 0, result)
+		resultStandard := HandleMapResponsePlugin("incom", "", 0, result)
 		return res.StatusCode(), resultStandard, err
 	}
 	var r any
 	if err := json.Unmarshal(res.Body(), &r); err != nil {
-		resultStandard := HandleMapResponsePlugin("incom", id, 0, result)
+		resultStandard := HandleMapResponsePlugin("incom", "", 0, result)
 		return res.StatusCode(), resultStandard, err
 	}
 	if err := util.ParseAnyToAny(r, &result); err != nil {
 		return res.StatusCode(), resultStandard, err
 	}
-	resultStandard = HandleMapResponsePlugin("incom", id, 0, result)
+	resultStandard = HandleMapResponsePlugin("incom", result.IdOmniMess, 0, result)
 	statusCode := 0
 	if resultStandard.Status == "Success" {
 		statusCode = 200

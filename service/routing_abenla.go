@@ -30,15 +30,6 @@ func HandleDeliveryMessageAbenla(ctx context.Context, id string, routingConfig m
 		"brandName":     routingConfig.RoutingOption.Abenla.Brandname,
 		"smsGuid":       id,
 	}
-	// if len(routingConfig.RoutingOption.Abenla.WebhookUrl) > 0 {
-	// temporary get first hook
-	// isCallbackTmp := false
-	// if len(config.WebhookUrl) > 0 {
-	// 	isCallbackTmp = true
-	// }
-	// isCallback := strconv.FormatBool(isCallbackTmp)
-	// params["callback"] = isCallback
-	// }
 	params["callback"] = strconv.FormatBool(true)
 
 	client := resty.New()
