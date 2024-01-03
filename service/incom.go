@@ -39,7 +39,6 @@ const (
 )
 
 func (s *Webhook) IncomWebhook(ctx context.Context, data model.WebhookIncom) (int, any) {
-	log.Info(ES_INDEX)
 	logWebhookExist, err := repository.InboxMarketingESRepo.GetDocByRoutingExternalMessageId(ctx, ES_INDEX, data.IdOmniMess)
 	if err != nil {
 		log.Error(err)
