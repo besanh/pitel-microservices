@@ -22,6 +22,8 @@ func CreateTable(ctx context.Context, db sqlclient.ISqlClientConn, entity any) (
 func InitRepositories() {
 	ExampleRepo = NewExample()
 	AuthSourceRepo = NewAuthSource()
+	ChatAppRepo = NewChatApp()
+	ConnectionAppRepo = NewConnectionApp()
 }
 
 func InitRepositoriesES() {
@@ -33,6 +35,12 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.AuthSource)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatApp)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ConnectionApp)(nil)); err != nil {
 		log.Error(err)
 	}
 }

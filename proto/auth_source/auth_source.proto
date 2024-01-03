@@ -26,11 +26,7 @@ message Info {
 message AuthSourceResponse {
     string code = 1;
     string message = 2;
-    AuthSourceResponseData data = 3;
-}
-
-message AuthSourceResponseData {
-    string id = 1;
+    string id = 3;
 }
 
 service AuthSourceService {

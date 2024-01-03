@@ -16,7 +16,9 @@ import (
 	v1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	pbApp "github.com/tel4vn/fins-microservices/gen/proto/app"
 	pbAuthSource "github.com/tel4vn/fins-microservices/gen/proto/auth_source"
+	pbConnection "github.com/tel4vn/fins-microservices/gen/proto/connection_app"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
@@ -56,6 +58,8 @@ func NewGRPCServer(port string) {
 	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
 	pbAuthSource.RegisterAuthSourceServiceServer(grpcServer, grpcService.NewGRPCAuthSoure())
+	pbApp.RegisterAppServer(grpcServer, grpcService.NewGRPCApp())
+	pbConnection.RegisterConnectionAppServer(grpcServer, grpcService.NewGRPCConnectionApp())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -81,6 +85,12 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err := pbAuthSource.RegisterAuthSourceServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbApp.RegisterAppHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbConnection.RegisterConnectionAppHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 	// Creating a normal HTTP server
