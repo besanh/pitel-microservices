@@ -11,12 +11,14 @@ type ChatApp struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_app,alias:ca"`
 	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
+	State         string   `json:"state" bun:"state,type:text,notnull"`
 	Status        bool     `json:"status" bun:"status,notnull"`
 	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:text"`
 }
 
 type AppRequest struct {
 	AppName string       `json:"app_name" bun:"app_name,type:text,notnull"`
+	State   string       `json:"state" bun:"state,type:text,notnull"`
 	Status  sql.NullBool `json:"status" bun:"status,notnull"`
 	InfoApp *InfoApp     `json:"info_app" bun:"info_app,type:text"`
 }
@@ -44,6 +46,9 @@ type FacebookApp struct {
 func (m *AppRequest) Validate() error {
 	if len(m.AppName) < 1 {
 		return errors.New("app name is required")
+	}
+	if len(m.State) < 1 {
+		return errors.New("state is required")
 	}
 	if !m.Status.Valid {
 		return errors.New("status is required")
