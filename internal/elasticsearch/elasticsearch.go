@@ -14,24 +14,26 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-type Config struct {
-	Username              string
-	Password              string
-	Host                  []string
-	RetryStatuses         []int
-	MaxRetries            int
-	ResponseHeaderTimeout int
-}
+type (
+	IElasticsearchClient interface {
+		GetClient() *elasticsearch.Client
+	}
 
-type Response struct {
-	StatusCode int
-	Header     http.Header
-	Body       map[string]interface{}
-}
+	Config struct {
+		Username              string
+		Password              string
+		Host                  []string
+		RetryStatuses         []int
+		MaxRetries            int
+		ResponseHeaderTimeout int
+	}
 
-type IElasticsearchClient interface {
-	GetClient() *elasticsearch.Client
-}
+	Response struct {
+		StatusCode int
+		Header     http.Header
+		Body       map[string]any
+	}
+)
 
 type elasticsearchClient struct {
 	config Config
@@ -210,8 +212,8 @@ func ParseSearchResponse(response *esapi.Response) (*model.SearchReponse, error)
 		if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
 			return nil, err
 		} else {
-			typeErr, _ := e["error"].(map[string]any)["type"]
-			reason, _ := e["error"].(map[string]any)["reason"]
+			typeErr := e["error"].(map[string]any)["type"]
+			reason := e["error"].(map[string]any)["reason"]
 			return nil, errors.New(util.ParseString(typeErr) + ":" + util.ParseString(reason))
 		}
 	}

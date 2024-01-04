@@ -3,10 +3,12 @@ package main
 import (
 	"io"
 	"path/filepath"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/queue"
 	elasticsearchsearch "github.com/tel4vn/fins-microservices/internal/elasticsearch"
+	"github.com/tel4vn/fins-microservices/internal/queuetask"
 	"github.com/tel4vn/fins-microservices/internal/redis"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	authMdw "github.com/tel4vn/fins-microservices/middleware/auth"
@@ -86,6 +88,15 @@ func init() {
 		RetryStatuses:         []int{502, 503, 504},
 	}
 	repository.ESClient = elasticsearchsearch.NewElasticsearchClient(esCfg)
+
+	// Queue task
+	queueTaskConfig := queuetask.QueueTask{
+		RedisUrl: env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
+		MaxRetry: env.GetIntENV("QUEUE_TASK_MAX_RETRY", 3),
+		Timeout:  env.GetTimeDurationENV("QUEUE_TASK_TIMEOUT", 30*time.Second),
+	}
+	queuetask.NewQueueTaskClient(queueTaskConfig)
+
 	// goauth.GoAuthClient = goauth.NewGoAuth(redis.Redis.GetClient())
 	// authMdw.SetupGoGuardian()
 	authMdw.AuthMdw = authMdw.NewGatewayAuthMiddleware(env.GetStringENV("ENV", "dev"))

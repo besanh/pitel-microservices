@@ -1,6 +1,6 @@
 package model
 
-type GetOttMessage struct {
+type OttMessage struct {
 	Type        string            `json:"type" bun:"type,type:text,notnull"`
 	EventName   string            `json:"event_name" bun:"event_name,type:text,notnull"` // text/image/audio/video/file/link/sticker/gif
 	AppId       string            `json:"app_id" bun:"app_id,type:text,notnull"`

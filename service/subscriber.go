@@ -15,6 +15,7 @@ type (
 	ISubscriber interface {
 		AddSubscriber(ctx context.Context, authUser *model.AuthUser, subscriber *Subscriber) (err error)
 		GetSubscriber(id string) (*Subscriber, error)
+		PublishMessageToSubscriber(ctx context.Context, id string, message any) error
 	}
 	SubscriberService struct{}
 )

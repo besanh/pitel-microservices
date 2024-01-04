@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 func GetStringENV(envVar string, defaultValue string) (value string) {
@@ -25,6 +26,14 @@ func GetBoolENV(envVar string, defaultValue bool) (value bool) {
 	value = defaultValue
 	if valueStr := os.Getenv(envVar); len(valueStr) > 0 {
 		value, _ = strconv.ParseBool(valueStr)
+	}
+	return
+}
+
+func GetTimeDurationENV(envVar string, defaultValue time.Duration) (value time.Duration) {
+	value = defaultValue
+	if valueStr := os.Getenv(envVar); len(valueStr) > 0 {
+		value, _ = time.ParseDuration(valueStr)
 	}
 	return
 }

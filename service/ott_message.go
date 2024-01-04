@@ -16,7 +16,7 @@ import (
 
 type (
 	IOttMessage interface {
-		GetOttMessage(ctx context.Context, data model.GetOttMessage) error
+		GetOttMessage(ctx context.Context, data model.OttMessage) error
 	}
 	OttMessage struct{}
 )
@@ -25,7 +25,7 @@ func NewOttMessage() IOttMessage {
 	return &OttMessage{}
 }
 
-func (s *OttMessage) GetOttMessage(ctx context.Context, data model.GetOttMessage) error {
+func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) error {
 	docId := uuid.NewString()
 	timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
 	message := model.Message{
