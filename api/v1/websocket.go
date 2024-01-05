@@ -25,7 +25,7 @@ func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber) {
 	WebSocketHandler = &WebSocket{
 		subscriber: subscriberService,
 	}
-	Group := r.Group("bss/v1/chat")
+	Group := r.Group("chat/v1")
 	{
 		Group.GET("subscriber", api.MoveTokenToHeader(), WebSocketHandler.Subscribe)
 	}

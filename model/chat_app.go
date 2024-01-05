@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"errors"
 
 	"github.com/uptrace/bun"
@@ -11,47 +10,42 @@ type ChatApp struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_app,alias:ca"`
 	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
-	State         string   `json:"state" bun:"state,type:text,notnull"`
 	Status        bool     `json:"status" bun:"status,notnull"`
-	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:text"`
+	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
 }
 
-type AppRequest struct {
-	AppName string       `json:"app_name" bun:"app_name,type:text,notnull"`
-	State   string       `json:"state" bun:"state,type:text,notnull"`
-	Status  sql.NullBool `json:"status" bun:"status,notnull"`
-	InfoApp *InfoApp     `json:"info_app" bun:"info_app,type:text"`
+type ChatAppRequest struct {
+	AppName string   `json:"app_name"`
+	State   string   `json:"state"`
+	Status  bool     `json:"status"`
+	InfoApp *InfoApp `json:"info_app"`
 }
 
 type InfoApp struct {
-	Zalo     *ZaloApp     `json:"zalo_app" bun:"zalo_app,type:text"`
-	Facebook *FacebookApp `json:"facebook_app" bun:"facebook_app,type:text"`
+	Zalo     *Zalo     `json:"zalo" bun:"zalo"`
+	Facebook *Facebook `json:"facebook" bun:"facebook"`
 }
 
-type ZaloApp struct {
-	AppId       string `json:"app_id"`
-	AppName     string `json:"app_name"`
-	SecretKey   string `json:"secret_key"`
-	AccessToken string `json:"access_token"`
-	Status      bool   `json:"status"`
+type Zalo struct {
+	AppId         string `json:"app_id"`
+	AppName       string `json:"app_name"`
+	SecretKey     string `json:"secret_key"`
+	AccessToken   string `json:"access_token"`
+	State         string `json:"state"`
+	CodeChallenge string `json:"code_challenge"`
+	Status        bool   `json:"status"`
 }
 
-type FacebookApp struct {
-	AppId   string `json:"app_id"`
-	AppName string `json:"app_name"`
-	Token   string `json:"token"`
-	Status  bool   `json:"status"`
+type Facebook struct {
+	AppId    string `json:"app_id"`
+	AppName  string `json:"app_name"`
+	AppToken string `json:"app_token"`
+	Status   bool   `json:"status"`
 }
 
-func (m *AppRequest) Validate() error {
+func (m *ChatAppRequest) Validate() error {
 	if len(m.AppName) < 1 {
 		return errors.New("app name is required")
-	}
-	if len(m.State) < 1 {
-		return errors.New("state is required")
-	}
-	if !m.Status.Valid {
-		return errors.New("status is required")
 	}
 
 	// var countOk int
@@ -68,6 +62,9 @@ func (m *AppRequest) Validate() error {
 		if len(m.InfoApp.Zalo.AccessToken) < 1 {
 			return errors.New("access token is required")
 		}
+		if len(m.InfoApp.Zalo.State) < 1 {
+			return errors.New("state is required")
+		}
 		// countOk += 1
 	}
 	if m.InfoApp.Facebook.Status {
@@ -77,7 +74,7 @@ func (m *AppRequest) Validate() error {
 		if len(m.InfoApp.Facebook.AppName) < 1 {
 			return errors.New("app name is required")
 		}
-		if len(m.InfoApp.Facebook.Token) < 1 {
+		if len(m.InfoApp.Facebook.AppToken) < 1 {
 			return errors.New("token is required")
 		}
 		// countOk += 1

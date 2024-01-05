@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: proto/app/app.proto
+// source: proto/chat_app/app.proto
 
 package pb
 
@@ -19,15 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	App_PostApp_FullMethodName = "/proto.app.App/PostApp"
-	App_GetApp_FullMethodName  = "/proto.app.App/GetApp"
+	App_InsertApp_FullMethodName = "/proto.app.App/InsertApp"
+	App_GetApp_FullMethodName    = "/proto.app.App/GetApp"
 )
 
 // AppClient is the client API for App service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AppClient interface {
-	PostApp(ctx context.Context, in *AppBodyRequest, opts ...grpc.CallOption) (*AppResponse, error)
+	InsertApp(ctx context.Context, in *ChatAppBodyRequest, opts ...grpc.CallOption) (*AppResponse, error)
 	GetApp(ctx context.Context, in *AppRequest, opts ...grpc.CallOption) (*AppGetResponse, error)
 }
 
@@ -39,9 +39,9 @@ func NewAppClient(cc grpc.ClientConnInterface) AppClient {
 	return &appClient{cc}
 }
 
-func (c *appClient) PostApp(ctx context.Context, in *AppBodyRequest, opts ...grpc.CallOption) (*AppResponse, error) {
+func (c *appClient) InsertApp(ctx context.Context, in *ChatAppBodyRequest, opts ...grpc.CallOption) (*AppResponse, error) {
 	out := new(AppResponse)
-	err := c.cc.Invoke(ctx, App_PostApp_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, App_InsertApp_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (c *appClient) GetApp(ctx context.Context, in *AppRequest, opts ...grpc.Cal
 // All implementations should embed UnimplementedAppServer
 // for forward compatibility
 type AppServer interface {
-	PostApp(context.Context, *AppBodyRequest) (*AppResponse, error)
+	InsertApp(context.Context, *ChatAppBodyRequest) (*AppResponse, error)
 	GetApp(context.Context, *AppRequest) (*AppGetResponse, error)
 }
 
@@ -69,8 +69,8 @@ type AppServer interface {
 type UnimplementedAppServer struct {
 }
 
-func (UnimplementedAppServer) PostApp(context.Context, *AppBodyRequest) (*AppResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PostApp not implemented")
+func (UnimplementedAppServer) InsertApp(context.Context, *ChatAppBodyRequest) (*AppResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InsertApp not implemented")
 }
 func (UnimplementedAppServer) GetApp(context.Context, *AppRequest) (*AppGetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetApp not implemented")
@@ -87,20 +87,20 @@ func RegisterAppServer(s grpc.ServiceRegistrar, srv AppServer) {
 	s.RegisterService(&App_ServiceDesc, srv)
 }
 
-func _App_PostApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AppBodyRequest)
+func _App_InsertApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChatAppBodyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AppServer).PostApp(ctx, in)
+		return srv.(AppServer).InsertApp(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: App_PostApp_FullMethodName,
+		FullMethod: App_InsertApp_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AppServer).PostApp(ctx, req.(*AppBodyRequest))
+		return srv.(AppServer).InsertApp(ctx, req.(*ChatAppBodyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -131,8 +131,8 @@ var App_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AppServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "PostApp",
-			Handler:    _App_PostApp_Handler,
+			MethodName: "InsertApp",
+			Handler:    _App_InsertApp_Handler,
 		},
 		{
 			MethodName: "GetApp",
@@ -140,5 +140,5 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/app/app.proto",
+	Metadata: "proto/chat_app/app.proto",
 }

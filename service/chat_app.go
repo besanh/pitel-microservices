@@ -12,7 +12,7 @@ import (
 
 type (
 	IChatApp interface {
-		InsertChatApp(ctx context.Context, authUser *model.AuthUser, data model.ChatApp) (string, error)
+		InsertChatApp(ctx context.Context, authUser *model.AuthUser, data model.ChatAppRequest) (string, error)
 		GetChatApp(ctx context.Context, authUser *model.AuthUser, filter model.AppFilter, limit, offset int) (int, *[]model.ChatApp, error)
 	}
 	ChatApp struct{}
@@ -22,7 +22,7 @@ func NewChatApp() IChatApp {
 	return &ChatApp{}
 }
 
-func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, data model.ChatApp) (string, error) {
+func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, data model.ChatAppRequest) (string, error) {
 	app := model.ChatApp{
 		Base: model.InitBase(),
 	}
@@ -46,12 +46,14 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 	}
 
 	app.AppName = data.AppName
+	app.InfoApp = data.InfoApp
 	app.Status = data.Status
 
 	if err := repository.ChatAppRepo.Insert(ctx, dbCon, app); err != nil {
+		log.Error(err)
 		return app.Base.GetId(), err
 	}
-	return data.Base.GetId(), nil
+	return app.Base.GetId(), nil
 }
 
 func (s *ChatApp) GetChatApp(ctx context.Context, authUser *model.AuthUser, filter model.AppFilter, limit, offset int) (int, *[]model.ChatApp, error) {

@@ -12,7 +12,9 @@ import (
 
 type (
 	IQueueTaskClient interface {
-		// GetClient() *asynq.Client
+		GetClient() *asynq.Client
+		NewMessageOttDeliveryTask(message *model.OttMessage) (*asynq.Task, error)
+		HandleMessageDeliveryTask(ctx context.Context, task *asynq.Task) (*MessageDeliveryPayload, error)
 	}
 
 	QueueTask struct {
@@ -24,8 +26,8 @@ type (
 	}
 
 	QueueTaskClient struct {
-		Config QueueTask
-		Client *asynq.Client
+		config QueueTask
+		client *asynq.Client
 	}
 )
 
@@ -37,29 +39,45 @@ var QueueConnector *IQueueTaskClient
 
 func NewQueueTaskClient(config QueueTask) IQueueTaskClient {
 	queueTask := &QueueTaskClient{
-		Config: config,
+		config: config,
 	}
 
 	return queueTask
 }
 
-func (s *QueueTask) NewMessageOttDeliveryTask(agentId string, message *model.OttMessage) (*asynq.Task, error) {
+func (s *QueueTaskClient) GetClient() *asynq.Client {
+	return s.client
+}
+
+func (s *QueueTaskClient) NewMessageOttDeliveryTask(message *model.OttMessage) (*asynq.Task, error) {
 	payload, err := json.Marshal(MessageDeliveryPayload{
 		OttMessage: message,
-		AgentId:    agentId,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return asynq.NewTask(MESSAGE_OTT_DELIVERY, payload, asynq.MaxRetry(s.MaxRetry), asynq.Timeout(s.Timeout)), nil
+	return asynq.NewTask(
+		MESSAGE_OTT_DELIVERY,
+		payload,
+		asynq.MaxRetry(s.config.MaxRetry),
+		asynq.Timeout(s.config.Timeout),
+	), nil
 }
 
-func (s *QueueTask) HandleMessageDeliveryTask(ctx context.Context, task *asynq.Task) (*MessageDeliveryPayload, error) {
+func (s *QueueTaskClient) HandleMessageDeliveryTask(ctx context.Context, task *asynq.Task) (*MessageDeliveryPayload, error) {
 	var payload MessageDeliveryPayload
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
 		return nil, fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
 	}
 
 	return &payload, nil
+}
+
+func (s *QueueTaskClient) EnQueue(ctx context.Context, task *asynq.Task) (*asynq.TaskInfo, error) {
+	info, err := s.client.Enqueue(task, asynq.Queue(s.config.QueueName))
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
 }

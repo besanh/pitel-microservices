@@ -17,3 +17,14 @@ type ConnectionAppFilter struct {
 	ConnectionType string
 	Status         sql.NullBool
 }
+
+type QueueFilter struct {
+	TenantId       string
+	BusinessUnitId string
+	QueueName      string
+}
+
+type ChatRoutingFilter struct {
+	RoutingName string
+	Status      sql.NullBool
+}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
-	pb "github.com/tel4vn/fins-microservices/gen/proto/app"
+	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
 	"github.com/tel4vn/fins-microservices/middleware/auth"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
@@ -24,16 +24,24 @@ func NewGRPCApp() *GRPCApp {
 	return &GRPCApp{}
 }
 
-func (g *GRPCApp) PostApp(ctx context.Context, req *pb.AppBodyRequest) (result *pb.AppResponse, err error) {
+func (g *GRPCApp) InsertApp(ctx context.Context, req *pb.ChatAppBodyRequest) (result *pb.AppResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	var payload model.ChatApp
+	var payload model.ChatAppRequest
 	if err = util.ParseAnyToAny(req, &payload); err != nil {
 		result = &pb.AppResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
+			Message: err.Error(),
+		}
+		return
+	}
+
+	if err = payload.Validate(); err != nil {
+		result = &pb.AppResponse{
+			Code:    response.MAP_ERR_RESPONSE[response.ERR_VALIDATION_FAILED].Code,
 			Message: err.Error(),
 		}
 		return

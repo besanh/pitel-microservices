@@ -78,6 +78,7 @@ func (e *elasticsearchClient) Connect() error {
 func (e *elasticsearchClient) GetClient() *elasticsearch.Client {
 	return e.client
 }
+
 func ParseAnyToAny(value any, dest any) error {
 	bytes, err := json.Marshal(value)
 	if err != nil {

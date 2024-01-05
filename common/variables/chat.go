@@ -31,4 +31,7 @@ var (
 		"sticker": "sticker",
 		"gif":     "gif",
 	}
+	CHAT_ROUTING []string = []string{
+		"round-robin",
+	}
 )

@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/queue"
-	elasticsearchsearch "github.com/tel4vn/fins-microservices/internal/elasticsearch"
+	elasticsearch "github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/internal/queuetask"
 	"github.com/tel4vn/fins-microservices/internal/redis"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
@@ -30,7 +31,9 @@ type Config struct {
 	LogFile    string
 }
 
-var config Config
+var (
+	config Config
+)
 
 func init() {
 	if err := godotenv.Load(); err != nil {
@@ -74,12 +77,16 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+	if redis.Redis != nil {
+		cache.RCache = cache.NewRedisCache(redis.Redis.GetClient())
+		defer cache.RCache.Close()
+	}
 	queue.RMQ = queue.NewRMQ(queue.Rcfg{
 		Address:  env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
 		Password: env.GetStringENV("REDIS_PASSWORD", ""),
 		DB:       9,
 	})
-	esCfg := elasticsearchsearch.Config{
+	esCfg := elasticsearch.Config{
 		Username:              env.GetStringENV("ES_USERNAME", "elastic"),
 		Password:              env.GetStringENV("ES_PASSWORD", "tel4vnEs2021"),
 		Host:                  []string{env.GetStringENV("ES_HOST", "http://113.164.246.12:9200")},
@@ -87,7 +94,7 @@ func init() {
 		ResponseHeaderTimeout: 60,
 		RetryStatuses:         []int{502, 503, 504},
 	}
-	repository.ESClient = elasticsearchsearch.NewElasticsearchClient(esCfg)
+	elasticsearch.NewElasticsearchClient(esCfg)
 
 	// Queue task
 	queueTaskConfig := queuetask.QueueTask{

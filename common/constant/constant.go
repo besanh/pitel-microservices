@@ -2,8 +2,8 @@ package constant
 
 const (
 	// Version
-	VERSION      = "1"
-	VERSION_NAME = "Chat(BSS)"
+	VERSION      string = "1"
+	VERSION_NAME string = "Chat(BSS)"
 )
 
 var (

@@ -28,6 +28,7 @@ const (
 	ERR_PUT_FAILED           = "put failed"
 	ERR_PATCH_FAILED         = "patch failed"
 	ERR_DELETE_FAILED        = "delete failed"
+	ERR_VALIDATION_FAILED    = "validation failed"
 )
 
 var MAP_ERR_RESPONSE = map[string]struct {

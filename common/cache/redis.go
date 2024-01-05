@@ -27,6 +27,7 @@ type (
 		Del(key []string) error
 		HDel(key string, fields ...string) error
 		GetKeysPattern(pattern string) ([]string, error)
+		Close()
 	}
 	RedisCache struct {
 		client *redis.Client
@@ -166,4 +167,8 @@ func (r *RedisCache) GetKeysPattern(pattern string) ([]string, error) {
 	defer cancel()
 	ret, err := r.client.Keys(ctx, pattern).Result()
 	return ret, err
+}
+
+func (r *RedisCache) Close() {
+	r.client.Close()
 }

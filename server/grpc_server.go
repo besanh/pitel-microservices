@@ -13,15 +13,16 @@ import (
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	v1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
-	pbApp "github.com/tel4vn/fins-microservices/gen/proto/app"
 	pbAuthSource "github.com/tel4vn/fins-microservices/gen/proto/auth_source"
+	pbApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
+	pbChatQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
+	pbChatQueuAgent "github.com/tel4vn/fins-microservices/gen/proto/chat_queue_agent"
+	pbChatRouting "github.com/tel4vn/fins-microservices/gen/proto/chat_routing"
 	pbConnection "github.com/tel4vn/fins-microservices/gen/proto/connection_app"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
-	"github.com/tel4vn/fins-microservices/service"
 
 	authMiddleware "github.com/tel4vn/fins-microservices/middleware/auth"
 	"golang.org/x/net/http2"
@@ -60,6 +61,9 @@ func NewGRPCServer(port string) {
 	pbAuthSource.RegisterAuthSourceServiceServer(grpcServer, grpcService.NewGRPCAuthSoure())
 	pbApp.RegisterAppServer(grpcServer, grpcService.NewGRPCApp())
 	pbConnection.RegisterConnectionAppServer(grpcServer, grpcService.NewGRPCConnectionApp())
+	pbChatRouting.RegisterChatRoutingServer(grpcServer, grpcService.NewGRPCChatRouting())
+	pbChatQueue.RegisterChatQueueServiceServer(grpcServer, grpcService.NewGRPCChatQueue())
+	pbChatQueuAgent.RegisterQueueAgentServiceServer(grpcServer, grpcService.NewGRPCChatQueueAgent())
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -93,10 +97,19 @@ func NewGRPCServer(port string) {
 	if err := pbConnection.RegisterConnectionAppHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbChatRouting.RegisterChatRoutingHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbChatQueue.RegisterChatQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbChatQueuAgent.RegisterQueueAgentServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
 	httpServer.Group("bss/*{grpc_gateway}").Any("", gin.WrapH(mux))
-	v1.NewWebSocket(httpServer, service.NewSubscriberService())
+	// v1.NewWebSocket(httpServer, service.NewSubscriberService())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)
@@ -114,6 +127,7 @@ func NewGRPCServer(port string) {
 	} else if err != nil {
 		panic(err)
 	}
+
 }
 
 func newHTTPandGRPC(httpHand http.Handler, grpcHandler http.Handler) http.Handler {

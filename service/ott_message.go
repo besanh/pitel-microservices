@@ -105,8 +105,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) e
 		log.Error(err)
 		return err
 	}
-	// TODO: delivery queue
-	// if err
+
+	// TODO: add to queue
+
+	// TODO: push wss
 
 	return nil
 }

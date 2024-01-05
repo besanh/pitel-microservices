@@ -14,7 +14,7 @@ type ConnectionApp struct {
 	TenantId       string   `json:"tenant_id"`
 	BusinessUnitId string   `json:"business_unit_id"`
 	AppId          string   `json:"app_id" bun:"app_id,type:text,notnull"`
-	ChatApp        *ChatApp `json:"chat_app" bun:"rel:belongs-to,join:app_id=id"`
+	ChatApp        *ChatApp `json:"chat_app" bun:"chat_app,type:jsonb,notnull"`
 	Status         bool     `json:"status" bun:"status,notnull"`
 }
 

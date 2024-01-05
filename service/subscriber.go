@@ -15,6 +15,7 @@ type (
 	ISubscriber interface {
 		AddSubscriber(ctx context.Context, authUser *model.AuthUser, subscriber *Subscriber) (err error)
 		GetSubscriber(id string) (*Subscriber, error)
+		GetSubscribers() []Subscriber
 		PublishMessageToSubscriber(ctx context.Context, id string, message any) error
 	}
 	SubscriberService struct{}
@@ -87,4 +88,12 @@ func (s *SubscriberService) GetSubscriber(id string) (*Subscriber, error) {
 		}
 	}
 	return nil, errors.New("subscriber not found")
+}
+
+func (s *SubscriberService) GetSubscribers() []Subscriber {
+	subscribers := []Subscriber{}
+	for s := range WsSubscribers.Subscribers {
+		subscribers = append(subscribers, *s)
+	}
+	return subscribers
 }
