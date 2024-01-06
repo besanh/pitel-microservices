@@ -30,7 +30,7 @@ func (s *GRPCConnectionApp) PostConnectionApp(ctx context.Context, req *pb.Conne
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	var payload model.ConnectionApp
+	var payload model.ConnectionAppRequest
 	if err = util.ParseAnyToAny(req, &payload); err != nil {
 		result = &pb.ConnectionAppResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
