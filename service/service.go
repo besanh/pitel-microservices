@@ -19,13 +19,26 @@ func InitServices() {
 
 // MAP TENANT_ID SQL_CONN
 var (
-	MapDBConn map[string]sqlclient.ISqlClientConn
+	MapDBConn        map[string]sqlclient.ISqlClientConn
+	ERR_EMPTY_CONN   = errors.New("empty_conn")
+	ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
 
 	// ES
-	ES_HOST     = "https://es.dev.fins.vn"
-	ES_USERNAME = "elastic"
-	ES_PASSWORD = "FinS##TEL4VN##ES#!2324"
-	ES_INDEX    = "pitel_bss_chat"
+	ES_HOST               = "https://es.dev.fins.vn"
+	ES_USERNAME           = "elastic"
+	ES_PASSWORD           = "FinS##TEL4VN##ES#!2324"
+	ES_INDEX              = "pitel_bss_chat"
+	ES_INDEX_CONVERSATION = "pitel_bss_conversation"
+
+	// Redis
+	CONVERSATION            = "conversation"
+	CONVERSATION_EXPIRE     = 30 * time.Minute
+	CHAT_QUEUE              = "chat_queue"
+	CHAT_QUEUE_EXPIRE       = 30 * time.Minute
+	CHAT_ROUTING            = "chat_routing"
+	CHAT_ROUTING_EXPIRE     = 1 * time.Hour
+	CHAT_QUEUE_AGENT        = "chat_queue_agent"
+	CHAT_QUEUE_AGENT_EXPIRE = 10 * time.Minute
 )
 
 type (
@@ -91,9 +104,6 @@ func NewDBConn(tenantId string, config DBConfig) (dbConn sqlclient.ISqlClientCon
 	MapDBConn[tenantId] = dbConn
 	return
 }
-
-var ERR_EMPTY_CONN = errors.New("empty_conn")
-var ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
 
 func GetDBConnOfUser(user model.AuthUser) (dbConn sqlclient.ISqlClientConn, err error) {
 	if len(user.DatabaseHost) < 1 {

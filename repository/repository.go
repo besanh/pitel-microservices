@@ -25,12 +25,13 @@ func InitRepositories() {
 	ChatAppRepo = NewChatApp()
 	ConnectionAppRepo = NewConnectionApp()
 	ChatQueueRepo = NewChatQueue()
-	ChatRoutingRepo = NewChatRouting()
 	ChatQueueAgentRepo = NewChatQueueAgent()
+	ChatRoutingRepo = NewChatRouting()
 }
 
 func InitRepositoriesES() {
 	ESRepo = NewES()
+	ConversationESRepo = NewConversationES()
 }
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {

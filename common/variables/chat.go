@@ -32,6 +32,7 @@ var (
 		"gif":     "gif",
 	}
 	CHAT_ROUTING []string = []string{
-		"round-robin",
+		"random",
+		"min_conversation",
 	}
 )

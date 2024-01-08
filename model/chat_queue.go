@@ -8,14 +8,15 @@ import (
 
 type ChatQueue struct {
 	*Base
-	bun.BaseModel  `bun:"table:chat_queue,alias:cq"`
-	TenantId       string       `json:"tenant_id" bun:"tenant_id,type:text,notnull"`
-	BusinessUnitId string       `json:"business_unit_id" bun:"business_unit_id,type:text,notnull"`
-	QueueName      string       `json:"queue_name" bun:"queue_name,type:text,notnull"`
-	Description    string       `json:"description" bun:"description,type:text"`
-	ChatRoutingId  string       `json:"chat_routing_id" bun:"chat_routing_id,type:text,notnull"`
-	ChatRouting    *ChatRouting `json:"chat_routing" bun:"rel:has-one,join:chat_routing_id=id"`
-	Status         bool         `json:"status" bun:"status,notnull"`
+	bun.BaseModel `bun:"table:chat_queue,alias:cq"`
+	ConnectionId  string       `json:"connection_id" bun:"connection_id,type:text,notnull"`
+	AppId         string       `json:"app_id" bun:"app_id,type:text,notnull"`
+	UserIdByApp   string       `json:"user_id_by_app" bun:"user_id_by_app,type:text,notnull"`
+	QueueName     string       `json:"queue_name" bun:"queue_name,type:text,notnull"`
+	Description   string       `json:"description" bun:"description,type:text"`
+	ChatRoutingId string       `json:"chat_routing_id" bun:"chat_routing_id,type:text,notnull"`
+	ChatRouting   *ChatRouting `json:"chat_routing" bun:"rel:has-one,join:chat_routing_id=id"`
+	Status        bool         `json:"status" bun:"status,notnull"`
 }
 
 type ChatQueueRequest struct {

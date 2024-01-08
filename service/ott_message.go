@@ -106,6 +106,35 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) e
 		return err
 	}
 
+	// TODO: check conversation and add message
+	conversation, err := GetConversationExist(ctx, data)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	_, err = InsertConversation(ctx, conversation)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	var agentId string
+
+	// TODO: check queue setting
+	filter := model.QueueFilter{
+		AppId: data.AppId,
+	}
+	agentId, err = CheckChatQueueSetting(ctx, filter)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	for s := range WsSubscribers.Subscribers {
+		if s.Id == agentId {
+			PublishMessage(agentId, message)
+		}
+	}
+
 	// TODO: add to queue
 
 	// TODO: push wss

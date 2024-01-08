@@ -19,12 +19,25 @@ type ConnectionAppFilter struct {
 }
 
 type QueueFilter struct {
-	TenantId       string
-	BusinessUnitId string
-	QueueName      string
+	AppId     string
+	QueueName string
+}
+
+type ChatQueueAgentFilter struct {
+	QueueId string
+	AgentId string
+	Source  string
 }
 
 type ChatRoutingFilter struct {
 	RoutingName string
 	Status      sql.NullBool
+}
+
+type ConversationFilter struct {
+	AppId       []string
+	UserIdByApp []string
+	Username    []string
+	PhoneNumber []string
+	Email       []string
 }

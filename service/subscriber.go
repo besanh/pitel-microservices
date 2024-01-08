@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -55,27 +54,10 @@ func (s *SubscriberService) AddSubscriber(ctx context.Context, authUser *model.A
 }
 
 func (s *SubscriberService) PublishMessageToSubscriber(ctx context.Context, id string, message any) error {
-	WsSubscribers.SubscribersMu.Lock()
-	defer WsSubscribers.SubscribersMu.Unlock()
-	msgByte, err := json.Marshal(message)
+	err := PublishMessage(id, message)
 	if err != nil {
 		log.Error(err)
 		return err
-	}
-	WsSubscribers.PublishLimiter.Wait(ctx)
-	isExisted := false
-	for s := range WsSubscribers.Subscribers {
-		if s.Id == id {
-			isExisted = true
-			select {
-			case s.Message <- msgByte:
-			default:
-				go s.CloseSlow()
-			}
-		}
-	}
-	if !isExisted {
-		return errors.New("subscriber not found")
 	}
 
 	return nil

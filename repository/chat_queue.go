@@ -27,12 +27,6 @@ func NewChatQueue() IChatQueue {
 func (repo *ChatQueue) GetQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
 	result := new([]model.ChatQueue)
 	query := db.GetDB().NewSelect().Model(result)
-	if len(filter.TenantId) > 0 {
-		query.Where("tenant_id = ?", filter.TenantId)
-	}
-	if len(filter.BusinessUnitId) > 0 {
-		query.Where("business_unit_id = ?", filter.BusinessUnitId)
-	}
 	if len(filter.QueueName) > 0 {
 		query.Where("queue_name = ?", filter.QueueName)
 	}
