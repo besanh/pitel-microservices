@@ -1,0 +1,101 @@
+name: CICD For BSS Chat
+
+on:
+  push:
+    branches:
+      - 'dev_fins_bss_chat'
+
+env:
+  docker_image: tel4vn/dev_fins_bss_chat_service
+  repository_folder: /home/fins/project/microservices/fins-bss-chat
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21.x'
+
+      - name: Install dependencies
+        run: go get .
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test with the Go CLI
+        run: go test ./... -coverprofile=coverage.out
+
+  publish-docker-hub:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ env.docker_image }}:latest
+
+      - name: send telegram message on push
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            *Repository:*
+            ${{ github.repository }} [link](https://github.com/${{ github.repository }})
+            *Branch:*
+            ${{ github.ref_name }}
+            *Commit:*
+            https://github.com/${{ github.repository }}/commit/${{github.sha}}
+            *Repo Action URL:*
+            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
+            *Message:*
+            Push Image to Docker Hub via GitHub Actions
+            *Image:*
+            ${{ env.docker_image }}:latest
+
+  deploy:
+    runs-on: fins-dev-cloud
+    needs: publish-docker-hub
+    steps:
+      - name: deploy docker-compose
+        run: |
+          cd ${{ env.repository_folder }}
+          docker compose pull && docker compose down && docker compose up -d
+
+      - name: send telegram message on push
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            *Repository:*
+            ${{ github.repository }} [link](https://github.com/${{ github.repository }})
+            *Branch:*
+            ${{ github.ref_name }}
+            *Commit:*
+            https://github.com/${{ github.repository }}/commit/${{github.sha}}
+            *Repo Action URL:*
+            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
+            *Message:*
+            Deploy docker compose
+            *Image:*
+            ${{ env.docker_image }}:latest
