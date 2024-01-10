@@ -23,6 +23,7 @@ require (
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.32.0
 	gotest.tools v2.2.0+incompatible
+	nhooyr.io/websocket v1.8.10
 )
 
 require (
@@ -44,7 +45,6 @@ require (
 	golang.org/x/sync v0.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230913181813-007df8e322eb // indirect
-	nhooyr.io/websocket v1.8.10 // indirect
 )
 
 require (

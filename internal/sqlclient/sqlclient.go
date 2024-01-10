@@ -50,14 +50,14 @@ type SqlClientConn struct {
 func NewSqlClient(config SqlConfig) ISqlClientConn {
 	client := &SqlClientConn{}
 	client.SqlConfig = config
-	// if err := client.Connect(); err != nil {
-	// 	log.Fatal(err)
-	// 	return nil
-	// }
-	// if err := client.DB.Ping(); err != nil {
-	// 	log.Fatal(err)
-	// 	return nil
-	// }
+	if err := client.Connect(); err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	if err := client.DB.Ping(); err != nil {
+		log.Fatal(err)
+		return nil
+	}
 	return client
 }
 

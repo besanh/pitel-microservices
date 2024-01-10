@@ -1,23 +1,25 @@
 package service
 
 import (
+	"context"
+	"encoding/json"
+
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
 )
 
 var WsSubscribers *Subscribers
 
-func (s *Subscribers) AddSubscriber(sub *Subscriber) {
+func (s *Subscribers) AddSubscriber(ctx context.Context, sub *Subscriber) {
 	s.SubscribersMu.Lock()
 	defer s.SubscribersMu.Unlock()
 
 	s.Subscribers[sub] = struct{}{}
-	var tmp []any
-	if err := util.ParseAnyToAny(sub, &tmp); err != nil {
+	jsonByte, err := json.Marshal(&sub)
+	if err != nil {
 		log.Error(err)
 	}
-	if err := cache.RCache.HSet(SUBSCRIBERS_LIST_USER+"_"+sub.UserId, tmp); err != nil {
+	if err := cache.RCache.HSetRaw(ctx, SUBSCRIBERS_LIST_USER, sub.UserId, string(jsonByte)); err != nil {
 		log.Error(err)
 	}
 

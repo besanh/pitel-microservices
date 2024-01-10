@@ -110,10 +110,6 @@ func InArray(item any, array any) bool {
 	return false
 }
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 func GenerateRandomString(n int) string {
 	b := make([]rune, n)
 	for i := range b {
@@ -145,4 +141,13 @@ func InArrayContains(item string, array []string) bool {
 		}
 	}
 	return false
+}
+
+func ParseStructToByte(data any) ([]byte, error) {
+	value, err := ParseAnyToString(data)
+	if err != nil {
+		return nil, err
+	}
+	byteSlice := []byte(value)
+	return byteSlice, nil
 }

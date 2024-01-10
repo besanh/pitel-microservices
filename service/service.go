@@ -39,6 +39,10 @@ var (
 	CHAT_ROUTING_EXPIRE     = 1 * time.Hour
 	CHAT_QUEUE_AGENT        = "chat_queue_agent"
 	CHAT_QUEUE_AGENT_EXPIRE = 10 * time.Minute
+	CHAT_APP                = "chat_app"
+	CHAT_APP_EXPIRE         = 5 * time.Hour
+
+	ORIGIN_LIST = []string{"localhost:*"}
 )
 
 type (

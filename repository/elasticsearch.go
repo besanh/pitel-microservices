@@ -37,7 +37,8 @@ func (repo *Elasticsearch) CheckAliasExist(ctx context.Context, index, alias str
 	}
 	res, err := esapi.IndicesExistsAliasRequest.Do(esapi.IndicesExistsAliasRequest{
 		Index: []string{idx},
-	}, ctx, ESClient.GetClient().Transport)
+	}, ctx,
+		ESClient.GetClient().Transport)
 	if err != nil {
 		return false, err
 	} else if res.StatusCode == 200 {
@@ -83,7 +84,6 @@ func (repo *Elasticsearch) CreateAliasRabbitMQ(ctx context.Context, index, alias
 	}
 }
 func (repo *Elasticsearch) CreateDocRabbitMQ(ctx context.Context, index, tenant, routing, uuid string, esDoc map[string]any) (bool, error) {
-	log.Infof("push log inbox marketing %s to rabbitmq", uuid)
 	payload := model.RabbitMQPayload{
 		HttpMethod: "POST",
 		Uri:        "/" + index + "_" + tenant + "/_doc/" + uuid + "/_create?routing=" + index + "_" + routing,
@@ -94,6 +94,7 @@ func (repo *Elasticsearch) CreateDocRabbitMQ(ctx context.Context, index, tenant,
 		log.Error(err)
 		return false, err
 	} else {
+		log.Infof("push log chat %s to rabbitmq success", uuid)
 		return true, nil
 	}
 }

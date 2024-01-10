@@ -35,4 +35,15 @@ var (
 		"random",
 		"min_conversation",
 	}
+
+	EVENT_NAME_SEND_MESSAGE = []string{
+		"text",
+		"image",
+		"audio",
+		"video",
+		"file",
+		"link",
+		"sticker",
+		"gif",
+	}
 )

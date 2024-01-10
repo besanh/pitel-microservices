@@ -14,7 +14,7 @@ import (
 
 type (
 	IRedisCache interface {
-		Set(key string, value any, ttl time.Duration)
+		Set(key string, value any, ttl time.Duration) error
 		SetTTL(key string, value any, t time.Duration) (string, error)
 		Get(key string) any
 		IsExisted(key string) (bool, error)
@@ -66,13 +66,15 @@ const (
 	REDIS_KEEP_TTL = redis.KeepTTL
 )
 
-func (r *RedisCache) Set(key string, value any, ttl time.Duration) {
+func (r *RedisCache) Set(key string, value any, ttl time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	val, _ := util.ParseAnyToString(value)
 	if _, err := r.client.Set(ctx, key, val, ttl).Result(); err != nil {
 		log.Error(err)
+		return err
 	}
+	return nil
 }
 
 func (r *RedisCache) Get(key string) any {

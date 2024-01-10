@@ -21,7 +21,7 @@ type (
 )
 
 const (
-	SUBSCRIBERS_LIST_USER = "subscribers_list_user"
+	SUBSCRIBERS_LIST_USER = "bss_subscribers"
 )
 
 var SubscriberServiceGlobal ISubscriber
@@ -41,7 +41,7 @@ func (s *SubscriberService) AddSubscriber(ctx context.Context, authUser *model.A
 	subscriber.Username = authUser.Username
 	subscriber.Services = authUser.Services
 
-	WsSubscribers.AddSubscriber(subscriber)
+	WsSubscribers.AddSubscriber(ctx, subscriber)
 	go func() {
 		time.Sleep(1500 * time.Millisecond)
 		message := map[string]any{

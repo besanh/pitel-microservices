@@ -9,7 +9,9 @@ import (
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/queue"
 	elasticsearch "github.com/tel4vn/fins-microservices/internal/elasticsearch"
+	"github.com/tel4vn/fins-microservices/internal/messagequeue"
 	"github.com/tel4vn/fins-microservices/internal/queuetask"
+	"github.com/tel4vn/fins-microservices/internal/rabbitmq"
 	"github.com/tel4vn/fins-microservices/internal/redis"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	authMdw "github.com/tel4vn/fins-microservices/middleware/auth"
@@ -77,15 +79,38 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
-	if redis.Redis != nil {
-		cache.RCache = cache.NewRedisCache(redis.Redis.GetClient())
-		defer cache.RCache.Close()
-	}
 	queue.RMQ = queue.NewRMQ(queue.Rcfg{
 		Address:  env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
 		Password: env.GetStringENV("REDIS_PASSWORD", ""),
 		DB:       9,
 	})
+	// rabbitmqconfig := rmq.Config{
+	// 	Uri:                  env.GetStringENV("RMQ_HOST", "rabbitmq.dev.fins.vn"),
+	// 	ChannelNotifyTimeout: 100 * time.Millisecond,
+	// 	Reconnect: struct {
+	// 		Interval   time.Duration
+	// 		MaxAttempt int
+	// 	}{
+	// 		Interval:   500 * time.Millisecond,
+	// 		MaxAttempt: 7200,
+	// 	},
+	// }
+	// rmq.RabbitConnector = rmq.New(rabbitmqconfig)
+	// rmq.RabbitConnector.RoutingKey = "es.writer"
+	// rmq.RabbitConnector.ExchangeName = "events"
+	// if err := rmq.RabbitConnector.Ping(); err != nil {
+	// 	panic(err)
+	// }
+	rabbitMQConfig := rabbitmq.Config{
+		Addr:         env.GetStringENV("RMQ_HOST", "rabbitmq.dev.fins.vn"),
+		ExchangeName: env.GetStringENV("RMQ_EXCHANGE_NAME", "bss-message"),
+		QueueName:    env.GetStringENV("RMQ_QUEUE_NAME", "bss-chat"),
+	}
+
+	err = messagequeue.NewMQConn(rabbitMQConfig)
+	if err != nil {
+		panic(err)
+	}
 	esCfg := elasticsearch.Config{
 		Username:              env.GetStringENV("ES_USERNAME", "elastic"),
 		Password:              env.GetStringENV("ES_PASSWORD", "tel4vnEs2021"),
@@ -94,7 +119,7 @@ func init() {
 		ResponseHeaderTimeout: 60,
 		RetryStatuses:         []int{502, 503, 504},
 	}
-	elasticsearch.NewElasticsearchClient(esCfg)
+	repository.ESClient = elasticsearch.NewElasticsearchClient(esCfg)
 
 	// Queue task
 	queueTaskConfig := queuetask.QueueTask{
@@ -104,7 +129,7 @@ func init() {
 	}
 	queuetask.NewQueueTaskClient(queueTaskConfig)
 
-	// goauth.GoAuthClient = goauth.NewGoAuth(redis.Redis.GetClient())
+	// goauth.GoAuthClient = goauth.NewGoAuth(cache.RCache.GetClient())
 	// authMdw.SetupGoGuardian()
 	authMdw.AuthMdw = authMdw.NewGatewayAuthMiddleware(env.GetStringENV("ENV", "dev"))
 	config = cfg
@@ -118,6 +143,11 @@ func main() {
 
 	// Init gRPC client
 	// auth.GRPC_Client = auth.NewGRPCAuh(config.AAA_Adress)
+	cache.RCache = cache.NewRedisCache(redis.Redis.GetClient())
+	defer cache.RCache.Close()
+
+	cache.MCache = cache.NewMemCache()
+	defer cache.MCache.Close()
 
 	// Init Repositories
 	repository.InitRepositories()

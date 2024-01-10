@@ -13,6 +13,8 @@ type (
 	IMemCache interface {
 		Set(key string, value any, ttl time.Duration)
 		Get(key string) any
+		Del(key string)
+		Close()
 	}
 	MemCache struct {
 		*ttlcache.Cache[string, any]
@@ -22,6 +24,8 @@ type (
 const (
 	DEFAULT_TTL = ttlcache.DefaultTTL
 )
+
+var MCache IMemCache
 
 func NewMemCache() IMemCache {
 	service := &MemCache{}
@@ -51,4 +55,12 @@ func (s *MemCache) Get(key string) any {
 		return nil
 	}
 	return val.Value()
+}
+
+func (s *MemCache) Del(key string) {
+	s.Cache.Delete(key)
+}
+
+func (s *MemCache) Close() {
+	s.Cache.Stop()
 }

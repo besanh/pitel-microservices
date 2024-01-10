@@ -38,6 +38,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 		err = errors.New(response.ERR_DATA_NOT_FOUND)
 		return chatQueue.Base.GetId(), err
 	}
+	chatQueue.AppId = data.AppId
 	chatQueue.QueueName = data.QueueName
 	chatQueue.Description = data.Description
 	chatQueue.ChatRoutingId = data.ChatRoutingId

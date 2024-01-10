@@ -9,6 +9,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/service"
+	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
 )
 
@@ -18,16 +19,20 @@ type WebSocket struct {
 
 var (
 	WebSocketHandler *WebSocket
-	ORIGIN_LIST      = []string{"localhost:*"}
 )
 
 func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber) {
-	WebSocketHandler = &WebSocket{
+	handler := &WebSocket{
 		subscriber: subscriberService,
 	}
-	Group := r.Group("chat/v1")
+	service.WsSubscribers = &service.Subscribers{
+		SubscriberMessageBuffer: 16,
+		Subscribers:             make(map[*service.Subscriber]struct{}),
+		PublishLimiter:          rate.NewLimiter(rate.Every(time.Millisecond*100), 100),
+	}
+	Group := r.Group("wss/v1")
 	{
-		Group.GET("subscriber", api.MoveTokenToHeader(), WebSocketHandler.Subscribe)
+		Group.Handle("GET", "subscriber", handler.Subscribe)
 	}
 }
 
@@ -35,7 +40,7 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context) {
 	wsCon, err := websocket.Accept(ctx.Writer, ctx.Request, &websocket.AcceptOptions{
 		InsecureSkipVerify: true,
 		CompressionMode:    websocket.CompressionContextTakeover,
-		OriginPatterns:     ORIGIN_LIST,
+		OriginPatterns:     service.ORIGIN_LIST,
 	})
 	if err != nil {
 		log.Error(err)
@@ -44,8 +49,7 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context) {
 	}
 	defer wsCon.Close(websocket.StatusInternalError, "close connection error")
 
-	err = handler.subscribe(ctx, wsCon)
-	if err != nil {
+	if err = handler.subscribe(ctx, wsCon); err != nil {
 		log.Error(err)
 		return
 	}
@@ -59,7 +63,6 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error
 		return errors.New("token is required")
 	}
 
-	ctx := wsCon.CloseRead(c)
 	s := &service.Subscriber{
 		Message: make(chan []byte, service.WsSubscribers.SubscriberMessageBuffer),
 		CloseSlow: func() {
@@ -70,21 +73,45 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error
 	if res == nil {
 		return errors.New("token is invalid")
 	}
-	err := handler.subscriber.AddSubscriber(ctx, res.Data, s)
-	if err != nil {
+	if err := handler.subscriber.AddSubscriber(c, res.Data, s); err != nil {
 		return err
 	}
-
 	defer service.WsSubscribers.DeleteSubscriber(s)
+
+	go func(conn *websocket.Conn) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error(err)
+			}
+		}()
+
+		for {
+			messageType, p, err := conn.Read(c)
+			if err != nil {
+				if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+					websocket.CloseStatus(err) == websocket.StatusGoingAway {
+					// writeActionChan(callId, CLOSE)
+				} else if e, ok := err.(websocket.CloseError); ok {
+					log.Errorf("close socket code: %d reason: %s", e.Code, e.Reason)
+				} else {
+					log.Errorf("read: %v", err)
+				}
+				break
+			}
+			log.Infof("read: %s", string(p))
+			log.Infof("message type: %d", messageType)
+		}
+
+	}(wsCon)
+
 	for {
 		select {
 		case msg := <-s.Message:
-			err := api.WriteTimeout(ctx, 5*time.Second, wsCon, msg)
-			if err != nil {
+			if err := api.WriteTimeout(c, 5*time.Second, wsCon, msg); err != nil {
 				return err
 			}
-		case <-ctx.Done():
-			return ctx.Err()
+		case <-c.Done():
+			return c.Err()
 		}
 	}
 }

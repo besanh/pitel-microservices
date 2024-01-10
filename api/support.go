@@ -2,14 +2,23 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
+	"github.com/tel4vn/fins-microservices/common/cache"
+	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"nhooyr.io/websocket"
+)
+
+const (
+	AUTHEN_TOKEN = "authen_token"
+	AGENT_INFO   = "agent_info"
 )
 
 var (
@@ -74,34 +83,80 @@ func RequestAAA(ctx *gin.Context, token string) (result *model.AAAResponse, err 
 	return result, nil
 }
 
-func RequestAuthen(ctx *gin.Context, token string) (result *model.AAAResponse, err error) {
+func RequestAuthen(ctx *gin.Context, apiKey string) (result *model.AAAResponse, err error) {
 	body := map[string]string{
-		"token": token,
+		"api_key": apiKey,
 	}
+	var token string
 	resp := model.Authen{}
-	// https://api-loadtest.tel4vn.com/v1/crm/auth
-	url := ctx.Query("auth_url")
-	client := resty.New()
-	res, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Authorization", "Bearer "+token).
-		SetBody(body).
-		SetResult(resp).
-		Post(url)
-	if err != nil {
-		return nil, err
+	tokenCache := cache.MCache.Get(AUTHEN_TOKEN + "_" + apiKey)
+	if tokenCache != nil {
+		if err := util.ParseAnyToAny(tokenCache, &resp); err != nil {
+			log.Error(err)
+			return nil, err
+		}
+	} else {
+		// https://api-loadtest.tel4vn.com/v3/auth/token
+		url := ctx.Query("auth_url")
+		client := resty.New()
+		res, err := client.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(body).
+			SetResult(resp).
+			Post(url)
+		if err != nil {
+			return nil, err
+		}
+		if res.StatusCode() != 200 {
+			return nil, err
+		}
+		if err := json.Unmarshal(res.Body(), &resp); err != nil {
+			return result, err
+		}
+		cache.MCache.Set(AUTHEN_TOKEN+"_"+apiKey, resp, 1*time.Minute)
 	}
-	if res.StatusCode() != 200 {
-		return nil, err
+
+	// Get Info agent
+	agentInfo := model.AuthUserInfo{}
+	agentInfoCache := cache.MCache.Get(AGENT_INFO + "_" + token)
+	if agentInfoCache != nil {
+		if err := util.ParseAnyToAny(agentInfoCache, &agentInfo); err != nil {
+			log.Error(err)
+			return nil, err
+		}
+	} else {
+		// https://api-loadtest.tel4vn.com/crm/user-crm
+		urlInfo := "https://api-loadtest.tel4vn.com/v1/crm/user-crm" + "/" + resp.UserId
+		clientInfo := resty.New()
+		res, err := clientInfo.R().
+			SetHeader("Content-Type", "application/json").
+			SetHeader("Authorization", "Bearer "+resp.Token).
+			Get(urlInfo)
+		if err != nil {
+			return nil, err
+		}
+		if res.StatusCode() != 200 {
+			return nil, err
+		}
+		if err := json.Unmarshal(res.Body(), &agentInfo); err != nil {
+			return result, err
+		}
+		cache.MCache.Set(AGENT_INFO+"_"+token, agentInfo, 1*time.Minute)
 	}
-	result = &model.AAAResponse{
-		Data: &model.AuthUser{
-			TenantId: resp.DomainUuid,
-			UserId:   resp.UserUuid,
-			Username: resp.Username,
-			Level:    resp.Level,
-		},
+
+	if len(agentInfo.UserUuid) > 1 {
+		result = &model.AAAResponse{
+			Data: &model.AuthUser{
+				TenantId: agentInfo.DomainUuid,
+				UserId:   agentInfo.UserUuid,
+				Username: agentInfo.Username,
+				Level:    agentInfo.Level,
+			},
+		}
+	} else {
+		return nil, fmt.Errorf("failed to get user info")
 	}
+
 	return result, nil
 }
 

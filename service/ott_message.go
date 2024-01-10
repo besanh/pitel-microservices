@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
@@ -16,7 +17,7 @@ import (
 
 type (
 	IOttMessage interface {
-		GetOttMessage(ctx context.Context, data model.OttMessage) error
+		GetOttMessage(ctx context.Context, data model.OttMessage) (int, any)
 	}
 	OttMessage struct{}
 )
@@ -25,25 +26,25 @@ func NewOttMessage() IOttMessage {
 	return &OttMessage{}
 }
 
-func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) error {
+func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (int, any) {
 	docId := uuid.NewString()
 	timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
 	message := model.Message{
-		Id:            docId,
-		ParentMsgId:   "",
-		MsgId:         data.MsgId,
-		MessageType:   data.Type,
-		EventName:     data.EventName,
-		Direction:     variables.DIRECTION["receive"],
-		AppId:         data.AppId,
-		OaId:          data.OaId,
-		UserIdByApp:   data.UserIdByApp,
-		UserId:        data.UserId,
-		Username:      data.Username,
-		Avatar:        data.Avatar,
-		SendTime:      timestamp,
-		SendTimestamp: data.Timestamp,
-		Content:       data.Text,
+		Id:                  docId,
+		ParentExternalMsgId: "",
+		ExternalMsgId:       data.MsgId,
+		MessageType:         data.MessageType,
+		EventName:           data.EventName,
+		Direction:           variables.DIRECTION["receive"],
+		AppId:               data.AppId,
+		OaId:                data.OaId,
+		UserIdByApp:         data.UserIdByApp,
+		UserId:              data.UserId,
+		Username:            data.Username,
+		Avatar:              data.Avatar,
+		SendTime:            timestamp,
+		SendTimestamp:       data.Timestamp,
+		Content:             data.Content,
 	}
 	if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
 		timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
@@ -51,18 +52,18 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) e
 		message.ReadTimestamp = data.Timestamp
 	}
 	if data.Attachments != nil {
-		for _, val := range data.Attachments {
+		for _, val := range *data.Attachments {
 			var attachmentFile model.OttPayloadFile
 			var attachmentMedia model.OttPayloadMedia
 			if val.AttType == variables.ATTACHMENT_TYPE["file"] {
-				if err := util.ParseAnyToAny(val.Payload, attachmentFile); err != nil {
+				if err := util.ParseAnyToAny(val.Payload, &attachmentFile); err != nil {
 					log.Error(err)
-					return err
+					return response.ServiceUnavailableMsg(err.Error())
 				}
 			} else {
-				if err := util.ParseAnyToAny(val.Payload, attachmentMedia); err != nil {
+				if err := util.ParseAnyToAny(val.Payload, &attachmentMedia); err != nil {
 					log.Error(err)
-					return err
+					return response.ServiceUnavailableMsg(err.Error())
 				}
 			}
 			message.Attachments = append(message.Attachments, &model.Attachments{
@@ -83,39 +84,37 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) e
 	tmpBytes, err := json.Marshal(message)
 	if err != nil {
 		log.Error(err)
-		return err
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	esDoc := map[string]any{}
 	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		log.Error(err)
-		return err
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, data.AppId); err != nil {
 		log.Error(err)
-		return err
+		return response.ServiceUnavailableMsg(err.Error())
 	} else if !isExisted {
 		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, data.AppId); err != nil {
 			log.Error(err)
-			return err
+			return response.ServiceUnavailableMsg(err.Error())
 		}
 	}
 
-	if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
-		log.Error(err)
-		return err
-	}
-
+	// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
+	// 	log.Error(err)
+	// 	return response.ServiceUnavailableMsg(err.Error())
+	// }
 	// TODO: check conversation and add message
 	conversation, err := GetConversationExist(ctx, data)
 	if err != nil {
-		log.Error(err)
-		return err
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 	_, err = InsertConversation(ctx, conversation)
 	if err != nil {
 		log.Error(err)
-		return err
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	var agentId string
@@ -127,17 +126,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) e
 	agentId, err = CheckChatQueueSetting(ctx, filter)
 	if err != nil {
 		log.Error(err)
-		return err
+		return response.ServiceUnavailableMsg(err.Error())
 	}
-	for s := range WsSubscribers.Subscribers {
-		if s.Id == agentId {
-			PublishMessage(agentId, message)
-		}
+	if len(agentId) > 0 {
+		PublishMessage(agentId, message.Content)
 	}
 
 	// TODO: add to queue
 
-	// TODO: push wss
-
-	return nil
+	return response.OKResponse()
 }

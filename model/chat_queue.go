@@ -9,7 +9,6 @@ import (
 type ChatQueue struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_queue,alias:cq"`
-	ConnectionId  string       `json:"connection_id" bun:"connection_id,type:text,notnull"`
 	AppId         string       `json:"app_id" bun:"app_id,type:text,notnull"`
 	UserIdByApp   string       `json:"user_id_by_app" bun:"user_id_by_app,type:text,notnull"`
 	QueueName     string       `json:"queue_name" bun:"queue_name,type:text,notnull"`
@@ -20,6 +19,7 @@ type ChatQueue struct {
 }
 
 type ChatQueueRequest struct {
+	AppId         string `json:"app_id"`
 	QueueName     string `json:"queue_name"`
 	Description   string `json:"description"`
 	ChatRoutingId string `json:"chat_routing_id"`
@@ -27,6 +27,9 @@ type ChatQueueRequest struct {
 }
 
 func (m *ChatQueueRequest) Validate() error {
+	if len(m.AppId) < 1 {
+		return errors.New("app id is required")
+	}
 	if len(m.QueueName) < 1 {
 		return errors.New("queue name is required")
 	}
