@@ -15,7 +15,6 @@ type (
 		GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.Conversation, error)
 	}
 	ConversationES struct {
-		Repo[model.Conversation]
 	}
 )
 

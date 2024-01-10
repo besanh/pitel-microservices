@@ -20,13 +20,13 @@ type (
 		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any)
 	}
 	Message struct {
-		OttReceiveMessageUrl string
+		OttSendMessageUrl string
 	}
 )
 
-func NewMessage(ottReceiveMessageUrl string) IMessage {
+func NewMessage(OttSendMessageUrl string) IMessage {
 	return &Message{
-		OttReceiveMessageUrl: ottReceiveMessageUrl,
+		OttSendMessageUrl: OttSendMessageUrl,
 	}
 }
 
@@ -70,7 +70,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	timestampTmp := time.Now().UnixMilli()
 	timestamp := fmt.Sprintf("%d", timestampTmp)
-	eventName := ""
+	eventName := "text"
 	if len(data.Attachments) > 0 {
 		for _, item := range data.Attachments {
 			eventNameTmp, ok := variables.ATTACHMENT_TYPE[item.AttachmentType]
@@ -82,7 +82,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 	if len(eventName) < 1 {
 		log.Errorf("event name %s not found", eventName)
-		return response.BadRequestMsg("event name %s " + eventName + " not found")
+		return response.BadRequestMsg("event name " + eventName + " not found")
 	}
 
 	docId := uuid.NewString()

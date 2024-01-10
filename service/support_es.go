@@ -29,7 +29,8 @@ func InsertES(ctx context.Context, appId, index, docId string, data any) error {
 		}
 	}
 
-	if err := repository.ESRepo.InsertLog(ctx, appId, ES_INDEX, docId, esDoc); err != nil {
+	err = repository.ESRepo.InsertLog(ctx, appId, ES_INDEX, docId, esDoc)
+	if err != nil {
 		log.Error(err)
 		return err
 	}

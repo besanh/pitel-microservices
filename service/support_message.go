@@ -14,7 +14,7 @@ func (s *Message) sendMessageToOTT(ctx context.Context, ott model.SendMessageToO
 	if err := util.ParseAnyToAny(ott, &body); err != nil {
 		return result, err
 	}
-	url := s.OttReceiveMessageUrl
+	url := s.OttSendMessageUrl
 	client := resty.New()
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").

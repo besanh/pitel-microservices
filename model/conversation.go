@@ -3,7 +3,7 @@ package model
 import "encoding/json"
 
 type Conversation struct {
-	*Base
+	ConversationId   string          `json:"conversation_id"`
 	ConversationType string          `json:"conversation_type"`
 	AppId            string          `json:"app_id"`
 	OaId             string          `json:"oa_id"`

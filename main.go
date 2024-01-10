@@ -158,7 +158,7 @@ func main() {
 	service.InitServices()
 
 	// Run gRPC server
-	server.NewGRPCServer(config.gRPCPort, env.GetStringENV("OTT_RECEIVE_MESSAGE", ""), env.GetStringENV("CRM_AUTH", ""))
+	server.NewGRPCServer(config.gRPCPort, env.GetStringENV("OTT_SEND_MESSAGE", ""), env.GetStringENV("CRM_AUTH", ""))
 }
 
 func setAppLogger(cfg Config, file *os.File) {

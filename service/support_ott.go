@@ -158,6 +158,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter) (strin
 
 func GetConversationExist(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isExisted bool, err error) {
 	conversation = model.Conversation{
+		ConversationId:   uuid.NewString(),
 		AppId:            data.AppId,
 		ConversationType: data.MessageType,
 		UserIdByApp:      data.UserIdByApp,
@@ -181,6 +182,7 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 			log.Error(err)
 			return conversation, false, err
 		}
+		return conversation, false, nil
 	}
 
 	conversationCache, err := cache.RCache.HGet(CONVERSATION, data.UserIdByApp)
