@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,7 +10,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
 	"golang.org/x/exp/slices"
 )
 
@@ -39,8 +37,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		AppId:               data.AppId,
 		OaId:                data.OaId,
 		UserIdByApp:         data.UserIdByApp,
-		UserId:              data.UserId,
-		Username:            data.Username,
+		Uid:                 data.UserId,
 		Avatar:              data.Avatar,
 		SendTime:            timestamp,
 		SendTimestamp:       data.Timestamp,
@@ -80,42 +77,34 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 
-	//  TODO: add rabbitmq message
-	tmpBytes, err := json.Marshal(message)
+	// TODO: check conversation and add message
+	conversationId := ""
+	conversation, isExisted, err := GetConversationExist(ctx, data)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-
-	esDoc := map[string]any{}
-	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, data.AppId); err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, data.AppId); err != nil {
+	if !isExisted {
+		id, err := InsertConversation(ctx, conversation)
+		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
+		conversationId = id
+	}
+
+	message.ConversationId = conversationId
+
+	//  TODO: add rabbitmq message
+	if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
 	// 	log.Error(err)
 	// 	return response.ServiceUnavailableMsg(err.Error())
 	// }
-	// TODO: check conversation and add message
-	conversation, err := GetConversationExist(ctx, data)
-	if err != nil {
-		return response.ServiceUnavailableMsg(err.Error())
-	}
-	_, err = InsertConversation(ctx, conversation)
-	if err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
 
 	var agentId string
 
@@ -129,7 +118,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if len(agentId) > 0 {
-		PublishMessage(agentId, message.Content)
+		// PublishMessageToOne(agentId, message.Content)
+		NewSubscriberService().PublishMessageToSubscriber(ctx, agentId, message)
 	}
 
 	// TODO: add to queue

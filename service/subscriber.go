@@ -21,13 +21,13 @@ type (
 )
 
 const (
-	SUBSCRIBERS_LIST_USER = "bss_subscribers"
+	BSS_SUBSCRIBERS = "bss_subscribers"
 )
 
 var SubscriberServiceGlobal ISubscriber
 
 func NewSubscriberService() *SubscriberService {
-	if err := cache.RCache.Del([]string{SUBSCRIBERS_LIST_USER}); err != nil {
+	if err := cache.RCache.Del([]string{BSS_SUBSCRIBERS}); err != nil {
 		log.Error(err)
 	}
 	return &SubscriberService{}
@@ -54,7 +54,7 @@ func (s *SubscriberService) AddSubscriber(ctx context.Context, authUser *model.A
 }
 
 func (s *SubscriberService) PublishMessageToSubscriber(ctx context.Context, id string, message any) error {
-	err := PublishMessage(id, message)
+	err := PublishMessageToOne(id, message)
 	if err != nil {
 		log.Error(err)
 		return err

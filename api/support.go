@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -40,19 +41,18 @@ func MoveTokenToHeader() gin.HandlerFunc {
 	}
 }
 
-func AAAMiddleware(ctx *gin.Context) (result *model.AAAResponse) {
-	token := ctx.Query("token")
-	if len(token) < 10 {
+func AAAMiddleware(ctx *gin.Context, crmAuthUrl string, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse) {
+	if len(bssAuthRequest.Token) < 10 {
 		return nil
 	}
-	if ctx.Query("source") == "authen" {
-		result, err := RequestAuthen(ctx, token)
+	if bssAuthRequest.Source == "authen" {
+		result, err := RequestAuthen(ctx, bssAuthRequest, crmAuthUrl)
 		if err != nil {
 			return nil
 		}
 		return result
-	} else if ctx.Query("source") == "aaa" {
-		result, err := RequestAAA(ctx, token)
+	} else if bssAuthRequest.Source == "aaa" {
+		result, err := RequestAAA(ctx, bssAuthRequest)
 		if err != nil {
 			return nil
 		}
@@ -61,19 +61,18 @@ func AAAMiddleware(ctx *gin.Context) (result *model.AAAResponse) {
 	return
 }
 
-func RequestAAA(ctx *gin.Context, token string) (result *model.AAAResponse, err error) {
+func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse, err error) {
 	body := map[string]string{
-		"token": token,
+		"token": bssAuthRequest.Token,
 	}
 	// https://api.dev.fins.vn/aaa/v1/token/verify
-	url := ctx.Query("auth_url")
 	client := resty.New()
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
-		SetHeader("Authorization", "Bearer "+token).
+		SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
 		SetBody(body).
 		SetResult(result).
-		Post(url)
+		Post(bssAuthRequest.AuthUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +82,8 @@ func RequestAAA(ctx *gin.Context, token string) (result *model.AAAResponse, err 
 	return result, nil
 }
 
-func RequestAuthen(ctx *gin.Context, apiKey string) (result *model.AAAResponse, err error) {
+func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAuthUrl string) (result *model.AAAResponse, err error) {
+	apiKey := bssAuthRequest.Token
 	body := map[string]string{
 		"api_key": apiKey,
 	}
@@ -96,14 +96,12 @@ func RequestAuthen(ctx *gin.Context, apiKey string) (result *model.AAAResponse, 
 			return nil, err
 		}
 	} else {
-		// https://api-loadtest.tel4vn.com/v3/auth/token
-		url := ctx.Query("auth_url")
 		client := resty.New()
 		res, err := client.R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(body).
 			SetResult(resp).
-			Post(url)
+			Post(bssAuthRequest.AuthUrl)
 		if err != nil {
 			return nil, err
 		}
@@ -115,6 +113,10 @@ func RequestAuthen(ctx *gin.Context, apiKey string) (result *model.AAAResponse, 
 		}
 		cache.MCache.Set(AUTHEN_TOKEN+"_"+apiKey, resp, 1*time.Minute)
 	}
+	token = resp.Token
+	if len(token) < 1 {
+		return nil, errors.New("token not found")
+	}
 
 	// Get Info agent
 	agentInfo := model.AuthUserInfo{}
@@ -125,8 +127,7 @@ func RequestAuthen(ctx *gin.Context, apiKey string) (result *model.AAAResponse, 
 			return nil, err
 		}
 	} else {
-		// https://api-loadtest.tel4vn.com/crm/user-crm
-		urlInfo := "https://api-loadtest.tel4vn.com/v1/crm/user-crm" + "/" + resp.UserId
+		urlInfo := crmAuthUrl + "/" + resp.UserId
 		clientInfo := resty.New()
 		res, err := clientInfo.R().
 			SetHeader("Content-Type", "application/json").

@@ -58,3 +58,8 @@ type MessageOttCache struct {
 	UserIdByApp string `json:"user_id_by_app"`
 	UserId      string `json:"user_id"`
 }
+
+type OttResponse struct {
+	MsgId string `json:"msg_id"`
+	Uid   string `json:"uid"`
+}

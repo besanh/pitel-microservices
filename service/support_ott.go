@@ -89,19 +89,6 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter) (strin
 	if err != nil {
 		log.Error(err)
 		return agentId, err
-	} else if len(routingCache) < 1 {
-		routing, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, queue.ChatRoutingId)
-		if err != nil {
-			log.Error(err)
-			return agentId, err
-		} else if routing == nil {
-			log.Error("routing not found")
-			return agentId, errors.New("routing not found")
-		}
-		if err := cache.RCache.RPush(ctx, CHAT_ROUTING, routing); err != nil {
-			log.Error(err)
-			return agentId, err
-		}
 	} else {
 		err := json.Unmarshal([]byte(routingCache), &routing)
 		if err != nil {
@@ -169,54 +156,46 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter) (strin
 	return agentId, nil
 }
 
-func GetConversationExist(ctx context.Context, data model.OttMessage) (conversation model.Conversation, err error) {
+func GetConversationExist(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isExisted bool, err error) {
 	conversation = model.Conversation{
-		UserIdByApp: data.UserIdByApp,
-		Username:    data.Username,
-		Avatar:      data.Avatar,
+		AppId:            data.AppId,
+		ConversationType: data.MessageType,
+		UserIdByApp:      data.UserIdByApp,
+		Username:         data.Username,
+		Avatar:           data.Avatar,
+		OaId:             data.OaId,
+		Uid:              data.UserId,
 	}
 
 	ok, err := cache.RCache.IsHExisted(CONVERSATION, data.UserIdByApp)
 	if err != nil {
 		log.Error(err)
-		return conversation, err
+		return conversation, true, err
 	} else if !ok {
 		jsonByte, err := json.Marshal(&conversation)
 		if err != nil {
 			log.Error(err)
-			return conversation, err
+			return conversation, false, err
 		}
 		if err := cache.RCache.HSetRaw(ctx, CONVERSATION, data.UserIdByApp, string(jsonByte)); err != nil {
 			log.Error(err)
-			return conversation, err
+			return conversation, false, err
 		}
 	}
 
 	conversationCache, err := cache.RCache.HGet(CONVERSATION, data.UserIdByApp)
 	if err != nil {
 		log.Error(err)
-		return conversation, err
-	} else if len(conversationCache) < 1 {
-		err := cache.RCache.SADD(ctx, CONVERSATION, conversation)
-		if err != nil {
-			log.Error(err)
-			return conversation, err
-		}
-		// Insert es
-		_, err = InsertConversation(ctx, conversation)
-		if err != nil {
-			log.Error(err)
-			return conversation, err
-		}
+		return conversation, false, err
 	} else {
 		err := json.Unmarshal([]byte(conversationCache), &conversation)
 		if err != nil {
 			log.Error(err)
-			return conversation, err
+			return conversation, false, err
 		}
 	}
 
-	return conversation, nil
+	return conversation, true, nil
 }
 
 func InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error) {
@@ -246,29 +225,4 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 		return id, err
 	}
 	return id, nil
-}
-
-func PublishMessage(id string, message any) error {
-	WsSubscribers.SubscribersMu.Lock()
-	defer WsSubscribers.SubscribersMu.Unlock()
-	msgBytes, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-	WsSubscribers.PublishLimiter.Wait(context.Background())
-	isExisted := false
-	for s := range WsSubscribers.Subscribers {
-		if s.Id == id {
-			isExisted = true
-			select {
-			case s.Message <- msgBytes:
-			default:
-				go s.CloseSlow()
-			}
-		}
-	}
-	if !isExisted {
-		return errors.New("subscriber is not existed")
-	}
-	return nil
 }

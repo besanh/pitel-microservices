@@ -8,6 +8,7 @@ import (
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
@@ -21,7 +22,7 @@ var (
 	WebSocketHandler *WebSocket
 )
 
-func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber) {
+func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmAuthUrl string) {
 	handler := &WebSocket{
 		subscriber: subscriberService,
 	}
@@ -32,11 +33,13 @@ func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber) {
 	}
 	Group := r.Group("wss/v1")
 	{
-		Group.Handle("GET", "subscriber", handler.Subscribe)
+		Group.Handle("GET", "subscriber", func(ctx *gin.Context) {
+			handler.Subscribe(ctx, crmAuthUrl)
+		})
 	}
 }
 
-func (handler *WebSocket) Subscribe(ctx *gin.Context) {
+func (handler *WebSocket) Subscribe(ctx *gin.Context, crmAuthUrl string) {
 	wsCon, err := websocket.Accept(ctx.Writer, ctx.Request, &websocket.AcceptOptions{
 		InsecureSkipVerify: true,
 		CompressionMode:    websocket.CompressionContextTakeover,
@@ -49,13 +52,13 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context) {
 	}
 	defer wsCon.Close(websocket.StatusInternalError, "close connection error")
 
-	if err = handler.subscribe(ctx, wsCon); err != nil {
+	if err = handler.subscribe(ctx, wsCon, crmAuthUrl); err != nil {
 		log.Error(err)
 		return
 	}
 }
 
-func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error {
+func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmAuthUrl string) error {
 	if len(c.Query("source")) < 1 {
 		return errors.New("source is required")
 	}
@@ -69,11 +72,17 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error
 			wsCon.Close(websocket.StatusPolicyViolation, "connection too slow")
 		},
 	}
-	res := api.AAAMiddleware(c)
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+	}
+	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
 	if res == nil {
 		return errors.New("token is invalid")
 	}
 	if err := handler.subscriber.AddSubscriber(c, res.Data, s); err != nil {
+		log.Error(err)
 		return err
 	}
 	defer service.WsSubscribers.DeleteSubscriber(s)

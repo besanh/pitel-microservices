@@ -4,15 +4,18 @@ import "encoding/json"
 
 type Conversation struct {
 	*Base
-	AppId       string          `json:"app_id"`
-	UserIdByApp string          `json:"user_id_by_app"`
-	Username    string          `json:"username"`
-	PhoneNumber string          `json:"phone_number"`
-	Email       string          `json:"email"`
-	Avatar      string          `json:"avatar"`
-	IsDone      bool            `json:"is_done"`
-	IsDoneAt    int64           `json:"is_done_at"`
-	IsDoneBy    json.RawMessage `json:"is_done_by"`
+	ConversationType string          `json:"conversation_type"`
+	AppId            string          `json:"app_id"`
+	OaId             string          `json:"oa_id"`
+	UserIdByApp      string          `json:"user_id_by_app"`
+	Uid              string          `json:"uid"`
+	Username         string          `json:"username"`
+	PhoneNumber      string          `json:"phone_number"`
+	Email            string          `json:"email"`
+	Avatar           string          `json:"avatar"`
+	IsDone           bool            `json:"is_done"`
+	IsDoneAt         int64           `json:"is_done_at"`
+	IsDoneBy         json.RawMessage `json:"is_done_by"`
 }
 
 type ElasticsearchChatResponse struct {
