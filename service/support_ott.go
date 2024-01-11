@@ -93,8 +93,6 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 	// }
 
 	if routing.RoutingName == "random" {
-		rand.NewSource(time.Now().UnixNano())
-		randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
 		subscribers := []Subscriber{}
 		isExisted := false
 		for s := range WsSubscribers.Subscribers {
@@ -106,16 +104,20 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 			}
 		}
 		if !isExisted {
-			agent := subscribers[randomIndex]
-			agent.UserIdByApp = userIdByApp
-			agentId = agent.Id
-			jsonByte, err := json.Marshal(&agent)
-			if err != nil {
-				log.Error(err)
-			}
-			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, agentId, string(jsonByte)); err != nil {
-				log.Error(err)
-				return agentId, err
+			if len(WsSubscribers.Subscribers) > 0 {
+				rand.NewSource(time.Now().UnixNano())
+				randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
+				agent := subscribers[randomIndex]
+				agent.UserIdByApp = userIdByApp
+				agentId = agent.Id
+				jsonByte, err := json.Marshal(&agent)
+				if err != nil {
+					log.Error(err)
+				}
+				if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, agentId, string(jsonByte)); err != nil {
+					log.Error(err)
+					return agentId, err
+				}
 			}
 		}
 	} else if routing.RoutingName == "min_conversation" {

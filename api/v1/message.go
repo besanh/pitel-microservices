@@ -18,7 +18,7 @@ func NewMessage(r *gin.Engine, messageService service.IMessage, crmAuthUrl strin
 		messageService: messageService,
 	}
 
-	Group := r.Group("bss-chat/v1/message")
+	Group := r.Group("bss-message/v1/message")
 	{
 		Group.POST("send", api.MoveTokenToHeader(), func(ctx *gin.Context) {
 			handler.SendMessage(ctx, crmAuthUrl)
