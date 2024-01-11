@@ -64,7 +64,6 @@ type MessageFilter struct {
 	UserIdByApp         string          `json:"user_id_by_app"`
 	Uid                 string          `json:"uid"`
 	UserAppname         string          `json:"user_app_name"`
-	Avatar              string          `json:"avatar"`
 	SupporterId         string          `json:"supporter_id"`
 	SupporterName       string          `json:"supporter_name"`
 	SendTime            string          `json:"send_time"`

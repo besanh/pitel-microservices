@@ -5,6 +5,7 @@ import (
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 )
@@ -22,6 +23,9 @@ func NewMessage(r *gin.Engine, messageService service.IMessage, crmAuthUrl strin
 	{
 		Group.POST("send", api.MoveTokenToHeader(), func(ctx *gin.Context) {
 			handler.SendMessage(ctx, crmAuthUrl)
+		})
+		Group.GET("", func(ctx *gin.Context) {
+			handler.GetMessages(ctx, crmAuthUrl)
 		})
 	}
 }
@@ -59,5 +63,28 @@ func (h *Message) SendMessage(c *gin.Context, crmAuthUrl string) {
 	}
 
 	code, result := h.messageService.SendMessageToOTT(c, res.Data, message)
+	c.JSON(code, result)
+}
+
+func (h *Message) GetMessages(c *gin.Context, crmAuthUrl string) {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+	}
+	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+	limit := util.ParseLimit(c.Query("limit"))
+	offset := util.ParseOffset(c.Query("offset"))
+
+	filter := model.MessageFilter{
+		ConversationId: c.Query("conversation_id"),
+		UserIdByApp:    c.Query("user_id_by_app"),
+	}
+
+	code, result := h.messageService.GetMessages(c, res.Data, filter, limit, offset)
 	c.JSON(code, result)
 }

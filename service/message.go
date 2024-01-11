@@ -18,7 +18,7 @@ import (
 type (
 	IMessage interface {
 		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any)
-		// GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.)
+		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
 	}
 	Message struct {
 		OttSendMessageUrl string
@@ -136,4 +136,13 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 
 	return response.OKResponse()
+}
+
+func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any) {
+	total, messages, err := repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX, filter, limit, offset)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	return response.Pagination(messages, total, limit, offset)
 }

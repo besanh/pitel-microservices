@@ -32,6 +32,7 @@ func InitRepositories() {
 func InitRepositoriesES() {
 	ESRepo = NewES()
 	ConversationESRepo = NewConversationES()
+	MessageESRepo = NewMessageES()
 }
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
