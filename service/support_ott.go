@@ -10,12 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter) (string, error) {
+func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userIdByApp string) (string, error) {
 	var agentId string
 	chatQueue := model.ChatQueue{}
 
@@ -65,40 +64,59 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter) (strin
 		}
 	}
 
-	agents := []model.ChatQueueAgent{}
-	// Chat queue agent
-	filterChatQueueAgent := model.ChatQueueAgentFilter{
-		QueueId: chatQueue.Id,
-	}
-	chatQueueAgentCache := cache.RCache.Get(CHAT_QUEUE_AGENT + "_" + chatQueue.Id)
-	if chatQueueAgentCache != nil {
-		if err := json.Unmarshal([]byte(chatQueueAgentCache.(string)), &agents); err != nil {
-			log.Error(err)
-			return agentId, err
-		}
-	} else {
-		total, agentDatas, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, repository.DBConn, filterChatQueueAgent, 1, 0)
-		if err != nil {
-			log.Error(err)
-			return agentId, err
-		}
-		agents = (*agentDatas)
-		if total > 0 {
-			for _, item := range *agentDatas {
-				if err := cache.RCache.Set(CHAT_QUEUE_AGENT+"_"+item.AgentId, item, CHAT_QUEUE_AGENT_EXPIRE); err != nil {
-					log.Error(err)
-					return agentId, err
-				}
-			}
-		}
-	}
+	// agents := []model.ChatQueueAgent{}
+	// // Chat queue agent
+	// filterChatQueueAgent := model.ChatQueueAgentFilter{
+	// 	QueueId: chatQueue.Id,
+	// }
+	// chatQueueAgentCache := cache.RCache.Get(CHAT_QUEUE_AGENT + "_" + chatQueue.Id)
+	// if chatQueueAgentCache != nil {
+	// 	if err := json.Unmarshal([]byte(chatQueueAgentCache.(string)), &agents); err != nil {
+	// 		log.Error(err)
+	// 		return agentId, err
+	// 	}
+	// } else {
+	// 	total, agentDatas, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, repository.DBConn, filterChatQueueAgent, 1, 0)
+	// 	if err != nil {
+	// 		log.Error(err)
+	// 		return agentId, err
+	// 	}
+	// 	agents = (*agentDatas)
+	// 	if total > 0 {
+	// 		for _, item := range *agentDatas {
+	// 			if err := cache.RCache.Set(CHAT_QUEUE_AGENT+"_"+item.AgentId, item, CHAT_QUEUE_AGENT_EXPIRE); err != nil {
+	// 				log.Error(err)
+	// 				return agentId, err
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	if routing.RoutingName == "random" {
-		if len(agents) > 0 {
-			rand.NewSource(time.Now().UnixNano())
-			randomIndex := rand.Intn(len(agents))
-			agent := agents[randomIndex]
-			agentId = agent.AgentId
+		rand.NewSource(time.Now().UnixNano())
+		randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
+		subscribers := []Subscriber{}
+		isExisted := false
+		for s := range WsSubscribers.Subscribers {
+			if s.UserIdByApp == userIdByApp {
+				isExisted = true
+				agentId = s.Id
+			} else {
+				subscribers = append(subscribers, *s)
+			}
+		}
+		if !isExisted {
+			agent := subscribers[randomIndex]
+			agent.UserIdByApp = userIdByApp
+			agentId = agent.Id
+			jsonByte, err := json.Marshal(&agent)
+			if err != nil {
+				log.Error(err)
+			}
+			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, agentId, string(jsonByte)); err != nil {
+				log.Error(err)
+				return agentId, err
+			}
 		}
 	} else if routing.RoutingName == "min_conversation" {
 	}
@@ -122,7 +140,7 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.UserIdByApp)
 	if conversationCache != nil {
 		isExisted = true
-		if err := util.ParseAnyToAny(conversationCache, &conversation); err != nil {
+		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
 			log.Error(err)
 			return conversation, err
 		}

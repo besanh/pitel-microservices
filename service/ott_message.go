@@ -102,7 +102,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	filter := model.QueueFilter{
 		AppId: data.AppId,
 	}
-	agentId, err = CheckChatQueueSetting(ctx, filter)
+	agentId, err = CheckChatQueueSetting(ctx, filter, data.UserIdByApp)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())

@@ -41,3 +41,10 @@ type ConversationFilter struct {
 	PhoneNumber []string
 	Email       []string
 }
+
+type AgentAllocationFilter struct {
+	UserIdByApp   string
+	AgentId       string
+	QueueId       string
+	AllocatedTime int64
+}
