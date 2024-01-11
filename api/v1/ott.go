@@ -20,7 +20,7 @@ func NewOttMessage(r *gin.Engine, messageService service.IOttMessage) {
 		ottMessageService: messageService,
 	}
 
-	Group := r.Group("bss-chat/v1/ott")
+	Group := r.Group("bss-message/v1/ott")
 	{
 		Group.POST("", handler.GetOttMessage)
 	}
