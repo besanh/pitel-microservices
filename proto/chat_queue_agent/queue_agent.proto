@@ -23,7 +23,7 @@ message QueueAgentResponse {
 service QueueAgentService {
     rpc InsertQueueAgent(QueueAgentBodyRequest) returns (QueueAgentResponse) {
         option (google.api.http) = {
-            post : "/bss/v1/chat/queue-agent",
+            post : "/bss/chat/v1/queue-agent",
             body: "*"
         };
     }
