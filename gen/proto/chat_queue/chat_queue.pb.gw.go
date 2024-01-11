@@ -79,7 +79,7 @@ func RegisterChatQueueServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chat_queue.ChatQueueService/InsertChatQueue", runtime.WithHTTPPathPattern("/bss/chat/v1/chat-queue"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chat_queue.ChatQueueService/InsertChatQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-queue"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -143,7 +143,7 @@ func RegisterChatQueueServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chat_queue.ChatQueueService/InsertChatQueue", runtime.WithHTTPPathPattern("/bss/chat/v1/chat-queue"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chat_queue.ChatQueueService/InsertChatQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-queue"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -163,7 +163,7 @@ func RegisterChatQueueServiceHandlerClient(ctx context.Context, mux *runtime.Ser
 }
 
 var (
-	pattern_ChatQueueService_InsertChatQueue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss", "chat", "v1", "chat-queue"}, ""))
+	pattern_ChatQueueService_InsertChatQueue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "chat-queue"}, ""))
 )
 
 var (

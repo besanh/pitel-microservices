@@ -25,7 +25,7 @@ message ChatQueueResponse {
 service ChatQueueService {
     rpc InsertChatQueue(ChatQueueBodyRequest) returns (ChatQueueResponse) {
         option (google.api.http) = {
-            post : "/bss/chat/v1/chat-queue",
+            post : "/bss-chat/v1/chat-queue",
             body: "*"
         };
     };

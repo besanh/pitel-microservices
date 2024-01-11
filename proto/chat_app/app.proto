@@ -61,13 +61,13 @@ message AppGetResponse {
 service App {
     rpc InsertApp(ChatAppBodyRequest) returns (AppResponse) {
         option (google.api.http) = {
-            post : "/bss/chat/v1/app",
+            post : "/bss-chat/v1/app",
             body : "*"
         };
     }
     rpc GetApp(AppRequest) returns (AppGetResponse) {
         option (google.api.http) = {
-            get : "/bss/chat/v1/app",
+            get : "/bss-chat/v1/app",
         };
     }
 }

@@ -18,6 +18,7 @@ import (
 type (
 	IMessage interface {
 		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any)
+		// GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.)
 	}
 	Message struct {
 		OttSendMessageUrl string
@@ -91,7 +92,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		Content:             data.Content,
 		Attachments:         data.Attachments,
 	}
-
+	log.Info(message)
 	if err := InsertES(ctx, conversation.AppId, ES_INDEX, docId, message); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())

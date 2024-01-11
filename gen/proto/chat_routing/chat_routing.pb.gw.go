@@ -79,7 +79,7 @@ func RegisterChatRoutingHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chat_routing.ChatRouting/PostChatRouting", runtime.WithHTTPPathPattern("/bss/chat/v1/chat-routing"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chat_routing.ChatRouting/PostChatRouting", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-routing"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -143,7 +143,7 @@ func RegisterChatRoutingHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chat_routing.ChatRouting/PostChatRouting", runtime.WithHTTPPathPattern("/bss/chat/v1/chat-routing"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chat_routing.ChatRouting/PostChatRouting", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-routing"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -163,7 +163,7 @@ func RegisterChatRoutingHandlerClient(ctx context.Context, mux *runtime.ServeMux
 }
 
 var (
-	pattern_ChatRouting_PostChatRouting_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss", "chat", "v1", "chat-routing"}, ""))
+	pattern_ChatRouting_PostChatRouting_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "chat-routing"}, ""))
 )
 
 var (
