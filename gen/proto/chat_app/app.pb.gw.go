@@ -115,7 +115,7 @@ func RegisterAppHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.app.App/InsertApp", runtime.WithHTTPPathPattern("/bss/chat/v1/app"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.app.App/InsertApp", runtime.WithHTTPPathPattern("/bss-chat/v1/app"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -140,7 +140,7 @@ func RegisterAppHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.app.App/GetApp", runtime.WithHTTPPathPattern("/bss/chat/v1/app"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.app.App/GetApp", runtime.WithHTTPPathPattern("/bss-chat/v1/app"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -204,7 +204,7 @@ func RegisterAppHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.app.App/InsertApp", runtime.WithHTTPPathPattern("/bss/chat/v1/app"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.app.App/InsertApp", runtime.WithHTTPPathPattern("/bss-chat/v1/app"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -226,7 +226,7 @@ func RegisterAppHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.app.App/GetApp", runtime.WithHTTPPathPattern("/bss/chat/v1/app"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.app.App/GetApp", runtime.WithHTTPPathPattern("/bss-chat/v1/app"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -246,9 +246,9 @@ func RegisterAppHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_App_InsertApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss", "chat", "v1", "app"}, ""))
+	pattern_App_InsertApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "app"}, ""))
 
-	pattern_App_GetApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss", "chat", "v1", "app"}, ""))
+	pattern_App_GetApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "app"}, ""))
 )
 
 var (

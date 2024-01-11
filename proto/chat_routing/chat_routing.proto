@@ -22,7 +22,7 @@ message ChatRoutingResponse {
 service ChatRouting {
     rpc PostChatRouting (ChatRoutingBodyRequest) returns (ChatRoutingResponse) {
         option (google.api.http) = {
-            post : "/bss/chat/v1/chat-routing",
+            post : "/bss-chat/v1/chat-routing",
             body: "*"
         };
     }

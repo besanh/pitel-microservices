@@ -236,3 +236,12 @@ func Created(data map[string]any) (int, any) {
 
 	return http.StatusCreated, result
 }
+
+func Pagination(data, total, limit, offset any) (int, any) {
+	return http.StatusOK, map[string]any{
+		"data":   data,
+		"total":  total,
+		"limit":  limit,
+		"offset": offset,
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
@@ -32,6 +33,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		c.JSON(response.BadRequestMsg(err))
 		return
 	}
+	log.Info(jsonBody)
 	messageType, _ := jsonBody["type"].(string)
 	eventName, _ := jsonBody["event_name"].(string)
 	appId, _ := jsonBody["app_id"].(string)
