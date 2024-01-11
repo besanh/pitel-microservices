@@ -31,7 +31,7 @@ func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmAuthU
 		Subscribers:             make(map[*service.Subscriber]struct{}),
 		PublishLimiter:          rate.NewLimiter(rate.Every(time.Millisecond*100), 100),
 	}
-	Group := r.Group("bss-chat/wss/v1")
+	Group := r.Group("bss-chat/v1/wss")
 	{
 		Group.Handle("GET", "subscriber", func(ctx *gin.Context) {
 			handler.Subscribe(ctx, crmAuthUrl)
