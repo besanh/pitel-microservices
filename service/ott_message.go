@@ -117,7 +117,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if len(agentId) > 0 {
-		PublishMessageToOne(agentId, message.Content)
+		PublishMessageToOne(agentId, message)
 	}
 
 	// TODO: add to queue
