@@ -41,13 +41,13 @@ message ConnectionAppStructResponse {
 service ConnectionApp {
     rpc PostConnectionApp (ConnectionAppBodyRequest) returns (ConnectionAppResponse) {
         option (google.api.http) = {
-            post : "/bss/v1/chat/connection-app",
+            post : "/bss/chat/v1/connection-app",
             body: "*"
         };
     }
     rpc GetConnectionApp (ConnectionAppRequest) returns (ConnectionAppStructResponse) {
         option (google.api.http) = {
-            get : "/bss/v1/chat/connection-app"
+            get : "/bss/chat/v1/connection-app"
         };
     }
 }

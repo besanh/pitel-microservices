@@ -10,6 +10,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -32,11 +33,13 @@ func NewMessage(OttSendMessageUrl string) IMessage {
 
 func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any) {
 	conversation := model.Conversation{}
-	ok, err := cache.RCache.IsHExisted(CONVERSATION, data.ConversationId)
-	if err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	} else if !ok {
+	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.UserIdByApp)
+	if conversationCache != nil {
+		if err := util.ParseAnyToAny(conversationCache, &conversation); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+	} else {
 		filter := model.ConversationFilter{}
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.AppId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
@@ -45,26 +48,10 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		}
 		if total > 0 {
 			conversation = (*conversations)[0]
-			jsonByte, err := json.Marshal(&conversation)
-			if err != nil {
+			if err := cache.RCache.Set(CONVERSATION+"_"+data.UserIdByApp, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
-			if err := cache.RCache.HSetRaw(ctx, CONVERSATION, data.UserIdByApp, string(jsonByte)); err != nil {
-				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
-			}
-		}
-	}
-	conversationCache, err := cache.RCache.HGet(CONVERSATION, data.UserIdByApp)
-	if err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	} else {
-		err := json.Unmarshal([]byte(conversationCache), &conversation)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
 		}
 	}
 

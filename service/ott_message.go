@@ -78,21 +78,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 
 	// TODO: check conversation and add message
-	conversation, isExisted, err := GetConversationExist(ctx, data)
+	conversation, err := GetConversationExist(ctx, data)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if !isExisted {
-		id, err := InsertConversation(ctx, conversation)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-		message.ConversationId = id
-	} else {
-		message.ConversationId = conversation.ConversationId
-	}
+	message.ConversationId = conversation.ConversationId
 
 	//  TODO: add rabbitmq message
 	if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {
@@ -111,13 +102,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	filter := model.QueueFilter{
 		AppId: data.AppId,
 	}
-	agentId, err = CheckChatQueueSetting(ctx, filter)
+	agentId, err = CheckChatQueueSetting(ctx, filter, data.UserIdByApp)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if len(agentId) > 0 {
-		PublishMessageToOne(agentId, message.Content)
+		PublishMessageToOne(agentId, message)
 	}
 
 	// TODO: add to queue

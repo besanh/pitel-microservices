@@ -32,7 +32,7 @@ message AuthSourceResponse {
 service AuthSourceService {
     rpc PostAuthSource(AuthSourceBodyRequest) returns (AuthSourceResponse) {
         option (google.api.http) = {
-            post : "/bss/v1/chat/auth-source",
+            post : "/bss/chat/v1/auth-source",
             body: "*"
         };
     };
