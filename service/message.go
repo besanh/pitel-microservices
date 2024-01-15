@@ -92,7 +92,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		Content:             data.Content,
 		Attachments:         data.Attachments,
 	}
-	log.Info(message)
+	log.Info("message to es: ", message)
 	if err := InsertES(ctx, conversation.AppId, ES_INDEX, docId, message); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -104,6 +104,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		EventName:     eventName,
 		AppId:         conversation.AppId,
 		UserIdByApp:   conversation.UserIdByApp,
+		OaId:          conversation.OaId,
 		Uid:           conversation.Uid,
 		SupporterId:   authUser.UserId,
 		SupporterName: authUser.Username,
@@ -111,13 +112,15 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		Text:          data.Content,
 	}
 
+	log.Info("message to ott: ", ottMessage)
+
 	resOtt, err := s.sendMessageToOTT(ctx, ottMessage)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	message.ExternalMsgId = resOtt.MsgId
+	message.ExternalMsgId = resOtt.Data.MsgId
 
 	// Update msgId to ES
 	tmpBytes, err := json.Marshal(message)
