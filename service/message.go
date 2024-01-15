@@ -142,7 +142,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 }
 
 func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any) {
-	total, messages, err := repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX, filter, limit, offset)
+	total, messages, err := repository.MessageESRepo.GetMessages(ctx, "", ES_INDEX, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
