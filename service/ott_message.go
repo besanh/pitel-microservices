@@ -42,6 +42,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		SendTime:            timestamp,
 		SendTimestamp:       data.Timestamp,
 		Content:             data.Content,
+		UserAppname:         data.Username,
 	}
 	if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
 		timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))

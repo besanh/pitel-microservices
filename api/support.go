@@ -105,9 +105,6 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAut
 		if err != nil {
 			return nil, err
 		}
-		if res.StatusCode() != 200 {
-			return nil, err
-		}
 		if err := json.Unmarshal(res.Body(), &resp); err != nil {
 			return result, err
 		}
@@ -134,9 +131,6 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAut
 			SetHeader("Authorization", "Bearer "+resp.Token).
 			Get(urlInfo)
 		if err != nil {
-			return nil, err
-		}
-		if res.StatusCode() != 200 {
 			return nil, err
 		}
 		if err := json.Unmarshal(res.Body(), &agentInfo); err != nil {
