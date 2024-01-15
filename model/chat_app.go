@@ -30,7 +30,8 @@ type Zalo struct {
 	AppId         string `json:"app_id"`
 	AppName       string `json:"app_name"`
 	SecretKey     string `json:"secret_key"`
-	AccessToken   string `json:"access_token"`
+	OaId          string `json:"oa_id"`
+	OaName        string `json:"oa_name"`
 	State         string `json:"state"`
 	CodeChallenge string `json:"code_challenge"`
 	Status        bool   `json:"status"`
@@ -59,8 +60,11 @@ func (m *ChatAppRequest) Validate() error {
 		if len(m.InfoApp.Zalo.SecretKey) < 1 {
 			return errors.New("secret key is required")
 		}
-		if len(m.InfoApp.Zalo.AccessToken) < 1 {
-			return errors.New("access token is required")
+		if len(m.InfoApp.Zalo.OaId) < 1 {
+			return errors.New("oat id is required")
+		}
+		if len(m.InfoApp.Zalo.OaName) < 1 {
+			return errors.New("oa name is required")
 		}
 		if len(m.InfoApp.Zalo.State) < 1 {
 			return errors.New("state is required")

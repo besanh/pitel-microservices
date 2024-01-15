@@ -1,6 +1,8 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type Conversation struct {
 	ConversationId   string          `json:"conversation_id"`
@@ -16,6 +18,9 @@ type Conversation struct {
 	IsDone           bool            `json:"is_done"`
 	IsDoneAt         int64           `json:"is_done_at"`
 	IsDoneBy         json.RawMessage `json:"is_done_by"`
+	CreatedAt        string          `json:"created_at"`
+	UpdatedAt        string          `json:"updated_at"`
+	TotalUnRead      int64           `json:"total_unread"`
 }
 
 type ElasticsearchChatResponse struct {

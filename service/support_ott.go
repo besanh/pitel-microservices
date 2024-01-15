@@ -64,55 +64,36 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 		}
 	}
 
-	// agents := []model.ChatQueueAgent{}
-	// // Chat queue agent
-	// filterChatQueueAgent := model.ChatQueueAgentFilter{
-	// 	QueueId: chatQueue.Id,
-	// }
-	// chatQueueAgentCache := cache.RCache.Get(CHAT_QUEUE_AGENT + "_" + chatQueue.Id)
-	// if chatQueueAgentCache != nil {
-	// 	if err := json.Unmarshal([]byte(chatQueueAgentCache.(string)), &agents); err != nil {
-	// 		log.Error(err)
-	// 		return agentId, err
-	// 	}
-	// } else {
-	// 	total, agentDatas, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, repository.DBConn, filterChatQueueAgent, 1, 0)
-	// 	if err != nil {
-	// 		log.Error(err)
-	// 		return agentId, err
-	// 	}
-	// 	agents = (*agentDatas)
-	// 	if total > 0 {
-	// 		for _, item := range *agentDatas {
-	// 			if err := cache.RCache.Set(CHAT_QUEUE_AGENT+"_"+item.AgentId, item, CHAT_QUEUE_AGENT_EXPIRE); err != nil {
-	// 				log.Error(err)
-	// 				return agentId, err
-	// 			}
-	// 		}
-	// 	}
-	// }
-
 	if routing.RoutingName == "random" {
 		subscribers := []Subscriber{}
 		isExisted := false
 		for s := range WsSubscribers.Subscribers {
-			if s.UserIdByApp == userIdByApp {
+			alive := CheckConversationInAgent(userIdByApp, s.AgentAllocation)
+			if alive {
 				isExisted = true
 				agentId = s.Id
 			} else {
+				agentAllocations := model.AgentAllocation{
+					UserIdByApp:   userIdByApp,
+					AgentId:       s.Id,
+					QueueId:       chatQueue.Id,
+					AllocatedTime: time.Now().Unix(),
+				}
+				s.AgentAllocation = append(s.AgentAllocation, &agentAllocations)
 				subscribers = append(subscribers, *s)
+				isExisted = true
 			}
 		}
-		if !isExisted {
+		if isExisted {
 			if len(WsSubscribers.Subscribers) > 0 {
 				rand.NewSource(time.Now().UnixNano())
 				randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
 				agent := subscribers[randomIndex]
-				agent.UserIdByApp = userIdByApp
 				agentId = agent.Id
 				jsonByte, err := json.Marshal(&agent)
 				if err != nil {
 					log.Error(err)
+					return agentId, err
 				}
 				if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, agentId, string(jsonByte)); err != nil {
 					log.Error(err)
@@ -136,6 +117,7 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 		Avatar:           data.Avatar,
 		OaId:             data.OaId,
 		Uid:              data.UserId,
+		CreatedAt:        time.Now().Format(time.RFC3339),
 	}
 
 	isExisted := false
@@ -174,6 +156,10 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 			return conversation, err
 		}
 		conversation.ConversationId = id
+		if err := cache.RCache.Set(CONVERSATION+"_"+data.UserIdByApp, conversation, CONVERSATION_EXPIRE); err != nil {
+			log.Error(err)
+			return conversation, err
+		}
 	}
 
 	return conversation, nil
@@ -206,4 +192,13 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 		return id, err
 	}
 	return id, nil
+}
+
+func CheckConversationInAgent(userIdByApp string, allocationAgent []*model.AgentAllocation) bool {
+	for _, item := range allocationAgent {
+		if item.UserIdByApp == userIdByApp {
+			return true
+		}
+	}
+	return false
 }

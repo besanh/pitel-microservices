@@ -60,7 +60,7 @@ type MessageOttCache struct {
 }
 
 type OttResponse struct {
-	Code int `json:"code"`
+	Code string `json:"code"`
 	Data struct {
 		MsgId   string `json:"msg_id"`
 		Uid     string `json:"uid"`

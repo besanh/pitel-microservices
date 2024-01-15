@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -13,6 +14,7 @@ import (
 type (
 	IConversation interface {
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
+		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 	}
 	Conversation struct {
 	}
@@ -50,4 +52,41 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 	}
 
 	return docId, nil
+}
+
+func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
+	subscribers := WsSubscribers.Subscribers
+	conversationIds := []string{}
+	for s := range subscribers {
+		if s.UserId == authUser.UserId {
+			for _, item := range s.AgentAllocation {
+				conversationIds = append(conversationIds, item.UserIdByApp)
+			}
+		}
+	}
+	if len(conversationIds) < 1 {
+		log.Info("conversationIds not found")
+		return response.Pagination(nil, 0, limit, offset)
+	}
+	filter.UserIdByApp = conversationIds
+	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if total > 0 {
+		for _, conv := range *conversations {
+			filter := model.MessageFilter{
+				ConversationId: conv.UserIdByApp,
+				IsRead:         false,
+			}
+			total, _, err := repository.MessageESRepo.GetMessages(ctx, "", ES_INDEX, filter, -1, 0)
+			if err != nil {
+				log.Error(err)
+				break
+			}
+			conv.TotalUnRead = int64(total)
+		}
+	}
+	return response.Pagination(conversations, total, limit, offset)
 }

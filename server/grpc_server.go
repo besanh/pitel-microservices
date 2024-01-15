@@ -114,6 +114,7 @@ func NewGRPCServer(port, ottSendMessageUrl, crmAuthUrl string) {
 	v1.NewOttMessage(httpServer, service.NewOttMessage())
 	v1.NewMessage(httpServer, service.NewMessage(ottSendMessageUrl), crmAuthUrl)
 	v1.NewWebSocket(httpServer, service.NewSubscriberService(), crmAuthUrl)
+	v1.NewConversation(httpServer, service.NewConversation(), crmAuthUrl)
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

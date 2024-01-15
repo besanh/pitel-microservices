@@ -70,4 +70,5 @@ type MessageFilter struct {
 	Content             string          `json:"content"`
 	ReadTime            string          `json:"read_time"`
 	ReadBy              json.RawMessage `json:"read_by"`
+	IsRead              bool            `json:"is_read"`
 }
