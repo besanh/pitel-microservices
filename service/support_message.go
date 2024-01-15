@@ -14,17 +14,16 @@ func (s *Message) sendMessageToOTT(ctx context.Context, ott model.SendMessageToO
 	if err := util.ParseAnyToAny(ott, &body); err != nil {
 		return result, err
 	}
+
 	url := s.OttSendMessageUrl
 	client := resty.New()
+
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		// SetHeader("Authorization", "Bearer "+token).
 		SetBody(body).
 		Post(url)
 	if err != nil {
-		return result, err
-	}
-	if res.StatusCode() != 200 {
 		return result, err
 	}
 	if err := util.ParseAnyToAny(res.Body(), &result); err != nil {

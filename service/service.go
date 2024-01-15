@@ -42,7 +42,7 @@ var (
 	CHAT_APP                = "chat_app"
 	CHAT_APP_EXPIRE         = 5 * time.Hour
 
-	ORIGIN_LIST = []string{"localhost:*"}
+	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 )
 
 type (
@@ -55,15 +55,15 @@ type (
 	}
 
 	Subscriber struct {
-		Id             string      `json:"id"`
-		TenantId       string      `json:"tenant_id"`
-		BusinessUnitId string      `json:"business_unit_id"`
-		UserId         string      `json:"user_id"`
-		Username       string      `json:"username"`
-		Services       []string    `json:"services"`
-		UserIdByApp    string      `json:"user_id_by_app"`
-		Message        chan []byte `json:"-"`
-		CloseSlow      func()      `json:"-"`
+		Id              string                   `json:"id"`
+		TenantId        string                   `json:"tenant_id"`
+		BusinessUnitId  string                   `json:"business_unit_id"`
+		UserId          string                   `json:"user_id"`
+		Username        string                   `json:"username"`
+		Services        []string                 `json:"services"`
+		AgentAllocation []*model.AgentAllocation `json:"agent_allocation"`
+		Message         chan []byte              `json:"-"`
+		CloseSlow       func()                   `json:"-"`
 	}
 
 	Subscribers struct {
