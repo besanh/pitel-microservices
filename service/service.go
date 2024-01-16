@@ -129,3 +129,17 @@ func GetDBConnOfUser(user model.AuthUser) (dbConn sqlclient.ISqlClientConn, err 
 	}
 	return
 }
+
+func HandleGetDBConSource(authUser *model.AuthUser) (sqlclient.ISqlClientConn, error) {
+	var dbCon sqlclient.ISqlClientConn
+	if len(authUser.Source) < 1 || authUser.Source == "authen" {
+		dbCon = repository.DBConn
+	} else {
+		dbConTmp, err := GetDBConnOfUser(*authUser)
+		if err != nil {
+			return dbCon, err
+		}
+		dbCon = dbConTmp
+	}
+	return dbCon, nil
+}

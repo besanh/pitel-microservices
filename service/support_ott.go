@@ -42,7 +42,6 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 	}
 
 	routing := model.ChatRouting{}
-	// Get routing from cache or db
 	chatRoutingCache := cache.RCache.Get(CHAT_ROUTING + "_" + chatQueue.ChatRoutingId)
 	if chatRoutingCache != nil {
 		if err := json.Unmarshal([]byte(chatRoutingCache.(string)), &routing); err != nil {
@@ -67,9 +66,6 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 
 	if routing.RoutingName == "random" {
 		subscribers := []Subscriber{}
-		// Get subscriber random
-		// Get subscriber having conversation
-		// Assign conversation for subscriber
 		rand.NewSource(time.Now().UnixNano())
 		randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
 		if len(WsSubscribers.Subscribers) > 0 {
@@ -80,19 +76,33 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 			filter := model.AgentAllocationFilter{
 				UserIdByApp: userIdByApp,
 			}
-			total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
-			if err != nil {
-				log.Error(err)
-				return agentId, err
-			}
-			if total > 0 {
-				for _, item := range *agentAllocations {
-					if len(item.AgentId) > 1 {
-						agentId = item.AgentId
-						break
+			agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + userIdByApp)
+			if agentAllocationCache != nil {
+				if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agent); err != nil {
+					log.Error(err)
+					return agentId, err
+				}
+			} else {
+				total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+				if err != nil {
+					log.Error(err)
+					return agentId, err
+				}
+				if total > 0 {
+					for _, item := range *agentAllocations {
+						if len(item.AgentId) > 1 {
+							agentId = item.AgentId
+							break
+						}
 					}
 				}
+
+				if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+userIdByApp, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+					log.Error(err)
+					return agentId, err
+				}
 			}
+
 			if len(agentId) < 1 {
 				agentId = agent.UserId
 				agentAllocation := model.AgentAllocation{

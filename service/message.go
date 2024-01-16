@@ -114,12 +114,15 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	log.Info("message to ott: ", ottMessage)
 
-	resOtt, err := s.sendMessageToOTT(ctx, ottMessage)
+	statusCode, resOtt, err := s.sendMessageToOTT(ctx, ottMessage)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-
+	if statusCode != 200 {
+		log.Error("status code error: ", statusCode)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
 	message.ExternalMsgId = resOtt.Data.MsgId
 
 	// Update msgId to ES
@@ -138,7 +141,9 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	return response.OKResponse()
+	return response.Created(map[string]any{
+		"message": message,
+	})
 }
 
 func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any) {
