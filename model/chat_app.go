@@ -10,14 +10,14 @@ type ChatApp struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_app,alias:ca"`
 	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
-	Status        bool     `json:"status" bun:"status,notnull"`
+	Status        string   `json:"status" bun:"status,notnull"`
 	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
 }
 
 type ChatAppRequest struct {
 	AppName string   `json:"app_name"`
 	State   string   `json:"state"`
-	Status  bool     `json:"status"`
+	Status  string   `json:"status"` //active/deactive
 	InfoApp *InfoApp `json:"info_app"`
 }
 
@@ -27,14 +27,13 @@ type InfoApp struct {
 }
 
 type Zalo struct {
-	AppId         string `json:"app_id"`
-	AppName       string `json:"app_name"`
-	SecretKey     string `json:"secret_key"`
-	OaId          string `json:"oa_id"`
-	OaName        string `json:"oa_name"`
-	State         string `json:"state"`
-	CodeChallenge string `json:"code_challenge"`
-	Status        bool   `json:"status"`
+	AppId     string `json:"app_id"`
+	AppName   string `json:"app_name"`
+	SecretKey string `json:"secret_key"`
+	OaId      string `json:"oa_id"`
+	OaName    string `json:"oa_name"`
+	Status    string `json:"status"` //active/deactive
+	Active    bool   `json:"active"`
 }
 
 type Facebook struct {
@@ -49,8 +48,9 @@ func (m *ChatAppRequest) Validate() error {
 		return errors.New("app name is required")
 	}
 
-	// var countOk int
-	if m.InfoApp.Zalo.Status {
+	var countOk int
+
+	if m.InfoApp.Zalo.Active {
 		if len(m.InfoApp.Zalo.AppId) < 1 {
 			return errors.New("app id is required")
 		}
@@ -61,16 +61,17 @@ func (m *ChatAppRequest) Validate() error {
 			return errors.New("secret key is required")
 		}
 		if len(m.InfoApp.Zalo.OaId) < 1 {
-			return errors.New("oat id is required")
+			return errors.New("oa id is required")
 		}
 		if len(m.InfoApp.Zalo.OaName) < 1 {
 			return errors.New("oa name is required")
 		}
-		if len(m.InfoApp.Zalo.State) < 1 {
+		if len(m.InfoApp.Zalo.Status) < 1 {
 			return errors.New("state is required")
 		}
-		// countOk += 1
+		countOk += 1
 	}
+
 	if m.InfoApp.Facebook.Status {
 		if len(m.InfoApp.Facebook.AppId) < 1 {
 			return errors.New("app id is required")
@@ -81,10 +82,12 @@ func (m *ChatAppRequest) Validate() error {
 		if len(m.InfoApp.Facebook.AppToken) < 1 {
 			return errors.New("token is required")
 		}
-		// countOk += 1
+		countOk += 1
 	}
-	// if countOk > 1 {
-	// 	return errors.New("only one app can be active")
-	// }
+
+	if countOk > 1 {
+		return errors.New("only one app can be active")
+	}
+
 	return nil
 }

@@ -12,6 +12,7 @@ type AuthUser struct {
 	DatabaseHost     string   `json:"database_host"`
 	DatabaseUser     string   `json:"database_user"`
 	DatabasePassword string   `json:"database_password"`
+	Source           string   `json:"source"`
 }
 
 type AAAResponse struct {

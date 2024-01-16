@@ -13,6 +13,8 @@ type OttMessage struct {
 	Timestamp   int64             `json:"timestamp"`
 	MsgId       string            `json:"msg_id"`
 	Content     string            `json:"content"`
+	QuoteMsgId  string            `json:"quote_msg_id"`
+	ReactIcon   string            `json:"react_icon"`
 	Attachments *[]OttAttachments `json:"attachments"`
 }
 
@@ -64,6 +66,6 @@ type OttResponse struct {
 	Data struct {
 		MsgId string `json:"msg_id"`
 		Uid   string `json:"uid"`
-	}
+	} `json:"data"`
 	Message string `json:"message"`
 }

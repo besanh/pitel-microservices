@@ -245,3 +245,7 @@ func Pagination(data, total, limit, offset any) (int, any) {
 		"offset": offset,
 	}
 }
+
+func OK(data any) (int, any) {
+	return http.StatusOK, data
+}

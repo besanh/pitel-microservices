@@ -70,11 +70,11 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		}
 	}
 	if len(conversationIds) < 1 {
-		log.Info("conversationIds not found")
+		log.Info("conversation id not found")
 		return response.Pagination(nil, 0, limit, offset)
 	}
 	filter.UserIdByApp = conversationIds
-	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
+	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
