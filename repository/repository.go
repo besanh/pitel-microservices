@@ -27,6 +27,7 @@ func InitRepositories() {
 	ChatQueueRepo = NewChatQueue()
 	ChatQueueAgentRepo = NewChatQueueAgent()
 	ChatRoutingRepo = NewChatRouting()
+	AgentAllocationRepo = NewAgentAllocation()
 }
 
 func InitRepositoriesES() {
@@ -57,4 +58,8 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatQueueAgent)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.AgentAllocation)(nil)); err != nil {
+		log.Error(err)
+	}
+	log.Println("TABLES WERE CREATED")
 }

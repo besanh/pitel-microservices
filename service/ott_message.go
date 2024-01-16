@@ -79,7 +79,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 
 	// TODO: check conversation and add message
-	conversation, err := GetConversationExist(ctx, data)
+	conversation, isNew, err := GetConversationExist(ctx, data)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -109,7 +109,22 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if len(agentId) > 0 {
-		PublishMessageToOne(agentId, message)
+		if isNew {
+			event := map[string]any{
+				"event_name": "conversation_created",
+				"event_data": map[string]any{
+					"conversation": conversation,
+				},
+			}
+			PublishMessageToOne(agentId, event)
+		}
+		event := map[string]any{
+			"event_name": "message_created",
+			"event_data": map[string]any{
+				"message": message,
+			},
+		}
+		PublishMessageToOne(agentId, event)
 	}
 
 	// TODO: add to queue

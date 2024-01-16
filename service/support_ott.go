@@ -50,54 +50,81 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 			return agentId, err
 		}
 	} else {
-		routing, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, chatQueue.ChatRoutingId)
+		routingTmp, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, chatQueue.ChatRoutingId)
 		if err != nil {
 			log.Error(err)
 			return agentId, err
-		} else if routing == nil {
+		} else if routingTmp == nil {
 			log.Error("routing not found")
 			return agentId, errors.New("routing not found")
 		}
-		if err := cache.RCache.Set(CHAT_ROUTING+"_"+chatQueue.ChatRoutingId, routing, CHAT_ROUTING_EXPIRE); err != nil {
+		if err := cache.RCache.Set(CHAT_ROUTING+"_"+chatQueue.ChatRoutingId, routingTmp, CHAT_ROUTING_EXPIRE); err != nil {
 			log.Error(err)
 			return agentId, err
 		}
+		routing = *routingTmp
 	}
 
 	if routing.RoutingName == "random" {
 		subscribers := []Subscriber{}
-		isExisted := false
-		for s := range WsSubscribers.Subscribers {
-			alive := CheckConversationInAgent(userIdByApp, s.AgentAllocation)
-			if alive {
-				isExisted = true
-				agentId = s.Id
-			} else {
-				agentAllocations := model.AgentAllocation{
-					UserIdByApp:   userIdByApp,
-					AgentId:       s.Id,
-					QueueId:       chatQueue.Id,
-					AllocatedTime: time.Now().Unix(),
-				}
-				s.AgentAllocation = append(s.AgentAllocation, &agentAllocations)
+		// Get subscriber random
+		// Get subscriber having conversation
+		// Assign conversation for subscriber
+		rand.NewSource(time.Now().UnixNano())
+		randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
+		if len(WsSubscribers.Subscribers) > 0 {
+			for s := range WsSubscribers.Subscribers {
 				subscribers = append(subscribers, *s)
-				isExisted = true
 			}
-		}
-		if isExisted {
-			if len(WsSubscribers.Subscribers) > 0 {
-				rand.NewSource(time.Now().UnixNano())
-				randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
-				agent := subscribers[randomIndex]
-				agentId = agent.Id
-				jsonByte, err := json.Marshal(&agent)
+			agent := subscribers[randomIndex]
+			filter := model.AgentAllocationFilter{
+				UserIdByApp: userIdByApp,
+			}
+			total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+			if err != nil {
+				log.Error(err)
+				return agentId, err
+			}
+			if total > 0 {
+				for _, item := range *agentAllocations {
+					if len(item.AgentId) > 1 {
+						agentId = item.AgentId
+						break
+					}
+				}
+			}
+			if len(agentId) < 1 {
+				agentId = agent.UserId
+				agentAllocation := model.AgentAllocation{
+					Base:               model.InitBase(),
+					UserIdByApp:        userIdByApp,
+					AgentId:            agent.UserId,
+					QueueId:            chatQueue.Id,
+					AllocatedTimestamp: time.Now().Unix(),
+				}
+				if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
+					log.Error(err)
+					return agentId, err
+				}
+			} else if len(agentId) > 0 {
+				agentId = agent.UserId
+				filter := model.AgentAllocationFilter{
+					UserIdByApp: userIdByApp,
+				}
+				total, agentAllocationTmp, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 				if err != nil {
 					log.Error(err)
 					return agentId, err
 				}
-				if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, agentId, string(jsonByte)); err != nil {
-					log.Error(err)
-					return agentId, err
+				if total > 0 {
+					agentAllocation := (*agentAllocationTmp)[0]
+					agentAllocation.AgentId = agent.UserId
+					agentAllocation.QueueId = chatQueue.Id
+					agentAllocation.AllocatedTimestamp = time.Now().Unix()
+					if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocation); err != nil {
+						log.Error(err)
+						return agentId, err
+					}
 				}
 			}
 		}
@@ -107,7 +134,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 	return agentId, nil
 }
 
-func GetConversationExist(ctx context.Context, data model.OttMessage) (conversation model.Conversation, err error) {
+func GetConversationExist(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
 	conversation = model.Conversation{
 		ConversationId:   uuid.NewString(),
 		AppId:            data.AppId,
@@ -126,9 +153,9 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 		isExisted = true
 		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
 			log.Error(err)
-			return conversation, err
+			return conversation, isNew, err
 		}
-		return conversation, nil
+		return conversation, isNew, nil
 	} else {
 		filter := model.ConversationFilter{
 			AppId:       []string{data.AppId},
@@ -137,14 +164,13 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.AppId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
-			return conversation, err
+			return conversation, isNew, err
 		}
 		if total > 0 {
-			isExisted = true
 			conversation = (*conversations)[0]
 			if err := cache.RCache.Set(CONVERSATION+"_"+data.UserIdByApp, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
-				return conversation, err
+				return conversation, isNew, err
 			}
 		}
 	}
@@ -153,16 +179,17 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 		id, err := InsertConversation(ctx, conversation)
 		if err != nil {
 			log.Error(err)
-			return conversation, err
+			return conversation, isNew, err
 		}
 		conversation.ConversationId = id
 		if err := cache.RCache.Set(CONVERSATION+"_"+data.UserIdByApp, conversation, CONVERSATION_EXPIRE); err != nil {
 			log.Error(err)
-			return conversation, err
+			return conversation, isNew, err
 		}
+		isNew = true
 	}
 
-	return conversation, nil
+	return conversation, isNew, nil
 }
 
 func InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error) {
