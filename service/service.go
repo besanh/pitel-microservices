@@ -41,6 +41,8 @@ var (
 	CHAT_QUEUE_AGENT_EXPIRE = 10 * time.Minute
 	CHAT_APP                = "chat_app"
 	CHAT_APP_EXPIRE         = 5 * time.Hour
+	AGENT_ALLOCATION        = "agent_allocation"
+	AGENT_ALLOCATION_EXPIRE = 1 * time.Minute
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 )
@@ -55,15 +57,14 @@ type (
 	}
 
 	Subscriber struct {
-		Id              string                   `json:"id"`
-		TenantId        string                   `json:"tenant_id"`
-		BusinessUnitId  string                   `json:"business_unit_id"`
-		UserId          string                   `json:"user_id"`
-		Username        string                   `json:"username"`
-		Services        []string                 `json:"services"`
-		AgentAllocation []*model.AgentAllocation `json:"agent_allocation"`
-		Message         chan []byte              `json:"-"`
-		CloseSlow       func()                   `json:"-"`
+		Id             string      `json:"id"`
+		TenantId       string      `json:"tenant_id"`
+		BusinessUnitId string      `json:"business_unit_id"`
+		UserId         string      `json:"user_id"`
+		Username       string      `json:"username"`
+		Services       []string    `json:"services"`
+		Message        chan []byte `json:"-"`
+		CloseSlow      func()      `json:"-"`
 	}
 
 	Subscribers struct {

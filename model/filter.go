@@ -47,7 +47,7 @@ type ConversationFilter struct {
 
 type AgentAllocationFilter struct {
 	UserIdByApp   string
-	AgentId       string
+	AgentId       []string
 	QueueId       string
 	AllocatedTime int64
 }

@@ -55,13 +55,18 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 }
 
 func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
-	subscribers := WsSubscribers.Subscribers
 	conversationIds := []string{}
-	for s := range subscribers {
-		if s.UserId == authUser.UserId {
-			for _, item := range s.AgentAllocation {
-				conversationIds = append(conversationIds, item.UserIdByApp)
-			}
+	conversationFilter := model.AgentAllocationFilter{
+		AgentId: []string{authUser.UserId},
+	}
+	total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, conversationFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if total > 0 {
+		for _, item := range *agentAllocations {
+			conversationIds = append(conversationIds, item.UserIdByApp)
 		}
 	}
 	if len(conversationIds) < 1 {
