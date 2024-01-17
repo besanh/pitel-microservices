@@ -40,7 +40,9 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 	} else {
-		filter := model.ConversationFilter{}
+		filter := model.ConversationFilter{
+			UserIdByApp: []string{data.UserIdByApp},
+		}
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.AppId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
