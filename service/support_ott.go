@@ -66,9 +66,9 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 
 	if routing.RoutingName == "random" {
 		subscribers := []Subscriber{}
-		rand.NewSource(time.Now().UnixNano())
-		randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
 		if len(WsSubscribers.Subscribers) > 0 {
+			rand.NewSource(time.Now().UnixNano())
+			randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
 			for s := range WsSubscribers.Subscribers {
 				subscribers = append(subscribers, *s)
 			}
@@ -165,6 +165,11 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 			log.Error(err)
 			return conversation, isNew, err
 		}
+		err := UpdateESAndCache(ctx, data.AppId, conversation.ConversationId, conversation.UserIdByApp)
+		if err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
 		return conversation, isNew, nil
 	} else {
 		filter := model.ConversationFilter{
@@ -203,7 +208,8 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 }
 
 func InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error) {
-	id = uuid.NewString()
+	id = conversation.UserIdByApp
+	// id = uuid.NewString()
 	tmpBytes, err := json.Marshal(conversation)
 	if err != nil {
 		log.Error(err)
@@ -238,4 +244,42 @@ func CheckConversationInAgent(userIdByApp string, allocationAgent []*model.Agent
 		}
 	}
 	return false
+}
+
+/**
+* Update ES and Cache
+* API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
+ */
+func UpdateESAndCache(ctx context.Context, appId, conversationId, userIdByApp string) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, appId, ES_INDEX_CONVERSATION, userIdByApp)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(conversationExist.UserIdByApp) < 1 {
+		log.Errorf("conversation %s not found", conversationId)
+		return errors.New("conversation not found")
+	}
+
+	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
+	tmpBytes, err := json.Marshal(conversationExist)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	esDoc := map[string]any{}
+	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		log.Error(err)
+		return err
+	}
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, userIdByApp, esDoc); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if err := cache.RCache.Set(CONVERSATION+"_"+userIdByApp, conversationExist, CONVERSATION_EXPIRE); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
 }

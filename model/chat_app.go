@@ -40,7 +40,7 @@ type Facebook struct {
 	AppId    string `json:"app_id"`
 	AppName  string `json:"app_name"`
 	AppToken string `json:"app_token"`
-	Status   bool   `json:"status"`
+	Status   string `json:"status"`
 }
 
 func (m *ChatAppRequest) Validate() error {
@@ -50,7 +50,7 @@ func (m *ChatAppRequest) Validate() error {
 
 	var countOk int
 
-	if m.InfoApp.Zalo.Active {
+	if m.InfoApp.Zalo.Status == "active" {
 		if len(m.InfoApp.Zalo.AppId) < 1 {
 			return errors.New("app id is required")
 		}
@@ -72,7 +72,7 @@ func (m *ChatAppRequest) Validate() error {
 		countOk += 1
 	}
 
-	if m.InfoApp.Facebook.Status {
+	if m.InfoApp.Facebook.Status == "active" {
 		if len(m.InfoApp.Facebook.AppId) < 1 {
 			return errors.New("app id is required")
 		}

@@ -80,17 +80,31 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if total > 0 {
-		for _, conv := range *conversations {
+		for k, conv := range *conversations {
 			filter := model.MessageFilter{
 				ConversationId: conv.UserIdByApp,
 				IsRead:         false,
 			}
-			total, _, err := repository.MessageESRepo.GetMessages(ctx, "", ES_INDEX, filter, -1, 0)
+			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filter, -1, 0)
 			if err != nil {
 				log.Error(err)
 				break
 			}
 			conv.TotalUnRead = int64(total)
+
+			filterMessage := model.MessageFilter{
+				UserIdByApp: conv.UserIdByApp,
+			}
+			total, message, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filterMessage, 1, 0)
+			if err != nil {
+				log.Error(err)
+				break
+			}
+			if total > 0 {
+				conv.LatestMessageContent = (*message)[0].Content
+			}
+
+			(*conversations)[k] = conv
 		}
 	}
 	return response.Pagination(conversations, total, limit, offset)
