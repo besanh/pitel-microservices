@@ -20,17 +20,17 @@ type GRPCConnectionApp struct {
 	pb.UnimplementedConnectionAppServer
 }
 
-func NewGRPCConnectionApp() *GRPCConnectionApp {
+func NewGRPCChatConnectionApp() *GRPCConnectionApp {
 	return &GRPCConnectionApp{}
 }
 
-func (s *GRPCConnectionApp) PostConnectionApp(ctx context.Context, req *pb.ConnectionAppBodyRequest) (result *pb.ConnectionAppResponse, err error) {
+func (s *GRPCConnectionApp) PostChatConnectionApp(ctx context.Context, req *pb.ConnectionAppBodyRequest) (result *pb.ConnectionAppResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	var payload model.ConnectionAppRequest
+	var payload model.ChatConnectionAppRequest
 	if err = util.ParseAnyToAny(req, &payload); err != nil {
 		result = &pb.ConnectionAppResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
@@ -39,7 +39,7 @@ func (s *GRPCConnectionApp) PostConnectionApp(ctx context.Context, req *pb.Conne
 		return
 	}
 
-	id, err := service.NewConnectionApp().InsertConnectionApp(ctx, authUser, payload)
+	id, err := service.NewChatConnectionApp().InsertChatConnectionApp(ctx, authUser, payload)
 	if err != nil {
 		result = &pb.ConnectionAppResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
@@ -68,7 +68,7 @@ func (s *GRPCConnectionApp) GetConnectionApp(ctx context.Context, req *pb.Connec
 		statusTmp, _ := strconv.ParseBool(req.Status)
 		status.Bool = statusTmp
 	}
-	filter := model.ConnectionAppFilter{
+	filter := model.ChatConnectionAppFilter{
 		ConnectionName: req.ConnectionName,
 		ConnectionType: req.ConnectionType,
 		Status:         status,
@@ -76,7 +76,7 @@ func (s *GRPCConnectionApp) GetConnectionApp(ctx context.Context, req *pb.Connec
 	limit := util.ParseLimit(req.GetLimit())
 	offset := util.ParseOffset(req.GetOffset())
 
-	total, apps, err := service.NewConnectionApp().GetConnectionApp(ctx, authUser, filter, limit, offset)
+	total, apps, err := service.NewChatConnectionApp().GetChatConnectionApp(ctx, authUser, filter, limit, offset)
 	if err != nil {
 		result = &pb.ConnectionAppStructResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,

@@ -8,9 +8,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type ConnectionApp struct {
+type ChatConnectionApp struct {
 	*Base
-	bun.BaseModel  `bun:"table:connection_app,alias:ca"`
+	bun.BaseModel  `bun:"table:chat_connection_app,alias:cca"`
 	ConnectionName string `json:"connection_name" bun:"connection_name,type:text,notnull"`
 	ConnectionType string `json:"connection_type" bun:"connection_type,type:text,notnull"`
 	TenantId       string `json:"tenant_id"`
@@ -20,7 +20,7 @@ type ConnectionApp struct {
 	Status         bool   `json:"status" bun:"status,notnull"`
 }
 
-type ConnectionAppRequest struct {
+type ChatConnectionAppRequest struct {
 	ConnectionName string `json:"connection_name"`
 	ConnectionType string `json:"connection_type"`
 	AppId          string `json:"app_id"`
@@ -34,7 +34,7 @@ type AccessInfo struct {
 	State         string `json:"state"`
 }
 
-func (m *ConnectionAppRequest) Validate() error {
+func (m *ChatConnectionAppRequest) Validate() error {
 	if len(m.ConnectionName) < 1 {
 		return errors.New("connection name is required")
 	}

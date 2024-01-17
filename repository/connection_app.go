@@ -9,23 +9,23 @@ import (
 )
 
 type (
-	IConnectionApp interface {
-		IRepo[model.ConnectionApp]
-		GetConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ConnectionAppFilter, limit, offset int) (int, *[]model.ConnectionApp, error)
+	IChatConnectionApp interface {
+		IRepo[model.ChatConnectionApp]
+		GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error)
 	}
-	ConnectionApp struct {
-		Repo[model.ConnectionApp]
+	ChatConnectionApp struct {
+		Repo[model.ChatConnectionApp]
 	}
 )
 
-var ConnectionAppRepo IConnectionApp
+var ChatConnectionAppRepo IChatConnectionApp
 
-func NewConnectionApp() IConnectionApp {
-	return &ConnectionApp{}
+func NewConnectionApp() IChatConnectionApp {
+	return &ChatConnectionApp{}
 }
 
-func (repo *ConnectionApp) GetConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ConnectionAppFilter, limit, offset int) (int, *[]model.ConnectionApp, error) {
-	result := new([]model.ConnectionApp)
+func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error) {
+	result := new([]model.ChatConnectionApp)
 	query := db.GetDB().NewSelect().Model(result)
 	if len(filter.ConnectionName) > 0 {
 		query.Where("connection_name = ?", filter.ConnectionName)
