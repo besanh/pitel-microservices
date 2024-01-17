@@ -59,6 +59,7 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		"_source": true,
 		"query":   boolQuery,
 		"sort": []any{
+			elasticsearch.Order("updated_at", false),
 			elasticsearch.Order("created_at", false),
 		},
 	}

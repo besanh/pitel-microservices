@@ -67,5 +67,6 @@ type OttResponse struct {
 		MsgId string `json:"msg_id"`
 		Uid   string `json:"uid"`
 	} `json:"data"`
+	Error   string `json:"error"`
 	Message string `json:"message"`
 }

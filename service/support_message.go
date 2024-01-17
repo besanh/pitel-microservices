@@ -2,18 +2,19 @@ package service
 
 import (
 	"context"
-	"net/http"
+	"encoding/json"
+	"errors"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *Message) sendMessageToOTT(ctx context.Context, ott model.SendMessageToOtt) (int, model.OttResponse, error) {
+func (s *Message) sendMessageToOTT(ctx context.Context, ott model.SendMessageToOtt) (model.OttResponse, error) {
 	var result model.OttResponse
 	var body any
 	if err := util.ParseAnyToAny(ott, &body); err != nil {
-		return http.StatusBadRequest, result, err
+		return result, err
 	}
 
 	url := s.OttSendMessageUrl
@@ -23,11 +24,17 @@ func (s *Message) sendMessageToOTT(ctx context.Context, ott model.SendMessageToO
 		SetHeader("Content-Type", "application/json").
 		// SetHeader("Authorization", "Bearer "+token).
 		SetBody(body).
-		SetResult(&result).
 		Post(url)
 	if err != nil {
-		return res.StatusCode(), result, err
+		return result, err
 	}
 
-	return res.StatusCode(), result, nil
+	if err := json.Unmarshal([]byte(res.Body()), &result); err != nil {
+		return result, err
+	}
+	if res.StatusCode() == 200 {
+		return result, nil
+	} else {
+		return result, errors.New(result.Message)
+	}
 }
