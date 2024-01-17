@@ -228,10 +228,11 @@ func ResponseXml(field, val string) (int, any) {
 	return http.StatusOK, gin.H{field: val}
 }
 
-func Created(data map[string]any) (int, any) {
+func Created(data any) (int, any) {
 	result := map[string]any{
 		"code":    http.StatusCreated,
 		"message": "SUCCESS",
+		"data":    data,
 	}
 
 	return http.StatusCreated, result
