@@ -15,7 +15,7 @@ type AppFilter struct {
 	Status  sql.NullBool
 }
 
-type ConnectionAppFilter struct {
+type ChatConnectionAppFilter struct {
 	ConnectionName string
 	ConnectionType string
 	Status         sql.NullBool

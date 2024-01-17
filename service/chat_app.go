@@ -15,7 +15,7 @@ type (
 		InsertChatApp(ctx context.Context, authUser *model.AuthUser, data model.ChatAppRequest) (string, error)
 		GetChatApp(ctx context.Context, authUser *model.AuthUser, filter model.AppFilter, limit, offset int) (int, *[]model.ChatApp, error)
 		GetChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (app model.ChatApp, err error)
-		UpdateChatAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatApp) (err error)
+		UpdateChatAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatAppRequest) (err error)
 		DeleteChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
 	ChatApp struct{}
@@ -92,7 +92,7 @@ func (s *ChatApp) GetChatAppById(ctx context.Context, authUser *model.AuthUser, 
 	return *chatApp, nil
 }
 
-func (s *ChatApp) UpdateChatAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatApp) (err error) {
+func (s *ChatApp) UpdateChatAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatAppRequest) (err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)

@@ -22,8 +22,9 @@ func NewAuthSource() IAuthSource {
 }
 
 func (s *AuthSource) InsertAuthSource(ctx context.Context, authUser *model.AuthUser, data model.AuthSource) (err error) {
-	dbCon, err := GetDBConnOfUser(*authUser)
+	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 

@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"database/sql"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -13,28 +10,26 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type ChatApp struct {
-	chatAppService service.IChatApp
+type ChatQueue struct {
+	chatQueueService service.IChatQueue
 }
 
-var CRM_AUTH_URL string
-
-func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp, crmAuthUrl string) {
-	handler := &ChatApp{
-		chatAppService: chatAppService,
+func NewChatQueue(engine *gin.Engine, chatQueueService service.IChatQueue, crmAuthUrl string) {
+	handler := &ChatQueue{
+		chatQueueService: chatQueueService,
 	}
 	CRM_AUTH_URL = crmAuthUrl
-	Group := engine.Group("bss-message/v1/chat-app")
+	Group := engine.Group("bss-message/v1/chat-queue")
 	{
-		Group.POST("", handler.InsertChatApp)
-		Group.GET("", handler.GetChatApp)
-		Group.GET(":id", handler.GetChatAppById)
-		Group.PUT(":id", handler.UpdateChatAppById)
-		Group.DELETE(":id", handler.DeleteChatAppById)
+		Group.POST("", handler.InsertChatQueue)
+		Group.GET("", handler.GetChatQueues)
+		Group.GET(":id", handler.GetChatQueueById)
+		Group.PUT(":id", handler.UpdateChatQueueById)
+		Group.DELETE(":id", handler.DeleteChatQueueById)
 	}
 }
 
-func (handler *ChatApp) InsertChatApp(c *gin.Context) {
+func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -47,14 +42,14 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 		return
 	}
 
-	var data model.ChatAppRequest
+	var data model.ChatQueueRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	log.Info("insert chat app payload -> ", &data)
+	log.Info("insert chat queue payload -> ", &data)
 
 	if err := data.Validate(); err != nil {
 		log.Error(err)
@@ -62,7 +57,7 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 		return
 	}
 
-	_, err := handler.chatAppService.InsertChatApp(c, res.Data, data)
+	_, err := handler.chatQueueService.InsertChatQueue(c, res.Data, data)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
@@ -70,7 +65,7 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 	c.JSON(response.OKResponse())
 }
 
-func (handler *ChatApp) GetChatApp(c *gin.Context) {
+func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -83,29 +78,23 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 		return
 	}
 
-	var status sql.NullBool
-	if len(c.Query("status")) > 0 {
-		statusTmp, _ := strconv.ParseBool(c.Query("status"))
-		status.Valid = true
-		status.Bool = statusTmp
-	}
-
-	filter := model.AppFilter{
-		AppName: c.Query("app_name"),
-		Status:  status,
-	}
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
-	total, chatApps, err := handler.chatAppService.GetChatApp(c, res.Data, filter, limit, offset)
-	if err != nil {
-		log.Error(err)
-		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+	filter := model.QueueFilter{
+		AppId:     c.Query("app_id"),
+		QueueName: c.Query("queue_name"),
 	}
-	c.JSON(response.Pagination(chatApps, total, limit, offset))
+
+	total, chatQueues, err := handler.chatQueueService.GetChatQueues(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(total, chatQueues, limit, offset))
 }
 
-func (handler *ChatApp) GetChatAppById(c *gin.Context) {
+func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -124,19 +113,17 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 		return
 	}
 
-	chatApp, err := handler.chatAppService.GetChatAppById(c, res.Data, id)
+	chatQueue, err := handler.chatQueueService.GetChatQueueById(c, res.Data, id)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
 
-	c.JSON(response.OK(map[string]any{
-		"id": chatApp.Id,
-	}))
+	c.JSON(response.OK(chatQueue))
 }
 
-func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
+func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -155,16 +142,16 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 		return
 	}
 
-	var data model.ChatAppRequest
+	var data model.ChatQueueRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	log.Info("update chat app payload -> ", &data)
+	log.Info("update chat queue payload -> ", &data)
 
-	err := handler.chatAppService.UpdateChatAppById(c, res.Data, id, data)
+	err := handler.chatQueueService.UpdateChatQueueById(c, res.Data, id, data)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
@@ -172,7 +159,7 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 	c.JSON(response.OKResponse())
 }
 
-func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
+func (handler *ChatQueue) DeleteChatQueueById(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -191,7 +178,7 @@ func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
 		return
 	}
 
-	err := handler.chatAppService.DeleteChatAppById(c, res.Data, id)
+	err := handler.chatQueueService.DeleteChatQueueById(c, res.Data, id)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return

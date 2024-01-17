@@ -15,6 +15,10 @@ import (
 type (
 	IChatRouting interface {
 		InsertChatRouting(ctx context.Context, authUser *model.AuthUser, data *model.ChatRoutingRequest) error
+		GetChatRoutings(ctx context.Context, authUser *model.AuthUser, filter model.ChatRoutingFilter, limit, offset int) (int, *[]model.ChatRouting, error)
+		GetChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string) (model.ChatRouting, error)
+		UpdateChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatRoutingRequest) error
+		DeleteChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 	ChatRouting struct{}
 )
@@ -24,7 +28,7 @@ func NewChatRouting() IChatRouting {
 }
 
 func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.AuthUser, data *model.ChatRoutingRequest) error {
-	dbConn, err := GetDBConnOfUser(*authUser)
+	dbConn, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -58,6 +62,81 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	}
 
 	if err := repository.ChatRoutingRepo.Insert(ctx, dbConn, chatRouting); err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (s *ChatRouting) GetChatRoutings(ctx context.Context, authUser *model.AuthUser, filter model.ChatRoutingFilter, limit, offset int) (int, *[]model.ChatRouting, error) {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		log.Error(err)
+		return 0, nil, err
+	}
+
+	total, chatRoutings, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbCon, filter, limit, offset)
+	if err != nil {
+		log.Error(err)
+		return 0, nil, err
+	}
+
+	return total, chatRoutings, nil
+}
+
+func (s *ChatRouting) GetChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string) (model.ChatRouting, error) {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		log.Error(err)
+		return model.ChatRouting{}, err
+	}
+
+	chatRouting, err := repository.ChatRoutingRepo.GetById(ctx, dbCon, id)
+	if err != nil {
+		log.Error(err)
+		return model.ChatRouting{}, err
+	}
+
+	return *chatRouting, nil
+}
+
+func (s *ChatRouting) UpdateChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatRoutingRequest) error {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	chatRouting, err := repository.ChatRoutingRepo.GetById(ctx, dbCon, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	chatRouting.RoutingName = data.RoutingName
+	chatRouting.Status = data.Status
+	err = repository.ChatRoutingRepo.Update(ctx, dbCon, *chatRouting)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (s *ChatRouting) DeleteChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string) error {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	_, err = repository.ChatRoutingRepo.GetById(ctx, dbCon, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	err = repository.ChatRoutingRepo.Delete(ctx, dbCon, id)
+	if err != nil {
 		log.Error(err)
 		return err
 	}

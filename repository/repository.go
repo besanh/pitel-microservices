@@ -23,7 +23,7 @@ func InitRepositories() {
 	ExampleRepo = NewExample()
 	AuthSourceRepo = NewAuthSource()
 	ChatAppRepo = NewChatApp()
-	ConnectionAppRepo = NewConnectionApp()
+	ChatConnectionAppRepo = NewConnectionApp()
 	ChatQueueRepo = NewChatQueue()
 	ChatQueueAgentRepo = NewChatQueueAgent()
 	ChatRoutingRepo = NewChatRouting()
@@ -46,7 +46,7 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatApp)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.ConnectionApp)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.ChatConnectionApp)(nil)); err != nil {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatQueue)(nil)); err != nil {

@@ -13,28 +13,26 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type ChatApp struct {
-	chatAppService service.IChatApp
+type ChatRouting struct {
+	chatRoutingService service.IChatRouting
 }
 
-var CRM_AUTH_URL string
-
-func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp, crmAuthUrl string) {
-	handler := &ChatApp{
-		chatAppService: chatAppService,
+func NewChatRouting(engine *gin.Engine, chatRoutingService service.IChatRouting, crmAuthUrl string) {
+	handler := &ChatRouting{
+		chatRoutingService: service.NewChatRouting(),
 	}
 	CRM_AUTH_URL = crmAuthUrl
-	Group := engine.Group("bss-message/v1/chat-app")
+	Group := engine.Group("bss-message/v1/chat-routing")
 	{
-		Group.POST("", handler.InsertChatApp)
-		Group.GET("", handler.GetChatApp)
-		Group.GET(":id", handler.GetChatAppById)
-		Group.PUT(":id", handler.UpdateChatAppById)
-		Group.DELETE(":id", handler.DeleteChatAppById)
+		Group.POST("", handler.InsertChatRouting)
+		Group.GET("", handler.GetChatRoutings)
+		Group.GET(":id", handler.GetChatRoutingById)
+		Group.PUT(":id", handler.UpdateChatRoutingById)
+		Group.DELETE(":id", handler.DeleteChatRoutingById)
 	}
 }
 
-func (handler *ChatApp) InsertChatApp(c *gin.Context) {
+func (handler *ChatRouting) InsertChatRouting(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -47,14 +45,14 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 		return
 	}
 
-	var data model.ChatAppRequest
+	var data model.ChatRoutingRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	log.Info("insert chat app payload -> ", &data)
+	log.Info("insert chat routing payload -> ", &data)
 
 	if err := data.Validate(); err != nil {
 		log.Error(err)
@@ -62,7 +60,7 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 		return
 	}
 
-	_, err := handler.chatAppService.InsertChatApp(c, res.Data, data)
+	err := handler.chatRoutingService.InsertChatRouting(c, res.Data, &data)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
@@ -70,7 +68,7 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 	c.JSON(response.OKResponse())
 }
 
-func (handler *ChatApp) GetChatApp(c *gin.Context) {
+func (handler *ChatRouting) GetChatRoutings(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -82,6 +80,9 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
+
+	limit := util.ParseLimit(c.Query("limit"))
+	offset := util.ParseOffset(c.Query("offset"))
 
 	var status sql.NullBool
 	if len(c.Query("status")) > 0 {
@@ -90,22 +91,22 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 		status.Bool = statusTmp
 	}
 
-	filter := model.AppFilter{
-		AppName: c.Query("app_name"),
-		Status:  status,
+	filter := model.ChatRoutingFilter{
+		RoutingName: c.Query("routing_name"),
+		Status:      status,
 	}
-	limit := util.ParseLimit(c.Query("limit"))
-	offset := util.ParseOffset(c.Query("offset"))
 
-	total, chatApps, err := handler.chatAppService.GetChatApp(c, res.Data, filter, limit, offset)
+	total, chatRoutings, err := handler.chatRoutingService.GetChatRoutings(c, res.Data, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
 	}
-	c.JSON(response.Pagination(chatApps, total, limit, offset))
+
+	c.JSON(response.Pagination(chatRoutings, total, limit, offset))
 }
 
-func (handler *ChatApp) GetChatAppById(c *gin.Context) {
+func (handler *ChatRouting) GetChatRoutingById(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -124,7 +125,7 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 		return
 	}
 
-	chatApp, err := handler.chatAppService.GetChatAppById(c, res.Data, id)
+	chatRouting, err := handler.chatRoutingService.GetChatRoutingById(c, res.Data, id)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
@@ -132,11 +133,11 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 	}
 
 	c.JSON(response.OK(map[string]any{
-		"id": chatApp.Id,
+		"id": chatRouting.Id,
 	}))
 }
 
-func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
+func (handler *ChatRouting) UpdateChatRoutingById(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -155,24 +156,25 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 		return
 	}
 
-	var data model.ChatAppRequest
+	var data model.ChatRoutingRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	log.Info("update chat app payload -> ", &data)
+	log.Info("update chat routing payload -> ", &data)
 
-	err := handler.chatAppService.UpdateChatAppById(c, res.Data, id, data)
+	err := handler.chatRoutingService.UpdateChatRoutingById(c, res.Data, id, data)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
+
 	c.JSON(response.OKResponse())
 }
 
-func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
+func (handler *ChatRouting) DeleteChatRoutingById(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
@@ -191,7 +193,7 @@ func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
 		return
 	}
 
-	err := handler.chatAppService.DeleteChatAppById(c, res.Data, id)
+	err := handler.chatRoutingService.DeleteChatRoutingById(c, res.Data, id)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
