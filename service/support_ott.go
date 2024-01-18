@@ -185,6 +185,8 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 				log.Error(err)
 				return conversation, isNew, err
 			}
+			isExisted = true
+			return conversation, isExisted, nil
 		}
 	}
 

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -33,7 +34,7 @@ func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmAuthU
 	}
 	Group := r.Group("bss-message/v1/wss")
 	{
-		Group.Handle("GET", "subscriber", func(ctx *gin.Context) {
+		Group.GET("subscriber", func(ctx *gin.Context) {
 			handler.Subscribe(ctx, crmAuthUrl)
 		})
 	}
@@ -50,9 +51,22 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context, crmAuthUrl string) {
 		ctx.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
-	defer wsCon.Close(websocket.StatusInternalError, "close connection error")
 
-	if err = handler.subscribe(ctx, wsCon, crmAuthUrl); err != nil {
+	defer func() {
+		if err := wsCon.Close(websocket.StatusInternalError, "close connection error"); err != nil {
+			log.Error(err)
+		}
+	}()
+
+	err = handler.subscribe(ctx, wsCon, crmAuthUrl)
+	if errors.Is(err, context.Canceled) {
+		return
+	}
+	if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+		websocket.CloseStatus(err) == websocket.StatusGoingAway {
+		return
+	}
+	if err != nil {
 		log.Error(err)
 		return
 	}
