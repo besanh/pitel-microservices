@@ -94,6 +94,19 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 							break
 						}
 					}
+				} else {
+					agentId = agent.UserId
+					agentAllocation := model.AgentAllocation{
+						Base:               model.InitBase(),
+						ConversationId:     externalUserId,
+						AgentId:            agent.UserId,
+						QueueId:            chatQueue.Id,
+						AllocatedTimestamp: time.Now().Unix(),
+					}
+					if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
+						log.Error(err)
+						return agentId, err
+					}
 				}
 
 				if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+externalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
@@ -102,20 +115,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 				}
 			}
 
-			if len(agentId) < 1 {
-				agentId = agent.UserId
-				agentAllocation := model.AgentAllocation{
-					Base:               model.InitBase(),
-					ConversationId:     externalUserId,
-					AgentId:            agent.UserId,
-					QueueId:            chatQueue.Id,
-					AllocatedTimestamp: time.Now().Unix(),
-				}
-				if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
-					log.Error(err)
-					return agentId, err
-				}
-			} else if len(agentId) > 0 {
+			if len(agent.UserId) > 0 {
 				agentId = agent.UserId
 				filter := model.AgentAllocationFilter{
 					ConversationId: externalUserId,
