@@ -151,3 +151,13 @@ func ParseStructToByte(data any) ([]byte, error) {
 	byteSlice := []byte(value)
 	return byteSlice, nil
 }
+
+func ParseQueryArray(slice []string) []string {
+	result := make([]string, 0)
+	for _, v := range slice {
+		if len(v) > 0 {
+			result = append(result, v)
+		}
+	}
+	return result
+}
