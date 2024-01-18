@@ -10,7 +10,7 @@ type Conversation struct {
 	AppId                string          `json:"app_id"`
 	OaId                 string          `json:"oa_id"`
 	UserIdByApp          string          `json:"user_id_by_app"`
-	Uid                  string          `json:"uid"`
+	ExternalUserId       string          `json:"external_user_id"`
 	Username             string          `json:"username"`
 	PhoneNumber          string          `json:"phone_number"`
 	Email                string          `json:"email"`

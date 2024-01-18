@@ -66,14 +66,14 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	}
 	if total > 0 {
 		for _, item := range *agentAllocations {
-			conversationIds = append(conversationIds, item.UserIdByApp)
+			conversationIds = append(conversationIds, item.ConversationId)
 		}
 	}
 	if len(conversationIds) < 1 {
 		log.Info("conversation id not found")
 		return response.Pagination(nil, 0, limit, offset)
 	}
-	filter.UserIdByApp = conversationIds
+	filter.ConversationId = conversationIds
 	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
@@ -82,7 +82,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	if total > 0 {
 		for k, conv := range *conversations {
 			filter := model.MessageFilter{
-				ConversationId: conv.UserIdByApp,
+				ConversationId: conv.ExternalUserId,
 				IsRead:         false,
 			}
 			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filter, -1, 0)
@@ -93,7 +93,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 			conv.TotalUnRead = int64(total)
 
 			filterMessage := model.MessageFilter{
-				UserIdByApp: conv.UserIdByApp,
+				ExternalUserId: conv.ExternalUserId,
 			}
 			total, message, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filterMessage, 1, 0)
 			if err != nil {

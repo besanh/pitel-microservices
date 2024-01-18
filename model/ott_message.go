@@ -1,21 +1,21 @@
 package model
 
 type OttMessage struct {
-	MessageType string            `json:"message_type"`
-	EventName   string            `json:"event_name"`
-	AppId       string            `json:"app_id"`
-	AppName     string            `json:"app_name"`
-	OaId        string            `json:"oa_id"`
-	UserIdByApp string            `json:"user_id_by_app"`
-	UserId      string            `json:"user_id"`
-	Username    string            `json:"username"`
-	Avatar      string            `json:"avatar"`
-	Timestamp   int64             `json:"timestamp"`
-	MsgId       string            `json:"msg_id"`
-	Content     string            `json:"content"`
-	QuoteMsgId  string            `json:"quote_msg_id"`
-	ReactIcon   string            `json:"react_icon"`
-	Attachments *[]OttAttachments `json:"attachments"`
+	MessageType    string            `json:"message_type"`
+	EventName      string            `json:"event_name"`
+	AppId          string            `json:"app_id"`
+	AppName        string            `json:"app_name"`
+	OaId           string            `json:"oa_id"`
+	UserIdByApp    string            `json:"user_id_by_app"`
+	ExternalUserId string            `json:"external_user_id"`
+	Username       string            `json:"username"`
+	Avatar         string            `json:"avatar"`
+	Timestamp      int64             `json:"timestamp"`
+	MsgId          string            `json:"msg_id"`
+	Content        string            `json:"content"`
+	QuoteMsgId     string            `json:"quote_msg_id"`
+	ReactIcon      string            `json:"react_icon"`
+	Attachments    *[]OttAttachments `json:"attachments"`
 }
 
 type OttAttachments struct {
@@ -51,14 +51,6 @@ type SendMessageToOtt struct {
 	MsgId         string            `json:"msg_id"`
 	Text          string            `json:"text"`
 	Attachments   []*OttAttachments `json:"attachments"`
-}
-
-type MessageOttCache struct {
-	EventType   string `json:"event_type"`
-	AppId       string `json:"app_id"`
-	OaId        string `json:"oa_id"`
-	UserIdByApp string `json:"user_id_by_app"`
-	UserId      string `json:"user_id"`
 }
 
 type OttResponse struct {
