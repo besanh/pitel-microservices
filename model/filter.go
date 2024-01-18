@@ -38,18 +38,18 @@ type ChatRoutingFilter struct {
 }
 
 type ConversationFilter struct {
-	AppId       []string
-	UserIdByApp []string
-	Username    []string
-	PhoneNumber []string
-	Email       []string
+	AppId          []string
+	ConversationId []string
+	Username       []string
+	PhoneNumber    []string
+	Email          []string
 }
 
 type AgentAllocationFilter struct {
-	UserIdByApp   string
-	AgentId       []string
-	QueueId       string
-	AllocatedTime int64
+	ConversationId string
+	AgentId        []string
+	QueueId        string
+	AllocatedTime  int64
 }
 
 type MessageFilter struct {
@@ -62,7 +62,7 @@ type MessageFilter struct {
 	AppId               string          `json:"app_id"`
 	OaId                string          `json:"oa_id"`
 	UserIdByApp         string          `json:"user_id_by_app"`
-	Uid                 string          `json:"uid"`
+	ExternalUserId      string          `json:"external_user_id"`
 	UserAppname         string          `json:"user_app_name"`
 	SupporterId         string          `json:"supporter_id"`
 	SupporterName       string          `json:"supporter_name"`

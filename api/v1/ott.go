@@ -40,7 +40,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	appName, _ := jsonBody["app_name"].(string)
 	oaId, _ := jsonBody["oa_id"].(string)
 	userIdByApp, _ := jsonBody["user_id_by_app"].(string)
-	userId, _ := jsonBody["uid"].(string)
+	externalUserId, _ := jsonBody["uid"].(string)
 	username, _ := jsonBody["username"].(string)
 	avatar, _ := jsonBody["avatar"].(string)
 	timestampTmp, _ := jsonBody["timestamp"].(string)
@@ -61,19 +61,19 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	}
 
 	message := model.OttMessage{
-		MessageType: messageType,
-		EventName:   eventName,
-		AppId:       appId,
-		AppName:     appName,
-		OaId:        oaId,
-		UserIdByApp: userIdByApp,
-		UserId:      userId,
-		Username:    username,
-		Avatar:      avatar,
-		Timestamp:   timestamp,
-		MsgId:       msgId,
-		Content:     content,
-		Attachments: &attachments,
+		MessageType:    messageType,
+		EventName:      eventName,
+		AppId:          appId,
+		AppName:        appName,
+		OaId:           oaId,
+		UserIdByApp:    userIdByApp,
+		ExternalUserId: externalUserId,
+		Username:       username,
+		Avatar:         avatar,
+		Timestamp:      timestamp,
+		MsgId:          msgId,
+		Content:        content,
+		Attachments:    &attachments,
 	}
 	code, result := h.ottMessageService.GetOttMessage(c, message)
 	c.JSON(code, result)

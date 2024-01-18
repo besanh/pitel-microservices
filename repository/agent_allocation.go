@@ -34,8 +34,8 @@ func (repo *AgentAllocation) GetAgentAllocations(ctx context.Context, db sqlclie
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
 	}
-	if len(filter.UserIdByApp) > 0 {
-		query.Where("user_id_by_app = ?", filter.UserIdByApp)
+	if len(filter.ConversationId) > 0 {
+		query.Where("conversation_id = ?", filter.ConversationId)
 	}
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

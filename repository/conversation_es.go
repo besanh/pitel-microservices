@@ -35,8 +35,8 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	if len(filter.AppId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray(filter.AppId)...))
 	}
-	if len(filter.UserIdByApp) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("user_id_by_app", util.ParseToAnyArray(filter.UserIdByApp)...))
+	if len(filter.ConversationId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("external_user_id", util.ParseToAnyArray(filter.ConversationId)...))
 	}
 	if len(filter.Username) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("username", util.ParseToAnyArray(filter.Username)...))

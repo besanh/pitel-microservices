@@ -49,16 +49,14 @@ func (h *Message) SendMessage(c *gin.Context, crmAuthUrl string) {
 	}
 	log.Info("send message body: ", jsonBody)
 
+	appId, _ := jsonBody["app_id"].(string)
 	conversationId, _ := jsonBody["conversation_id"].(string)
-	parentMessageId, _ := jsonBody["parent_message_id"].(string)
-	userIdByApp, _ := jsonBody["user_id_by_app"].(string)
 	content, _ := jsonBody["content"].(string)
 	// attachment, _ := jsonBody["attachment"].(string)
 	message := model.MessageRequest{
-		ConversationId:  conversationId,
-		ParentMessageId: parentMessageId,
-		UserIdByApp:     userIdByApp,
-		Content:         content,
+		AppId:          appId,
+		ConversationId: conversationId,
+		Content:        content,
 		// Attachments:     attachment,
 	}
 
@@ -82,7 +80,7 @@ func (h *Message) GetMessages(c *gin.Context, crmAuthUrl string) {
 
 	filter := model.MessageFilter{
 		ConversationId: c.Query("conversation_id"),
-		UserIdByApp:    c.Query("user_id_by_app"),
+		ExternalUserId: c.Query("external_user_id"),
 	}
 
 	code, result := h.messageService.GetMessages(c, res.Data, filter, limit, offset)

@@ -16,13 +16,13 @@ type Message struct {
 	EventName           string          `json:"event_name"`
 	Direction           string          `json:"direction"`
 	AppId               string          `json:"app_id"`
-	OaId                string          `json:"oa_id"`          // connection id
-	UserIdByApp         string          `json:"user_id_by_app"` // require for zalo
-	Uid                 string          `json:"uid"`            // id zalo
-	UserAppname         string          `json:"user_app_name"`  // username zalo
-	Avatar              string          `json:"avatar"`         // avatar zalo
-	SupporterId         string          `json:"supporter_id"`   // from crm
-	SupporterName       string          `json:"supporter_name"` // from crm
+	OaId                string          `json:"oa_id"`            // connection id
+	UserIdByApp         string          `json:"user_id_by_app"`   // require for zalo
+	ExternalUserId      string          `json:"external_user_id"` // id zalo
+	UserAppname         string          `json:"user_app_name"`    // username zalo
+	Avatar              string          `json:"avatar"`           // avatar zalo
+	SupporterId         string          `json:"supporter_id"`     // from crm
+	SupporterName       string          `json:"supporter_name"`   // from crm
 	SendTime            time.Time       `json:"send_time"`
 	SendTimestamp       int64           `json:"send_timestamp"`
 	Content             string          `json:"content"`
@@ -30,6 +30,8 @@ type Message struct {
 	ReadTimestamp       int64           `json:"read_timestamp"`
 	ReadBy              json.RawMessage `json:"read_by"`
 	Attachments         []*Attachments  `json:"attachments"`
+	CreatedAt           time.Time       `json:"created_at"`
+	UpdatedAt           time.Time       `json:"updated_at"`
 }
 
 type Attachments struct {
@@ -47,12 +49,10 @@ type AttachmentsDetail struct {
 }
 
 type MessageRequest struct {
-	AppId           string         `json:"app_id"`
-	ConversationId  string         `json:"conversation_id"`
-	ParentMessageId string         `json:"parent_message_id"`
-	UserIdByApp     string         `json:"user_id_by_app"`
-	Content         string         `json:"content"`
-	Attachments     []*Attachments `json:"attachments"`
+	AppId          string         `json:"app_id"`
+	ConversationId string         `json:"conversation_id"`
+	Content        string         `json:"content"`
+	Attachments    []*Attachments `json:"attachments"`
 }
 
 func (m *MessageRequest) Validate() error {
@@ -61,9 +61,6 @@ func (m *MessageRequest) Validate() error {
 	}
 	if len(m.Content) < 1 {
 		return errors.New("content is required")
-	}
-	if len(m.UserIdByApp) < 1 {
-		return errors.New("user id by app is required")
 	}
 	return nil
 }

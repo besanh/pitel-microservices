@@ -33,7 +33,7 @@ func NewMessage(OttSendMessageUrl string) IMessage {
 
 func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any) {
 	conversation := model.Conversation{}
-	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.UserIdByApp)
+	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.ConversationId)
 	if conversationCache != nil {
 		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
 			log.Error(err)
@@ -41,7 +41,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		}
 	} else {
 		filter := model.ConversationFilter{
-			UserIdByApp: []string{data.UserIdByApp},
+			ConversationId: []string{data.ConversationId},
 		}
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.AppId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
@@ -50,10 +50,12 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		}
 		if total > 0 {
 			conversation = (*conversations)[0]
-			if err := cache.RCache.Set(CONVERSATION+"_"+data.UserIdByApp, conversation, CONVERSATION_EXPIRE); err != nil {
+			if err := cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
+		} else {
+			return response.BadRequestMsg("conversation: " + data.ConversationId + " not found")
 		}
 	}
 
@@ -81,6 +83,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		ParentExternalMsgId: "",
 		Id:                  docId,
 		MessageType:         conversation.ConversationType,
+		ConversationId:      conversation.ConversationId,
 		EventName:           eventName,
 		Direction:           variables.DIRECTION["send"],
 		AppId:               conversation.AppId,
@@ -107,7 +110,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		AppId:         conversation.AppId,
 		UserIdByApp:   conversation.UserIdByApp,
 		OaId:          conversation.OaId,
-		Uid:           conversation.Uid,
+		Uid:           conversation.ExternalUserId,
 		SupporterId:   authUser.UserId,
 		SupporterName: authUser.Username,
 		Timestamp:     timestamp,

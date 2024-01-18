@@ -37,12 +37,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		AppId:               data.AppId,
 		OaId:                data.OaId,
 		UserIdByApp:         data.UserIdByApp,
-		Uid:                 data.UserId,
+		ExternalUserId:      data.ExternalUserId,
 		Avatar:              data.Avatar,
 		SendTime:            timestamp,
 		SendTimestamp:       data.Timestamp,
 		Content:             data.Content,
 		UserAppname:         data.Username,
+		CreatedAt:           time.Now(),
 	}
 	if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
 		timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
@@ -103,7 +104,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	filter := model.QueueFilter{
 		AppId: data.AppId,
 	}
-	agentId, err = CheckChatQueueSetting(ctx, filter, data.UserIdByApp)
+	agentId, err = CheckChatQueueSetting(ctx, filter, data.ExternalUserId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -126,8 +127,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 		PublishMessageToOne(agentId, event)
 	}
-
-	// TODO: add to queue
 
 	return response.OKResponse()
 }

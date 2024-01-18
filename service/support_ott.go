@@ -14,7 +14,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userIdByApp string) (string, error) {
+func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, externalUserId string) (string, error) {
 	var agentId string
 	chatQueue := model.ChatQueue{}
 
@@ -74,9 +74,9 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 			}
 			agent := subscribers[randomIndex]
 			filter := model.AgentAllocationFilter{
-				UserIdByApp: userIdByApp,
+				ConversationId: externalUserId,
 			}
-			agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + userIdByApp)
+			agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + externalUserId)
 			if agentAllocationCache != nil {
 				if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agent); err != nil {
 					log.Error(err)
@@ -97,7 +97,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 					}
 				}
 
-				if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+userIdByApp, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+				if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+externalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
 					log.Error(err)
 					return agentId, err
 				}
@@ -107,7 +107,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 				agentId = agent.UserId
 				agentAllocation := model.AgentAllocation{
 					Base:               model.InitBase(),
-					UserIdByApp:        userIdByApp,
+					ConversationId:     externalUserId,
 					AgentId:            agent.UserId,
 					QueueId:            chatQueue.Id,
 					AllocatedTimestamp: time.Now().Unix(),
@@ -119,7 +119,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, userId
 			} else if len(agentId) > 0 {
 				agentId = agent.UserId
 				filter := model.AgentAllocationFilter{
-					UserIdByApp: userIdByApp,
+					ConversationId: externalUserId,
 				}
 				total, agentAllocationTmp, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 				if err != nil {
@@ -153,28 +153,27 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 		Username:         data.Username,
 		Avatar:           data.Avatar,
 		OaId:             data.OaId,
-		Uid:              data.UserId,
+		ExternalUserId:   data.ExternalUserId,
 		CreatedAt:        time.Now().Format(time.RFC3339),
 	}
 
 	isExisted := false
-	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.UserIdByApp)
+	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.ExternalUserId)
 	if conversationCache != nil {
 		isExisted = true
 		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		err := UpdateESAndCache(ctx, data.AppId, conversation.ConversationId, conversation.UserIdByApp)
-		if err != nil {
+		if err := UpdateESAndCache(ctx, data.AppId, conversation.ConversationId, conversation.ExternalUserId); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
 		return conversation, isNew, nil
 	} else {
 		filter := model.ConversationFilter{
-			AppId:       []string{data.AppId},
-			UserIdByApp: []string{data.UserIdByApp},
+			AppId:          []string{data.AppId},
+			ConversationId: []string{data.ExternalUserId},
 		}
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.AppId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
@@ -183,7 +182,7 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 		}
 		if total > 0 {
 			conversation = (*conversations)[0]
-			if err := cache.RCache.Set(CONVERSATION+"_"+data.UserIdByApp, conversation, CONVERSATION_EXPIRE); err != nil {
+			if err := cache.RCache.Set(CONVERSATION+"_"+data.ExternalUserId, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
 				return conversation, isNew, err
 			}
@@ -197,7 +196,7 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 			return conversation, isNew, err
 		}
 		conversation.ConversationId = id
-		if err := cache.RCache.Set(CONVERSATION+"_"+data.UserIdByApp, conversation, CONVERSATION_EXPIRE); err != nil {
+		if err := cache.RCache.Set(CONVERSATION+"_"+data.ExternalUserId, conversation, CONVERSATION_EXPIRE); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
@@ -208,7 +207,7 @@ func GetConversationExist(ctx context.Context, data model.OttMessage) (conversat
 }
 
 func InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error) {
-	id = conversation.UserIdByApp
+	id = conversation.ExternalUserId
 	// id = uuid.NewString()
 	tmpBytes, err := json.Marshal(conversation)
 	if err != nil {
@@ -237,9 +236,9 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 	return id, nil
 }
 
-func CheckConversationInAgent(userIdByApp string, allocationAgent []*model.AgentAllocation) bool {
+func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAllocation) bool {
 	for _, item := range allocationAgent {
-		if item.UserIdByApp == userIdByApp {
+		if item.ConversationId == userId {
 			return true
 		}
 	}
@@ -250,12 +249,12 @@ func CheckConversationInAgent(userIdByApp string, allocationAgent []*model.Agent
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, appId, conversationId, userIdByApp string) error {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, appId, ES_INDEX_CONVERSATION, userIdByApp)
+func UpdateESAndCache(ctx context.Context, appId, conversationId, userId string) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, appId, ES_INDEX_CONVERSATION, userId)
 	if err != nil {
 		log.Error(err)
 		return err
-	} else if len(conversationExist.UserIdByApp) < 1 {
+	} else if len(conversationExist.ExternalUserId) < 1 {
 		log.Errorf("conversation %s not found", conversationId)
 		return errors.New("conversation not found")
 	}
@@ -271,12 +270,12 @@ func UpdateESAndCache(ctx context.Context, appId, conversationId, userIdByApp st
 		log.Error(err)
 		return err
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, userIdByApp, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, userId, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
 
-	if err := cache.RCache.Set(CONVERSATION+"_"+userIdByApp, conversationExist, CONVERSATION_EXPIRE); err != nil {
+	if err := cache.RCache.Set(CONVERSATION+"_"+userId, conversationExist, CONVERSATION_EXPIRE); err != nil {
 		log.Error(err)
 		return err
 	}
