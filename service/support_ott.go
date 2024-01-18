@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
@@ -146,7 +145,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 
 func GetConversationExist(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
 	conversation = model.Conversation{
-		ConversationId:   uuid.NewString(),
+		ConversationId:   data.ExternalUserId,
 		AppId:            data.AppId,
 		ConversationType: data.MessageType,
 		UserIdByApp:      data.UserIdByApp,
