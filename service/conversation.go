@@ -82,7 +82,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	if total > 0 {
 		for k, conv := range *conversations {
 			filter := model.MessageFilter{
-				ConversationId: conv.ExternalUserId,
+				ConversationId: conv.ConversationId,
 				IsRead:         false,
 			}
 			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filter, -1, 0)
@@ -93,7 +93,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 			conv.TotalUnRead = int64(total)
 
 			filterMessage := model.MessageFilter{
-				ExternalUserId: conv.ExternalUserId,
+				ConversationId: conv.ConversationId,
 			}
 			total, message, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filterMessage, 1, 0)
 			if err != nil {
