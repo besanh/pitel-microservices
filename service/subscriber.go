@@ -39,6 +39,7 @@ func (s *SubscriberService) AddSubscriber(ctx context.Context, authUser *model.A
 	subscriber.TenantId = authUser.TenantId
 	subscriber.UserId = authUser.UserId
 	subscriber.Username = authUser.Username
+	subscriber.Level = authUser.Level
 	subscriber.Services = authUser.Services
 
 	WsSubscribers.AddSubscriber(ctx, subscriber)
