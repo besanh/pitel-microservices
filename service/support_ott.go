@@ -96,12 +96,13 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 					return agentId, err
 				}
 				if total > 0 {
-					for _, item := range *agentAllocations {
-						if len(item.AgentId) > 1 {
-							agentId = item.AgentId
-							break
-						}
-					}
+					agentId = (*agentAllocations)[0].AgentId
+					// for _, item := range *agentAllocations {
+					// 	if len(item.AgentId) > 1 {
+					// 		agentId = item.AgentId
+					// 		break
+					// 	}
+					// }
 				} else {
 					agentId = agent.UserId
 					agentAllocation := model.AgentAllocation{
@@ -123,27 +124,27 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 				}
 			}
 
-			if len(agent.UserId) > 0 {
-				agentId = agent.UserId
-				filter := model.AgentAllocationFilter{
-					ConversationId: externalUserId,
-				}
-				total, agentAllocationTmp, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
-				if err != nil {
-					log.Error(err)
-					return agentId, err
-				}
-				if total > 0 {
-					agentAllocation := (*agentAllocationTmp)[0]
-					agentAllocation.AgentId = agent.UserId
-					agentAllocation.QueueId = chatQueue.Id
-					agentAllocation.AllocatedTimestamp = time.Now().Unix()
-					if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocation); err != nil {
-						log.Error(err)
-						return agentId, err
-					}
-				}
-			}
+			// if len(agent.UserId) > 0 {
+			// 	agentId = agent.UserId
+			// 	filter := model.AgentAllocationFilter{
+			// 		ConversationId: externalUserId,
+			// 	}
+			// 	total, agentAllocationTmp, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+			// 	if err != nil {
+			// 		log.Error(err)
+			// 		return agentId, err
+			// 	}
+			// 	if total > 0 {
+			// 		agentAllocation := (*agentAllocationTmp)[0]
+			// 		agentAllocation.AgentId = agent.UserId
+			// 		agentAllocation.QueueId = chatQueue.Id
+			// 		agentAllocation.AllocatedTimestamp = time.Now().Unix()
+			// 		if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocation); err != nil {
+			// 			log.Error(err)
+			// 			return agentId, err
+			// 		}
+			// 	}
+			// }
 		}
 	} else if routing.RoutingName == "min_conversation" {
 	}
