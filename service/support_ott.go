@@ -73,7 +73,11 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 					subscribers = append(subscribers, *s)
 				}
 			}
-			agent := subscribers[randomIndex]
+			agent := Subscriber{}
+			if len(subscribers) > 0 {
+				agent = subscribers[randomIndex]
+			}
+
 			agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + externalUserId)
 			if agentAllocationCache != nil {
 				agentTmp := Subscriber{}
