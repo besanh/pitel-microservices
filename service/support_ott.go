@@ -72,16 +72,18 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 				subscribers = append(subscribers, *s)
 			}
 			agent := subscribers[randomIndex]
-			filter := model.AgentAllocationFilter{
-				ConversationId: externalUserId,
-			}
 			agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + externalUserId)
 			if agentAllocationCache != nil {
-				if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agent); err != nil {
+				agentTmp := Subscriber{}
+				if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
 					log.Error(err)
 					return agentId, err
 				}
+				agent = agentTmp
 			} else {
+				filter := model.AgentAllocationFilter{
+					ConversationId: externalUserId,
+				}
 				total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 				if err != nil {
 					log.Error(err)
