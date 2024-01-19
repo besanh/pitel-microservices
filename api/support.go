@@ -140,17 +140,13 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAut
 	}
 
 	if len(agentInfo.UserUuid) > 1 {
-		if agentInfo.Level == "user" || agentInfo.Level == "agent" {
-			result = &model.AAAResponse{
-				Data: &model.AuthUser{
-					TenantId: agentInfo.DomainUuid,
-					UserId:   agentInfo.UserUuid,
-					Username: agentInfo.Username,
-					Level:    agentInfo.Level,
-				},
-			}
-		} else {
-			return nil, fmt.Errorf("user level %s is not allowed. only approve level: user and agent", agentInfo.Level)
+		result = &model.AAAResponse{
+			Data: &model.AuthUser{
+				TenantId: agentInfo.DomainUuid,
+				UserId:   agentInfo.UserUuid,
+				Username: agentInfo.Username,
+				Level:    agentInfo.Level,
+			},
 		}
 	} else {
 		return nil, fmt.Errorf("failed to get user info")

@@ -69,7 +69,9 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 			rand.NewSource(time.Now().UnixNano())
 			randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
 			for s := range WsSubscribers.Subscribers {
-				subscribers = append(subscribers, *s)
+				if s.Level == "user" || s.Level == "agent" {
+					subscribers = append(subscribers, *s)
+				}
 			}
 			agent := subscribers[randomIndex]
 			agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + externalUserId)
@@ -145,7 +147,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 	return agentId, nil
 }
 
-func GetConversationExist(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
+func UpSertConversation(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
 	conversation = model.Conversation{
 		ConversationId:   data.ExternalUserId,
 		AppId:            data.AppId,

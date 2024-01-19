@@ -63,6 +63,7 @@ type (
 		UserId         string      `json:"user_id"`
 		Username       string      `json:"username"`
 		Services       []string    `json:"services"`
+		Level          string      `json:"level"`
 		Message        chan []byte `json:"-"`
 		CloseSlow      func()      `json:"-"`
 	}

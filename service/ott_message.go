@@ -80,7 +80,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 
 	// TODO: check conversation and add message
-	conversation, isNew, err := GetConversationExist(ctx, data)
+	conversation, isNew, err := UpSertConversation(ctx, data)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
