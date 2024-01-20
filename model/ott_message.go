@@ -62,3 +62,13 @@ type OttResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`
 }
+
+type OttAccount struct {
+	Type      string `json:"type"`
+	AppId     string `json:"app_id"`
+	AppName   string `json:"app_name"`
+	AppSecret string `json:"app_secret"`
+	OaId      string `json:"oa_id"`
+	OaName    string `json:"oa_name"`
+	Status    string `json:"status"`
+}

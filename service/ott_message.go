@@ -54,28 +54,23 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		for _, val := range *data.Attachments {
 			var attachmentFile model.OttPayloadFile
 			var attachmentMedia model.OttPayloadMedia
+			var attachmentDetail model.AttachmentsDetails
+			attachmentDetail.AttachmentType = val.AttType
 			if val.AttType == variables.ATTACHMENT_TYPE["file"] {
 				if err := util.ParseAnyToAny(val.Payload, &attachmentFile); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}
+				attachmentDetail.AttachmentFile = &attachmentFile
 			} else {
 				if err := util.ParseAnyToAny(val.Payload, &attachmentMedia); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}
+				attachmentDetail.AttachmentMedia = &attachmentMedia
 			}
-			message.Attachments = append(message.Attachments, &model.Attachments{
-				Id:             uuid.NewString(),
-				MsgId:          docId,
-				AttachmentType: val.AttType,
-				AttachmentsDetail: &model.AttachmentsDetail{
-					AttachmentFile:  &attachmentFile,
-					AttachmentMedia: &attachmentMedia,
-				},
-				SendTime:      timestamp,
-				SendTimestamp: data.Timestamp,
-			})
+			// TODO: edit url link
+			message.Attachments = append(message.Attachments, &attachmentDetail)
 		}
 	}
 
