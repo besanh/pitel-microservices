@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -61,15 +62,16 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}
+				attachmentFile.Url = strings.ReplaceAll(attachmentFile.Url, "u0026", "&")
 				attachmentDetail.AttachmentFile = &attachmentFile
 			} else {
 				if err := util.ParseAnyToAny(val.Payload, &attachmentMedia); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}
+				attachmentMedia.Url = strings.ReplaceAll(attachmentMedia.Url, "u0026", "&")
 				attachmentDetail.AttachmentMedia = &attachmentMedia
 			}
-			// TODO: edit url link
 			message.Attachments = append(message.Attachments, &attachmentDetail)
 		}
 	}
