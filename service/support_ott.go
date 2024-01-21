@@ -66,8 +66,6 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 	if routing.RoutingName == "random" {
 		subscribers := []Subscriber{}
 		if len(WsSubscribers.Subscribers) > 0 {
-			rand.NewSource(time.Now().UnixNano())
-			randomIndex := rand.Intn(len(WsSubscribers.Subscribers))
 			for s := range WsSubscribers.Subscribers {
 				if s.Level == "user" || s.Level == "agent" {
 					subscribers = append(subscribers, *s)
@@ -75,6 +73,8 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 			}
 			agent := Subscriber{}
 			if len(subscribers) > 0 {
+				rand.NewSource(time.Now().UnixNano())
+				randomIndex := rand.Intn(len(subscribers))
 				agent = subscribers[randomIndex]
 			}
 
@@ -239,10 +239,19 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 			return id, err
 		}
 	}
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, conversation.AppId, ES_INDEX_CONVERSATION, id)
+	if err != nil {
+		log.Error(err)
+		return id, err
+	} else if len(conversationExist.ExternalUserId) > 0 {
+		log.Errorf("conversation %s not found", id)
+		return id, errors.New("conversation not found")
+	}
 	if err := repository.ESRepo.InsertLog(ctx, conversation.AppId, ES_INDEX_CONVERSATION, id, esDoc); err != nil {
 		log.Error(err)
 		return id, err
 	}
+
 	return id, nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
@@ -48,16 +49,22 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	msgId, _ := jsonBody["msg_id"].(string)
 	content, _ := jsonBody["text"].(string)
 	attachmentsTmp, _ := jsonBody["attachments"].([]any)
-	attachments := make([]model.OttAttachments, 0)
+	attachmentsAny := make([]any, 0)
 	for item := range attachmentsTmp {
 		tmp := attachmentsTmp[item].(map[string]any)
 		attType, _ := tmp["att_type"].(string)
 		if slices.Contains[[]string](variables.EVENT_NAME_SEND_MESSAGE, attType) {
-			attachments = append(attachments, model.OttAttachments{
-				AttType: attType,
-				Payload: tmp,
-			})
+			attachment := map[string]any{
+				"att_type": attType,
+				"payload":  tmp["payload"],
+			}
+			attachmentsAny = append(attachmentsAny, attachment)
 		}
+	}
+	attachments := make([]model.OttAttachments, 0)
+	if err := util.ParseAnyToAny(attachmentsAny, &attachments); err != nil {
+		c.JSON(response.BadRequestMsg(err))
+		return
 	}
 
 	message := model.OttMessage{
