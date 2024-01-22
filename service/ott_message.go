@@ -83,6 +83,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	message.ConversationId = conversation.ConversationId
+	message.IsRead = "deactive"
 
 	//  TODO: add rabbitmq message
 	if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {

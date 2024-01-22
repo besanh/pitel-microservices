@@ -53,6 +53,7 @@ type AgentAllocationFilter struct {
 }
 
 type MessageFilter struct {
+	MessageId           []string        `json:"message_id"`
 	ParentMessageId     string          `json:"parent_message_id"`
 	ConversationId      string          `json:"conversation_id"`
 	ParentExternalMsgId string          `json:"parent_external_msg_id"`
@@ -70,5 +71,5 @@ type MessageFilter struct {
 	Content             string          `json:"content"`
 	ReadTime            string          `json:"read_time"`
 	ReadBy              json.RawMessage `json:"read_by"`
-	IsRead              bool            `json:"is_read"`
+	IsRead              string          `json:"is_read"`
 }

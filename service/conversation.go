@@ -83,7 +83,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		for k, conv := range *conversations {
 			filter := model.MessageFilter{
 				ConversationId: conv.ConversationId,
-				IsRead:         false,
+				IsRead:         "deactive",
 			}
 			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filter, -1, 0)
 			if err != nil {
