@@ -1,7 +1,6 @@
 package model
 
 import (
-	"encoding/json"
 	"errors"
 	"time"
 )
@@ -26,9 +25,10 @@ type Message struct {
 	SendTime            time.Time             `json:"send_time"`
 	SendTimestamp       int64                 `json:"send_timestamp"`
 	Content             string                `json:"content"`
+	IsRead              string                `json:"is_read"`
 	ReadTime            time.Time             `json:"read_time"`
 	ReadTimestamp       int64                 `json:"read_timestamp"`
-	ReadBy              json.RawMessage       `json:"read_by"`
+	ReadBy              []string              `json:"read_by"`
 	Attachments         []*AttachmentsDetails `json:"attachments"`
 	CreatedAt           time.Time             `json:"created_at"`
 	UpdatedAt           time.Time             `json:"updated_at"`
@@ -47,6 +47,13 @@ type MessageRequest struct {
 	Attachments    []*AttachmentsDetails `json:"attachments"`
 }
 
+type MessageMarkRead struct {
+	ConversationId string   `json:"conversation_id"`
+	MessageIds     []string `json:"message_ids"`
+	ReadBy         string   `json:"read_by"`
+	ReadAt         string   `json:"read_at"`
+}
+
 func (m *MessageRequest) Validate() error {
 	if len(m.ConversationId) < 1 {
 		return errors.New("conversation id is required")
@@ -54,5 +61,17 @@ func (m *MessageRequest) Validate() error {
 	if len(m.Content) < 1 {
 		return errors.New("content is required")
 	}
+
+	return nil
+}
+
+func (m *MessageMarkRead) ValidateMarkRead() error {
+	if len(m.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
+	if len(m.MessageIds) < 1 {
+		return errors.New("message ids is required")
+	}
+
 	return nil
 }

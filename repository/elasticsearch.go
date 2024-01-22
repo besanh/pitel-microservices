@@ -20,6 +20,7 @@ type (
 		CreateAliasRabbitMQ(ctx context.Context, index, alias string) (bool, error)
 		InsertLog(ctx context.Context, tenantId, index, docId string, esDoc map[string]any) error
 		UpdateDocById(ctx context.Context, index, docId string, esDoc map[string]any) error
+		BulkUpdateDoc(ctx context.Context, index string, esDoc map[string]any) error
 	}
 	Elasticsearch struct{}
 )
@@ -100,7 +101,7 @@ func (repo *Elasticsearch) CreateDocRabbitMQ(ctx context.Context, index, tenant,
 }
 
 func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, docId string, esDoc map[string]any) error {
-	bdy, err := json.Marshal(esDoc)
+	body, err := json.Marshal(esDoc)
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,7 @@ func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, docId
 		Index:      index,
 		DocumentID: docId,
 		Routing:    index + "_" + tenantId,
-		Body:       bytes.NewReader(bdy),
+		Body:       bytes.NewReader(body),
 		Refresh:    "true",
 	}
 	res, err := req.Do(ctx, ESClient.GetClient())
@@ -125,14 +126,14 @@ func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, docId
 }
 
 func (repo *Elasticsearch) UpdateDocById(ctx context.Context, index, docId string, esDoc map[string]any) error {
-	bdy, err := json.Marshal(esDoc)
+	body, err := json.Marshal(esDoc)
 	if err != nil {
 		return err
 	}
 	req := esapi.UpdateRequest{
 		Index:      index,
 		DocumentID: docId,
-		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, bdy))),
+		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, body))),
 		Refresh:    "true",
 	}
 	res, err := req.Do(ctx, ESClient.GetClient())
@@ -143,6 +144,30 @@ func (repo *Elasticsearch) UpdateDocById(ctx context.Context, index, docId strin
 
 	if res.IsError() {
 		return fmt.Errorf("update: response: %s", res.String())
+	}
+
+	return nil
+}
+
+func (repo *Elasticsearch) BulkUpdateDoc(ctx context.Context, index string, esDoc map[string]any) error {
+	body, err := json.Marshal(esDoc)
+	if err != nil {
+		return err
+	}
+	req := esapi.BulkRequest{
+		Index: index,
+		Body:  bytes.NewReader(body),
+	}
+
+	res, err := req.Do(ctx, ESClient.GetClient())
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("bulk update: response: %s", res.String())
 	}
 
 	return nil

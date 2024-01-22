@@ -13,6 +13,7 @@ import (
 type (
 	IMessageES interface {
 		GetMessages(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit, offset int) (int, *[]model.Message, error)
+		GetMessageById(ctx context.Context, appId, index, id string) (*model.Message, error)
 	}
 	MessageES struct {
 	}
@@ -32,6 +33,9 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 	}
 	if len(filter.ConversationId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("conversation_id", util.ParseToAnyArray([]string{filter.ConversationId})...))
+	}
+	if len(filter.IsRead) > 0 {
+		filters = append(filters, elasticsearch.TermQuery("is_read", filter.IsRead))
 	}
 
 	boolQuery := map[string]any{
@@ -101,4 +105,77 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 
 	return total, &result, nil
 
+}
+
+func (repo *MessageES) GetMessageById(ctx context.Context, appId, index, id string) (*model.Message, error) {
+	filters := []map[string]any{}
+	musts := []map[string]any{}
+	if len(appId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+appId))
+		musts = append(musts, elasticsearch.MatchQuery("app_id", appId))
+	}
+	filters = append(filters, elasticsearch.MatchQuery("_id", id))
+
+	boolQuery := map[string]any{
+		"bool": map[string]any{
+			"filter": filters,
+			"must":   musts,
+		},
+	}
+	searchSource := map[string]any{
+		"from":    0,
+		"size":    1,
+		"_source": true,
+		"query":   boolQuery,
+		"sort": []any{
+			elasticsearch.Order("send_time", false),
+		},
+	}
+	buf, err := elasticsearch.EncodeAny(searchSource)
+
+	if err != nil {
+		return nil, err
+	}
+	client := ESClient.GetClient()
+	res, err := client.Search(
+		client.Search.WithContext(ctx),
+		client.Search.WithIndex(index),
+		client.Search.WithBody(&buf),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// handle res error
+	if res.IsError() {
+		var e map[string]any
+		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+			return nil, err
+		} else {
+			// Print the response status and error information.
+			return nil, fmt.Errorf("[%s] %s: %s",
+				res.Status(),
+				e["error"].(map[string]any)["type"],
+				e["error"].(map[string]any)["reason"],
+			)
+		}
+	}
+
+	defer res.Body.Close()
+
+	body := model.ElasticsearchChatResponse{}
+
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		return nil, err
+	}
+	result := model.Message{}
+	// mapping
+	for _, bodyHits := range body.Hits.Hits {
+		data := model.Message{}
+		if err := util.ParseAnyToAny(bodyHits.Source, &data); err != nil {
+			return nil, err
+		}
+		result = data
+	}
+	return &result, nil
 }

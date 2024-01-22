@@ -91,7 +91,7 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	c.JSON(response.Pagination(total, chatQueues, limit, offset))
+	c.JSON(response.Pagination(chatQueues, total, limit, offset))
 }
 
 func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {

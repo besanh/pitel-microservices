@@ -27,6 +27,9 @@ func NewMessage(r *gin.Engine, messageService service.IMessage, crmAuthUrl strin
 		Group.GET("", func(ctx *gin.Context) {
 			handler.GetMessages(ctx, crmAuthUrl)
 		})
+		Group.POST("read", func(ctx *gin.Context) {
+			handler.MarkReadMessages(ctx, crmAuthUrl)
+		})
 	}
 }
 
@@ -84,5 +87,34 @@ func (h *Message) GetMessages(c *gin.Context, crmAuthUrl string) {
 	}
 
 	code, result := h.messageService.GetMessages(c, res.Data, filter, limit, offset)
+	c.JSON(code, result)
+}
+
+func (h *Message) MarkReadMessages(c *gin.Context, crmAuthUrl string) {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+	}
+	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	markReadMessages := model.MessageMarkRead{}
+	if err := c.ShouldBindJSON(&markReadMessages); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	log.Info("mark read message body: ", markReadMessages)
+
+	if err := markReadMessages.ValidateMarkRead(); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	code, result := h.messageService.MarkReadMessages(c, res.Data, markReadMessages)
 	c.JSON(code, result)
 }
