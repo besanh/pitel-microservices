@@ -86,15 +86,19 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmAu
 			wsCon.Close(websocket.StatusPolicyViolation, "connection too slow")
 		},
 	}
+
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
+
 	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
 	if res == nil {
 		return errors.New("token is invalid")
 	}
+
+	ctx := wsCon.CloseRead(c)
 	if err := handler.subscriber.AddSubscriber(c, res.Data, s); err != nil {
 		log.Error(err)
 		return err
@@ -133,8 +137,8 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmAu
 			if err := api.WriteTimeout(c, 5*time.Second, wsCon, msg); err != nil {
 				return err
 			}
-		case <-c.Done():
-			return c.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
 }
