@@ -52,7 +52,7 @@ func isHeaderAllowed(s string) (string, bool) {
 	return s, false
 }
 
-func NewGRPCServer(port, ottSendMessageUrl, crmAuthUrl string) {
+func NewGRPCServer(port, ottSendMessageUrl, crmAuthUrl, ottDomain string) {
 	// Setup gRPC
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
@@ -115,10 +115,11 @@ func NewGRPCServer(port, ottSendMessageUrl, crmAuthUrl string) {
 	v1.NewMessage(httpServer, service.NewMessage(ottSendMessageUrl), crmAuthUrl)
 	v1.NewWebSocket(httpServer, service.NewSubscriberService(), crmAuthUrl)
 	v1.NewConversation(httpServer, service.NewConversation(), crmAuthUrl)
-	v1.NewChatApp(httpServer, service.NewChatApp(), crmAuthUrl)
+	v1.NewChatApp(httpServer, service.NewChatApp(ottDomain), crmAuthUrl)
 	v1.NewChatConnectionApp(httpServer, service.NewChatConnectionApp(), crmAuthUrl)
 	v1.NewChatRouting(httpServer, service.NewChatRouting(), crmAuthUrl)
 	v1.NewChatQueue(httpServer, service.NewChatQueue(), crmAuthUrl)
+	v1.NewChatQueueAgent(httpServer, service.NewChatQueueAgent(), crmAuthUrl)
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

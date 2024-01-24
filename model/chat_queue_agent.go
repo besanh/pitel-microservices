@@ -16,9 +16,16 @@ type ChatQueueAgent struct {
 }
 
 type ChatQueueAgentRequest struct {
-	QueueId string `json:"queue_id"`
-	AgentId string `json:"agent_id"`
-	Source  string `json:"source"`
+	QueueId string   `json:"queue_id"`
+	AgentId []string `json:"agent_id"`
+	Source  string   `json:"source"`
+}
+
+type ChatQueueAgentUpdateResponse struct {
+	TotalSuccess int      `json:"total_success"`
+	TotalFail    int      `json:"total_fail"`
+	ListFail     []string `json:"list_fail"`
+	ListSuccess  []string `json:"list_success"`
 }
 
 func (m *ChatQueueAgentRequest) Validate() error {

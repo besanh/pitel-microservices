@@ -18,6 +18,7 @@ message QueueAgentBodyRequest {
 message QueueAgentResponse {
     string code = 1;
     string message = 2;
+    string id = 3;
 }
 
 service QueueAgentService {

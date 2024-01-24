@@ -38,7 +38,8 @@ func (g *GRPCChatQueueAgent) InsertQueueAgent(ctx context.Context, req *pb.Queue
 	}
 
 	log.Println("payload -->", payload)
-	if err = service.NewChatQueueAgent().InsertChatQueueAgent(ctx, authUser, payload); err != nil {
+	err = service.NewChatQueueAgent().InsertChatQueueAgent(ctx, authUser, payload)
+	if err != nil {
 		result = &pb.QueueAgentResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
 			Message: err.Error(),

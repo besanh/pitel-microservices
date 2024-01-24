@@ -11,7 +11,7 @@ import (
 type (
 	IChatQueue interface {
 		IRepo[model.ChatQueue]
-		GetQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error)
+		GetQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error)
 	}
 	ChatQueue struct {
 		Repo[model.ChatQueue]
@@ -24,7 +24,7 @@ func NewChatQueue() IChatQueue {
 	return &ChatQueue{}
 }
 
-func (repo *ChatQueue) GetQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
+func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
 	result := new([]model.ChatQueue)
 	query := db.GetDB().NewSelect().Model(result)
 	if len(filter.QueueName) > 0 {
