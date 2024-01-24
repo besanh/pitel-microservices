@@ -14,7 +14,7 @@ import (
 
 type (
 	IChatRouting interface {
-		InsertChatRouting(ctx context.Context, authUser *model.AuthUser, data *model.ChatRoutingRequest) error
+		InsertChatRouting(ctx context.Context, authUser *model.AuthUser, data *model.ChatRoutingRequest) (string, error)
 		GetChatRoutings(ctx context.Context, authUser *model.AuthUser, filter model.ChatRoutingFilter, limit, offset int) (int, *[]model.ChatRouting, error)
 		GetChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string) (model.ChatRouting, error)
 		UpdateChatRoutingById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatRoutingRequest) error
@@ -27,16 +27,19 @@ func NewChatRouting() IChatRouting {
 	return &ChatRouting{}
 }
 
-func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.AuthUser, data *model.ChatRoutingRequest) error {
+func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.AuthUser, data *model.ChatRoutingRequest) (string, error) {
+	chatRouting := model.ChatRouting{
+		Base: model.InitBase(),
+	}
 	dbConn, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
-		return err
+		return chatRouting.GetId(), err
 	}
 
 	if !slices.Contains[[]string](variables.CHAT_ROUTING, data.RoutingName) {
 		err = errors.New("chat routing method is not supported")
-		return err
+		return chatRouting.GetId(), err
 	}
 
 	total, _, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbConn, model.ChatRoutingFilter{
@@ -48,24 +51,22 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	}, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return err
+		return chatRouting.GetId(), err
 	}
 	if total > 0 {
+		log.Error("chat routing already exists")
 		err = errors.New("chat routing already exists")
-		return err
+		return chatRouting.GetId(), err
 	}
 
-	chatRouting := model.ChatRouting{
-		Base:        model.InitBase(),
-		RoutingName: data.RoutingName,
-		Status:      data.Status,
-	}
+	chatRouting.RoutingName = data.RoutingName
+	chatRouting.Status = data.Status
 
 	if err := repository.ChatRoutingRepo.Insert(ctx, dbConn, chatRouting); err != nil {
 		log.Error(err)
-		return err
+		return chatRouting.GetId(), err
 	}
-	return nil
+	return chatRouting.GetId(), nil
 }
 
 func (s *ChatRouting) GetChatRoutings(ctx context.Context, authUser *model.AuthUser, filter model.ChatRoutingFilter, limit, offset int) (int, *[]model.ChatRouting, error) {

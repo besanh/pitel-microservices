@@ -48,7 +48,8 @@ func (s *GRPCChatRouting) PostChatRouting(ctx context.Context, req *pb.ChatRouti
 		return
 	}
 
-	if err = service.NewChatRouting().InsertChatRouting(ctx, authUser, &payload); err != nil {
+	id, err := service.NewChatRouting().InsertChatRouting(ctx, authUser, &payload)
+	if err != nil {
 		log.Error(err)
 		result = &pb.ChatRoutingResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
@@ -60,6 +61,7 @@ func (s *GRPCChatRouting) PostChatRouting(ctx context.Context, req *pb.ChatRouti
 	result = &pb.ChatRoutingResponse{
 		Code:    "OK",
 		Message: "ok",
+		Id:      id,
 	}
 
 	return

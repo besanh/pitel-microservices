@@ -57,12 +57,14 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 		return
 	}
 
-	_, err := handler.chatQueueService.InsertChatQueue(c, res.Data, data)
+	id, err := handler.chatQueueService.InsertChatQueue(c, res.Data, data)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	c.JSON(response.OKResponse())
+	c.JSON(response.OK(map[string]any{
+		"id": id,
+	}))
 }
 
 func (handler *ChatQueue) GetChatQueues(c *gin.Context) {

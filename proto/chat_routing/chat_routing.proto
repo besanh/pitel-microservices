@@ -17,6 +17,7 @@ message ChatRoutingBodyRequest {
 message ChatRoutingResponse {
     string code = 1;
     string message = 2;
+    string id = 3;
 }
 
 service ChatRouting {
