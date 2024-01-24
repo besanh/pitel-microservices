@@ -28,7 +28,7 @@ type QueueFilter struct {
 
 type ChatQueueAgentFilter struct {
 	QueueId string
-	AgentId string
+	AgentId []string
 	Source  string
 }
 

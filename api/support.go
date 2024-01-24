@@ -146,6 +146,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAut
 				UserId:   agentInfo.UserUuid,
 				Username: agentInfo.Username,
 				Level:    agentInfo.Level,
+				Source:   bssAuthRequest.Source,
 			},
 		}
 	} else {

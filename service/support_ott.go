@@ -24,7 +24,7 @@ func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, extern
 			return agentId, err
 		}
 	} else {
-		total, queues, err := repository.ChatQueueRepo.GetQueue(ctx, repository.DBConn, filter, 1, 0)
+		total, queues, err := repository.ChatQueueRepo.GetQueues(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return agentId, err

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"path/filepath"
 	"time"
@@ -66,6 +67,7 @@ func init() {
 		Driver:       sqlclient.POSTGRESQL,
 	}
 	repository.DBConn = sqlclient.NewSqlClient(sqlClientConfig)
+
 	var err error
 	if redis.Redis, err = redis.NewRedis(redis.Config{
 		Addr:         env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
@@ -153,12 +155,16 @@ func main() {
 	repository.InitRepositories()
 	repository.InitRepositoriesES()
 
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancel()
+	repository.InitTables(ctx, repository.DBConn)
+
 	// Init services
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.InitServices()
 
 	// Run gRPC server
-	server.NewGRPCServer(config.gRPCPort, env.GetStringENV("OTT_SEND_MESSAGE", ""), env.GetStringENV("CRM_AUTH", ""))
+	server.NewGRPCServer(config.gRPCPort, env.GetStringENV("OTT_SEND_MESSAGE", ""), env.GetStringENV("CRM_AUTH", ""), env.GetStringENV("OTT_DOMAIN", ""))
 }
 
 func setAppLogger(cfg Config, file *os.File) {

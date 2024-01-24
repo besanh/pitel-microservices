@@ -42,7 +42,6 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 		err = errors.New(response.ERR_DATA_NOT_FOUND)
 		return chatQueue.Base.GetId(), err
 	}
-	chatQueue.AppId = data.AppId
 	chatQueue.QueueName = data.QueueName
 	chatQueue.Description = data.Description
 	chatQueue.ChatRoutingId = data.ChatRoutingId
@@ -62,7 +61,7 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 		return 0, nil, err
 	}
 
-	total, queues, err := repository.ChatQueueRepo.GetQueue(ctx, dbCon, filter, limit, offset)
+	total, queues, err := repository.ChatQueueRepo.GetQueues(ctx, dbCon, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return 0, nil, err
