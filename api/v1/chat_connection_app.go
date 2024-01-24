@@ -26,6 +26,7 @@ func NewChatConnectionApp(engin *gin.Engine, chatConnectionAppService service.IC
 	{
 		Group.GET("", handler.GetChatConnectionApp)
 		Group.POST("", handler.InsertChatConnectionApp)
+		Group.PUT(":id", handler.UpdateChatConnectionAppById)
 		Group.GET(":id", handler.GetChatConnectionAppById)
 	}
 }
@@ -131,4 +132,40 @@ func (handler *ChatConnectionApp) GetChatConnectionAppById(c *gin.Context) {
 	c.JSON(response.OK(map[string]any{
 		"id": chatConnectionApp.Id,
 	}))
+}
+
+func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+	}
+
+	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	id := c.Param("id")
+	if len(id) < 1 {
+		c.JSON(response.BadRequestMsg("id is required"))
+		return
+	}
+
+	var data model.ChatConnectionAppRequest
+	if err := c.ShouldBind(&data); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	log.Info("update chat connection app payload -> ", data)
+
+	err := handler.chatConnectionAppService.UpdateChatConnectionAppById(c, res.Data, id, data)
+	if err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }

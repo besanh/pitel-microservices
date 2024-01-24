@@ -40,10 +40,12 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		return connectionApp.Base.GetId(), err
 	}
 
-	_, err = repository.ChatQueueAgentRepo.GetById(ctx, dbCon, data.QueueId)
-	if err != nil {
-		log.Error(err)
-		return connectionApp.Base.GetId(), err
+	if len(data.QueueId) > 0 {
+		_, err = repository.ChatQueueAgentRepo.GetById(ctx, dbCon, data.QueueId)
+		if err != nil {
+			log.Error(err)
+			return connectionApp.Base.GetId(), err
+		}
 	}
 
 	filter := model.AppFilter{
@@ -122,6 +124,8 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 
 	chatConnectionAppExist.ConnectionName = data.ConnectionName
 	chatConnectionAppExist.ConnectionType = data.ConnectionType
+	chatConnectionAppExist.QueueId = data.QueueId
+	chatConnectionAppExist.UrlOa = data.UrlOa
 	chatConnectionAppExist.Status = data.Status
 	err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist)
 	if err != nil {
