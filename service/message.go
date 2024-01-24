@@ -167,7 +167,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		conversationFilter := model.ConversationFilter{
 			ConversationId: []string{data.ConversationId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, conversationFilter, 1, 0)
+		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, conversationFilter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -181,62 +181,115 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		}
 	}
 
-	totalSuccess := len(data.MessageIds)
+	totalSuccess := 0
 	totalFail := 0
 	listMessageIdSuccess := map[string]string{}
 	listMessageIdFail := map[string]string{}
-	for _, item := range data.MessageIds {
-		// Need tracking message stil not read ?
-		message, err := repository.MessageESRepo.GetMessageById(ctx, "", ES_INDEX, item)
+
+	if data.ReadAll {
+		filter := model.MessageFilter{
+			IsRead:         "deactive",
+			ConversationId: data.ConversationId,
+		}
+		total, messages, err := repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX, filter, -1, 0)
 		if err != nil {
 			log.Error(err)
 			totalSuccess -= 1
 			totalFail += 1
-			listMessageIdFail[item] = err.Error()
-			continue
-		} else if len(message.Id) < 1 {
-			totalSuccess -= 1
-			totalFail += 1
-			log.Errorf("message %s not found", item)
-			listMessageIdFail[item] = "message " + item + " not found"
-			continue
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		totalSuccess = total
+		if total > 0 {
+			for _, item := range *messages {
+				item.IsRead = "active"
+				item.ReadBy = append(item.ReadBy, authUser.UserId)
+				item.ReadTimestamp = time.Now().Unix()
+				item.UpdatedAt = time.Now()
+				item.ReadTime = time.Now()
+
+				tmpBytes, err := json.Marshal(item)
+				if err != nil {
+					log.Error(err)
+					totalSuccess -= 1
+					totalFail += 1
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+				esDoc := map[string]any{}
+				if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+					log.Error(err)
+					totalSuccess -= 1
+					totalFail += 1
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.Id, esDoc); err != nil {
+					log.Error(err)
+					totalSuccess -= 1
+					totalFail += 1
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+			}
 		}
 
-		message.IsRead = "active"
-		message.ReadBy = append(message.ReadBy, authUser.UserId)
-		message.ReadTimestamp = time.Now().Unix()
-		message.UpdatedAt = time.Now()
-		message.ReadTime = time.Now()
+		return response.OK(map[string]any{
+			"total_success": totalSuccess,
+			"total_fail":    totalFail,
+			"list_fail":     listMessageIdFail,
+			"list_success":  listMessageIdSuccess,
+		})
+	} else {
+		for _, item := range data.MessageIds {
+			// Need tracking message stil not read ?
+			message, err := repository.MessageESRepo.GetMessageById(ctx, "", ES_INDEX, item)
+			if err != nil {
+				log.Error(err)
+				totalSuccess -= 1
+				totalFail += 1
+				listMessageIdFail[item] = err.Error()
+				continue
+			} else if len(message.Id) < 1 {
+				totalSuccess -= 1
+				totalFail += 1
+				log.Errorf("message %s not found", item)
+				listMessageIdFail[item] = "message " + item + " not found"
+				continue
+			}
 
-		tmpBytes, err := json.Marshal(message)
-		if err != nil {
-			log.Error(err)
-			totalSuccess -= 1
-			totalFail += 1
-			listMessageIdFail[item] = err.Error()
-			continue
+			message.IsRead = "active"
+			message.ReadBy = append(message.ReadBy, authUser.UserId)
+			message.ReadTimestamp = time.Now().Unix()
+			message.UpdatedAt = time.Now()
+			message.ReadTime = time.Now()
+
+			tmpBytes, err := json.Marshal(message)
+			if err != nil {
+				log.Error(err)
+				totalSuccess -= 1
+				totalFail += 1
+				listMessageIdFail[item] = err.Error()
+				continue
+			}
+
+			esDoc := map[string]any{}
+			if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+				log.Error(err)
+				totalSuccess -= 1
+				totalFail += 1
+				listMessageIdFail[item] = err.Error()
+			}
+			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item, esDoc); err != nil {
+				log.Error(err)
+				totalSuccess -= 1
+				totalFail += 1
+				listMessageIdFail[item] = err.Error()
+			}
+			listMessageIdSuccess[item] = "success"
 		}
 
-		esDoc := map[string]any{}
-		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-			log.Error(err)
-			totalSuccess -= 1
-			totalFail += 1
-			listMessageIdFail[item] = err.Error()
-		}
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item, esDoc); err != nil {
-			log.Error(err)
-			totalSuccess -= 1
-			totalFail += 1
-			listMessageIdFail[item] = err.Error()
-		}
-		listMessageIdSuccess[item] = "success"
+		return response.OK(map[string]any{
+			"total_success": totalSuccess,
+			"total_fail":    totalFail,
+			"list_fail":     listMessageIdFail,
+			"list_success":  listMessageIdSuccess,
+		})
 	}
-
-	return response.OK(map[string]any{
-		"total_success": totalSuccess,
-		"total_fail":    totalFail,
-		"list_fail":     listMessageIdFail,
-		"list_success":  listMessageIdSuccess,
-	})
 }

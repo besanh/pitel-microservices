@@ -35,7 +35,7 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 		filters = append(filters, elasticsearch.TermsQuery("conversation_id", util.ParseToAnyArray([]string{filter.ConversationId})...))
 	}
 	if len(filter.IsRead) > 0 {
-		filters = append(filters, elasticsearch.TermQuery("is_read", filter.IsRead))
+		filters = append(filters, elasticsearch.TermsQuery("is_read", util.ParseToAnyArray([]string{filter.IsRead})...))
 	}
 
 	boolQuery := map[string]any{
