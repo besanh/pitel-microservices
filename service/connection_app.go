@@ -61,6 +61,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 			connectionApp.AppId = (*app)[0].InfoApp.Zalo.AppId
 		}
 	} else {
+		log.Error("app with type " + data.ConnectionType + " not found")
 		return connectionApp.Base.GetId(), errors.New("app not found")
 	}
 	connectionApp.QueueId = data.QueueId
