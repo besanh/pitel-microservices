@@ -52,6 +52,7 @@ type MessageMarkRead struct {
 	MessageIds     []string `json:"message_ids"`
 	ReadBy         string   `json:"read_by"`
 	ReadAt         string   `json:"read_at"`
+	ReadAll        bool     `json:"read_all"`
 }
 
 func (m *MessageRequest) Validate() error {
