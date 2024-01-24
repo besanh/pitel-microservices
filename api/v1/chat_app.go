@@ -59,12 +59,14 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 		return
 	}
 
-	_, err := handler.chatAppService.InsertChatApp(c, res.Data, data)
+	id, err := handler.chatAppService.InsertChatApp(c, res.Data, data)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	c.JSON(response.OKResponse())
+	c.JSON(response.OK(map[string]any{
+		"id": id,
+	}))
 }
 
 func (handler *ChatApp) GetChatApp(c *gin.Context) {
