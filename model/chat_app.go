@@ -16,7 +16,6 @@ type ChatApp struct {
 
 type ChatAppRequest struct {
 	AppName string   `json:"app_name"`
-	State   string   `json:"state"`
 	Status  string   `json:"status"` //active/deactive
 	InfoApp *InfoApp `json:"info_app"`
 }
@@ -29,7 +28,7 @@ type InfoApp struct {
 type Zalo struct {
 	AppId     string `json:"app_id"`
 	AppName   string `json:"app_name"`
-	SecretKey string `json:"secret_key"`
+	AppSecret string `json:"app_secret"`
 	OaId      string `json:"oa_id"`
 	OaName    string `json:"oa_name"`
 	Status    string `json:"status"` //active/deactive
@@ -37,10 +36,12 @@ type Zalo struct {
 }
 
 type Facebook struct {
-	AppId    string `json:"app_id"`
-	AppName  string `json:"app_name"`
-	AppToken string `json:"app_token"`
-	Status   string `json:"status"`
+	AppId     string `json:"app_id"`
+	AppName   string `json:"app_name"`
+	AppSecret string `json:"app_secret"`
+	OaId      string `json:"oa_id"`
+	OaName    string `json:"oa_name"`
+	Status    string `json:"status"`
 }
 
 func (m *ChatAppRequest) Validate() error {
@@ -57,8 +58,8 @@ func (m *ChatAppRequest) Validate() error {
 		if len(m.InfoApp.Zalo.AppName) < 1 {
 			return errors.New("app name is required")
 		}
-		if len(m.InfoApp.Zalo.SecretKey) < 1 {
-			return errors.New("secret key is required")
+		if len(m.InfoApp.Zalo.AppSecret) < 1 {
+			return errors.New("app secret is required")
 		}
 		if len(m.InfoApp.Zalo.OaId) < 1 {
 			return errors.New("oa id is required")
@@ -67,7 +68,7 @@ func (m *ChatAppRequest) Validate() error {
 			return errors.New("oa name is required")
 		}
 		if len(m.InfoApp.Zalo.Status) < 1 {
-			return errors.New("state is required")
+			return errors.New("status is required")
 		}
 		countOk += 1
 	}
@@ -79,8 +80,17 @@ func (m *ChatAppRequest) Validate() error {
 		if len(m.InfoApp.Facebook.AppName) < 1 {
 			return errors.New("app name is required")
 		}
-		if len(m.InfoApp.Facebook.AppToken) < 1 {
-			return errors.New("token is required")
+		if len(m.InfoApp.Facebook.AppSecret) < 1 {
+			return errors.New("app secret is required")
+		}
+		if len(m.InfoApp.Facebook.OaId) < 1 {
+			return errors.New("oa id is required")
+		}
+		if len(m.InfoApp.Facebook.OaName) < 1 {
+			return errors.New("oa name is required")
+		}
+		if len(m.InfoApp.Facebook.Status) < 1 {
+			return errors.New("status is required")
 		}
 		countOk += 1
 	}
