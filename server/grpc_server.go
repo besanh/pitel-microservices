@@ -52,7 +52,7 @@ func isHeaderAllowed(s string) (string, bool) {
 	return s, false
 }
 
-func NewGRPCServer(port, ottSendMessageUrl, crmAuthUrl, ottDomain string) {
+func NewGRPCServer(port, crmAuthUrl, ottDomain string) {
 	// Setup gRPC
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
@@ -112,7 +112,7 @@ func NewGRPCServer(port, ottSendMessageUrl, crmAuthUrl, ottDomain string) {
 	httpServer := NewHTTPServer()
 	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", gin.WrapH(mux))
 	v1.NewOttMessage(httpServer, service.NewOttMessage())
-	v1.NewMessage(httpServer, service.NewMessage(ottSendMessageUrl), crmAuthUrl)
+	v1.NewMessage(httpServer, service.NewMessage(ottDomain), crmAuthUrl)
 	v1.NewWebSocket(httpServer, service.NewSubscriberService(), crmAuthUrl)
 	v1.NewConversation(httpServer, service.NewConversation(), crmAuthUrl)
 	v1.NewChatApp(httpServer, service.NewChatApp(ottDomain), crmAuthUrl)

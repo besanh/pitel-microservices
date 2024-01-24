@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"database/sql"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -83,16 +80,9 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 		return
 	}
 
-	var status sql.NullBool
-	if len(c.Query("status")) > 0 {
-		statusTmp, _ := strconv.ParseBool(c.Query("status"))
-		status.Valid = true
-		status.Bool = statusTmp
-	}
-
 	filter := model.AppFilter{
 		AppName: c.Query("app_name"),
-		Status:  status,
+		Status:  c.Query("status"),
 	}
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))

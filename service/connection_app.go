@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
@@ -39,20 +40,32 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		return connectionApp.Base.GetId(), err
 	}
 
-	_, err = repository.ChatAppRepo.GetById(ctx, dbCon, data.AppId)
-	if err != nil {
-		log.Error(err)
-		return connectionApp.Base.GetId(), err
-	}
-
 	_, err = repository.ChatQueueAgentRepo.GetById(ctx, dbCon, data.QueueId)
 	if err != nil {
 		log.Error(err)
 		return connectionApp.Base.GetId(), err
 	}
 
-	connectionApp.AppId = data.AppId
+	filter := model.AppFilter{
+		AppType: data.ConnectionType,
+	}
+	total, app, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return connectionApp.Base.GetId(), err
+	}
+	if total > 0 {
+		if data.ConnectionType == "facebook" {
+			connectionApp.AppId = (*app)[0].InfoApp.Facebook.AppId
+		} else if data.ConnectionType == "zalo" {
+			connectionApp.AppId = (*app)[0].InfoApp.Zalo.AppId
+		}
+	} else {
+		return connectionApp.Base.GetId(), errors.New("app not found")
+	}
 	connectionApp.QueueId = data.QueueId
+	connectionApp.UrlOa = data.UrlOa
+	connectionApp.Status = data.Status
 
 	if err := repository.ChatConnectionAppRepo.Insert(ctx, dbCon, connectionApp); err != nil {
 		log.Error(err)

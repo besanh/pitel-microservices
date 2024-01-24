@@ -16,6 +16,7 @@ func PostOttAccount(ottDomain string, chatApp model.ChatApp) error {
 		accountInfo.AppSecret = chatApp.InfoApp.Facebook.AppSecret
 		accountInfo.OaId = chatApp.InfoApp.Facebook.OaId
 		accountInfo.OaName = chatApp.InfoApp.Facebook.OaName
+		accountInfo.Status = chatApp.InfoApp.Facebook.Status
 	} else if chatApp.InfoApp.Zalo.Status == "active" {
 		accountInfo.Type = "zalo"
 		accountInfo.AppId = chatApp.InfoApp.Zalo.AppId
@@ -23,6 +24,7 @@ func PostOttAccount(ottDomain string, chatApp model.ChatApp) error {
 		accountInfo.AppSecret = chatApp.InfoApp.Zalo.AppSecret
 		accountInfo.OaId = chatApp.InfoApp.Zalo.OaId
 		accountInfo.OaName = chatApp.InfoApp.Zalo.OaName
+		accountInfo.Status = chatApp.InfoApp.Zalo.Status
 	}
 
 	body := map[string]string{
@@ -35,13 +37,14 @@ func PostOttAccount(ottDomain string, chatApp model.ChatApp) error {
 		"status":     accountInfo.Status,
 	}
 
+	url := ottDomain + "/ott/v1/account"
 	client := resty.New()
 
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		// SetHeader("Authorization", "Bearer "+token).
 		SetBody(body).
-		Post(ottDomain)
+		Post(url)
 	if err != nil {
 		return err
 	}

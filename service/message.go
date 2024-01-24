@@ -22,13 +22,13 @@ type (
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
 	}
 	Message struct {
-		OttSendMessageUrl string
+		OttDomain string
 	}
 )
 
-func NewMessage(OttSendMessageUrl string) IMessage {
+func NewMessage(ottDomain string) IMessage {
 	return &Message{
-		OttSendMessageUrl: OttSendMessageUrl,
+		OttDomain: ottDomain,
 	}
 }
 

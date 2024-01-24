@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -40,13 +39,11 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 		return app.Base.GetId(), err
 	}
 
-	total, _, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, model.AppFilter{
+	filter := model.AppFilter{
 		AppName: data.AppName,
-		Status: sql.NullBool{
-			Valid: true,
-			Bool:  true,
-		},
-	}, 1, 0)
+		Status:  data.Status,
+	}
+	total, _, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return app.Base.GetId(), err
