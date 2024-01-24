@@ -30,8 +30,8 @@ func (s *ChatApp) GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, f
 	if len(filter.AppName) > 0 {
 		query.Where("app_name = ?", filter.AppName)
 	}
-	if filter.Status.Valid {
-		query.Where("status = ?", filter.Status.Bool)
+	if len(filter.Status) > 0 {
+		query.Where("status = ?", filter.Status)
 	}
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

@@ -17,7 +17,7 @@ func (s *Message) sendMessageToOTT(ctx context.Context, ott model.SendMessageToO
 		return result, err
 	}
 
-	url := s.OttSendMessageUrl
+	url := s.OttDomain + "/ott/v1/crm"
 	client := resty.New()
 
 	res, err := client.R().

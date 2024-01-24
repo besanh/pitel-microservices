@@ -2,8 +2,6 @@ package grpc
 
 import (
 	"context"
-	"database/sql"
-	"strconv"
 
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -70,15 +68,9 @@ func (s *GRPCApp) GetApp(ctx context.Context, req *pb.AppRequest) (result *pb.Ap
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	status := sql.NullBool{}
-	if len(req.Status) > 0 {
-		status.Valid = true
-		statusTmp, _ := strconv.ParseBool(req.Status)
-		status.Bool = statusTmp
-	}
 	filter := model.AppFilter{
 		AppName: req.AppName,
-		Status:  status,
+		Status:  req.Status,
 	}
 	limit := util.ParseLimit(req.GetLimit())
 	offset := util.ParseOffset(req.GetOffset())

@@ -11,8 +11,11 @@ type AuthSourceFilter struct {
 }
 
 type AppFilter struct {
-	AppName string
-	Status  sql.NullBool
+	AppId   string `json:"app_id"`
+	AppName string `json:"app_name"`
+	OaId    string `json:"oa_id"`
+	AppType string `json:"app_type"`
+	Status  string `json:"status"`
 }
 
 type ChatConnectionAppFilter struct {

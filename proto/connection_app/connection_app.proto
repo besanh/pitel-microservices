@@ -14,7 +14,7 @@ message ConnectionAppBodyRequest {
     string connection_type = 2;
     string app_id = 3;
     string queue_id = 4;
-    bool status = 5;
+    string status = 5;
 }
 
 message ConnectionAppRequest {
