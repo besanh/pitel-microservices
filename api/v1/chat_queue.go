@@ -49,7 +49,7 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 		return
 	}
 
-	log.Info("insert chat queue payload -> ", &data)
+	log.Info("insert chat queue payload -> ", data)
 
 	if err := data.Validate(); err != nil {
 		log.Error(err)
@@ -149,7 +149,7 @@ func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 		return
 	}
 
-	log.Info("update chat queue payload -> ", &data)
+	log.Info("update chat queue payload -> ", data)
 
 	err := handler.chatQueueService.UpdateChatQueueById(c, res.Data, id, data)
 	if err != nil {

@@ -16,6 +16,7 @@ type IRepo[T model.Model] interface {
 	Delete(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
 	CreateTable(ctx context.Context, db sqlclient.ISqlClientConn) (err error)
 	SelectByQuery(ctx context.Context, db sqlclient.ISqlClientConn, params []model.Param, limit int, offset int) (entries *[]T, total int, err error)
+	BulkInsert(ctx context.Context, db sqlclient.ISqlClientConn, entities []T) error
 }
 
 type Repo[T model.Model] struct {
@@ -93,4 +94,11 @@ func (r *Repo[T]) SelectByQuery(ctx context.Context, db sqlclient.ISqlClientConn
 		return nil, 0, err
 	}
 	return entries, total, nil
+}
+
+func (r *Repo[T]) BulkInsert(ctx context.Context, db sqlclient.ISqlClientConn, entities []T) (err error) {
+	_, err = db.GetDB().NewInsert().
+		Model(&entities).
+		Exec(ctx)
+	return
 }

@@ -12,6 +12,7 @@ type (
 	IChatQueueAgent interface {
 		IRepo[model.ChatQueueAgent]
 		GetChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatQueueAgentFilter, limit, offset int) (int, *[]model.ChatQueueAgent, error)
+		DeleteChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, queueId string) error
 	}
 	ChatQueueAgent struct {
 		Repo[model.ChatQueueAgent]
@@ -47,4 +48,9 @@ func (repo *ChatQueueAgent) GetChatQueueAgents(ctx context.Context, db sqlclient
 	}
 
 	return total, result, nil
+}
+
+func (repo *ChatQueueAgent) DeleteChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, queueId string) error {
+	_, err := db.GetDB().NewDelete().Model(new(model.ChatQueueAgent)).Where("queue_id = ?", queueId).Exec(ctx)
+	return err
 }
