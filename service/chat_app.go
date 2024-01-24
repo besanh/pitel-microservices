@@ -8,6 +8,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
@@ -18,11 +19,15 @@ type (
 		UpdateChatAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatAppRequest) (err error)
 		DeleteChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
-	ChatApp struct{}
+	ChatApp struct {
+		OttDomain string
+	}
 )
 
-func NewChatApp() IChatApp {
-	return &ChatApp{}
+func NewChatApp(ottDomain string) IChatApp {
+	return &ChatApp{
+		OttDomain: ottDomain,
+	}
 }
 
 func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, data model.ChatAppRequest) (string, error) {
@@ -57,6 +62,17 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 		log.Error(err)
 		return app.Base.GetId(), err
 	}
+
+	// Call ott, if fail => roll back
+	if err := common.PostOttAccount(s.OttDomain, app); err != nil {
+		log.Error(err)
+		if err := repository.ChatAppRepo.Delete(ctx, dbCon, app.Base.GetId()); err != nil {
+			log.Error(err)
+			return app.Base.GetId(), err
+		}
+		return app.Base.GetId(), err
+	}
+
 	return app.Base.GetId(), nil
 }
 
@@ -104,6 +120,7 @@ func (s *ChatApp) UpdateChatAppById(ctx context.Context, authUser *model.AuthUse
 		log.Error(err)
 		return err
 	}
+	// chatAppTmp := chatAppExist
 
 	chatAppExist.AppName = data.AppName
 	chatAppExist.InfoApp = data.InfoApp
