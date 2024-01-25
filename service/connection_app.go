@@ -67,7 +67,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		return connectionApp.Base.GetId(), errors.New("app not found")
 	}
 	connectionApp.QueueId = data.QueueId
-	connectionApp.UrlOa = data.UrlOa
+	connectionApp.OaInfo = data.OaInfo
 	connectionApp.Status = data.Status
 
 	if err := repository.ChatConnectionAppRepo.Insert(ctx, dbCon, connectionApp); err != nil {
@@ -125,7 +125,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	chatConnectionAppExist.ConnectionName = data.ConnectionName
 	chatConnectionAppExist.ConnectionType = data.ConnectionType
 	chatConnectionAppExist.QueueId = data.QueueId
-	chatConnectionAppExist.UrlOa = data.UrlOa
+	chatConnectionAppExist.OaInfo.Zalo = append(chatConnectionAppExist.OaInfo.Zalo, data.OaInfo.Zalo...)
 	chatConnectionAppExist.Status = data.Status
 	err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist)
 	if err != nil {
