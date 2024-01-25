@@ -17,15 +17,26 @@ type ChatConnectionApp struct {
 	ConnectionType string `json:"connection_type" bun:"connection_type,type:text,notnull"`
 	AppId          string `json:"app_id" bun:"app_id,type:text,notnull"`
 	QueueId        string `json:"queue_id" bun:"queue_id,type:text,notnull"`
-	UrlOa          string `json:"url_oa" bun:"url_oa,type:text,notnull"`
+	OaInfo         OaInfo `json:"oa_info" bun:"oa_info,type:text,notnull"`
 	Status         string `json:"status" bun:"status,notnull"`
+}
+
+type OaInfo struct {
+	Zalo []struct {
+		UrlOa string `json:"url_oa"`
+	} `json:"zalo"`
+	Facebook []struct {
+		OaId        string `json:"oa_id"`
+		OaName      string `json:"oa_name"`
+		AccessToken string `json:"access_token"`
+	} `json:"facebook"`
 }
 
 type ChatConnectionAppRequest struct {
 	ConnectionName string `json:"connection_name"`
 	ConnectionType string `json:"connection_type"`
 	QueueId        string `json:"queue_id"`
-	UrlOa          string `json:"url_oa"`
+	OaInfo         OaInfo `json:"oa_info"`
 	Status         string `json:"status"`
 }
 
@@ -44,9 +55,6 @@ func (m *ChatConnectionAppRequest) Validate() error {
 	}
 	if !slices.Contains[[]string](variables.CONNECTION_TYPE, m.ConnectionType) {
 		return errors.New("connection type " + m.ConnectionType + " is not supported")
-	}
-	if len(m.UrlOa) < 1 {
-		return errors.New("url oa is required")
 	}
 	if len(m.Status) < 1 {
 		return errors.New("status is required")
