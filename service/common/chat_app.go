@@ -7,34 +7,33 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func PostOttAccount(ottDomain string, chatApp model.ChatApp) error {
+func PostOttAccount(ottDomain string, chatApp model.ChatApp, connectionApp model.ChatConnectionApp) error {
 	accountInfo := model.OttAccount{}
 	if chatApp.InfoApp.Facebook.Status == "active" {
 		accountInfo.Type = "facebook"
 		accountInfo.AppId = chatApp.InfoApp.Facebook.AppId
 		accountInfo.AppName = chatApp.InfoApp.Facebook.AppName
 		accountInfo.AppSecret = chatApp.InfoApp.Facebook.AppSecret
-		accountInfo.OaId = chatApp.InfoApp.Facebook.OaId
-		accountInfo.OaName = chatApp.InfoApp.Facebook.OaName
-		accountInfo.Status = chatApp.InfoApp.Facebook.Status
+		accountInfo.OaId = connectionApp.OaInfo.Facebook[0].OaId
+		accountInfo.AccessToken = connectionApp.OaInfo.Facebook[0].AccessToken
+		accountInfo.Status = connectionApp.OaInfo.Facebook[0].Status
 	} else if chatApp.InfoApp.Zalo.Status == "active" {
 		accountInfo.Type = "zalo"
 		accountInfo.AppId = chatApp.InfoApp.Zalo.AppId
 		accountInfo.AppName = chatApp.InfoApp.Zalo.AppName
 		accountInfo.AppSecret = chatApp.InfoApp.Zalo.AppSecret
-		accountInfo.OaId = chatApp.InfoApp.Zalo.OaId
-		accountInfo.OaName = chatApp.InfoApp.Zalo.OaName
 		accountInfo.Status = chatApp.InfoApp.Zalo.Status
 	}
 
 	body := map[string]string{
-		"type":       accountInfo.Type,
-		"app_id":     accountInfo.AppId,
-		"app_name":   accountInfo.AppName,
-		"app_secret": accountInfo.AppSecret,
-		"oa_id":      accountInfo.OaId,
-		"oa_name":    accountInfo.OaName,
-		"status":     accountInfo.Status,
+		"type":         accountInfo.Type,
+		"app_id":       accountInfo.AppId,
+		"app_name":     accountInfo.AppName,
+		"app_secret":   accountInfo.AppSecret,
+		"oa_id":        accountInfo.OaId,
+		"oa_name":      accountInfo.OaName,
+		"status":       accountInfo.Status,
+		"access_token": accountInfo.AccessToken,
 	}
 
 	url := ottDomain + "/ott/v1/account"

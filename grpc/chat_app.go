@@ -45,7 +45,7 @@ func (g *GRPCApp) InsertApp(ctx context.Context, req *pb.ChatAppBodyRequest) (re
 		return
 	}
 
-	id, err := service.NewChatApp("").InsertChatApp(ctx, authUser, payload)
+	id, err := service.NewChatApp().InsertChatApp(ctx, authUser, payload)
 	if err != nil {
 		result = &pb.AppResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
@@ -75,7 +75,7 @@ func (s *GRPCApp) GetApp(ctx context.Context, req *pb.AppRequest) (result *pb.Ap
 	limit := util.ParseLimit(req.GetLimit())
 	offset := util.ParseOffset(req.GetOffset())
 
-	total, apps, err := service.NewChatApp("").GetChatApp(ctx, authUser, filter, limit, offset)
+	total, apps, err := service.NewChatApp().GetChatApp(ctx, authUser, filter, limit, offset)
 	if err != nil {
 		result = &pb.AppGetResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
