@@ -7,6 +7,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
@@ -17,11 +18,15 @@ type (
 		UpdateChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatConnectionAppRequest) (err error)
 		DeleteChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
-	ChatConnectionApp struct{}
+	ChatConnectionApp struct {
+		OttDomain string
+	}
 )
 
-func NewChatConnectionApp() IChatConnectionApp {
-	return &ChatConnectionApp{}
+func NewChatConnectionApp(ottDomain string) IChatConnectionApp {
+	return &ChatConnectionApp{
+		OttDomain: ottDomain,
+	}
 }
 
 func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUser *model.AuthUser, data model.ChatConnectionAppRequest) (string, error) {
@@ -74,6 +79,13 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		log.Error(err)
 		return connectionApp.Base.GetId(), err
 	}
+
+	// Call ott, if fail => roll back
+	if err := common.PostOttAccount(s.OttDomain, (*app)[0], connectionApp); err != nil {
+		log.Error(err)
+		return connectionApp.Base.GetId(), err
+	}
+
 	return connectionApp.Base.GetId(), nil
 }
 
@@ -125,7 +137,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	chatConnectionAppExist.ConnectionName = data.ConnectionName
 	chatConnectionAppExist.ConnectionType = data.ConnectionType
 	chatConnectionAppExist.QueueId = data.QueueId
-	chatConnectionAppExist.OaInfo.Zalo = append(chatConnectionAppExist.OaInfo.Zalo, data.OaInfo.Zalo...)
+	chatConnectionAppExist.OaInfo.Zalo = data.OaInfo.Zalo
 	chatConnectionAppExist.Status = data.Status
 	err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist)
 	if err != nil {

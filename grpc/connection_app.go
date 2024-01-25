@@ -39,7 +39,7 @@ func (s *GRPCConnectionApp) PostChatConnectionApp(ctx context.Context, req *pb.C
 		return
 	}
 
-	id, err := service.NewChatConnectionApp().InsertChatConnectionApp(ctx, authUser, payload)
+	id, err := service.NewChatConnectionApp("").InsertChatConnectionApp(ctx, authUser, payload)
 	if err != nil {
 		result = &pb.ConnectionAppResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
@@ -76,7 +76,7 @@ func (s *GRPCConnectionApp) GetConnectionApp(ctx context.Context, req *pb.Connec
 	limit := util.ParseLimit(req.GetLimit())
 	offset := util.ParseOffset(req.GetOffset())
 
-	total, apps, err := service.NewChatConnectionApp().GetChatConnectionApp(ctx, authUser, filter, limit, offset)
+	total, apps, err := service.NewChatConnectionApp("").GetChatConnectionApp(ctx, authUser, filter, limit, offset)
 	if err != nil {
 		result = &pb.ConnectionAppStructResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,

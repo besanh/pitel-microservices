@@ -23,12 +23,14 @@ type ChatConnectionApp struct {
 
 type OaInfo struct {
 	Zalo []struct {
-		UrlOa string `json:"url_oa"`
+		UrlOa  string `json:"url_oa"`
+		Status string `json:"status"`
 	} `json:"zalo"`
 	Facebook []struct {
 		OaId        string `json:"oa_id"`
 		OaName      string `json:"oa_name"`
 		AccessToken string `json:"access_token"`
+		Status      string `json:"status"`
 	} `json:"facebook"`
 }
 

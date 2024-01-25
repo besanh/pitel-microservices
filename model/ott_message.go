@@ -64,11 +64,12 @@ type OttResponse struct {
 }
 
 type OttAccount struct {
-	Type      string `json:"type"`
-	AppId     string `json:"app_id"`
-	AppName   string `json:"app_name"`
-	AppSecret string `json:"app_secret"`
-	OaId      string `json:"oa_id"`
-	OaName    string `json:"oa_name"`
-	Status    string `json:"status"`
+	Type        string `json:"type"`
+	AppId       string `json:"app_id"`
+	AppName     string `json:"app_name"`
+	AppSecret   string `json:"app_secret"`
+	OaId        string `json:"oa_id"`
+	OaName      string `json:"oa_name"`
+	AccessToken string `json:"access_token"`
+	Status      string `json:"status"`
 }
