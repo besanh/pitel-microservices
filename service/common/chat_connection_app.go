@@ -16,7 +16,7 @@ func PostOttAccount(ottDomain string, chatApp model.ChatApp, connectionApp model
 		accountInfo.AppName = chatApp.InfoApp.Facebook.AppName
 		accountInfo.AppSecret = chatApp.InfoApp.Facebook.AppSecret
 		accountInfo.OaId = connectionApp.OaInfo.Facebook[0].OaId
-		accountInfo.AccessToken = connectionApp.OaInfo.Facebook[0].AccessToken
+		accountInfo.AccessToken = chatApp.InfoApp.Facebook.AccessToken
 		accountInfo.Status = connectionApp.OaInfo.Facebook[0].Status
 	} else if chatApp.InfoApp.Zalo.Status == "active" {
 		accountInfo.Type = "zalo"
