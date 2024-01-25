@@ -84,7 +84,6 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 	offset := util.ParseOffset(c.Query("offset"))
 
 	filter := model.QueueFilter{
-		AppId:     c.Query("app_id"),
 		QueueName: c.Query("queue_name"),
 	}
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 )
 
@@ -36,6 +37,8 @@ func PostOttAccount(ottDomain string, chatApp model.ChatApp, connectionApp model
 		"access_token": accountInfo.AccessToken,
 	}
 
+	log.Info("post ott account: ", body)
+
 	url := ottDomain + "/ott/v1/account"
 	client := resty.New()
 
@@ -54,5 +57,3 @@ func PostOttAccount(ottDomain string, chatApp model.ChatApp, connectionApp model
 		return errors.New("create app error")
 	}
 }
-
-// func UpdateOttAccount(ottDomain string)

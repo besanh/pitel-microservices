@@ -30,6 +30,7 @@ func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientCon
 	if len(filter.QueueName) > 0 {
 		query.Where("queue_name = ?", filter.QueueName)
 	}
+	query.Order("created_at desc")
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}

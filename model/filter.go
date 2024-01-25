@@ -76,3 +76,8 @@ type MessageFilter struct {
 	ReadBy              json.RawMessage `json:"read_by"`
 	IsRead              string          `json:"is_read"`
 }
+
+type ConnectionQueueFilter struct {
+	ConnectionId string `json:"connection_id"`
+	QueueId      string `json:"queue_id"`
+}
