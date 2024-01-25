@@ -27,10 +27,9 @@ type OaInfo struct {
 		Status string `json:"status"`
 	} `json:"zalo"`
 	Facebook []struct {
-		OaId        string `json:"oa_id"`
-		OaName      string `json:"oa_name"`
-		AccessToken string `json:"access_token"`
-		Status      string `json:"status"`
+		OaId   string `json:"oa_id"`
+		OaName string `json:"oa_name"`
+		Status string `json:"status"`
 	} `json:"facebook"`
 }
 
