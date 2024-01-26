@@ -181,19 +181,21 @@ func (s *ChatQueue) UpdateChatQueueById(ctx context.Context, authUser *model.Aut
 		}
 	}
 
-	connectionAgents := []model.ConnectionQueue{}
-	for _, item := range data.ConnectionId {
-		connectionAgent := model.ConnectionQueue{
-			Base:         model.InitBase(),
-			ConnectionId: item,
-			QueueId:      queueExist.Id,
-			Status:       data.Status,
+	if len(data.ConnectionId) > 0 {
+		connectionAgents := []model.ConnectionQueue{}
+		for _, item := range data.ConnectionId {
+			connectionAgent := model.ConnectionQueue{
+				Base:         model.InitBase(),
+				ConnectionId: item,
+				QueueId:      queueExist.Id,
+				Status:       data.Status,
+			}
+			connectionAgents = append(connectionAgents, connectionAgent)
 		}
-		connectionAgents = append(connectionAgents, connectionAgent)
-	}
-	if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
-		log.Error(err)
-		return err
+		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	return nil
