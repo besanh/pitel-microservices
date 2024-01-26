@@ -161,6 +161,8 @@ func main() {
 
 	// Init services
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
+	service.ES_INDEX = env.GetStringENV("ES_INDEX", "pitel_bss_chat")
+	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
 	service.InitServices()
 
 	// Run gRPC server
