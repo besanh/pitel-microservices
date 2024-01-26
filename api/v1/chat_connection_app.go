@@ -133,7 +133,7 @@ func (handler *ChatConnectionApp) GetChatConnectionAppById(c *gin.Context) {
 	}
 
 	c.JSON(response.OK(map[string]any{
-		"id": chatConnectionApp.Id,
+		"data": chatConnectionApp,
 	}))
 }
 
