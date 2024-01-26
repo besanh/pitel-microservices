@@ -8,13 +8,14 @@ import (
 
 type ChatQueue struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_queue,alias:cq"`
-	QueueName     string `json:"queue_name" bun:"queue_name,type:text,notnull"`
-	Description   string `json:"description" bun:"description,type:text"`
-	ChatRoutingId string `json:"chat_routing_id" bun:"chat_routing_id,type:text,notnull"`
-	// ChatRouting      *ChatRouting       `json:"chat_routing" bun:"rel:has-one,join:chat_routing_id=id"`
-	// ConnectionQueues []*ConnectionQueue `json:"connection_queues" bun:"rel:has-many,join:id=queue_id"`
-	Status string `json:"status" bun:"status,notnull"`
+	bun.BaseModel    `bun:"table:chat_queue,alias:cq"`
+	QueueName        string             `json:"queue_name" bun:"queue_name,type:text,notnull"`
+	Description      string             `json:"description" bun:"description,type:text"`
+	ChatRoutingId    string             `json:"chat_routing_id" bun:"chat_routing_id,type:text,notnull"`
+	ChatRouting      *ChatRouting       `json:"chat_routing" bun:"rel:has-one,join:chat_routing_id=id"`
+	ConnectionQueues []*ConnectionQueue `json:"connection_queues" bun:"rel:has-many,join:id=queue_id"`
+	ChatQueueAgent   []*ChatQueueAgent  `json:"chat_queue_agent" bun:"rel:has-many,join:id=queue_id"`
+	Status           string             `json:"status" bun:"status,notnull"`
 }
 
 type ChatQueueRequest struct {

@@ -16,11 +16,11 @@ type ChatApp struct {
 
 var CRM_AUTH_URL string
 
-func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp, crmAuthUrl string) {
+func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp, crmUrl string) {
 	handler := &ChatApp{
 		chatAppService: chatAppService,
 	}
-	CRM_AUTH_URL = crmAuthUrl
+	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-app")
 	{
 		Group.POST("", handler.InsertChatApp)

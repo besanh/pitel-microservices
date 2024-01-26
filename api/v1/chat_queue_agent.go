@@ -13,11 +13,11 @@ type ChatQueueAgent struct {
 	chatQueueAgent service.IChatQueueAgent
 }
 
-func NewChatQueueAgent(engine *gin.Engine, chatQueueAgent service.IChatQueueAgent, crmAuthUrl string) {
+func NewChatQueueAgent(engine *gin.Engine, chatQueueAgent service.IChatQueueAgent, crmUrl string) {
 	handler := &ChatQueueAgent{
 		chatQueueAgent: chatQueueAgent,
 	}
-	CRM_AUTH_URL = crmAuthUrl
+	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-queue-agent")
 	{
 		Group.POST("", handler.InsertChatQueueAgent)

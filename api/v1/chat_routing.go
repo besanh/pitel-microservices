@@ -17,11 +17,11 @@ type ChatRouting struct {
 	chatRoutingService service.IChatRouting
 }
 
-func NewChatRouting(engine *gin.Engine, chatRoutingService service.IChatRouting, crmAuthUrl string) {
+func NewChatRouting(engine *gin.Engine, chatRoutingService service.IChatRouting, crmUrl string) {
 	handler := &ChatRouting{
 		chatRoutingService: service.NewChatRouting(),
 	}
-	CRM_AUTH_URL = crmAuthUrl
+	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-routing")
 	{
 		Group.POST("", handler.InsertChatRouting)

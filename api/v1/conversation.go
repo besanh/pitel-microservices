@@ -13,25 +13,25 @@ type Conversation struct {
 	conversationService service.IConversation
 }
 
-func NewConversation(engine *gin.Engine, conversationService service.IConversation, crmAuthUrl string) {
+func NewConversation(engine *gin.Engine, conversationService service.IConversation, crmUrl string) {
 	handler := &Conversation{
 		conversationService: conversationService,
 	}
 	Group := engine.Group("bss-message/v1/conversation")
 	{
 		Group.GET("", func(ctx *gin.Context) {
-			handler.GetConversations(ctx, crmAuthUrl)
+			handler.GetConversations(ctx, crmUrl)
 		})
 	}
 }
 
-func (handler *Conversation) GetConversations(c *gin.Context, crmAuthUrl string) {
+func (handler *Conversation) GetConversations(c *gin.Context, crmUrl string) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

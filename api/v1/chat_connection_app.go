@@ -17,11 +17,11 @@ type ChatConnectionApp struct {
 	chatConnectionAppService service.IChatConnectionApp
 }
 
-func NewChatConnectionApp(engin *gin.Engine, chatConnectionAppService service.IChatConnectionApp, crmAuthUrl string) {
+func NewChatConnectionApp(engin *gin.Engine, chatConnectionAppService service.IChatConnectionApp, crmUrl string) {
 	handler := &ChatConnectionApp{
 		chatConnectionAppService: chatConnectionAppService,
 	}
-	CRM_AUTH_URL = crmAuthUrl
+	CRM_AUTH_URL = crmUrl
 	Group := engin.Group("bss-message/v1/chat-connection-app")
 	{
 		Group.GET("", handler.GetChatConnectionApp)

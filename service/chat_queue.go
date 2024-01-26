@@ -8,21 +8,26 @@ import (
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 type (
 	IChatQueue interface {
 		InsertChatQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequest) (string, error)
-		GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error)
+		GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int, token string) (int, *[]model.ChatQueue, error)
 		GetChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatQueue, error)
 		UpdateChatQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequest) error
 		DeleteChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
-	ChatQueue struct{}
+	ChatQueue struct {
+		CrmUrl string
+	}
 )
 
-func NewChatQueue() IChatQueue {
-	return &ChatQueue{}
+func NewChatQueue(crmUrl string) IChatQueue {
+	return &ChatQueue{
+		CrmUrl: crmUrl,
+	}
 }
 
 func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequest) (string, error) {
@@ -76,7 +81,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 	return chatQueue.Base.GetId(), nil
 }
 
-func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
+func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int, token string) (int, *[]model.ChatQueue, error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -87,6 +92,34 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 	if err != nil {
 		log.Error(err)
 		return 0, nil, err
+	}
+
+	if len(token) > 0 {
+		if total > 0 {
+			for i, item := range *queues {
+				for j, val := range item.ChatQueueAgent {
+					if val.Source == "authen" {
+						authUser, err := common.GetUserAuthenticated(s.CrmUrl, token, val.AgentId)
+						if err != nil {
+							log.Error(err)
+							return 0, nil, err
+						}
+
+						if len(authUser.FirstName) > 0 {
+							val.Fullname += authUser.FirstName
+						}
+						if len(authUser.MiddleName) > 0 {
+							val.Fullname += " " + authUser.MiddleName
+						}
+						if len(authUser.LastName) > 0 {
+							val.Fullname += " " + authUser.LastName
+						}
+						item.ChatQueueAgent[j] = val
+					}
+				}
+				(*queues)[i] = item
+			}
+		}
 	}
 
 	return total, queues, nil
