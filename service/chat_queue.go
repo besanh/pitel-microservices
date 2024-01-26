@@ -44,18 +44,23 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 	}
 
 	connectionAgents := []model.ConnectionQueue{}
-	for _, item := range data.ConnectionId {
-		connectionAgent := model.ConnectionQueue{
-			Base:         model.InitBase(),
-			ConnectionId: item,
-			QueueId:      chatQueue.Base.GetId(),
-			Status:       data.Status,
+	if len(data.ConnectionId) > 0 {
+		for _, item := range data.ConnectionId {
+			connectionAgent := model.ConnectionQueue{
+				Base:         model.InitBase(),
+				ConnectionId: item,
+				QueueId:      chatQueue.Base.GetId(),
+				Status:       data.Status,
+			}
+			connectionAgents = append(connectionAgents, connectionAgent)
 		}
-		connectionAgents = append(connectionAgents, connectionAgent)
 	}
-	if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
-		log.Error(err)
-		return chatQueue.Base.GetId(), err
+
+	if len(connectionAgents) > 0 {
+		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
+			log.Error(err)
+			return chatQueue.Base.GetId(), err
+		}
 	}
 
 	chatQueue.QueueName = data.QueueName

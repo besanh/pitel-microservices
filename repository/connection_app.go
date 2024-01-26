@@ -30,6 +30,12 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if len(filter.ConnectionName) > 0 {
 		query.Where("connection_name = ?", filter.ConnectionName)
 	}
+	if len(filter.ConnectionType) > 0 {
+		query.Where("connection_type = ?", filter.ConnectionType)
+	}
+	if len(filter.QueueId) > 0 {
+		query.Where("queue_id = ?", filter.QueueId)
+	}
 	if filter.Status.Valid {
 		query.Where("status = ?", filter.Status.Bool)
 	}
