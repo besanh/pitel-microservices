@@ -7,7 +7,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
-	"github.com/uptrace/bun"
 )
 
 type (
@@ -28,10 +27,11 @@ func NewChatQueue() IChatQueue {
 
 func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
 	result := new([]model.ChatQueue)
-	query := db.GetDB().NewSelect().Model(result).
-		Relation("ChatQueueAgents", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("created_at desc")
-		})
+	query := db.GetDB().NewSelect().Model(result)
+	// Relation("ConnectionQueues", func(q *bun.SelectQuery) *bun.SelectQuery {
+	// 	return q.Order("created_at desc")
+	// }).
+	// Relation("ChatRouting")
 	if len(filter.QueueName) > 0 {
 		query.Where("queue_name = ?", filter.QueueName)
 	}
