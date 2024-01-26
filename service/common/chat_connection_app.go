@@ -11,13 +11,13 @@ import (
 func PostOttAccount(ottDomain string, chatApp model.ChatApp, connectionApp model.ChatConnectionApp) error {
 	accountInfo := model.OttAccount{}
 	if chatApp.InfoApp.Facebook.Status == "active" {
-		accountInfo.Type = "facebook"
+		accountInfo.Type = "face"
 		accountInfo.AppId = chatApp.InfoApp.Facebook.AppId
 		accountInfo.AppName = chatApp.InfoApp.Facebook.AppName
 		accountInfo.AppSecret = chatApp.InfoApp.Facebook.AppSecret
 		accountInfo.OaId = connectionApp.OaInfo.Facebook[0].OaId
 		accountInfo.AccessToken = chatApp.InfoApp.Facebook.AccessToken
-		accountInfo.Status = connectionApp.OaInfo.Facebook[0].Status
+		accountInfo.Status = chatApp.InfoApp.Facebook.Status
 	} else if chatApp.InfoApp.Zalo.Status == "active" {
 		accountInfo.Type = "zalo"
 		accountInfo.AppId = chatApp.InfoApp.Zalo.AppId
