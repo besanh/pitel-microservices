@@ -66,7 +66,6 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 	chatQueue.QueueName = data.QueueName
 	chatQueue.Description = data.Description
 	chatQueue.ChatRoutingId = data.ChatRoutingId
-	chatQueue.ChatRouting = routingExist
 	chatQueue.Status = data.Status
 
 	err = repository.ChatQueueRepo.Insert(ctx, dbCon, chatQueue)
