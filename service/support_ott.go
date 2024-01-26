@@ -146,17 +146,16 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		if err := UpdateESAndCache(ctx, data.AppId, conversation.ConversationId, conversation.ExternalUserId); err != nil {
+		if err := UpdateESAndCache(ctx, data.AppId, data.ExternalUserId); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
 		return conversation, isNew, nil
 	} else {
 		filter := model.ConversationFilter{
-			AppId:          []string{data.AppId},
 			ConversationId: []string{data.ExternalUserId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.AppId, ES_INDEX_CONVERSATION, filter, 1, 0)
+		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return conversation, isNew, err
@@ -241,8 +240,8 @@ func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAlloc
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, appId, conversationId, userId string) error {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, appId, ES_INDEX_CONVERSATION, userId)
+func UpdateESAndCache(ctx context.Context, appId, conversationId string) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, appId, ES_INDEX_CONVERSATION, conversationId)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -262,12 +261,12 @@ func UpdateESAndCache(ctx context.Context, appId, conversationId, userId string)
 		log.Error(err)
 		return err
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, userId, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversationId, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
 
-	if err := cache.RCache.Set(CONVERSATION+"_"+userId, conversationExist, CONVERSATION_EXPIRE); err != nil {
+	if err := cache.RCache.Set(CONVERSATION+"_"+conversationId, conversationExist, CONVERSATION_EXPIRE); err != nil {
 		log.Error(err)
 		return err
 	}
