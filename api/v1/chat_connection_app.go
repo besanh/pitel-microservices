@@ -56,6 +56,7 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 	filter := model.ChatConnectionAppFilter{
 		ConnectionName: c.Query("connection_name"),
 		ConnectionType: c.Query("connection_type"),
+		QueueId:        c.Query("queue_id"),
 		Status:         status,
 	}
 

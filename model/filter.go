@@ -21,6 +21,7 @@ type AppFilter struct {
 type ChatConnectionAppFilter struct {
 	ConnectionName string
 	ConnectionType string
+	QueueId        string
 	Status         sql.NullBool
 }
 
