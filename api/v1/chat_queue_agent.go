@@ -46,7 +46,7 @@ func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
 	}
 	data.Source = res.Data.Source
 
-	log.Info("insert chat queue agent payload -> ", &data)
+	log.Info("insert chat queue agent payload -> ", data)
 
 	if err := data.Validate(); err != nil {
 		log.Error(err)
@@ -77,12 +77,6 @@ func (h *ChatQueueAgent) UpdateChatQueueAgentById(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
-	if len(id) < 1 {
-		c.JSON(response.BadRequestMsg("id is required"))
-		return
-	}
-
 	var data model.ChatQueueAgentRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
@@ -90,9 +84,9 @@ func (h *ChatQueueAgent) UpdateChatQueueAgentById(c *gin.Context) {
 		return
 	}
 
-	log.Info("update chat queue agent payload -> ", &data)
+	log.Info("update chat queue agent payload -> ", data)
 
-	result, err := h.chatQueueAgent.UpdateChatQueueAgentById(c, res.Data, id, data)
+	result, err := h.chatQueueAgent.UpdateChatQueueAgentById(c, res.Data, data)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))

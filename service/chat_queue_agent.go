@@ -13,7 +13,7 @@ import (
 type (
 	IChatQueueAgent interface {
 		InsertChatQueueAgent(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueAgentRequest) error
-		UpdateChatQueueAgentById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueAgentRequest) (*model.ChatQueueAgentUpdateResponse, error)
+		UpdateChatQueueAgentById(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueAgentRequest) (*model.ChatQueueAgentUpdateResponse, error)
 	}
 	ChatQueueAgent struct{}
 )
@@ -51,7 +51,7 @@ func (s *ChatQueueAgent) InsertChatQueueAgent(ctx context.Context, authUser *mod
 	return nil
 }
 
-func (s *ChatQueueAgent) UpdateChatQueueAgentById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueAgentRequest) (*model.ChatQueueAgentUpdateResponse, error) {
+func (s *ChatQueueAgent) UpdateChatQueueAgentById(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueAgentRequest) (*model.ChatQueueAgentUpdateResponse, error) {
 	result := model.ChatQueueAgentUpdateResponse{}
 	totalSuccess := len(data.AgentId)
 	totalFail := 0
