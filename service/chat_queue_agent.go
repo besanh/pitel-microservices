@@ -34,6 +34,15 @@ func (s *ChatQueueAgent) InsertChatQueueAgent(ctx context.Context, authUser *mod
 		return err
 	}
 
+	filter := model.ChatQueueAgentFilter{
+		QueueId: data.QueueId,
+	}
+	total, chatQueueAgents, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, dbCon, filter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
 	for _, item := range data.AgentId {
 		chatQueueAgent := model.ChatQueueAgent{
 			Base:    model.InitBase(),
@@ -45,6 +54,15 @@ func (s *ChatQueueAgent) InsertChatQueueAgent(ctx context.Context, authUser *mod
 		if err != nil {
 			log.Error(err)
 			return err
+		}
+	}
+
+	if total > 0 {
+		for _, item := range *chatQueueAgents {
+			if err = repository.ChatQueueAgentRepo.Delete(ctx, dbCon, item.Id); err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	}
 
