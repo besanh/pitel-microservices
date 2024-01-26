@@ -14,11 +14,11 @@ type ChatQueue struct {
 	chatQueueService service.IChatQueue
 }
 
-func NewChatQueue(engine *gin.Engine, chatQueueService service.IChatQueue, crmAuthUrl string) {
+func NewChatQueue(engine *gin.Engine, chatQueueService service.IChatQueue, crmUrl string) {
 	handler := &ChatQueue{
 		chatQueueService: chatQueueService,
 	}
-	CRM_AUTH_URL = crmAuthUrl
+	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-queue")
 	{
 		Group.POST("", handler.InsertChatQueue)
@@ -87,7 +87,7 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		QueueName: c.Query("queue_name"),
 	}
 
-	total, chatQueues, err := handler.chatQueueService.GetChatQueues(c, res.Data, filter, limit, offset)
+	total, chatQueues, err := handler.chatQueueService.GetChatQueues(c, res.Data, filter, limit, offset, res.Data.Token)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return

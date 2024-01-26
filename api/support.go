@@ -41,12 +41,12 @@ func MoveTokenToHeader() gin.HandlerFunc {
 	}
 }
 
-func AAAMiddleware(ctx *gin.Context, crmAuthUrl string, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse) {
+func AAAMiddleware(ctx *gin.Context, crmUrl string, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse) {
 	if len(bssAuthRequest.Token) < 10 {
 		return nil
 	}
 	if bssAuthRequest.Source == "authen" {
-		result, err := RequestAuthen(ctx, bssAuthRequest, crmAuthUrl)
+		result, err := RequestAuthen(ctx, bssAuthRequest, crmUrl)
 		if err != nil {
 			return nil
 		}
@@ -82,7 +82,7 @@ func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *
 	return result, nil
 }
 
-func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAuthUrl string) (result *model.AAAResponse, err error) {
+func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmUrl string) (result *model.AAAResponse, err error) {
 	apiKey := bssAuthRequest.Token
 	body := map[string]string{
 		"api_key": apiKey,
@@ -124,7 +124,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAut
 			return nil, err
 		}
 	} else {
-		urlInfo := crmAuthUrl + "/" + resp.UserId
+		urlInfo := crmUrl + "/v1/crm/user-crm/" + resp.UserId
 		clientInfo := resty.New()
 		res, err := clientInfo.R().
 			SetHeader("Content-Type", "application/json").
@@ -147,6 +147,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmAut
 				Username: agentInfo.Username,
 				Level:    agentInfo.Level,
 				Source:   bssAuthRequest.Source,
+				Token:    token,
 			},
 		}
 	} else {

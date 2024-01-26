@@ -14,7 +14,7 @@ type Message struct {
 	messageService service.IMessage
 }
 
-func NewMessage(r *gin.Engine, messageService service.IMessage, crmAuthUrl string) {
+func NewMessage(r *gin.Engine, messageService service.IMessage, crmUrl string) {
 	handler := &Message{
 		messageService: messageService,
 	}
@@ -22,24 +22,24 @@ func NewMessage(r *gin.Engine, messageService service.IMessage, crmAuthUrl strin
 	Group := r.Group("bss-message/v1/message")
 	{
 		Group.POST("send", api.MoveTokenToHeader(), func(ctx *gin.Context) {
-			handler.SendMessage(ctx, crmAuthUrl)
+			handler.SendMessage(ctx, crmUrl)
 		})
 		Group.GET("", func(ctx *gin.Context) {
-			handler.GetMessages(ctx, crmAuthUrl)
+			handler.GetMessages(ctx, crmUrl)
 		})
 		Group.POST("read", func(ctx *gin.Context) {
-			handler.MarkReadMessages(ctx, crmAuthUrl)
+			handler.MarkReadMessages(ctx, crmUrl)
 		})
 	}
 }
 
-func (h *Message) SendMessage(c *gin.Context, crmAuthUrl string) {
+func (h *Message) SendMessage(c *gin.Context, crmUrl string) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -67,13 +67,13 @@ func (h *Message) SendMessage(c *gin.Context, crmAuthUrl string) {
 	c.JSON(code, result)
 }
 
-func (h *Message) GetMessages(c *gin.Context, crmAuthUrl string) {
+func (h *Message) GetMessages(c *gin.Context, crmUrl string) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -90,13 +90,13 @@ func (h *Message) GetMessages(c *gin.Context, crmAuthUrl string) {
 	c.JSON(code, result)
 }
 
-func (h *Message) MarkReadMessages(c *gin.Context, crmAuthUrl string) {
+func (h *Message) MarkReadMessages(c *gin.Context, crmUrl string) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

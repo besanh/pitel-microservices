@@ -13,6 +13,7 @@ type ChatQueueAgent struct {
 	ChatQueue     *ChatQueue `json:"chat_queue" bun:"rel:belongs-to,join:queue_id=id"`
 	AgentId       string     `json:"agent_id" bun:"agent_id,type:text,notnull"`
 	Source        string     `json:"source" bun:"source,type:text,notnull"`
+	Fullname      string     `json:"fullname" bun:"-"`
 }
 
 type ChatQueueAgentRequest struct {

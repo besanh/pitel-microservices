@@ -23,7 +23,7 @@ var (
 	WebSocketHandler *WebSocket
 )
 
-func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmAuthUrl string) {
+func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmUrl string) {
 	handler := &WebSocket{
 		subscriber: subscriberService,
 	}
@@ -35,12 +35,12 @@ func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmAuthU
 	Group := r.Group("bss-message/v1/wss")
 	{
 		Group.GET("subscriber", func(ctx *gin.Context) {
-			handler.Subscribe(ctx, crmAuthUrl)
+			handler.Subscribe(ctx, crmUrl)
 		})
 	}
 }
 
-func (handler *WebSocket) Subscribe(ctx *gin.Context, crmAuthUrl string) {
+func (handler *WebSocket) Subscribe(ctx *gin.Context, crmUrl string) {
 	wsCon, err := websocket.Accept(ctx.Writer, ctx.Request, &websocket.AcceptOptions{
 		InsecureSkipVerify: true,
 		CompressionMode:    websocket.CompressionContextTakeover,
@@ -58,7 +58,7 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context, crmAuthUrl string) {
 		}
 	}()
 
-	err = handler.subscribe(ctx, wsCon, crmAuthUrl)
+	err = handler.subscribe(ctx, wsCon, crmUrl)
 	if errors.Is(err, context.Canceled) {
 		return
 	}
@@ -72,7 +72,7 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context, crmAuthUrl string) {
 	}
 }
 
-func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmAuthUrl string) error {
+func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmUrl string) error {
 	if len(c.Query("source")) < 1 {
 		return errors.New("source is required")
 	}
@@ -93,7 +93,7 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmAu
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, crmAuthUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
 	if res == nil {
 		return errors.New("token is invalid")
 	}

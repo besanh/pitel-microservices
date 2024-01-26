@@ -36,7 +36,7 @@ func (g *GRPCChatQueue) InsertChatQueue(ctx context.Context, req *pb.ChatQueueBo
 		return
 	}
 
-	id, err := service.NewChatQueue().InsertChatQueue(ctx, authUser, payload)
+	id, err := service.NewChatQueue("").InsertChatQueue(ctx, authUser, payload)
 	if err != nil {
 		result = &pb.ChatQueueResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
