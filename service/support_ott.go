@@ -13,32 +13,32 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func CheckChatQueueSetting(ctx context.Context, filter model.QueueFilter, externalUserId string) (string, error) {
+func CheckChatQueueSetting(ctx context.Context, externalUserId string) (string, error) {
 	var agentId string
 	chatQueue := model.ChatQueue{}
 
-	chatQueueCache := cache.RCache.Get(CHAT_QUEUE + "_" + filter.AppId)
-	if chatQueueCache != nil {
-		if err := json.Unmarshal([]byte(chatQueueCache.(string)), &chatQueue); err != nil {
-			log.Error(err)
-			return agentId, err
-		}
-	} else {
-		total, queues, err := repository.ChatQueueRepo.GetQueues(ctx, repository.DBConn, filter, 1, 0)
-		if err != nil {
-			log.Error(err)
-			return agentId, err
-		}
-		if total < 1 {
-			log.Error("queue not found")
-			return agentId, errors.New("queue not found")
-		}
-		chatQueue = (*queues)[0]
-		if err := cache.RCache.Set(CHAT_QUEUE+"_"+filter.AppId, chatQueue, CHAT_QUEUE_EXPIRE); err != nil {
-			log.Error(err)
-			return agentId, err
-		}
-	}
+	// chatQueueCache := cache.RCache.Get(CHAT_QUEUE + "_" + filter.AppId)
+	// if chatQueueCache != nil {
+	// 	if err := json.Unmarshal([]byte(chatQueueCache.(string)), &chatQueue); err != nil {
+	// 		log.Error(err)
+	// 		return agentId, err
+	// 	}
+	// } else {
+	// 	total, queues, err := repository.ChatQueueRepo.GetQueues(ctx, repository.DBConn, filter, 1, 0)
+	// 	if err != nil {
+	// 		log.Error(err)
+	// 		return agentId, err
+	// 	}
+	// 	if total < 1 {
+	// 		log.Error("queue not found")
+	// 		return agentId, errors.New("queue not found")
+	// 	}
+	// 	chatQueue = (*queues)[0]
+	// 	if err := cache.RCache.Set(CHAT_QUEUE+"_"+filter.AppId, chatQueue, CHAT_QUEUE_EXPIRE); err != nil {
+	// 		log.Error(err)
+	// 		return agentId, err
+	// 	}
+	// }
 
 	routing := model.ChatRouting{}
 	chatRoutingCache := cache.RCache.Get(CHAT_ROUTING + "_" + chatQueue.ChatRoutingId)
