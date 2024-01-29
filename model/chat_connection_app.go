@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
@@ -9,22 +10,26 @@ import (
 )
 
 type ChatConnectionApp struct {
-	*Base
 	bun.BaseModel  `bun:"table:chat_connection_app,alias:cca"`
-	TenantId       string `json:"tenant_id"`
-	BusinessUnitId string `json:"business_unit_id"`
-	ConnectionName string `json:"connection_name" bun:"connection_name,type:text,notnull"`
-	ConnectionType string `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId          string `json:"app_id" bun:"app_id,type:text,notnull"`
-	QueueId        string `json:"queue_id" bun:"queue_id,type:text,notnull"`
-	OaInfo         OaInfo `json:"oa_info" bun:"oa_info,type:text,notnull"`
-	Status         string `json:"status" bun:"status,notnull"`
+	Id             string    `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	CreatedAt      time.Time `bun:"created_at,notnull"`
+	UpdatedAt      time.Time `bun:"updated_at,notnull"`
+	TenantId       string    `json:"tenant_id"`
+	BusinessUnitId string    `json:"business_unit_id"`
+	ConnectionName string    `json:"connection_name" bun:"connection_name,type:text,notnull"`
+	ConnectionType string    `json:"connection_type" bun:"connection_type,type:text,notnull"`
+	AppId          string    `json:"app_id" bun:"app_id,type:text,notnull"`
+	QueueId        string    `json:"queue_id" bun:"queue_id,type:text,notnull"`
+	OaInfo         OaInfo    `json:"oa_info" bun:"oa_info,type:text,notnull"`
+	Status         string    `json:"status" bun:"status,notnull"`
 }
 
 type OaInfo struct {
 	Zalo []struct {
-		UrlOa  string `json:"url_oa"`
+		OaId   string `json:"oa_id"`
 		OaName string `json:"oa_name"`
+		UrlOa  string `json:"url_oa"`
+		State  string `json:"state"`
 		Status string `json:"status"`
 	} `json:"zalo"`
 	Facebook []struct {
@@ -36,6 +41,7 @@ type OaInfo struct {
 }
 
 type ChatConnectionAppRequest struct {
+	Id             string `json:"id"`
 	ConnectionName string `json:"connection_name"`
 	ConnectionType string `json:"connection_type"`
 	QueueId        string `json:"queue_id"`

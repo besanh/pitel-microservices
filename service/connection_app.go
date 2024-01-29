@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -30,8 +32,14 @@ func NewChatConnectionApp(ottDomain string) IChatConnectionApp {
 }
 
 func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUser *model.AuthUser, data model.ChatConnectionAppRequest) (string, error) {
+	id := data.Id
+	if len(id) < 1 {
+		id = uuid.NewString()
+	}
 	connectionApp := model.ChatConnectionApp{
-		Base:           model.InitBase(),
+		Id:             id,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 		TenantId:       authUser.TenantId,
 		BusinessUnitId: authUser.BusinessUnitId,
 		ConnectionName: data.ConnectionName,
@@ -42,14 +50,14 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
-		return connectionApp.Base.GetId(), err
+		return connectionApp.Id, err
 	}
 
 	if len(data.QueueId) > 0 {
 		_, err = repository.ChatQueueAgentRepo.GetById(ctx, dbCon, data.QueueId)
 		if err != nil {
 			log.Error(err)
-			return connectionApp.Base.GetId(), err
+			return connectionApp.Id, err
 		}
 	}
 
@@ -59,7 +67,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	total, app, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return connectionApp.Base.GetId(), err
+		return connectionApp.Id, err
 	}
 	if total > 0 {
 		if data.ConnectionType == "facebook" {
@@ -69,7 +77,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		}
 	} else {
 		log.Error("app with type " + data.ConnectionType + " not found")
-		return connectionApp.Base.GetId(), errors.New("app not found")
+		return connectionApp.Id, errors.New("app not found")
 	}
 	connectionApp.QueueId = data.QueueId
 	connectionApp.OaInfo = data.OaInfo
@@ -77,16 +85,17 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 
 	if err := repository.ChatConnectionAppRepo.Insert(ctx, dbCon, connectionApp); err != nil {
 		log.Error(err)
-		return connectionApp.Base.GetId(), err
+		return connectionApp.Id, err
 	}
 
+	// Step belows apply when app is available
 	// Call ott, if fail => roll back
 	if err := common.PostOttAccount(s.OttDomain, (*app)[0], connectionApp); err != nil {
 		log.Error(err)
-		return connectionApp.Base.GetId(), err
+		return connectionApp.Id, err
 	}
 
-	return connectionApp.Base.GetId(), nil
+	return connectionApp.Id, nil
 }
 
 func (s *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, authUser *model.AuthUser, filter model.ChatConnectionAppFilter, limit, offset int) (total int, connectionApps *[]model.ChatConnectionApp, err error) {
@@ -139,6 +148,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	chatConnectionAppExist.QueueId = data.QueueId
 	chatConnectionAppExist.OaInfo.Zalo = data.OaInfo.Zalo
 	chatConnectionAppExist.Status = data.Status
+	chatConnectionAppExist.UpdatedAt = time.Now()
 	err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist)
 	if err != nil {
 		log.Error(err)

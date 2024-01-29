@@ -70,8 +70,10 @@ func (m *MessageMarkRead) ValidateMarkRead() error {
 	if len(m.ConversationId) < 1 {
 		return errors.New("conversation id is required")
 	}
-	if len(m.MessageIds) < 1 {
-		return errors.New("message ids is required")
+	if !m.ReadAll {
+		if len(m.MessageIds) < 1 {
+			return errors.New("message ids is required")
+		}
 	}
 
 	return nil
