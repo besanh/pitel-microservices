@@ -26,8 +26,9 @@ type ChatConnectionAppFilter struct {
 }
 
 type QueueFilter struct {
-	AppId     string
-	QueueName string
+	QueueId       string
+	QueueName     string
+	ChatRoutingId string
 }
 
 type ChatQueueAgentFilter struct {
