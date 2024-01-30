@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"database/sql"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -46,18 +43,11 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
-	var status sql.NullBool
-	if len(c.Query("status")) > 0 {
-		statusTmp, _ := strconv.ParseBool(c.Query("status"))
-		status.Valid = true
-		status.Bool = statusTmp
-	}
-
 	filter := model.ChatConnectionAppFilter{
 		ConnectionName: c.Query("connection_name"),
 		ConnectionType: c.Query("connection_type"),
 		QueueId:        c.Query("queue_id"),
-		Status:         status,
+		Status:         c.Query("status"),
 	}
 
 	total, result, err := handler.chatConnectionAppService.GetChatConnectionApp(c, res.Data, filter, limit, offset)

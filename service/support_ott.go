@@ -11,117 +11,161 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"golang.org/x/exp/slices"
 )
 
-func CheckChatQueueSetting(ctx context.Context, externalUserId string) (string, error) {
+func CheckChatSetting(ctx context.Context, message model.Message) (string, error) {
 	var agentId string
-	chatQueue := model.ChatQueue{}
+	var userLives []Subscriber
+	var agent Subscriber
 
-	// chatQueueCache := cache.RCache.Get(CHAT_QUEUE + "_" + filter.AppId)
-	// if chatQueueCache != nil {
-	// 	if err := json.Unmarshal([]byte(chatQueueCache.(string)), &chatQueue); err != nil {
-	// 		log.Error(err)
-	// 		return agentId, err
-	// 	}
-	// } else {
-	// 	total, queues, err := repository.ChatQueueRepo.GetQueues(ctx, repository.DBConn, filter, 1, 0)
-	// 	if err != nil {
-	// 		log.Error(err)
-	// 		return agentId, err
-	// 	}
-	// 	if total < 1 {
-	// 		log.Error("queue not found")
-	// 		return agentId, errors.New("queue not found")
-	// 	}
-	// 	chatQueue = (*queues)[0]
-	// 	if err := cache.RCache.Set(CHAT_QUEUE+"_"+filter.AppId, chatQueue, CHAT_QUEUE_EXPIRE); err != nil {
-	// 		log.Error(err)
-	// 		return agentId, err
-	// 	}
-	// }
-
-	routing := model.ChatRouting{}
-	chatRoutingCache := cache.RCache.Get(CHAT_ROUTING + "_" + chatQueue.ChatRoutingId)
-	if chatRoutingCache != nil {
-		if err := json.Unmarshal([]byte(chatRoutingCache.(string)), &routing); err != nil {
+	agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + message.ExternalUserId)
+	if agentAllocationCache != nil {
+		agentTmp := Subscriber{}
+		if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
 			log.Error(err)
 			return agentId, err
 		}
+		agent = agentTmp
+		agentId = agent.UserId
 	} else {
-		routingTmp, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, chatQueue.ChatRoutingId)
+		filter := model.AgentAllocationFilter{
+			ConversationId: message.ExternalUserId,
+		}
+		total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return agentId, err
-		} else if routingTmp == nil {
-			log.Error("routing not found")
-			return agentId, errors.New("routing not found")
 		}
-		if err := cache.RCache.Set(CHAT_ROUTING+"_"+chatQueue.ChatRoutingId, routingTmp, CHAT_ROUTING_EXPIRE); err != nil {
-			log.Error(err)
-			return agentId, err
-		}
-		routing = *routingTmp
-	}
-
-	if routing.RoutingName == "random" {
-		subscribers := []Subscriber{}
-		if len(WsSubscribers.Subscribers) > 0 {
-			for s := range WsSubscribers.Subscribers {
-				if s.Level == "user" || s.Level == "agent" {
-					subscribers = append(subscribers, *s)
-				}
+		if total > 0 {
+			agentId = (*agentAllocations)[0].AgentId
+		} else {
+			// Get connection
+			connectionFilter := model.ChatConnectionAppFilter{
+				OaId:   message.OaId,
+				AppId:  message.AppId,
+				Status: "active",
 			}
-			agent := Subscriber{}
-			if len(subscribers) > 0 {
-				rand.NewSource(time.Now().UnixNano())
-				randomIndex := rand.Intn(len(subscribers))
-				agent = subscribers[randomIndex]
+			totalConnection, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionFilter, 1, 0)
+			if err != nil {
+				log.Error(err)
+				return agentId, err
 			}
-
-			agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + externalUserId)
-			if agentAllocationCache != nil {
-				agentTmp := Subscriber{}
-				if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
-					log.Error(err)
-					return agentId, err
+			if totalConnection > 0 {
+				filter := model.ConnectionQueueFilter{
+					ConnectionId: (*connectionApps)[0].Id,
 				}
-				agent = agentTmp
-				agentId = agent.UserId
-			} else {
-				filter := model.AgentAllocationFilter{
-					ConversationId: externalUserId,
-				}
-				total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+				totalConnectionQueue, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, filter, -1, 0)
 				if err != nil {
 					log.Error(err)
 					return agentId, err
 				}
-				if total > 0 {
-					agentId = (*agentAllocations)[0].AgentId
-				} else {
-					agentId = agent.UserId
-					agentAllocation := model.AgentAllocation{
-						Base:               model.InitBase(),
-						ConversationId:     externalUserId,
-						AgentId:            agent.UserId,
-						QueueId:            chatQueue.Id,
-						AllocatedTimestamp: time.Now().Unix(),
+				if totalConnectionQueue > 0 {
+					filterAgentAllocation := model.AgentAllocationFilter{
+						ConversationId: message.ExternalUserId,
+						QueueId:        (*connectionQueues)[0].QueueId,
 					}
-					if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
+					totalAgentAllocation, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filterAgentAllocation, -1, 0)
+					if err != nil {
 						log.Error(err)
 						return agentId, err
 					}
-				}
+					if totalAgentAllocation > 0 {
+						agentId = (*agentAllocations)[0].AgentId
+						for s := range WsSubscribers.Subscribers {
+							if s.UserId == agentId && (s.Level == "user" || s.Level == "agent") {
+								agent = *s
+							}
+						}
+						if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+							log.Error(err)
+							return agentId, err
+						}
+					} else {
+						// Connection prevent duplicate
+						// Meaning: 1 connection with page A in 1 app => only recieve one queue
+						queue, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, (*connectionQueues)[0].QueueId)
+						if err != nil {
+							log.Error(err)
+							return agentId, err
+						} else if queue == nil {
+							log.Error("queue " + (*connectionQueues)[0].QueueId + " not found")
+							return agentId, errors.New("queue " + (*connectionQueues)[0].QueueId + " not found")
+						}
 
-				if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+externalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
-					log.Error(err)
-					return agentId, err
+						chatRouting, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, queue.ChatRoutingId)
+						if err != nil {
+							log.Error(err)
+							return agentId, err
+						} else if chatRouting == nil {
+							log.Error("chat routing " + queue.ChatRoutingId + " not found")
+							return agentId, errors.New("chat routing " + queue.ChatRoutingId + " not found")
+						}
+
+						filterQueueAgent := model.ChatQueueAgentFilter{
+							QueueId: []string{queue.Id},
+						}
+						totalQueueAgents, queueAgents, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, repository.DBConn, filterQueueAgent, -1, 0)
+						if err != nil {
+							log.Error(err)
+							return agentId, err
+						}
+						if totalQueueAgents > 0 {
+							if chatRouting.RoutingName == "random" {
+								agentUuids := []string{}
+								for _, item := range *queueAgents {
+									agentUuids = append(agentUuids, item.AgentId)
+								}
+								for s := range WsSubscribers.Subscribers {
+									if slices.Contains[[]string](agentUuids, s.UserId) && s.Level == "user" || s.Level == "agent" {
+										userLives = append(userLives, *s)
+									}
+								}
+							} else {
+							}
+
+							if len(userLives) > 0 {
+								rand.NewSource(time.Now().UnixNano())
+								randomIndex := rand.Intn(len(userLives))
+								agent = userLives[randomIndex]
+								agentId = agent.UserId
+								agentAllocation := model.AgentAllocation{
+									Base:               model.InitBase(),
+									ConversationId:     message.ExternalUserId,
+									AgentId:            agent.UserId,
+									QueueId:            queue.Id,
+									AllocatedTimestamp: time.Now().Unix(),
+								}
+								if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
+									log.Error(err)
+									return agentId, err
+								}
+
+								if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+									log.Error(err)
+									return agentId, err
+								}
+
+								return agentId, nil
+							} else {
+								log.Error("agent not available")
+								return agentId, errors.New("agent not available")
+							}
+						} else {
+							log.Error("queue agent not found")
+							return agentId, errors.New("queue agent not found")
+						}
+					}
+				} else {
+					log.Error("queue not found")
+					return agentId, errors.New("queue not found")
 				}
+			} else {
+				log.Error("connection not found")
+				return agentId, errors.New("connection " + message.OaId + " not found")
 			}
 		}
-	} else if routing.RoutingName == "min_conversation" {
 	}
-
 	return agentId, nil
 }
 

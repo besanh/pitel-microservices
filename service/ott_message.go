@@ -76,35 +76,37 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 
-	// TODO: check conversation and add message
-	conversation, isNew, err := UpSertConversation(ctx, data)
-	if err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
-	message.ConversationId = conversation.ConversationId
-	message.IsRead = "deactive"
-
-	//  TODO: add rabbitmq message
-	if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
-
-	// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
-	// 	log.Error(err)
-	// 	return response.ServiceUnavailableMsg(err.Error())
-	// }
-
 	var agentId string
 
 	// TODO: check queue setting
-	agentId, err = CheckChatQueueSetting(ctx, data.ExternalUserId)
+	agentId, err := CheckChatSetting(ctx, message)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if len(agentId) > 0 {
+		// TODO: check conversation and add message
+		conversation, isNew, err := UpSertConversation(ctx, data)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+
+		//  TODO: add rabbitmq message
+		if len(conversation.ConversationId) > 0 {
+			message.ConversationId = conversation.ConversationId
+			message.IsRead = "deactive"
+			if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+		}
+
+		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
+		// 	log.Error(err)
+		// 	return response.ServiceUnavailableMsg(err.Error())
+		// }
+
 		if isNew {
 			event := map[string]any{
 				"event_name": "conversation_created",
@@ -121,6 +123,28 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			},
 		}
 		PublishMessageToOne(agentId, event)
+	} else {
+		// TODO: check conversation and add message
+		conversation, _, err := UpSertConversation(ctx, data)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+
+		// TODO: add rabbitmq message
+		if len(conversation.ConversationId) > 0 {
+			message.ConversationId = conversation.ConversationId
+			message.IsRead = "deactive"
+			if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+		}
+
+		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
+		// 	log.Error(err)
+		// 	return response.ServiceUnavailableMsg(err.Error())
+		// }
 	}
 
 	return response.OKResponse()

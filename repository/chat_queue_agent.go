@@ -6,6 +6,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type (
@@ -29,10 +30,10 @@ func (repo *ChatQueueAgent) GetChatQueueAgents(ctx context.Context, db sqlclient
 	result := new([]model.ChatQueueAgent)
 	query := db.GetDB().NewSelect().Model(result)
 	if len(filter.QueueId) > 0 {
-		query.Where("queue_id = ?", filter.QueueId)
+		query.Where("queue_id IN (?)", bun.In(filter.QueueId))
 	}
 	if len(filter.AgentId) > 0 {
-		query.Where("agent_id = ?", filter.AgentId)
+		query.Where("agent_id IN (?)", bun.In(filter.AgentId))
 	}
 	if len(filter.Source) > 0 {
 		query.Where("source = ?", filter.Source)

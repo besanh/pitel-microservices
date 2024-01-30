@@ -19,20 +19,22 @@ type AppFilter struct {
 }
 
 type ChatConnectionAppFilter struct {
+	AppId          string
 	ConnectionName string
 	ConnectionType string
 	QueueId        string
-	Status         sql.NullBool
+	Status         string
+	OaId           string
 }
 
 type QueueFilter struct {
-	QueueId       string
+	QueueId       []string
 	QueueName     string
 	ChatRoutingId string
 }
 
 type ChatQueueAgentFilter struct {
-	QueueId string
+	QueueId []string
 	AgentId []string
 	Source  string
 }

@@ -14,12 +14,14 @@ import (
 )
 
 type OttMessage struct {
-	ottMessageService service.IOttMessage
+	ottMessageService    service.IOttMessage
+	connectionAppService service.IChatConnectionApp
 }
 
-func NewOttMessage(r *gin.Engine, messageService service.IOttMessage) {
+func NewOttMessage(r *gin.Engine, messageService service.IOttMessage, connectionApp service.IChatConnectionApp) {
 	handler := &OttMessage{
-		ottMessageService: messageService,
+		ottMessageService:    messageService,
+		connectionAppService: connectionApp,
 	}
 
 	Group := r.Group("bss-message/v1/ott")
@@ -48,6 +50,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	timestamp, _ := strconv.ParseInt(timestampTmp, 10, 64)
 	msgId, _ := jsonBody["msg_id"].(string)
 	content, _ := jsonBody["text"].(string)
+	connectionId, _ := jsonBody["connection_id"].(string)
 	attachmentsTmp, _ := jsonBody["attachments"].([]any)
 	attachmentsAny := make([]any, 0)
 	for item := range attachmentsTmp {
@@ -67,21 +70,33 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		return
 	}
 
-	message := model.OttMessage{
-		MessageType:    messageType,
-		EventName:      eventName,
-		AppId:          appId,
-		AppName:        appName,
-		OaId:           oaId,
-		UserIdByApp:    userIdByApp,
-		ExternalUserId: externalUserId,
-		Username:       username,
-		Avatar:         avatar,
-		Timestamp:      timestamp,
-		MsgId:          msgId,
-		Content:        content,
-		Attachments:    &attachments,
+	var message model.OttMessage
+	if eventName == "" {
+		connectionAppRequest := model.ChatConnectionAppRequest{
+			OaId: oaId,
+		}
+		if err := h.connectionAppService.UpdateChatConnectionAppById(c, nil, connectionId, connectionAppRequest); err != nil {
+			c.JSON(response.BadRequestMsg(err))
+			return
+		}
+		c.JSON(response.OKResponse())
+	} else {
+		message = model.OttMessage{
+			MessageType:    messageType,
+			EventName:      eventName,
+			AppId:          appId,
+			AppName:        appName,
+			OaId:           oaId,
+			UserIdByApp:    userIdByApp,
+			ExternalUserId: externalUserId,
+			Username:       username,
+			Avatar:         avatar,
+			Timestamp:      timestamp,
+			MsgId:          msgId,
+			Content:        content,
+			Attachments:    &attachments,
+		}
+		code, result := h.ottMessageService.GetOttMessage(c, message)
+		c.JSON(code, result)
 	}
-	code, result := h.ottMessageService.GetOttMessage(c, message)
-	c.JSON(code, result)
 }
