@@ -88,6 +88,18 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		return connectionApp.Id, err
 	}
 
+	if len(data.QueueId) > 0 {
+		connectionQueue := model.ConnectionQueue{
+			Base:         model.InitBase(),
+			ConnectionId: connectionApp.Id,
+			QueueId:      data.QueueId,
+		}
+		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		}
+	}
+
 	// Step belows apply when app is available
 	// Call ott, if fail => roll back
 	if err := common.PostOttAccount(s.OttDomain, (*app)[0], connectionApp); err != nil {
@@ -180,6 +192,16 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	}
 
 	if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	connectionQueue := model.ConnectionQueue{
+		Base:         model.InitBase(),
+		ConnectionId: chatConnectionAppExist.Id,
+		QueueId:      data.QueueId,
+	}
+	if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
 		log.Error(err)
 		return err
 	}
