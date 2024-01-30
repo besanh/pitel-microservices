@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -111,7 +112,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 							return agentId, err
 						}
 						if totalQueueAgents > 0 {
-							if chatRouting.RoutingName == "random" {
+							if strings.ToLower(chatRouting.RoutingName) == "random" {
 								agentUuids := []string{}
 								for _, item := range *queueAgents {
 									agentUuids = append(agentUuids, item.AgentId)
@@ -121,14 +122,16 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 										userLives = append(userLives, *s)
 									}
 								}
-							} else {
-							}
 
-							if len(userLives) > 0 {
+								// Pick random
 								rand.NewSource(time.Now().UnixNano())
 								randomIndex := rand.Intn(len(userLives))
 								agent = userLives[randomIndex]
 								agentId = agent.UserId
+							} else {
+							}
+
+							if len(userLives) > 0 {
 								agentAllocation := model.AgentAllocation{
 									Base:               model.InitBase(),
 									ConversationId:     message.ExternalUserId,
