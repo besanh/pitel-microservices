@@ -37,7 +37,7 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 		return chatRouting.GetId(), err
 	}
 
-	if !slices.Contains[[]string](variables.CHAT_ROUTING, data.RoutingName) {
+	if !slices.Contains[[]string](variables.CHAT_ROUTING, data.RoutingAlias) {
 		err = errors.New("chat routing method is not supported")
 		return chatRouting.GetId(), err
 	}
