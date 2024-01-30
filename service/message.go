@@ -44,7 +44,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		filter := model.ConversationFilter{
 			ConversationId: []string{data.ConversationId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.AppId, ES_INDEX_CONVERSATION, filter, 1, 0)
+		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -79,31 +79,6 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	docId := uuid.NewString()
 
-	// Store ES
-	message := model.Message{
-		ParentExternalMsgId: "",
-		Id:                  docId,
-		MessageType:         conversation.ConversationType,
-		ConversationId:      conversation.ConversationId,
-		EventName:           eventName,
-		Direction:           variables.DIRECTION["send"],
-		AppId:               conversation.AppId,
-		OaId:                conversation.OaId,
-		UserIdByApp:         conversation.UserIdByApp,
-		Avatar:              conversation.Avatar,
-		SupporterId:         authUser.UserId,
-		SupporterName:       authUser.Username,
-		SendTime:            time.Now(),
-		SendTimestamp:       timestampTmp,
-		Content:             data.Content,
-		Attachments:         data.Attachments,
-	}
-	log.Info("message to es: ", message)
-	if err := InsertES(ctx, conversation.AppId, ES_INDEX, docId, message); err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
-
 	// Send to OTT
 	ottMessage := model.SendMessageToOtt{
 		Type:          conversation.ConversationType,
@@ -125,20 +100,29 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	message.ExternalMsgId = resOtt.Data.MsgId
 
-	// Update msgId to ES
-	tmpBytes, err := json.Marshal(message)
-	if err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+	// Store ES
+	message := model.Message{
+		ParentExternalMsgId: "",
+		Id:                  docId,
+		MessageType:         conversation.ConversationType,
+		ConversationId:      conversation.ConversationId,
+		ExternalMsgId:       resOtt.Data.MsgId,
+		EventName:           eventName,
+		Direction:           variables.DIRECTION["send"],
+		AppId:               conversation.AppId,
+		OaId:                conversation.OaId,
+		UserIdByApp:         conversation.UserIdByApp,
+		Avatar:              conversation.Avatar,
+		SupporterId:         authUser.UserId,
+		SupporterName:       authUser.Username,
+		SendTime:            time.Now(),
+		SendTimestamp:       timestampTmp,
+		Content:             data.Content,
+		Attachments:         data.Attachments,
 	}
-	esDoc := map[string]any{}
-	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, docId, esDoc); err != nil {
+	log.Info("message to es: ", message)
+	if err := InsertES(ctx, conversation.AppId, ES_INDEX, docId, message); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}

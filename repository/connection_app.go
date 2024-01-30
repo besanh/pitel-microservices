@@ -29,6 +29,8 @@ func NewConnectionApp() IChatConnectionApp {
 	return &ChatConnectionApp{}
 }
 
+// Current: one connection having 1 element zalo/fb in 1 record
+// TODO: one connection having many elements zalo/fb in 1 record
 func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error) {
 	result := new([]model.ChatConnectionApp)
 	query := db.GetDB().NewSelect().Model(result)
@@ -37,12 +39,15 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	}
 	if len(filter.ConnectionType) > 0 {
 		query.Where("connection_type = ?", filter.ConnectionType)
+		if len(filter.OaId) > 0 {
+			query.Where("oa_info->'zalo'::text->0->>'oa_id' = ?", filter.OaId)
+		}
 	}
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
 	}
-	if filter.Status.Valid {
-		query.Where("status = ?", filter.Status.Bool)
+	if len(filter.Status) > 0 {
+		query.Where("status = ?", filter.Status)
 	}
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

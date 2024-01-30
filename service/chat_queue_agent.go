@@ -35,7 +35,7 @@ func (s *ChatQueueAgent) InsertChatQueueAgent(ctx context.Context, authUser *mod
 	}
 
 	filter := model.ChatQueueAgentFilter{
-		QueueId: data.QueueId,
+		QueueId: []string{data.QueueId},
 	}
 	total, chatQueueAgents, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, dbCon, filter, -1, 0)
 	if err != nil {
@@ -82,7 +82,7 @@ func (s *ChatQueueAgent) UpdateChatQueueAgentById(ctx context.Context, authUser 
 	}
 
 	filter := model.ChatQueueAgentFilter{
-		QueueId: data.QueueId,
+		QueueId: []string{data.QueueId},
 	}
 	total, chatQueueAgents, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, dbCon, filter, -1, 0)
 	if err != nil {

@@ -111,7 +111,7 @@ func NewGRPCServer(port, crmUrl, ottDomain string) {
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
 	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", gin.WrapH(mux))
-	v1.NewOttMessage(httpServer, service.NewOttMessage())
+	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(ottDomain))
 	v1.NewMessage(httpServer, service.NewMessage(ottDomain), crmUrl)
 	v1.NewWebSocket(httpServer, service.NewSubscriberService(), crmUrl)
 	v1.NewConversation(httpServer, service.NewConversation(), crmUrl)

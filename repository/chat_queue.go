@@ -56,6 +56,12 @@ func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientCon
 	if len(filter.QueueName) > 0 {
 		query.Where("queue_name = ?", filter.QueueName)
 	}
+	if len(filter.QueueId) > 0 {
+		query.Where("id = IN (?)", bun.In(filter.QueueId))
+	}
+	if len(filter.ChatRoutingId) > 0 {
+		query.Where("chat_routing_id = IN (?)", bun.In(filter.ChatRoutingId))
+	}
 	query.Order("created_at desc")
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

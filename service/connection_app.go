@@ -141,6 +141,23 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if err != nil {
 		log.Error(err)
 		return err
+	} else if chatConnectionAppExist == nil {
+		log.Error("connection app not found")
+		return errors.New("connection app not found")
+	}
+
+	// Check if page having many connection in one app => reject
+	filter := model.ChatConnectionAppFilter{
+		AppId: data.AppId,
+		OaId:  data.OaId,
+	}
+	total, _, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if total > 1 {
+		log.Error("page having many connection in one app")
+		return errors.New("page having many connection in one app")
 	}
 
 	chatConnectionAppExist.ConnectionName = data.ConnectionName
@@ -149,6 +166,12 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	chatConnectionAppExist.OaInfo.Zalo = data.OaInfo.Zalo
 	chatConnectionAppExist.Status = data.Status
 	chatConnectionAppExist.UpdatedAt = time.Now()
+	if chatConnectionAppExist.ConnectionType == "zalo" && len(data.OaId) > 0 {
+		chatConnectionAppExist.OaInfo.Zalo[0].OaId = data.OaId
+	} else if chatConnectionAppExist.ConnectionType == "facebook" && len(data.OaId) > 0 {
+		chatConnectionAppExist.OaInfo.Facebook[0].OaId = data.OaId
+	}
+
 	err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist)
 	if err != nil {
 		log.Error(err)

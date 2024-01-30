@@ -2,8 +2,6 @@ package grpc
 
 import (
 	"context"
-	"database/sql"
-	"strconv"
 
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -62,16 +60,10 @@ func (s *GRPCConnectionApp) GetConnectionApp(ctx context.Context, req *pb.Connec
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	status := sql.NullBool{}
-	if len(req.Status) > 0 {
-		status.Valid = true
-		statusTmp, _ := strconv.ParseBool(req.Status)
-		status.Bool = statusTmp
-	}
 	filter := model.ChatConnectionAppFilter{
 		ConnectionName: req.ConnectionName,
 		ConnectionType: req.ConnectionType,
-		Status:         status,
+		Status:         req.Status,
 	}
 	limit := util.ParseLimit(req.GetLimit())
 	offset := util.ParseOffset(req.GetOffset())

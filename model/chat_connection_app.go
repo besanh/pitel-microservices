@@ -20,7 +20,7 @@ type ChatConnectionApp struct {
 	ConnectionType string    `json:"connection_type" bun:"connection_type,type:text,notnull"`
 	AppId          string    `json:"app_id" bun:"app_id,type:text,notnull"`
 	QueueId        string    `json:"queue_id" bun:"queue_id,type:text,notnull"`
-	OaInfo         OaInfo    `json:"oa_info" bun:"oa_info,type:text,notnull"`
+	OaInfo         OaInfo    `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
 	Status         string    `json:"status" bun:"status,notnull"`
 }
 
@@ -47,6 +47,8 @@ type ChatConnectionAppRequest struct {
 	QueueId        string `json:"queue_id"`
 	OaInfo         OaInfo `json:"oa_info"`
 	Status         string `json:"status"`
+	OaId           string `json:"oa_id"`
+	AppId          string `json:"app_id"` // use for receive from message when user grant permission to ott
 }
 
 type AccessInfo struct {
