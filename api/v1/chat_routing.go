@@ -94,8 +94,9 @@ func (handler *ChatRouting) GetChatRoutings(c *gin.Context) {
 	}
 
 	filter := model.ChatRoutingFilter{
-		RoutingName: c.Query("routing_name"),
-		Status:      status,
+		RoutingName:  c.Query("routing_name"),
+		RoutingAlias: c.Query("routing_alias"),
+		Status:       status,
 	}
 
 	total, chatRoutings, err := handler.chatRoutingService.GetChatRoutings(c, res.Data, filter, limit, offset)

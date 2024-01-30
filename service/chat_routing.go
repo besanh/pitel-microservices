@@ -43,7 +43,7 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	}
 
 	total, _, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbConn, model.ChatRoutingFilter{
-		RoutingName: data.RoutingName,
+		RoutingAlias: data.RoutingAlias,
 		Status: sql.NullBool{
 			Valid: true,
 			Bool:  true,
@@ -60,6 +60,7 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	}
 
 	chatRouting.RoutingName = data.RoutingName
+	chatRouting.RoutingAlias = data.RoutingAlias
 	chatRouting.Status = data.Status
 
 	if err := repository.ChatRoutingRepo.Insert(ctx, dbConn, chatRouting); err != nil {
@@ -115,6 +116,7 @@ func (s *ChatRouting) UpdateChatRoutingById(ctx context.Context, authUser *model
 	}
 
 	chatRouting.RoutingName = data.RoutingName
+	chatRouting.RoutingAlias = data.RoutingAlias
 	chatRouting.Status = data.Status
 	err = repository.ChatRoutingRepo.Update(ctx, dbCon, *chatRouting)
 	if err != nil {

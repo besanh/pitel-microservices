@@ -11,7 +11,8 @@ import "buf/validate/validate.proto";
 
 message ChatRoutingBodyRequest {
     string routing_name = 1;
-    bool status = 2;
+    string routing_alias = 2;
+    bool status = 3;
 }
 
 message ChatRoutingResponse {

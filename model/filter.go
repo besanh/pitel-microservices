@@ -40,8 +40,9 @@ type ChatQueueAgentFilter struct {
 }
 
 type ChatRoutingFilter struct {
-	RoutingName string
-	Status      sql.NullBool
+	RoutingName  string       `json:"routing_name"`
+	RoutingAlias string       `json:"routing_alias"`
+	Status       sql.NullBool `json:"status"`
 }
 
 type ConversationFilter struct {
