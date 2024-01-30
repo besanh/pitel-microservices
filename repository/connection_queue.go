@@ -12,6 +12,7 @@ type (
 	IConnectionQueue interface {
 		IRepo[model.ConnectionQueue]
 		GetConnectionQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ConnectionQueueFilter, limit, offset int) (int, *[]model.ConnectionQueue, error)
+		DeleteConnectionQueue(ctx context.Context, db sqlclient.ISqlClientConn, connectionId, queueId string) (err error)
 	}
 	ConnectionQueue struct {
 		Repo[model.ConnectionQueue]
@@ -45,4 +46,17 @@ func (repo *ConnectionQueue) GetConnectionQueues(ctx context.Context, db sqlclie
 	}
 
 	return total, result, nil
+}
+
+func (repo *ConnectionQueue) DeleteConnectionQueue(ctx context.Context, db sqlclient.ISqlClientConn, connectionId, queueId string) (err error) {
+	query := db.GetDB().NewDelete().
+		Model((*model.ConnectionQueue)(nil))
+	if len(connectionId) > 0 {
+		query.Where("connection_id = ?", connectionId)
+	}
+	if len(queueId) > 0 {
+		query.Where("queue_id = ?", queueId)
+	}
+	query.Exec(ctx)
+	return
 }
