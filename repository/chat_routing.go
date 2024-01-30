@@ -30,6 +30,9 @@ func (repo *ChatRouting) GetChatRoutings(ctx context.Context, db sqlclient.ISqlC
 	if len(filter.RoutingName) > 0 {
 		query.Where("routing_name = ?", filter.RoutingName)
 	}
+	if len(filter.RoutingAlias) > 0 {
+		query.Where("routing_alias = ?", filter.RoutingAlias)
+	}
 	if filter.Status.Valid {
 		query.Where("status = ?", filter.Status.Bool)
 	}
