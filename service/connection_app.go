@@ -147,20 +147,20 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	}
 
 	// Check if page having many connection in one app => reject
-	if data.ConnectionType == "zalo" {
-		filter := model.ChatConnectionAppFilter{
-			AppId: data.AppId,
-			OaId:  data.OaId,
-		}
-		total, _, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, -1, 0)
-		if err != nil {
-			log.Error(err)
-			return err
-		} else if total > 1 {
-			log.Error("page having many connection in one app")
-			return errors.New("page having many connection in one app")
-		}
-	}
+	// if data.ConnectionType == "zalo" {
+	// 	filter := model.ChatConnectionAppFilter{
+	// 		AppId: data.AppId,
+	// 		OaId:  data.OaId,
+	// 	}
+	// 	total, _, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, -1, 0)
+	// 	if err != nil {
+	// 		log.Error(err)
+	// 		return err
+	// 	} else if total > 1 {
+	// 		log.Error("page having many connection in one app")
+	// 		return errors.New("page having many connection in one app")
+	// 	}
+	// }
 
 	chatConnectionAppExist.ConnectionName = data.ConnectionName
 	chatConnectionAppExist.ConnectionType = data.ConnectionType
@@ -174,11 +174,12 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		chatConnectionAppExist.OaInfo.Facebook[0].OaId = data.OaId
 	}
 
-	if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist); err != nil {
+	if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.QueueId); err != nil {
 		log.Error(err)
 		return err
 	}
-	if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.QueueId); err != nil {
+
+	if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist); err != nil {
 		log.Error(err)
 		return err
 	}
