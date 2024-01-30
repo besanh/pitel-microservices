@@ -40,7 +40,7 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if len(filter.ConnectionType) > 0 {
 		query.Where("connection_type = ?", filter.ConnectionType)
 		if len(filter.OaId) > 0 {
-			query.Where("oa_info->'zalo'::text->0->>'oa_id' = ?", filter.OaId)
+			query.Where("oa_info->?::text->0->>'oa_id' = ?", filter.ConnectionType, filter.OaId)
 		}
 	}
 	if len(filter.QueueId) > 0 {

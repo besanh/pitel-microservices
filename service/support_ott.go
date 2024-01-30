@@ -42,10 +42,17 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 			agentId = (*agentAllocations)[0].AgentId
 		} else {
 			// Get connection
+			connectionType := ""
+			if message.MessageType == "zalo" {
+				connectionType = "zalo"
+			} else if message.MessageType == "face" {
+				connectionType = "facebook"
+			}
 			connectionFilter := model.ChatConnectionAppFilter{
-				OaId:   message.OaId,
-				AppId:  message.AppId,
-				Status: "active",
+				ConnectionType: connectionType,
+				OaId:           message.OaId,
+				AppId:          message.AppId,
+				Status:         "active",
 			}
 			totalConnection, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionFilter, 1, 0)
 			if err != nil {
