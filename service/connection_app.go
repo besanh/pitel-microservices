@@ -194,15 +194,23 @@ func (s *ChatConnectionApp) DeleteChatConnectionAppById(ctx context.Context, aut
 		return err
 	}
 
-	_, err = repository.ChatConnectionAppRepo.GetById(ctx, dbCon, id)
+	connectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return err
+	} else if connectionAppExist == nil {
+		log.Error("connection app not found")
+		return errors.New("connection app not found")
 	}
-	err = repository.ChatConnectionAppRepo.Delete(ctx, dbCon, id)
-	if err != nil {
+	if err = repository.ChatConnectionAppRepo.Delete(ctx, dbCon, id); err != nil {
 		log.Error(err)
 		return err
 	}
+
+	if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, connectionAppExist.Id, ""); err != nil {
+		log.Error(err)
+		return err
+	}
+
 	return nil
 }
