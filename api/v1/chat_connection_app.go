@@ -25,6 +25,7 @@ func NewChatConnectionApp(engin *gin.Engine, chatConnectionAppService service.IC
 		Group.POST("", handler.InsertChatConnectionApp)
 		Group.PUT(":id", handler.UpdateChatConnectionAppById)
 		Group.GET(":id", handler.GetChatConnectionAppById)
+		Group.DELETE(":id", handler.DeleteChatConnectionAppById)
 	}
 }
 
@@ -156,6 +157,33 @@ func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
 	log.Info("update chat connection app payload -> ", data)
 
 	err := handler.chatConnectionAppService.UpdateChatConnectionAppById(c, res.Data, id, data)
+	if err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
+}
+
+func (handler *ChatConnectionApp) DeleteChatConnectionAppById(c *gin.Context) {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+	}
+
+	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	id := c.Param("id")
+	if len(id) < 1 {
+		c.JSON(response.BadRequestMsg("id is required"))
+		return
+	}
+
+	err := handler.chatConnectionAppService.DeleteChatConnectionAppById(c, res.Data, id)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return

@@ -155,7 +155,7 @@ func main() {
 	repository.InitRepositories()
 	repository.InitRepositoriesES()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	repository.InitTables(ctx, repository.DBConn)
 

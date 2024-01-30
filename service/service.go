@@ -42,7 +42,7 @@ var (
 	CHAT_APP                = "chat_app"
 	CHAT_APP_EXPIRE         = 5 * time.Hour
 	AGENT_ALLOCATION        = "agent_allocation"
-	AGENT_ALLOCATION_EXPIRE = 1 * time.Minute
+	AGENT_ALLOCATION_EXPIRE = 1 * time.Hour
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 )
