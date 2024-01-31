@@ -1,8 +1,9 @@
 package variables
 
 var (
-	CONNECTION_TYPE []string          = []string{"facebook", "zalo", "telegram"}
-	EVENT_NAME      map[string]string = map[string]string{
+	CONNECTION_TYPE []string = []string{"facebook", "zalo", "telegram"}
+
+	EVENT_NAME map[string]string = map[string]string{
 		"user_send_text":        "user_send_text",
 		"user_send_image":       "user_send_image",
 		"user_send_link":        "user_send_link",
@@ -13,14 +14,19 @@ var (
 		"user_send_file":        "user_send_file",
 		"user_received_message": "user_received_message",
 		"user_seen_message":     "user_seen_message",
+		"oa_connection":         "oa_connection",
+		"submit_info":           "submit_info",
 	}
+
 	EVENT_READ_MESSAGE []string = []string{
 		"user_seen_message",
 	}
+
 	DIRECTION map[string]string = map[string]string{
 		"send":    "send",
 		"receive": "receive",
 	}
+
 	ATTACHMENT_TYPE map[string]string = map[string]string{
 		"text":    "text",
 		"image":   "image",
@@ -31,6 +37,7 @@ var (
 		"sticker": "sticker",
 		"gif":     "gif",
 	}
+
 	CHAT_ROUTING []string = []string{
 		"random",
 		"min_conversation",
@@ -45,5 +52,10 @@ var (
 		"link",
 		"sticker",
 		"gif",
+	}
+
+	EVENT_NAME_EXCLUDE map[string]string = map[string]string{
+		"oa_connection": "oa_connection",
+		"submit_info":   "submit_info",
 	}
 )

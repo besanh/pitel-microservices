@@ -50,7 +50,6 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	timestamp, _ := strconv.ParseInt(timestampTmp, 10, 64)
 	msgId, _ := jsonBody["msg_id"].(string)
 	content, _ := jsonBody["text"].(string)
-	connectionId, _ := jsonBody["connection_id"].(string)
 	attachmentsTmp, _ := jsonBody["attachments"].([]any)
 	attachmentsAny := make([]any, 0)
 	for item := range attachmentsTmp {
@@ -70,12 +69,43 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		return
 	}
 
-	var message model.OttMessage
-	if eventName == "" {
-		connectionAppRequest := model.ChatConnectionAppRequest{
-			OaId: oaId,
+	oaInfoMessageTmp, _ := jsonBody["oa_info"].(map[string]any)
+	oaInfoMessage := model.OaInfoMessage{}
+	if oaInfoMessageTmp != nil {
+		if err := util.ParseAnyToAny(oaInfoMessageTmp, &oaInfoMessage); err != nil {
+			c.JSON(response.BadRequestMsg(err))
+			return
 		}
-		if err := h.connectionAppService.UpdateChatConnectionAppById(c, nil, connectionId, connectionAppRequest); err != nil {
+	}
+
+	shareInfoTmp, _ := jsonBody["share_info"].(map[string]any)
+	shareInfo := model.ShareInfo{}
+	if shareInfoTmp != nil {
+		if err := util.ParseAnyToAny(shareInfoTmp, &shareInfo); err != nil {
+			c.JSON(response.BadRequestMsg(err))
+			return
+		}
+	}
+
+	var message model.OttMessage
+	if eventName == variables.EVENT_NAME_EXCLUDE["oa_connection"] {
+		if len(oaInfoMessage.ConnectionId) < 1 {
+			c.JSON(response.BadRequestMsg("connection_id is required"))
+			return
+		}
+		connectionAppRequest := model.ChatConnectionAppRequest{
+			OaId:     oaId,
+			Id:       oaInfoMessage.ConnectionId,
+			OaName:   oaInfoMessage.Name,
+			Avatar:   oaInfoMessage.Avatar,
+			Cover:    oaInfoMessage.Cover,
+			CateName: oaInfoMessage.CateName,
+			Status:   "active",
+		}
+		authUser := model.AuthUser{
+			Source: "authen",
+		}
+		if err := h.connectionAppService.UpdateChatConnectionAppById(c, &authUser, oaInfoMessage.ConnectionId, connectionAppRequest); err != nil {
 			c.JSON(response.BadRequestMsg(err))
 			return
 		}
@@ -87,6 +117,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			AppId:          appId,
 			AppName:        appName,
 			OaId:           oaId,
+			ShareInfo:      &shareInfo,
 			UserIdByApp:    userIdByApp,
 			ExternalUserId: externalUserId,
 			Username:       username,

@@ -188,6 +188,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 		Username:         data.Username,
 		Avatar:           data.Avatar,
 		OaId:             data.OaId,
+		ShareInfo:        data.ShareInfo,
 		ExternalUserId:   data.ExternalUserId,
 		CreatedAt:        time.Now().Format(time.RFC3339),
 	}
@@ -200,7 +201,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		if err := UpdateESAndCache(ctx, data.AppId, data.ExternalUserId); err != nil {
+		if err := UpdateESAndCache(ctx, data.AppId, data.ExternalUserId, *conversation.ShareInfo); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
@@ -216,6 +217,22 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 		}
 		if total > 0 {
 			conversation = (*conversations)[0]
+			conversation.ShareInfo = data.ShareInfo
+
+			tmpBytes, err := json.Marshal(conversation)
+			if err != nil {
+				log.Error(err)
+				return conversation, isNew, err
+			}
+			esDoc := map[string]any{}
+			if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+				log.Error(err)
+				return conversation, isNew, err
+			}
+			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.ExternalUserId, esDoc); err != nil {
+				log.Error(err)
+				return conversation, isNew, err
+			}
 			if err := cache.RCache.Set(CONVERSATION+"_"+data.ExternalUserId, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
 				return conversation, isNew, err
@@ -294,7 +311,7 @@ func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAlloc
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, appId, conversationId string) error {
+func UpdateESAndCache(ctx context.Context, appId, conversationId string, shareInfo model.ShareInfo) error {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, appId, ES_INDEX_CONVERSATION, conversationId)
 	if err != nil {
 		log.Error(err)
@@ -304,6 +321,7 @@ func UpdateESAndCache(ctx context.Context, appId, conversationId string) error {
 		return errors.New("conversation not found")
 	}
 
+	conversationExist.ShareInfo = &shareInfo
 	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
 	tmpBytes, err := json.Marshal(conversationExist)
 	if err != nil {
