@@ -55,6 +55,24 @@ type MessageMarkRead struct {
 	ReadAll        bool     `json:"read_all"`
 }
 
+type OaInfoMessage struct {
+	ConnectionId string `json:"connection_id"`
+	Name         string `json:"name"`
+	Avatar       string `json:"avatar"`
+	Cover        string `json:"cover"`
+	CateName     string `json:"cate_name"`
+	Code         int64  `json:"code"`
+	Message      string `json:"message"`
+}
+
+type ShareInfo struct {
+	Address  string `json:"address"`
+	Phone    string `json:"phone"`
+	City     string `json:"city"`
+	District string `json:"district"`
+	Name     string `json:"name"`
+}
+
 func (m *MessageRequest) Validate() error {
 	if len(m.ConversationId) < 1 {
 		return errors.New("conversation id is required")

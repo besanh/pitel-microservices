@@ -6,6 +6,7 @@ type OttMessage struct {
 	AppId          string            `json:"app_id"`
 	AppName        string            `json:"app_name"`
 	OaId           string            `json:"oa_id"`
+	ShareInfo      *ShareInfo        `json:"share_info"`
 	UserIdByApp    string            `json:"user_id_by_app"`
 	ExternalUserId string            `json:"external_user_id"`
 	Username       string            `json:"username"`

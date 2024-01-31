@@ -9,6 +9,7 @@ type Conversation struct {
 	ConversationType     string          `json:"conversation_type"`
 	AppId                string          `json:"app_id"`
 	OaId                 string          `json:"oa_id"`
+	ShareInfo            *ShareInfo      `json:"share_info"`
 	UserIdByApp          string          `json:"user_id_by_app"`
 	ExternalUserId       string          `json:"external_user_id"`
 	Username             string          `json:"username"`

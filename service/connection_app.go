@@ -40,8 +40,6 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		Id:             id,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
-		TenantId:       authUser.TenantId,
-		BusinessUnitId: authUser.BusinessUnitId,
 		ConnectionName: data.ConnectionName,
 		ConnectionType: data.ConnectionType,
 		Status:         data.Status,
@@ -80,7 +78,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		return connectionApp.Id, errors.New("app not found")
 	}
 	connectionApp.QueueId = data.QueueId
-	connectionApp.OaInfo = data.OaInfo
+	connectionApp.OaInfo = *data.OaInfo
 	connectionApp.Status = data.Status
 
 	if err := repository.ChatConnectionAppRepo.Insert(ctx, dbCon, connectionApp); err != nil {
@@ -158,37 +156,40 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		return errors.New("connection app not found")
 	}
 
-	// Check if page having many connection in one app => reject
-	// if data.ConnectionType == "zalo" {
-	// 	filter := model.ChatConnectionAppFilter{
-	// 		AppId: data.AppId,
-	// 		OaId:  data.OaId,
-	// 	}
-	// 	total, _, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, -1, 0)
-	// 	if err != nil {
-	// 		log.Error(err)
-	// 		return err
-	// 	} else if total > 1 {
-	// 		log.Error("page having many connection in one app")
-	// 		return errors.New("page having many connection in one app")
-	// 	}
-	// }
+	if len(data.ConnectionName) > 0 {
+		chatConnectionAppExist.ConnectionName = data.ConnectionName
+	}
 
-	chatConnectionAppExist.ConnectionName = data.ConnectionName
-	chatConnectionAppExist.ConnectionType = data.ConnectionType
-	chatConnectionAppExist.QueueId = data.QueueId
-	chatConnectionAppExist.OaInfo.Zalo = data.OaInfo.Zalo
-	chatConnectionAppExist.Status = data.Status
-	chatConnectionAppExist.UpdatedAt = time.Now()
+	if len(data.ConnectionType) > 0 {
+		chatConnectionAppExist.ConnectionType = data.ConnectionType
+	}
+	if len(data.QueueId) > 0 {
+		chatConnectionAppExist.QueueId = data.QueueId
+	}
+	if data.OaInfo != nil {
+		chatConnectionAppExist.OaInfo.Zalo = data.OaInfo.Zalo
+	}
+	if len(data.Status) > 0 {
+		chatConnectionAppExist.Status = data.Status
+	}
+
 	if chatConnectionAppExist.ConnectionType == "zalo" && len(data.OaId) > 0 {
 		chatConnectionAppExist.OaInfo.Zalo[0].OaId = data.OaId
+		chatConnectionAppExist.OaInfo.Zalo[0].OaName = data.OaName
+		chatConnectionAppExist.OaInfo.Zalo[0].Avatar = data.Avatar
+		chatConnectionAppExist.OaInfo.Zalo[0].Cover = data.Cover
+		chatConnectionAppExist.OaInfo.Zalo[0].CateName = data.CateName
+		chatConnectionAppExist.OaInfo.Zalo[0].Status = data.Status
 	} else if chatConnectionAppExist.ConnectionType == "facebook" && len(data.OaId) > 0 {
 		chatConnectionAppExist.OaInfo.Facebook[0].OaId = data.OaId
 	}
+	chatConnectionAppExist.UpdatedAt = time.Now()
 
-	if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.QueueId); err != nil {
-		log.Error(err)
-		return err
+	if len(data.OaId) < 1 {
+		if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.QueueId); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist); err != nil {
@@ -196,14 +197,16 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		return err
 	}
 
-	connectionQueue := model.ConnectionQueue{
-		Base:         model.InitBase(),
-		ConnectionId: chatConnectionAppExist.Id,
-		QueueId:      data.QueueId,
-	}
-	if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
-		log.Error(err)
-		return err
+	if len(data.OaId) < 1 {
+		connectionQueue := model.ConnectionQueue{
+			Base:         model.InitBase(),
+			ConnectionId: chatConnectionAppExist.Id,
+			QueueId:      data.QueueId,
+		}
+		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	return nil
