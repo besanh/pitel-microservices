@@ -47,10 +47,10 @@ type ChatRoutingFilter struct {
 
 type ConversationFilter struct {
 	AppId          []string
-	ConversationId []string
-	Username       []string
-	PhoneNumber    []string
-	Email          []string
+	ConversationId string
+	Username       string
+	PhoneNumber    string
+	Email          string
 }
 
 type AgentAllocationFilter struct {
