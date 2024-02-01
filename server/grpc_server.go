@@ -52,7 +52,7 @@ func isHeaderAllowed(s string) (string, bool) {
 	return s, false
 }
 
-func NewGRPCServer(port, crmUrl, ottDomain string) {
+func NewGRPCServer(port string) {
 	// Setup gRPC
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
@@ -111,15 +111,15 @@ func NewGRPCServer(port, crmUrl, ottDomain string) {
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
 	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", gin.WrapH(mux))
-	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(ottDomain))
-	v1.NewMessage(httpServer, service.NewMessage(ottDomain), crmUrl)
-	v1.NewWebSocket(httpServer, service.NewSubscriberService(), crmUrl)
-	v1.NewConversation(httpServer, service.NewConversation(), crmUrl)
-	v1.NewChatApp(httpServer, service.NewChatApp(), crmUrl)
-	v1.NewChatConnectionApp(httpServer, service.NewChatConnectionApp(ottDomain), crmUrl)
-	v1.NewChatRouting(httpServer, service.NewChatRouting(), crmUrl)
-	v1.NewChatQueue(httpServer, service.NewChatQueue(crmUrl), crmUrl)
-	v1.NewChatQueueAgent(httpServer, service.NewChatQueueAgent(), crmUrl)
+	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp())
+	v1.NewMessage(httpServer, service.NewMessage())
+	v1.NewWebSocket(httpServer, service.NewSubscriberService())
+	v1.NewConversation(httpServer, service.NewConversation())
+	v1.NewChatApp(httpServer, service.NewChatApp())
+	v1.NewChatConnectionApp(httpServer, service.NewChatConnectionApp())
+	v1.NewChatRouting(httpServer, service.NewChatRouting())
+	v1.NewChatQueue(httpServer, service.NewChatQueue())
+	v1.NewChatQueueAgent(httpServer, service.NewChatQueueAgent())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

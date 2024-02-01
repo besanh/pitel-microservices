@@ -74,3 +74,7 @@ type OttAccount struct {
 	AccessToken string `json:"access_token"`
 	Status      string `json:"status"`
 }
+
+type OttCodeChallenge struct {
+	Data string `json:"data"`
+}

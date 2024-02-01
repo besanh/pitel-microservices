@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/queue"
@@ -163,10 +164,15 @@ func main() {
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.ES_INDEX = env.GetStringENV("ES_INDEX", "pitel_bss_chat")
 	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
+	service.CRM_AUTH_URL = env.GetStringENV("CRM_URL", "")
+	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
 	service.InitServices()
 
+	// Run cron jobs
+	// handleCronBatchSchedule(service.BatchService.ScanBatchJobEvery1Minute)
+
 	// Run gRPC server
-	server.NewGRPCServer(config.gRPCPort, env.GetStringENV("CRM_URL", ""), env.GetStringENV("OTT_DOMAIN", ""))
+	server.NewGRPCServer(config.gRPCPort)
 }
 
 func setAppLogger(cfg Config, file *os.File) {
@@ -189,4 +195,14 @@ func setAppLogger(cfg Config, file *os.File) {
 		log.SetLevel(log.InfoLevel)
 	}
 	log.SetOutput(io.MultiWriter(os.Stdout, file))
+}
+
+func handleCronBatchSchedule(f func()) {
+	s1 := gocron.NewScheduler(time.UTC)
+	s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
+	_, err := s1.Every(1).Minute().Do(f)
+	if err != nil {
+		return
+	}
+	s1.StartAsync()
 }

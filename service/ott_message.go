@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -17,6 +19,7 @@ import (
 type (
 	IOttMessage interface {
 		GetOttMessage(ctx context.Context, data model.OttMessage) (int, any)
+		GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any)
 	}
 	OttMessage struct{}
 )
@@ -148,4 +151,25 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 
 	return response.OKResponse()
+}
+
+func (s *OttMessage) GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any) {
+	url := OTT_URL + "/ott/v1/zalo/code-challenge/" + appId
+	client := resty.New()
+
+	resp, err := client.R().
+		SetHeader("Accept", "application/json").
+		Get(url)
+	if err != nil {
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if resp.StatusCode() == 200 {
+		var result model.OttCodeChallenge
+		if err := json.Unmarshal([]byte(resp.Body()), &result); err != nil {
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		return response.OK(result)
+	} else {
+		return response.ServiceUnavailableMsg(resp.String())
+	}
 }

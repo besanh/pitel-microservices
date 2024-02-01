@@ -19,15 +19,11 @@ type (
 		UpdateChatQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequest) error
 		DeleteChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
-	ChatQueue struct {
-		CrmUrl string
-	}
+	ChatQueue struct{}
 )
 
-func NewChatQueue(crmUrl string) IChatQueue {
-	return &ChatQueue{
-		CrmUrl: crmUrl,
-	}
+func NewChatQueue() IChatQueue {
+	return &ChatQueue{}
 }
 
 func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequest) (string, error) {
@@ -99,7 +95,7 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 			for i, item := range *queues {
 				for j, val := range item.ChatQueueAgent {
 					if val.Source == "authen" {
-						authUser, err := common.GetUserAuthenticated(s.CrmUrl, token, val.AgentId)
+						authUser, err := common.GetUserAuthenticated(CRM_AUTH_URL, token, val.AgentId)
 						if err != nil {
 							log.Error(err)
 							return 0, nil, err

@@ -14,11 +14,10 @@ type ChatQueue struct {
 	chatQueueService service.IChatQueue
 }
 
-func NewChatQueue(engine *gin.Engine, chatQueueService service.IChatQueue, crmUrl string) {
+func NewChatQueue(engine *gin.Engine, chatQueueService service.IChatQueue) {
 	handler := &ChatQueue{
 		chatQueueService: chatQueueService,
 	}
-	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-queue")
 	{
 		Group.POST("", handler.InsertChatQueue)
@@ -36,7 +35,7 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -74,7 +73,7 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -102,7 +101,7 @@ func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -131,7 +130,7 @@ func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -167,7 +166,7 @@ func (handler *ChatQueue) DeleteChatQueueById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

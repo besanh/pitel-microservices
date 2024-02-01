@@ -17,11 +17,10 @@ type ChatRouting struct {
 	chatRoutingService service.IChatRouting
 }
 
-func NewChatRouting(engine *gin.Engine, chatRoutingService service.IChatRouting, crmUrl string) {
+func NewChatRouting(engine *gin.Engine, chatRoutingService service.IChatRouting) {
 	handler := &ChatRouting{
 		chatRoutingService: service.NewChatRouting(),
 	}
-	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-routing")
 	{
 		Group.POST("", handler.InsertChatRouting)
@@ -39,7 +38,7 @@ func (handler *ChatRouting) InsertChatRouting(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -77,7 +76,7 @@ func (handler *ChatRouting) GetChatRoutings(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -116,7 +115,7 @@ func (handler *ChatRouting) GetChatRoutingById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -147,7 +146,7 @@ func (handler *ChatRouting) UpdateChatRoutingById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -184,7 +183,7 @@ func (handler *ChatRouting) DeleteChatRoutingById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

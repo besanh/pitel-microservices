@@ -14,11 +14,11 @@ type ChatConnectionApp struct {
 	chatConnectionAppService service.IChatConnectionApp
 }
 
-func NewChatConnectionApp(engin *gin.Engine, chatConnectionAppService service.IChatConnectionApp, crmUrl string) {
+func NewChatConnectionApp(engin *gin.Engine, chatConnectionAppService service.IChatConnectionApp) {
 	handler := &ChatConnectionApp{
 		chatConnectionAppService: chatConnectionAppService,
 	}
-	CRM_AUTH_URL = crmUrl
+
 	Group := engin.Group("bss-message/v1/chat-connection-app")
 	{
 		Group.GET("", handler.GetChatConnectionApp)
@@ -36,7 +36,7 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -66,7 +66,7 @@ func (handler *ChatConnectionApp) InsertChatConnectionApp(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -104,7 +104,7 @@ func (handler *ChatConnectionApp) GetChatConnectionAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -135,7 +135,7 @@ func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -171,7 +171,7 @@ func (handler *ChatConnectionApp) DeleteChatConnectionAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

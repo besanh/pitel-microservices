@@ -45,6 +45,9 @@ var (
 	AGENT_ALLOCATION_EXPIRE = 1 * time.Hour
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
+
+	CRM_AUTH_URL string = ""
+	OTT_URL      string = ""
 )
 
 type (

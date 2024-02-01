@@ -21,15 +21,11 @@ type (
 		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
 	}
-	Message struct {
-		OttDomain string
-	}
+	Message struct{}
 )
 
-func NewMessage(ottDomain string) IMessage {
-	return &Message{
-		OttDomain: ottDomain,
-	}
+func NewMessage() IMessage {
+	return &Message{}
 }
 
 func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any) {

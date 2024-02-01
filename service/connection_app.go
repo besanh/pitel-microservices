@@ -20,15 +20,11 @@ type (
 		UpdateChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatConnectionAppRequest) (err error)
 		DeleteChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
-	ChatConnectionApp struct {
-		OttDomain string
-	}
+	ChatConnectionApp struct{}
 )
 
-func NewChatConnectionApp(ottDomain string) IChatConnectionApp {
-	return &ChatConnectionApp{
-		OttDomain: ottDomain,
-	}
+func NewChatConnectionApp() IChatConnectionApp {
+	return &ChatConnectionApp{}
 }
 
 func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUser *model.AuthUser, data model.ChatConnectionAppRequest) (string, error) {
@@ -100,7 +96,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 
 	// Step belows apply when app is available
 	// Call ott, if fail => roll back
-	if err := common.PostOttAccount(s.OttDomain, (*app)[0], connectionApp); err != nil {
+	if err := common.PostOttAccount(OTT_URL, (*app)[0], connectionApp); err != nil {
 		log.Error(err)
 		return connectionApp.Id, err
 	}
