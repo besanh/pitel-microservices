@@ -14,32 +14,27 @@ type Message struct {
 	messageService service.IMessage
 }
 
-func NewMessage(r *gin.Engine, messageService service.IMessage, crmUrl string) {
+func NewMessage(r *gin.Engine, messageService service.IMessage) {
 	handler := &Message{
 		messageService: messageService,
 	}
 
 	Group := r.Group("bss-message/v1/message")
 	{
-		Group.POST("send", api.MoveTokenToHeader(), func(ctx *gin.Context) {
-			handler.SendMessage(ctx, crmUrl)
-		})
-		Group.GET("", func(ctx *gin.Context) {
-			handler.GetMessages(ctx, crmUrl)
-		})
-		Group.POST("read", func(ctx *gin.Context) {
-			handler.MarkReadMessages(ctx, crmUrl)
-		})
+		Group.POST("send", api.MoveTokenToHeader(), handler.SendMessage)
+		Group.GET("", handler.GetMessages)
+		Group.POST("read", handler.MarkReadMessages)
+		Group.POST("share-info", handler.ShareInfo)
 	}
 }
 
-func (h *Message) SendMessage(c *gin.Context, crmUrl string) {
+func (h *Message) SendMessage(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -67,13 +62,13 @@ func (h *Message) SendMessage(c *gin.Context, crmUrl string) {
 	c.JSON(code, result)
 }
 
-func (h *Message) GetMessages(c *gin.Context, crmUrl string) {
+func (h *Message) GetMessages(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -90,13 +85,13 @@ func (h *Message) GetMessages(c *gin.Context, crmUrl string) {
 	c.JSON(code, result)
 }
 
-func (h *Message) MarkReadMessages(c *gin.Context, crmUrl string) {
+func (h *Message) MarkReadMessages(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -117,4 +112,24 @@ func (h *Message) MarkReadMessages(c *gin.Context, crmUrl string) {
 
 	code, result := h.messageService.MarkReadMessages(c, res.Data, markReadMessages)
 	c.JSON(code, result)
+}
+
+func (h *Message) ShareInfo(ctx *gin.Context) {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   ctx.Query("token"),
+		AuthUrl: ctx.Query("auth_url"),
+		Source:  ctx.Query("source"),
+	}
+	res := api.AAAMiddleware(ctx, service.CRM_AUTH_URL, bssAuthRequest)
+	if res == nil {
+		ctx.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	shareInfo := model.ShareInfo{}
+	if err := ctx.ShouldBindJSON(&shareInfo); err != nil {
+		ctx.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
 }

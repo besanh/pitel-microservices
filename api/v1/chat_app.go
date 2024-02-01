@@ -14,13 +14,10 @@ type ChatApp struct {
 	chatAppService service.IChatApp
 }
 
-var CRM_AUTH_URL string
-
-func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp, crmUrl string) {
+func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp) {
 	handler := &ChatApp{
 		chatAppService: chatAppService,
 	}
-	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-app")
 	{
 		Group.POST("", handler.InsertChatApp)
@@ -38,7 +35,7 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -76,7 +73,7 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -105,7 +102,7 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -136,7 +133,7 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -172,7 +169,7 @@ func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

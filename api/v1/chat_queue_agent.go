@@ -13,11 +13,10 @@ type ChatQueueAgent struct {
 	chatQueueAgent service.IChatQueueAgent
 }
 
-func NewChatQueueAgent(engine *gin.Engine, chatQueueAgent service.IChatQueueAgent, crmUrl string) {
+func NewChatQueueAgent(engine *gin.Engine, chatQueueAgent service.IChatQueueAgent) {
 	handler := &ChatQueueAgent{
 		chatQueueAgent: chatQueueAgent,
 	}
-	CRM_AUTH_URL = crmUrl
 	Group := engine.Group("bss-message/v1/chat-queue-agent")
 	{
 		Group.POST("", handler.InsertChatQueueAgent)
@@ -32,7 +31,7 @@ func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -71,7 +70,7 @@ func (h *ChatQueueAgent) UpdateChatQueueAgentById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	res := api.AAAMiddleware(c, CRM_AUTH_URL, bssAuthRequest)
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

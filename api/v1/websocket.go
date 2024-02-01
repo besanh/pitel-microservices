@@ -23,7 +23,7 @@ var (
 	WebSocketHandler *WebSocket
 )
 
-func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmUrl string) {
+func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber) {
 	handler := &WebSocket{
 		subscriber: subscriberService,
 	}
@@ -34,13 +34,11 @@ func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber, crmUrl s
 	}
 	Group := r.Group("bss-message/v1/wss")
 	{
-		Group.GET("subscriber", func(ctx *gin.Context) {
-			handler.Subscribe(ctx, crmUrl)
-		})
+		Group.GET("subscriber", handler.Subscribe)
 	}
 }
 
-func (handler *WebSocket) Subscribe(ctx *gin.Context, crmUrl string) {
+func (handler *WebSocket) Subscribe(ctx *gin.Context) {
 	wsCon, err := websocket.Accept(ctx.Writer, ctx.Request, &websocket.AcceptOptions{
 		InsecureSkipVerify: true,
 		CompressionMode:    websocket.CompressionContextTakeover,
@@ -58,7 +56,7 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context, crmUrl string) {
 		}
 	}()
 
-	err = handler.subscribe(ctx, wsCon, crmUrl)
+	err = handler.subscribe(ctx, wsCon, service.CRM_AUTH_URL)
 	if errors.Is(err, context.Canceled) {
 		return
 	}

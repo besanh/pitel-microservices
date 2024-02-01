@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -27,6 +28,7 @@ func NewOttMessage(r *gin.Engine, messageService service.IOttMessage, connection
 	Group := r.Group("bss-message/v1/ott")
 	{
 		Group.POST("", handler.GetOttMessage)
+		Group.GET("code-challenge/:app_id", handler.GetCodeChallenge)
 	}
 }
 
@@ -130,4 +132,26 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		code, result := h.ottMessageService.GetOttMessage(c, message)
 		c.JSON(code, result)
 	}
+}
+
+func (h *OttMessage) GetCodeChallenge(c *gin.Context) {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+	}
+	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	appId := c.Param("app_id")
+	if len(appId) < 1 {
+		c.JSON(response.BadRequestMsg("app_id is required"))
+		return
+	}
+
+	code, result := h.ottMessageService.GetCodeChallenge(c, res.Data, appId)
+	c.JSON(code, result)
 }
