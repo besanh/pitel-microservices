@@ -131,10 +131,12 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 								}
 
 								// Pick random
-								rand.NewSource(time.Now().UnixNano())
-								randomIndex := rand.Intn(len(userLives))
-								agent = userLives[randomIndex]
-								agentId = agent.UserId
+								if len(userLives) > 0 {
+									rand.NewSource(time.Now().UnixNano())
+									randomIndex := rand.Intn(len(userLives))
+									agent = userLives[randomIndex]
+									agentId = agent.UserId
+								}
 							} else {
 							}
 
