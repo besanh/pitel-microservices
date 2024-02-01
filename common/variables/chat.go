@@ -57,5 +57,6 @@ var (
 	EVENT_NAME_EXCLUDE map[string]string = map[string]string{
 		"oa_connection": "oa_connection",
 		"submit_info":   "submit_info",
+		"ask_info":      "ask_info",
 	}
 )

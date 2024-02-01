@@ -66,11 +66,21 @@ type OaInfoMessage struct {
 }
 
 type ShareInfo struct {
-	Address  string `json:"address"`
-	Phone    string `json:"phone"`
-	City     string `json:"city"`
-	District string `json:"district"`
-	Name     string `json:"name"`
+	Fullname    string `json:"fullname"`
+	PhoneNumber string `json:"phone_number"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	District    string `json:"district"`
+}
+
+type ShareInfoRequest struct {
+	AppId       string `json:"app_id"`
+	OaId        string `json:"oa_id"`
+	Fullname    string `json:"fullname"`
+	PhoneNumber string `json:"phone_number"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	District    string `json:"district"`
 }
 
 func (m *MessageRequest) Validate() error {

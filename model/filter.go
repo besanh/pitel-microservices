@@ -46,11 +46,12 @@ type ChatRoutingFilter struct {
 }
 
 type ConversationFilter struct {
-	AppId          []string
-	ConversationId []string
-	Username       string
-	PhoneNumber    string
-	Email          string
+	AppId          []string `json:"app_id"`
+	ConversationId []string `json:"conversation_id"`
+	Username       string   `json:"username"`
+	PhoneNumber    string   `json:"phone_number"`
+	Email          string   `json:"email"`
+	Insensitive    string   `json:"insensitive"`
 }
 
 type AgentAllocationFilter struct {

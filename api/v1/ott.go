@@ -17,18 +17,21 @@ import (
 type OttMessage struct {
 	ottMessageService    service.IOttMessage
 	connectionAppService service.IChatConnectionApp
+	conversationService  service.IConversation
 }
 
-func NewOttMessage(r *gin.Engine, messageService service.IOttMessage, connectionApp service.IChatConnectionApp) {
+func NewOttMessage(r *gin.Engine, messageService service.IOttMessage, connectionApp service.IChatConnectionApp, conversation service.IConversation) {
 	handler := &OttMessage{
 		ottMessageService:    messageService,
 		connectionAppService: connectionApp,
+		conversationService:  conversation,
 	}
 
 	Group := r.Group("bss-message/v1/ott")
 	{
 		Group.POST("", handler.GetOttMessage)
 		Group.GET("code-challenge/:app_id", handler.GetCodeChallenge)
+		Group.POST("ask-info", handler.GetShareInfo)
 	}
 }
 
@@ -38,7 +41,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		c.JSON(response.BadRequestMsg(err))
 		return
 	}
-	log.Info(jsonBody)
+	log.Info("ott get message body: ", jsonBody)
 	messageType, _ := jsonBody["type"].(string)
 	eventName, _ := jsonBody["event_name"].(string)
 	appId, _ := jsonBody["app_id"].(string)
@@ -81,12 +84,12 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	}
 
 	shareInfoTmp, _ := jsonBody["share_info"].(map[string]any)
-	shareInfo := model.ShareInfo{}
-	if shareInfoTmp != nil {
-		if err := util.ParseAnyToAny(shareInfoTmp, &shareInfo); err != nil {
-			c.JSON(response.BadRequestMsg(err))
-			return
-		}
+	shareInfo := model.ShareInfo{
+		Fullname:    shareInfoTmp["name"].(string),
+		PhoneNumber: shareInfoTmp["phone"].(string),
+		Address:     shareInfoTmp["address"].(string),
+		City:        shareInfoTmp["city"].(string),
+		District:    shareInfoTmp["district"].(string),
 	}
 
 	var message model.OttMessage
@@ -112,6 +115,10 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			return
 		}
 		c.JSON(response.OKResponse())
+	} else if eventName == "submit_info" {
+		code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, shareInfo)
+		c.JSON(code, result)
+		return
 	} else {
 		message = model.OttMessage{
 			MessageType:    messageType,
@@ -154,4 +161,29 @@ func (h *OttMessage) GetCodeChallenge(c *gin.Context) {
 
 	code, result := h.ottMessageService.GetCodeChallenge(c, res.Data, appId)
 	c.JSON(code, result)
+}
+
+func (h *OttMessage) GetShareInfo(c *gin.Context) {
+	// jsonBody := make(map[string]any, 0)
+	// if err := c.ShouldBindJSON(&jsonBody); err != nil {
+	// 	c.JSON(response.BadRequestMsg(err))
+	// 	return
+	// }
+	// log.Info("ott share info body: ", jsonBody)
+
+	// appId, _ := jsonBody["app_id"].(string)
+	// oaId, _ := jsonBody["oa_id"].(string)
+	// uid, _ := jsonBody["uid"].(string)
+	// imageUrl, _ := jsonBody["image_url"].(string)
+	// title, _ := jsonBody["title"].(string)
+	// subtitle, _ := jsonBody["subtitle"].(string)
+
+	// shareInfo := model.ShareInfo{
+	// 	Fullname:    title,
+	// 	PhoneNumber: uid,
+	// 	Address:     subtitle,
+	// 	City:        imageUrl,
+	// 	District:    oaId,
+	// }
+
 }
