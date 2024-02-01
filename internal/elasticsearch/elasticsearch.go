@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"io"
@@ -147,12 +148,16 @@ func TermsQuery(field string, values ...any) map[string]any {
 	}
 }
 
-func WildcardQuery(field string, value any) map[string]any {
+func WildcardQuery(field string, value any, insensitive sql.NullBool) map[string]any {
+	valueTmp := map[string]any{
+		"value": value,
+	}
+	if insensitive.Valid {
+		valueTmp["case_insensitive"] = insensitive.Bool
+	}
 	return map[string]any{
 		"wildcard": map[string]any{
-			field: map[string]any{
-				"value": value,
-			},
+			field: valueTmp,
 		},
 	}
 }

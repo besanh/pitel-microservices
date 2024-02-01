@@ -132,4 +132,8 @@ func (h *Message) ShareInfo(ctx *gin.Context) {
 		return
 	}
 
+	log.Info("share info body: ", shareInfo)
+
+	code, result := h.messageService.ShareInfo(ctx, res.Data, shareInfo)
+	ctx.JSON(code, result)
 }

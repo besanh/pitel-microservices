@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -20,6 +21,7 @@ type (
 		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any)
 		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
+		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
 	}
 	Message struct{}
 )
@@ -271,5 +273,35 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 			"list_fail":     listMessageIdFail,
 			"list_success":  listMessageIdSuccess,
 		})
+	}
+}
+
+func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any) {
+	body := map[string]string{
+		"name":     data.Fullname,
+		"phone":    data.PhoneNumber,
+		"address":  data.Address,
+		"city":     data.City,
+		"district": data.District,
+	}
+
+	url := OTT_URL
+	client := resty.New()
+
+	resp, err := client.R().
+		SetHeader("Accept", "application/json").
+		SetBody(body).
+		Post(url)
+	if err != nil {
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if resp.StatusCode() == 200 {
+		var result model.OttCodeChallenge
+		if err := json.Unmarshal([]byte(resp.Body()), &result); err != nil {
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		return response.OK(result)
+	} else {
+		return response.ServiceUnavailableMsg(resp.String())
 	}
 }

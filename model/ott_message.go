@@ -78,3 +78,15 @@ type OttAccount struct {
 type OttCodeChallenge struct {
 	Data string `json:"data"`
 }
+
+type OttShareInfo struct {
+	AppId       string `json:"app_id"`
+	OaId        string `json:"oa_id"`
+	Uid         string `json:"uid"`
+	Username    string `json:"username"`
+	Avatar      string `json:"avatar"`
+	Address     string `json:"address"`
+	City        string `json:"city"`
+	District    string `json:"district"`
+	PhoneNumber string `json:"phone_number"`
+}

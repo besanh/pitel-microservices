@@ -148,8 +148,8 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		log.Error(err)
 		return err
 	} else if chatConnectionAppExist == nil {
-		log.Error("connection app not found")
-		return errors.New("connection app not found")
+		log.Error("connection app " + id + " not found")
+		return errors.New("connection app " + id + " not found")
 	}
 
 	if len(data.ConnectionName) > 0 {
