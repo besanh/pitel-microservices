@@ -47,7 +47,7 @@ type ChatRoutingFilter struct {
 
 type ConversationFilter struct {
 	AppId          []string
-	ConversationId string
+	ConversationId []string
 	Username       string
 	PhoneNumber    string
 	Email          string
