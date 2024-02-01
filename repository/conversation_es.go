@@ -36,16 +36,22 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray(filter.AppId)...))
 	}
 	if len(filter.ConversationId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("external_user_id", util.ParseToAnyArray(filter.ConversationId)...))
+		// filters = append(filters, elasticsearch.TermsQuery("external_user_id", util.ParseToAnyArray(filter.ConversationId)...))
 	}
 	if len(filter.Username) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("username", util.ParseToAnyArray(filter.Username)...))
+		// Search like
+		filters = append(filters, elasticsearch.MustQuery(map[string]any{
+			"multi_match": map[string]any{
+				"query":  "%" + filter.Username + "%s",
+				"fields": []string{"username"},
+			},
+		}))
 	}
 	if len(filter.PhoneNumber) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("phone_number", util.ParseToAnyArray(filter.PhoneNumber)...))
+		// filters = append(filters, elasticsearch.TermsQuery("phone_number", util.ParseToAnyArray(filter.PhoneNumber)...))
 	}
 	if len(filter.Email) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("email", util.ParseToAnyArray(filter.Email)...))
+		// filters = append(filters, elasticsearch.TermsQuery("email", util.ParseToAnyArray(filter.Email)...))
 	}
 
 	boolQuery := map[string]any{

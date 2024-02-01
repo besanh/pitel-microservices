@@ -42,10 +42,10 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 
 	filter := model.ConversationFilter{
 		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
-		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
+		ConversationId: c.Query("conversation_id"),
 		Username:       c.Query("username"),
-		PhoneNumber:    util.ParseQueryArray(c.QueryArray("phone_number")),
-		Email:          util.ParseQueryArray(c.QueryArray("email")),
+		PhoneNumber:    c.Query("phone_number"),
+		Email:          c.Query("email"),
 	}
 
 	code, result := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
