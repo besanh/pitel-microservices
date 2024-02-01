@@ -75,21 +75,29 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	}
 
 	oaInfoMessageTmp, _ := jsonBody["oa_info"].(map[string]any)
+	oaInfoMessageCode, _ := oaInfoMessageTmp["code"].(float64)
 	oaInfoMessage := model.OaInfoMessage{}
-	if oaInfoMessageTmp != nil {
+	if oaInfoMessageCode == 200 {
 		if err := util.ParseAnyToAny(oaInfoMessageTmp, &oaInfoMessage); err != nil {
 			c.JSON(response.BadRequestMsg(err))
 			return
 		}
+	} else if oaInfoMessageCode != 200 {
+		log.Error("get oa info error: ", oaInfoMessageTmp)
+		c.JSON(response.BadRequestMsg("get oa info error"))
+		return
 	}
 
 	shareInfoTmp, _ := jsonBody["share_info"].(map[string]any)
-	shareInfo := model.ShareInfo{
-		Fullname:    shareInfoTmp["name"].(string),
-		PhoneNumber: shareInfoTmp["phone"].(string),
-		Address:     shareInfoTmp["address"].(string),
-		City:        shareInfoTmp["city"].(string),
-		District:    shareInfoTmp["district"].(string),
+	shareInfo := model.ShareInfo{}
+	if eventName != variables.EVENT_NAME_EXCLUDE["oa_connection"] {
+		shareInfo = model.ShareInfo{
+			Fullname:    shareInfoTmp["name"].(string),
+			PhoneNumber: shareInfoTmp["phone"].(string),
+			Address:     shareInfoTmp["address"].(string),
+			City:        shareInfoTmp["city"].(string),
+			District:    shareInfoTmp["district"].(string),
+		}
 	}
 
 	var message model.OttMessage
