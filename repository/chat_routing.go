@@ -27,6 +27,9 @@ func NewChatRouting() IChatRouting {
 func (repo *ChatRouting) GetChatRoutings(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatRoutingFilter, limit, offset int) (int, *[]model.ChatRouting, error) {
 	result := new([]model.ChatRouting)
 	query := db.GetDB().NewSelect().Model(result)
+	if len(filter.TenantId) > 0 {
+		query.Where("tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.RoutingName) > 0 {
 		query.Where("routing_name = ?", filter.RoutingName)
 	}

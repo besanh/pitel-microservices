@@ -45,10 +45,11 @@ func (s *ChatQueueAgent) InsertChatQueueAgent(ctx context.Context, authUser *mod
 
 	for _, item := range data.AgentId {
 		chatQueueAgent := model.ChatQueueAgent{
-			Base:    model.InitBase(),
-			QueueId: data.QueueId,
-			AgentId: item,
-			Source:  authUser.Source,
+			Base:     model.InitBase(),
+			TenantId: authUser.TenantId,
+			QueueId:  data.QueueId,
+			AgentId:  item,
+			Source:   authUser.Source,
 		}
 		err = repository.ChatQueueAgentRepo.Insert(ctx, dbCon, chatQueueAgent)
 		if err != nil {
@@ -101,10 +102,11 @@ func (s *ChatQueueAgent) UpdateChatQueueAgentById(ctx context.Context, authUser 
 		}
 
 		chatQueueAgent := model.ChatQueueAgent{
-			Base:    model.InitBase(),
-			QueueId: data.QueueId,
-			AgentId: item,
-			Source:  authUser.Source,
+			Base:     model.InitBase(),
+			TenantId: authUser.TenantId,
+			QueueId:  data.QueueId,
+			AgentId:  item,
+			Source:   authUser.Source,
 		}
 		if err = repository.ChatQueueAgentRepo.Insert(ctx, dbCon, chatQueueAgent); err != nil {
 			log.Error(err)

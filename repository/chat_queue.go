@@ -53,6 +53,9 @@ func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientCon
 		}).
 		Relation("ChatRouting").
 		Relation("ChatQueueAgent")
+	if len(filter.TenantId) > 0 {
+		query.Where("tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.QueueName) > 0 {
 		query.Where("queue_name = ?", filter.QueueName)
 	}

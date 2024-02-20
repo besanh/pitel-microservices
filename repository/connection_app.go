@@ -34,6 +34,9 @@ func NewConnectionApp() IChatConnectionApp {
 func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error) {
 	result := new([]model.ChatConnectionApp)
 	query := db.GetDB().NewSelect().Model(result)
+	if len(filter.TenantId) > 0 {
+		query.Where("tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.ConnectionName) > 0 {
 		query.Where("connection_name = ?", filter.ConnectionName)
 	}

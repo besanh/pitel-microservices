@@ -6,6 +6,7 @@ import (
 )
 
 type Message struct {
+	TenantId            string                `json:"tenant_id"`
 	ParentMessageId     string                `json:"parent_message_id"`
 	Id                  string                `json:"id"`
 	ConversationId      string                `json:"conversation_id"`

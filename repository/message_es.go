@@ -28,6 +28,9 @@ func NewMessageES() IMessageES {
 func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit, offset int) (int, *[]model.Message, error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
+	if len(tenantId) > 0 {
+		filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
+	}
 	if len(filter.AppId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray([]string{filter.AppId})...))
 	}
