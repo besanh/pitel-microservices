@@ -11,6 +11,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -48,7 +49,10 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 		if total > 0 {
-			conversation = (*conversations)[0]
+			if err := util.ParseAnyToAny((*conversations)[0], &conversation); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
 			if err := cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
@@ -82,7 +86,6 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		Type:          conversation.ConversationType,
 		EventName:     eventName,
 		AppId:         conversation.AppId,
-		UserIdByApp:   conversation.UserIdByApp,
 		OaId:          conversation.OaId,
 		Uid:           conversation.ExternalUserId,
 		SupporterId:   authUser.UserId,
@@ -101,6 +104,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	// Store ES
 	message := model.Message{
+		TenantId:            conversation.TenantId,
 		ParentExternalMsgId: "",
 		Id:                  docId,
 		MessageType:         conversation.ConversationType,
@@ -110,7 +114,6 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		Direction:           variables.DIRECTION["send"],
 		AppId:               conversation.AppId,
 		OaId:                conversation.OaId,
-		UserIdByApp:         conversation.UserIdByApp,
 		Avatar:              conversation.Avatar,
 		SupporterId:         authUser.UserId,
 		SupporterName:       authUser.Username,
@@ -120,7 +123,9 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		Attachments:         data.Attachments,
 	}
 	log.Info("message to es: ", message)
-	if err := InsertES(ctx, conversation.AppId, ES_INDEX, docId, message); err != nil {
+
+	// Should to queue
+	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, docId, message); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}

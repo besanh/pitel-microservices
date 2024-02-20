@@ -39,16 +39,16 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 		log.Error(err)
 		return docId, err
 	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, conversation.AppId); err != nil {
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, conversation.TenantId); err != nil {
 		log.Error(err)
 		return docId, err
 	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, conversation.AppId); err != nil {
+		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, conversation.TenantId); err != nil {
 			log.Error(err)
 			return docId, err
 		}
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.AppId, ES_INDEX, docId, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX, docId, esDoc); err != nil {
 		log.Error(err)
 		return docId, err
 	}
@@ -87,7 +87,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				ConversationId: conv.ConversationId,
 				IsRead:         "deactive",
 			}
-			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filter, -1, 0)
+			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
 			if err != nil {
 				log.Error(err)
 				break
@@ -97,12 +97,12 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 			filterMessage := model.MessageFilter{
 				ConversationId: conv.ConversationId,
 			}
-			total, message, err := repository.MessageESRepo.GetMessages(ctx, conv.AppId, ES_INDEX, filterMessage, 1, 0)
+			totalTmp, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
 			if err != nil {
 				log.Error(err)
 				break
 			}
-			if total > 0 {
+			if totalTmp > 0 {
 				conv.LatestMessageContent = (*message)[0].Content
 			}
 

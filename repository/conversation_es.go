@@ -14,7 +14,7 @@ import (
 
 type (
 	IConversationES interface {
-		GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.Conversation, error)
+		GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.ConversationView, error)
 		GetConversationById(ctx context.Context, appId, index, id string) (*model.Conversation, error)
 	}
 	ConversationES struct {
@@ -27,7 +27,7 @@ func NewConversationES() IConversationES {
 	return &ConversationES{}
 }
 
-func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.Conversation, error) {
+func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.ConversationView, error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
 	insensitiveBool, _ := strconv.ParseBool(filter.Insensitive)
@@ -113,11 +113,11 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
 		return 0, nil, err
 	}
-	result := []model.Conversation{}
+	result := []model.ConversationView{}
 	total := body.Hits.Total.Value
 	// mapping
 	for _, bodyHits := range body.Hits.Hits {
-		data := model.Conversation{}
+		data := model.ConversationView{}
 		if err := util.ParseAnyToAny(bodyHits.Source, &data); err != nil {
 			return 0, nil, err
 		}
