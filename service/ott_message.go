@@ -20,6 +20,7 @@ type (
 	IOttMessage interface {
 		GetOttMessage(ctx context.Context, data model.OttMessage) (int, any)
 		GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any)
+		// GetShareInfo(ctx context.Context, )
 	}
 	OttMessage struct{}
 )
@@ -79,15 +80,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 
-	var agentId string
+	var authInfo model.AuthUser
 
 	// TODO: check queue setting
-	agentId, err := CheckChatSetting(ctx, message)
+	authInfo, err := CheckChatSetting(ctx, message)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if len(agentId) > 0 {
+
+	data.TenantId = authInfo.TenantId
+	message.TenantId = authInfo.TenantId
+
+	if len(authInfo.UserId) > 0 {
 		// TODO: check conversation and add message
 		conversation, isNew, err := UpSertConversation(ctx, data)
 		if err != nil {
@@ -99,7 +104,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if len(conversation.ConversationId) > 0 {
 			message.ConversationId = conversation.ConversationId
 			message.IsRead = "deactive"
-			if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {
+			if err := InsertES(ctx, data.TenantId, ES_INDEX, docId, message); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
@@ -117,7 +122,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					"conversation": conversation,
 				},
 			}
-			PublishMessageToOne(agentId, event)
+			PublishMessageToOne(authInfo.UserId, event)
 		}
 		event := map[string]any{
 			"event_name": "message_created",
@@ -125,7 +130,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				"message": message,
 			},
 		}
-		PublishMessageToOne(agentId, event)
+		PublishMessageToOne(authInfo.UserId, event)
 	} else {
 		// TODO: check conversation and add message
 		conversation, _, err := UpSertConversation(ctx, data)
@@ -138,7 +143,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if len(conversation.ConversationId) > 0 {
 			message.ConversationId = conversation.ConversationId
 			message.IsRead = "deactive"
-			if err := InsertES(ctx, data.AppId, ES_INDEX, docId, message); err != nil {
+			if err := InsertES(ctx, data.TenantId, ES_INDEX, docId, message); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}

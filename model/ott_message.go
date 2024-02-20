@@ -1,6 +1,7 @@
 package model
 
 type OttMessage struct {
+	TenantId       string            `json:"tenant_id"`
 	MessageType    string            `json:"message_type"`
 	EventName      string            `json:"event_name"`
 	AppId          string            `json:"app_id"`

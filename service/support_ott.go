@@ -10,13 +10,14 @@ import (
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 	"golang.org/x/exp/slices"
 )
 
-func CheckChatSetting(ctx context.Context, message model.Message) (string, error) {
-	var agentId string
+func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUser, error) {
+	var authInfo model.AuthUser
 	var userLives []Subscriber
 	var agent Subscriber
 
@@ -25,10 +26,11 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 		agentTmp := Subscriber{}
 		if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
 			log.Error(err)
-			return agentId, err
+			return authInfo, err
 		}
 		agent = agentTmp
-		agentId = agent.UserId
+		authInfo.TenantId = agent.TenantId
+		authInfo.UserId = agent.UserId
 	} else {
 		filter := model.AgentAllocationFilter{
 			ConversationId: message.ExternalUserId,
@@ -36,10 +38,11 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 		total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
-			return agentId, err
+			return authInfo, err
 		}
 		if total > 0 {
-			agentId = (*agentAllocations)[0].AgentId
+			authInfo.TenantId = (*agentAllocations)[0].TenantId
+			authInfo.UserId = (*agentAllocations)[0].AgentId
 		} else {
 			// Get connection
 			connectionType := ""
@@ -57,7 +60,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 			totalConnection, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionFilter, 1, 0)
 			if err != nil {
 				log.Error(err)
-				return agentId, err
+				return authInfo, err
 			}
 			if totalConnection > 0 {
 				filter := model.ConnectionQueueFilter{
@@ -66,7 +69,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 				totalConnectionQueue, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, filter, -1, 0)
 				if err != nil {
 					log.Error(err)
-					return agentId, err
+					return authInfo, err
 				}
 				if totalConnectionQueue > 0 {
 					filterAgentAllocation := model.AgentAllocationFilter{
@@ -76,18 +79,19 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 					totalAgentAllocation, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filterAgentAllocation, -1, 0)
 					if err != nil {
 						log.Error(err)
-						return agentId, err
+						return authInfo, err
 					}
 					if totalAgentAllocation > 0 {
-						agentId = (*agentAllocations)[0].AgentId
+						authInfo.TenantId = (*agentAllocations)[0].TenantId
+						authInfo.UserId = (*agentAllocations)[0].AgentId
 						for s := range WsSubscribers.Subscribers {
-							if s.UserId == agentId && (s.Level == "user" || s.Level == "agent") {
+							if s.UserId == authInfo.UserId && (s.Level == "user" || s.Level == "agent") {
 								agent = *s
 							}
 						}
 						if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
 							log.Error(err)
-							return agentId, err
+							return authInfo, err
 						}
 					} else {
 						// Connection prevent duplicate
@@ -95,19 +99,19 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 						queue, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, (*connectionQueues)[0].QueueId)
 						if err != nil {
 							log.Error(err)
-							return agentId, err
+							return authInfo, err
 						} else if queue == nil {
 							log.Error("queue " + (*connectionQueues)[0].QueueId + " not found")
-							return agentId, errors.New("queue " + (*connectionQueues)[0].QueueId + " not found")
+							return authInfo, errors.New("queue " + (*connectionQueues)[0].QueueId + " not found")
 						}
 
 						chatRouting, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, queue.ChatRoutingId)
 						if err != nil {
 							log.Error(err)
-							return agentId, err
+							return authInfo, err
 						} else if chatRouting == nil {
 							log.Error("chat routing " + queue.ChatRoutingId + " not found")
-							return agentId, errors.New("chat routing " + queue.ChatRoutingId + " not found")
+							return authInfo, errors.New("chat routing " + queue.ChatRoutingId + " not found")
 						}
 
 						filterQueueAgent := model.ChatQueueAgentFilter{
@@ -116,7 +120,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 						totalQueueAgents, queueAgents, err := repository.ChatQueueAgentRepo.GetChatQueueAgents(ctx, repository.DBConn, filterQueueAgent, -1, 0)
 						if err != nil {
 							log.Error(err)
-							return agentId, err
+							return authInfo, err
 						}
 						if totalQueueAgents > 0 {
 							if strings.ToLower(chatRouting.RoutingName) == "random" {
@@ -135,7 +139,8 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 									rand.NewSource(time.Now().UnixNano())
 									randomIndex := rand.Intn(len(userLives))
 									agent = userLives[randomIndex]
-									agentId = agent.UserId
+									authInfo.TenantId = agent.TenantId
+									authInfo.UserId = agent.UserId
 								}
 							} else {
 							}
@@ -143,6 +148,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 							if len(userLives) > 0 {
 								agentAllocation := model.AgentAllocation{
 									Base:               model.InitBase(),
+									TenantId:           (*connectionApps)[0].TenantId,
 									ConversationId:     message.ExternalUserId,
 									AgentId:            agent.UserId,
 									QueueId:            queue.Id,
@@ -150,43 +156,43 @@ func CheckChatSetting(ctx context.Context, message model.Message) (string, error
 								}
 								if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
 									log.Error(err)
-									return agentId, err
+									return authInfo, err
 								}
 
 								if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
 									log.Error(err)
-									return agentId, err
+									return authInfo, err
 								}
 
-								return agentId, nil
+								return authInfo, nil
 							} else {
 								log.Error("agent not available")
-								return agentId, errors.New("agent not available")
+								return authInfo, errors.New("agent not available")
 							}
 						} else {
 							log.Error("queue agent not found")
-							return agentId, errors.New("queue agent not found")
+							return authInfo, errors.New("queue agent not found")
 						}
 					}
 				} else {
 					log.Error("queue not found")
-					return agentId, errors.New("queue not found")
+					return authInfo, errors.New("queue not found")
 				}
 			} else {
 				log.Error("connection not found")
-				return agentId, errors.New("connection " + message.OaId + " not found")
+				return authInfo, errors.New("connection " + message.OaId + " not found")
 			}
 		}
 	}
-	return agentId, nil
+	return authInfo, nil
 }
 
 func UpSertConversation(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
 	conversation = model.Conversation{
+		TenantId:         data.TenantId,
 		ConversationId:   data.ExternalUserId,
 		AppId:            data.AppId,
 		ConversationType: data.MessageType,
-		UserIdByApp:      data.UserIdByApp,
 		Username:         data.Username,
 		Avatar:           data.Avatar,
 		OaId:             data.OaId,
@@ -218,7 +224,10 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 			return conversation, isNew, err
 		}
 		if total > 0 {
-			conversation = (*conversations)[0]
+			if err := util.ParseAnyToAny((*conversations)[0], &conversation); err != nil {
+				log.Error(err)
+				return conversation, isNew, err
+			}
 			conversation.ShareInfo = data.ShareInfo
 
 			tmpBytes, err := json.Marshal(conversation)
@@ -275,16 +284,16 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 		log.Error(err)
 		return id, err
 	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX_CONVERSATION, conversation.AppId); err != nil {
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX_CONVERSATION, conversation.TenantId); err != nil {
 		log.Error(err)
 		return id, err
 	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX_CONVERSATION, conversation.AppId); err != nil {
+		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX_CONVERSATION, conversation.TenantId); err != nil {
 			log.Error(err)
 			return id, err
 		}
 	}
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, conversation.AppId, ES_INDEX_CONVERSATION, id)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, id)
 	if err != nil {
 		log.Error(err)
 		return id, err
@@ -292,7 +301,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 		log.Errorf("conversation %s not found", id)
 		return id, errors.New("conversation not found")
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.AppId, ES_INDEX_CONVERSATION, id, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, id, esDoc); err != nil {
 		log.Error(err)
 		return id, err
 	}

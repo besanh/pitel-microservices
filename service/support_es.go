@@ -8,7 +8,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func InsertES(ctx context.Context, appId, index, docId string, data any) error {
+func InsertES(ctx context.Context, tenantId, index, docId string, data any) error {
 	tmpBytes, err := json.Marshal(data)
 	if err != nil {
 		log.Error(err)
@@ -19,17 +19,17 @@ func InsertES(ctx context.Context, appId, index, docId string, data any) error {
 		log.Error(err)
 		return err
 	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, index, appId); err != nil {
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, index, tenantId); err != nil {
 		log.Error(err)
 		return err
 	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, index, appId); err != nil {
+		if err := repository.ESRepo.CreateAlias(ctx, index, tenantId); err != nil {
 			log.Error(err)
 			return err
 		}
 	}
 
-	err = repository.ESRepo.InsertLog(ctx, appId, ES_INDEX, docId, esDoc)
+	err = repository.ESRepo.InsertLog(ctx, tenantId, ES_INDEX, docId, esDoc)
 	if err != nil {
 		log.Error(err)
 		return err
