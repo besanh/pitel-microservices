@@ -5,6 +5,7 @@ import (
 )
 
 type Conversation struct {
+	TenantId             string          `json:"tenant_id"`
 	ConversationId       string          `json:"conversation_id"`
 	ConversationType     string          `json:"conversation_type"`
 	AppId                string          `json:"app_id"`

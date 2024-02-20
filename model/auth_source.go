@@ -5,10 +5,11 @@ import "github.com/uptrace/bun"
 type AuthSource struct {
 	bun.BaseModel `bun:"table:auth_source"`
 	*Base
-	Source  string `json:"source"`
-	AuthUrl string `json:"auth_url"`
-	Info    *Info  `json:"info"`
-	Status  bool   `json:"status"`
+	TenantId string `json:"tenant_id"`
+	Source   string `json:"source"`
+	AuthUrl  string `json:"auth_url"`
+	Info     *Info  `json:"info"`
+	Status   bool   `json:"status"`
 }
 
 type Info struct {

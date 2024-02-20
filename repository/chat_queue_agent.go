@@ -29,6 +29,9 @@ func NewChatQueueAgent() IChatQueueAgent {
 func (repo *ChatQueueAgent) GetChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatQueueAgentFilter, limit, offset int) (int, *[]model.ChatQueueAgent, error) {
 	result := new([]model.ChatQueueAgent)
 	query := db.GetDB().NewSelect().Model(result)
+	if len(filter.TenantId) > 0 {
+		query.Where("tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id IN (?)", bun.In(filter.QueueId))
 	}

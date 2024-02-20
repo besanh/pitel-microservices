@@ -12,6 +12,7 @@ import (
 type ChatRouting struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_routing,alias:cr"`
+	TenantId      string `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	RoutingName   string `json:"routing_name" bun:"routing_name,type:text,notnull"`
 	RoutingAlias  string `json:"routing_alias" bun:"routing_alias,type:text,notnull"`
 	Status        bool   `json:"status" bun:"status,notnull"`

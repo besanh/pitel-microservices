@@ -34,6 +34,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	}
 	connectionApp := model.ChatConnectionApp{
 		Id:             id,
+		TenantId:       authUser.TenantId,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		ConnectionName: data.ConnectionName,
@@ -85,6 +86,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	if len(data.QueueId) > 0 {
 		connectionQueue := model.ConnectionQueue{
 			Base:         model.InitBase(),
+			TenantId:     authUser.TenantId,
 			ConnectionId: connectionApp.Id,
 			QueueId:      data.QueueId,
 		}
@@ -196,6 +198,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if len(data.OaId) < 1 {
 		connectionQueue := model.ConnectionQueue{
 			Base:         model.InitBase(),
+			TenantId:     chatConnectionAppExist.TenantId,
 			ConnectionId: chatConnectionAppExist.Id,
 			QueueId:      data.QueueId,
 		}

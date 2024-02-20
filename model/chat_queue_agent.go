@@ -9,6 +9,7 @@ import (
 type ChatQueueAgent struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_queue_agent,alias:qa"`
+	TenantId      string     `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	QueueId       string     `json:"queue_id" bun:"queue_id,type:uuid,notnull"`
 	ChatQueue     *ChatQueue `json:"chat_queue" bun:"rel:belongs-to,join:queue_id=id"`
 	AgentId       string     `json:"agent_id" bun:"agent_id,type:text,notnull"`

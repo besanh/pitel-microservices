@@ -27,6 +27,9 @@ func NewAuthSource() IAuthSource {
 func (s *AuthSource) GetAuthSource(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AuthSourceFilter, limit, offset int) (int, *[]model.AuthSource, error) {
 	result := new([]model.AuthSource)
 	query := db.GetDB().NewSelect().Model(result)
+	if len(filter.TenantId) > 0 {
+		query.Where("tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.Source) > 0 {
 		query.Where("source = ?", filter.Source)
 	}

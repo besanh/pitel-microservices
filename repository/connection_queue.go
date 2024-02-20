@@ -28,6 +28,9 @@ func NewConnectionQueue() IConnectionQueue {
 func (repo *ConnectionQueue) GetConnectionQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ConnectionQueueFilter, limit, offset int) (int, *[]model.ConnectionQueue, error) {
 	result := new([]model.ConnectionQueue)
 	query := db.GetDB().NewSelect().Model(result)
+	if len(filter.TenantId) > 0 {
+		query.Where("tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
 	}

@@ -28,6 +28,9 @@ func NewAgentAllocation() IAgentAllocation {
 func (repo *AgentAllocation) GetAgentAllocations(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AgentAllocationFilter, limit, offset int) (int, *[]model.AgentAllocation, error) {
 	result := new([]model.AgentAllocation)
 	query := db.GetDB().NewSelect().Model(result)
+	if len(filter.TenantId) > 0 {
+		query.Where("tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.AgentId) > 0 {
 		query.Where("agent_id IN (?)", bun.In(filter.AgentId))
 	}

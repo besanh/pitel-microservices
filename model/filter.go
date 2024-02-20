@@ -6,8 +6,9 @@ import (
 )
 
 type AuthSourceFilter struct {
-	Source string
-	Status sql.NullBool
+	TenantId string `json:"tenant_id"`
+	Source   string
+	Status   sql.NullBool
 }
 
 type AppFilter struct {
@@ -20,6 +21,7 @@ type AppFilter struct {
 
 type ChatConnectionAppFilter struct {
 	AppId          string
+	TenantId       string `json:"tenant_id"`
 	ConnectionName string
 	ConnectionType string
 	QueueId        string
@@ -28,18 +30,21 @@ type ChatConnectionAppFilter struct {
 }
 
 type QueueFilter struct {
+	TenantId      string `json:"tenant_id"`
 	QueueId       []string
 	QueueName     string
 	ChatRoutingId string
 }
 
 type ChatQueueAgentFilter struct {
-	QueueId []string
-	AgentId []string
-	Source  string
+	TenantId string `json:"tenant_id"`
+	QueueId  []string
+	AgentId  []string
+	Source   string
 }
 
 type ChatRoutingFilter struct {
+	TenantId     string       `json:"tenant_id"`
 	RoutingName  string       `json:"routing_name"`
 	RoutingAlias string       `json:"routing_alias"`
 	Status       sql.NullBool `json:"status"`
@@ -47,6 +52,7 @@ type ChatRoutingFilter struct {
 
 type ConversationFilter struct {
 	AppId          []string `json:"app_id"`
+	TenantId       string   `json:"tenant_id"`
 	ConversationId []string `json:"conversation_id"`
 	Username       string   `json:"username"`
 	PhoneNumber    string   `json:"phone_number"`
@@ -55,6 +61,7 @@ type ConversationFilter struct {
 }
 
 type AgentAllocationFilter struct {
+	TenantId       string `json:"tenant_id"`
 	ConversationId string
 	AgentId        []string
 	QueueId        string
@@ -62,6 +69,7 @@ type AgentAllocationFilter struct {
 }
 
 type MessageFilter struct {
+	TenantId            []string        `json:"tenant_id"`
 	MessageId           []string        `json:"message_id"`
 	ParentMessageId     string          `json:"parent_message_id"`
 	ConversationId      string          `json:"conversation_id"`
@@ -84,6 +92,7 @@ type MessageFilter struct {
 }
 
 type ConnectionQueueFilter struct {
+	TenantId     string `json:"tenant_id"`
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
 }

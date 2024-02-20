@@ -46,11 +46,12 @@ func (s *AuthSource) InsertAuthSource(ctx context.Context, authUser *model.AuthU
 	}
 
 	authSource := model.AuthSource{
-		Base:    &model.Base{},
-		Source:  data.Source,
-		AuthUrl: data.AuthUrl,
-		Info:    data.Info,
-		Status:  data.Status,
+		Base:     &model.Base{},
+		TenantId: authUser.TenantId,
+		Source:   data.Source,
+		AuthUrl:  data.AuthUrl,
+		Info:     data.Info,
+		Status:   data.Status,
 	}
 
 	if err := repository.AuthSourceRepo.Insert(ctx, dbCon, authSource); err != nil {

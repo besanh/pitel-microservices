@@ -49,6 +49,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 		for _, item := range data.ConnectionId {
 			connectionAgent := model.ConnectionQueue{
 				Base:         model.InitBase(),
+				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      chatQueue.Base.GetId(),
 				Status:       data.Status,
@@ -64,6 +65,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 		}
 	}
 
+	chatQueue.TenantId = authUser.TenantId
 	chatQueue.QueueName = data.QueueName
 	chatQueue.Description = data.Description
 	chatQueue.ChatRoutingId = data.ChatRoutingId
@@ -182,6 +184,7 @@ func (s *ChatQueue) UpdateChatQueueById(ctx context.Context, authUser *model.Aut
 		for _, item := range data.ConnectionId {
 			connectionAgent := model.ConnectionQueue{
 				Base:         model.InitBase(),
+				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      queueExist.Id,
 				Status:       data.Status,

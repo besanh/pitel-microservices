@@ -62,6 +62,7 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	chatRouting.RoutingName = data.RoutingName
 	chatRouting.RoutingAlias = data.RoutingAlias
 	chatRouting.Status = data.Status
+	chatRouting.TenantId = authUser.TenantId
 
 	if err := repository.ChatRoutingRepo.Insert(ctx, dbConn, chatRouting); err != nil {
 		log.Error(err)
