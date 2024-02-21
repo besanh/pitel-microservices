@@ -34,7 +34,6 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -42,7 +41,6 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -74,7 +72,6 @@ func (handler *ChatConnectionApp) InsertChatConnectionApp(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -82,7 +79,6 @@ func (handler *ChatConnectionApp) InsertChatConnectionApp(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -122,7 +118,6 @@ func (handler *ChatConnectionApp) GetChatConnectionAppById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -130,7 +125,6 @@ func (handler *ChatConnectionApp) GetChatConnectionAppById(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -163,7 +157,6 @@ func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -171,7 +164,6 @@ func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -209,7 +201,6 @@ func (handler *ChatConnectionApp) DeleteChatConnectionAppById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -217,7 +208,6 @@ func (handler *ChatConnectionApp) DeleteChatConnectionAppById(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 

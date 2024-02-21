@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -82,6 +83,24 @@ func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *
 }
 
 func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse, err error) {
+	clientInfo := resty.New()
+	urlInfo := bssAuthRequest.AuthUrl + "/v1/crm/auth/auth-info"
+	res, err := clientInfo.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
+		Get(urlInfo)
+	if err != nil {
+		return nil, err
+	}
+	var resInfo map[string]any
+	if err := json.Unmarshal(res.Body(), &resInfo); err != nil {
+		return result, err
+	}
+	userUuid, _ := resInfo["user_uuid"].(string)
+	if len(userUuid) < 1 {
+		return nil, errors.New("invalid user uuid")
+	}
+
 	// Get Info agent
 	agentInfo := model.AuthUserInfo{}
 	agentInfoCache := cache.MCache.Get(AGENT_INFO + "_" + bssAuthRequest.Token)
@@ -91,12 +110,11 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			return nil, err
 		}
 	} else {
-		urlInfo := bssAuthRequest.AuthUrl + "/v1/crm/user-crm/" + bssAuthRequest.UserId
-		clientInfo := resty.New()
+		url := bssAuthRequest.AuthUrl + "/v1/crm/user-crm/" + userUuid
 		res, err := clientInfo.R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
-			Get(urlInfo)
+			Get(url)
 		if err != nil {
 			return nil, err
 		}

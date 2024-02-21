@@ -33,7 +33,6 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -41,7 +40,6 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -81,7 +79,6 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -89,7 +86,6 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -119,7 +115,6 @@ func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -127,7 +122,6 @@ func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -158,7 +152,6 @@ func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -166,7 +159,6 @@ func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
@@ -204,7 +196,6 @@ func (handler *ChatQueue) DeleteChatQueueById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	if len(c.GetHeader("validator-header")) > 0 {
@@ -212,7 +203,6 @@ func (handler *ChatQueue) DeleteChatQueueById(c *gin.Context) {
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
 			Source:  c.GetHeader("source"),
-			UserId:  c.GetHeader("user_id"),
 		}
 	}
 
