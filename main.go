@@ -164,7 +164,6 @@ func main() {
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.ES_INDEX = env.GetStringENV("ES_INDEX", "pitel_bss_chat")
 	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
-	service.CRM_AUTH_URL = env.GetStringENV("CRM_URL", "")
 	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
 	service.InitServices()
 

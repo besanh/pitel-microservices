@@ -14,7 +14,7 @@ import (
 type (
 	IChatQueue interface {
 		InsertChatQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequest) (string, error)
-		GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int, token string) (int, *[]model.ChatQueue, error)
+		GetChatQueues(ctx context.Context, authUser *model.AuthUser, bssAuthRequest model.BssAuthRequest, filter model.QueueFilter, limit, offset int, token string) (int, *[]model.ChatQueue, error)
 		GetChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatQueue, error)
 		UpdateChatQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequest) error
 		DeleteChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) error
@@ -79,7 +79,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 	return chatQueue.Base.GetId(), nil
 }
 
-func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int, token string) (int, *[]model.ChatQueue, error) {
+func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser, bssAuthRequest model.BssAuthRequest, filter model.QueueFilter, limit, offset int, token string) (int, *[]model.ChatQueue, error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -97,7 +97,7 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 			for i, item := range *queues {
 				for j, val := range item.ChatQueueAgent {
 					if val.Source == "authen" {
-						authUser, err := common.GetUserAuthenticated(CRM_AUTH_URL, token, val.AgentId)
+						authUser, err := common.GetUserAuthenticated(bssAuthRequest.AuthUrl, token, val.AgentId)
 						if err != nil {
 							log.Error(err)
 							return 0, nil, err

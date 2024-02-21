@@ -33,8 +33,19 @@ func (h *Message) SendMessage(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -67,8 +78,19 @@ func (h *Message) GetMessages(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -90,8 +112,18 @@ func (h *Message) MarkReadMessages(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -114,26 +146,36 @@ func (h *Message) MarkReadMessages(c *gin.Context) {
 	c.JSON(code, result)
 }
 
-func (h *Message) ShareInfo(ctx *gin.Context) {
+func (h *Message) ShareInfo(c *gin.Context) {
 	bssAuthRequest := model.BssAuthRequest{
-		Token:   ctx.Query("token"),
-		AuthUrl: ctx.Query("auth_url"),
-		Source:  ctx.Query("source"),
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
-	res := api.AAAMiddleware(ctx, service.CRM_AUTH_URL, bssAuthRequest)
+
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
-		ctx.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
 
 	shareInfo := model.ShareInfo{}
-	if err := ctx.ShouldBindJSON(&shareInfo); err != nil {
-		ctx.JSON(response.BadRequestMsg(err.Error()))
+	if err := c.ShouldBindJSON(&shareInfo); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
 	log.Info("share info body: ", shareInfo)
 
-	code, result := h.messageService.ShareInfo(ctx, res.Data, shareInfo)
-	ctx.JSON(code, result)
+	code, result := h.messageService.ShareInfo(c, res.Data, shareInfo)
+	c.JSON(code, result)
 }

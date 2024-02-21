@@ -56,7 +56,7 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context) {
 		}
 	}()
 
-	err = handler.subscribe(ctx, wsCon, service.CRM_AUTH_URL)
+	err = handler.subscribe(ctx, wsCon)
 	if errors.Is(err, context.Canceled) {
 		return
 	}
@@ -70,7 +70,7 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context) {
 	}
 }
 
-func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmUrl string) error {
+func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error {
 	if len(c.Query("source")) < 1 {
 		return errors.New("source is required")
 	}
@@ -89,9 +89,10 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn, crmUr
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
 
-	res := api.AAAMiddleware(c, crmUrl, bssAuthRequest)
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		return errors.New("token is invalid")
 	}

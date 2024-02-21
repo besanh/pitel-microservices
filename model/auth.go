@@ -26,4 +26,5 @@ type BssAuthRequest struct {
 	Token   string `json:"token"`
 	AuthUrl string `json:"auth_url"`
 	Source  string `json:"source"`
+	UserId  string `json:"user_id"`
 }
