@@ -33,9 +33,19 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
 
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -71,9 +81,19 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
 
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -86,7 +106,7 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		QueueName: c.Query("queue_name"),
 	}
 
-	total, chatQueues, err := handler.chatQueueService.GetChatQueues(c, res.Data, filter, limit, offset, res.Data.Token)
+	total, chatQueues, err := handler.chatQueueService.GetChatQueues(c, res.Data, bssAuthRequest, filter, limit, offset, res.Data.Token)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
@@ -99,9 +119,19 @@ func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
 
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -128,9 +158,19 @@ func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
 
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -164,9 +204,19 @@ func (handler *ChatQueue) DeleteChatQueueById(c *gin.Context) {
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
+		UserId:  c.Query("user_id"),
 	}
 
-	res := api.AAAMiddleware(c, service.CRM_AUTH_URL, bssAuthRequest)
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+			UserId:  c.GetHeader("user_id"),
+		}
+	}
+
+	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

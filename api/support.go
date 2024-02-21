@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -41,12 +40,12 @@ func MoveTokenToHeader() gin.HandlerFunc {
 	}
 }
 
-func AAAMiddleware(ctx *gin.Context, crmUrl string, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse) {
+func AAAMiddleware(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse) {
 	if len(bssAuthRequest.Token) < 10 {
 		return nil
 	}
 	if bssAuthRequest.Source == "authen" {
-		result, err := RequestAuthen(ctx, bssAuthRequest, crmUrl)
+		result, err := RequestAuthen(ctx, bssAuthRequest)
 		if err != nil {
 			return nil
 		}
@@ -82,61 +81,48 @@ func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *
 	return result, nil
 }
 
-func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmUrl string) (result *model.AAAResponse, err error) {
-	apiKey := bssAuthRequest.Token
-	body := map[string]string{
-		"api_key": apiKey,
-	}
-	var token string
-	resp := model.Authen{}
-	tokenCache := cache.MCache.Get(AUTHEN_TOKEN + "_" + apiKey)
-	if tokenCache != nil {
-		if err := util.ParseAnyToAny(tokenCache, &resp); err != nil {
-			log.Error(err)
-			return nil, err
-		}
-	} else {
-		client := resty.New()
-		res, err := client.R().
-			SetHeader("Content-Type", "application/json").
-			SetBody(body).
-			SetResult(resp).
-			Post(bssAuthRequest.AuthUrl)
-		if err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal(res.Body(), &resp); err != nil {
-			return result, err
-		}
-		cache.MCache.Set(AUTHEN_TOKEN+"_"+apiKey, resp, 1*time.Minute)
-	}
-	token = resp.Token
-	if len(token) < 1 {
-		return nil, errors.New("token not found")
-	}
-
+func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse, err error) {
 	// Get Info agent
 	agentInfo := model.AuthUserInfo{}
-	agentInfoCache := cache.MCache.Get(AGENT_INFO + "_" + token)
+	agentInfoCache := cache.MCache.Get(AGENT_INFO + "_" + bssAuthRequest.Token)
 	if agentInfoCache != nil {
 		if err := util.ParseAnyToAny(agentInfoCache, &agentInfo); err != nil {
 			log.Error(err)
 			return nil, err
 		}
 	} else {
-		urlInfo := crmUrl + "/v1/crm/user-crm/" + resp.UserId
+		urlInfo := bssAuthRequest.AuthUrl + "/v1/crm/user-crm/" + bssAuthRequest.UserId
 		clientInfo := resty.New()
 		res, err := clientInfo.R().
 			SetHeader("Content-Type", "application/json").
-			SetHeader("Authorization", "Bearer "+resp.Token).
+			SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
 			Get(urlInfo)
 		if err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal(res.Body(), &agentInfo); err != nil {
+		var resp map[string]any
+		if err := json.Unmarshal(res.Body(), &resp); err != nil {
 			return result, err
 		}
-		cache.MCache.Set(AGENT_INFO+"_"+token, agentInfo, 1*time.Minute)
+
+		agentInfo.UserUuid, _ = resp["user_uuid"].(string)
+		agentInfo.DomainUuid, _ = resp["domain_uuid"].(string)
+		agentInfo.Username, _ = resp["username"].(string)
+		agentInfo.Password, _ = resp["password"].(string)
+		agentInfo.ApiKey, _ = resp["api_key"].(string)
+		agentInfo.UserEnabled, _ = resp["user_enabled"].(string)
+		agentInfo.UserStatus, _ = resp["user_status"].(string)
+		agentInfo.Level, _ = resp["level"].(string)
+		agentInfo.LastName, _ = resp["last_name"].(string)
+		agentInfo.MiddleName, _ = resp["middle_name"].(string)
+		agentInfo.FirstName, _ = resp["first_name"].(string)
+		agentInfo.UnitUuid, _ = resp["unit_uuid"].(string)
+		agentInfo.UnitName, _ = resp["unit_name"].(string)
+		agentInfo.RoleUuid, _ = resp["role_uuid"].(string)
+		agentInfo.Extension, _ = resp["extension"].(string)
+		agentInfo.ExtensionUuid, _ = resp["extension_uuid"].(string)
+
+		cache.MCache.Set(AGENT_INFO+"_"+bssAuthRequest.Token, agentInfo, 1*time.Minute)
 	}
 
 	if len(agentInfo.UserUuid) > 1 {
@@ -147,10 +133,11 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest, crmUrl
 				Username: agentInfo.Username,
 				Level:    agentInfo.Level,
 				Source:   bssAuthRequest.Source,
-				Token:    token,
+				Token:    bssAuthRequest.Token,
 			},
 		}
 	} else {
+		cache.MCache.Del(AGENT_INFO + "_" + bssAuthRequest.Token)
 		return nil, fmt.Errorf("failed to get user info")
 	}
 
