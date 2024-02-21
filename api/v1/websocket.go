@@ -89,7 +89,6 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
-		UserId:  c.Query("user_id"),
 	}
 
 	res := api.AAAMiddleware(c, bssAuthRequest)
