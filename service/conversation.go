@@ -76,6 +76,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		return response.Pagination(nil, 0, limit, offset)
 	}
 	filter.ConversationId = conversationIds
+	filter.TenantId = authUser.TenantId
 	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
