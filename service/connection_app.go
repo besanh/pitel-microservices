@@ -112,6 +112,7 @@ func (s *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, authUser *
 		log.Error(err)
 		return
 	}
+	filter.TenantId = authUser.TenantId
 
 	total, apps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, limit, offset)
 	if err != nil {

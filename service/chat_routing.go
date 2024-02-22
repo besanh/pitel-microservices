@@ -77,6 +77,7 @@ func (s *ChatRouting) GetChatRoutings(ctx context.Context, authUser *model.AuthU
 		log.Error(err)
 		return 0, nil, err
 	}
+	filter.TenantId = authUser.TenantId
 
 	total, chatRoutings, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbCon, filter, limit, offset)
 	if err != nil {

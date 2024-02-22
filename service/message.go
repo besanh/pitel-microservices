@@ -153,6 +153,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 	} else {
 		conversationFilter := model.ConversationFilter{
 			ConversationId: []string{data.ConversationId},
+			TenantId:       authUser.TenantId,
 		}
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, conversationFilter, 1, 0)
 		if err != nil {

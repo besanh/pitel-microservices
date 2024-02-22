@@ -13,7 +13,7 @@ import (
 type (
 	IMessageES interface {
 		GetMessages(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit, offset int) (int, *[]model.Message, error)
-		GetMessageById(ctx context.Context, appId, index, id string) (*model.Message, error)
+		GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error)
 	}
 	MessageES struct {
 	}
@@ -110,12 +110,12 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 
 }
 
-func (repo *MessageES) GetMessageById(ctx context.Context, appId, index, id string) (*model.Message, error) {
+func (repo *MessageES) GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
-	if len(appId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+appId))
-		musts = append(musts, elasticsearch.MatchQuery("app_id", appId))
+	if len(tenantId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	filters = append(filters, elasticsearch.MatchQuery("_id", id))
 

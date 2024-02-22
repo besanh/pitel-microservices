@@ -85,6 +85,7 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 		log.Error(err)
 		return 0, nil, err
 	}
+	filter.TenantId = authUser.TenantId
 
 	total, queues, err := repository.ChatQueueRepo.GetQueues(ctx, dbCon, filter, limit, offset)
 	if err != nil {
