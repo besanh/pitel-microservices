@@ -54,7 +54,7 @@ func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientCon
 		Relation("ChatRouting").
 		Relation("ChatQueueAgent")
 	if len(filter.TenantId) > 0 {
-		query.Where("tenant_id = ?", filter.TenantId)
+		query.Where("cq.tenant_id = ?", filter.TenantId)
 	}
 	if len(filter.QueueName) > 0 {
 		query.Where("queue_name = ?", filter.QueueName)
@@ -69,7 +69,6 @@ func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientCon
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
-
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil
