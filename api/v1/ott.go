@@ -160,7 +160,7 @@ func (h *OttMessage) GetCodeChallenge(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	if len(c.GetHeader("validator-header")) > 0 {
+	if len(c.GetHeader("validator_header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
