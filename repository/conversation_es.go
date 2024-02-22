@@ -127,12 +127,12 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	return total, &result, nil
 }
 
-func (repo *ConversationES) GetConversationById(ctx context.Context, appId, index, id string) (*model.Conversation, error) {
+func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, index, id string) (*model.Conversation, error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
-	if len(appId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+appId))
-		musts = append(musts, elasticsearch.MatchQuery("app_id", appId))
+	if len(tenantId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	filters = append(filters, elasticsearch.MatchQuery("_id", id))
 
