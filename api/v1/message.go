@@ -21,7 +21,7 @@ func NewMessage(r *gin.Engine, messageService service.IMessage) {
 
 	Group := r.Group("bss-message/v1/message")
 	{
-		Group.POST("send", api.MoveTokenToHeader(), handler.SendMessage)
+		Group.POST("send", handler.SendMessage)
 		Group.GET("", handler.GetMessages)
 		Group.POST("read", handler.MarkReadMessages)
 		Group.POST("share-info", handler.ShareInfo)
