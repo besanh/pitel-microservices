@@ -34,7 +34,7 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
-	if len(c.GetHeader("validator-header")) > 0 {
+	if len(c.GetHeader("validator_header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
@@ -80,7 +80,7 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	if len(c.GetHeader("validator-header")) > 0 {
+	if len(c.GetHeader("validator_header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
@@ -117,7 +117,7 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	if len(c.GetHeader("validator-header")) > 0 {
+	if len(c.GetHeader("validator_header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
@@ -156,7 +156,7 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	if len(c.GetHeader("validator-header")) > 0 {
+	if len(c.GetHeader("validator_header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
@@ -200,7 +200,7 @@ func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
-	if len(c.GetHeader("validator-header")) > 0 {
+	if len(c.GetHeader("validator_header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
 			Token:   c.GetHeader("token"),
 			AuthUrl: c.GetHeader("auth_url"),
