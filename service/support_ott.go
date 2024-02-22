@@ -209,7 +209,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		if err := UpdateESAndCache(ctx, data.AppId, data.ExternalUserId, *conversation.ShareInfo); err != nil {
+		if err := UpdateESAndCache(ctx, data.TenantId, data.ExternalUserId, *conversation.ShareInfo); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
@@ -322,8 +322,8 @@ func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAlloc
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, appId, conversationId string, shareInfo model.ShareInfo) error {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, appId, ES_INDEX_CONVERSATION, conversationId)
+func UpdateESAndCache(ctx context.Context, tenantId, conversationId string, shareInfo model.ShareInfo) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, conversationId)
 	if err != nil {
 		log.Error(err)
 		return err
