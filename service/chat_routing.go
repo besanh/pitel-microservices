@@ -43,6 +43,7 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	}
 
 	total, _, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbConn, model.ChatRoutingFilter{
+		TenantId:     authUser.TenantId,
 		RoutingAlias: data.RoutingAlias,
 		Status: sql.NullBool{
 			Valid: true,
