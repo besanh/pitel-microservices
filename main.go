@@ -16,6 +16,7 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/rabbitmq"
 	"github.com/tel4vn/fins-microservices/internal/redis"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
+	"github.com/tel4vn/fins-microservices/internal/storage"
 	authMdw "github.com/tel4vn/fins-microservices/middleware/auth"
 	"github.com/tel4vn/fins-microservices/repository"
 	"github.com/tel4vn/fins-microservices/server"
@@ -166,6 +167,9 @@ func main() {
 	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
 	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
 	service.InitServices()
+
+	// Init storage
+	storage.InitStorage()
 
 	// Run cron jobs
 	// handleCronBatchSchedule(service.BatchService.ScanBatchJobEvery1Minute)

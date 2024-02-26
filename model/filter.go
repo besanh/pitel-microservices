@@ -96,3 +96,10 @@ type ConnectionQueueFilter struct {
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
 }
+
+type ShareInfoFormFilter struct {
+	TenantId  string `json:"tenant_id"`
+	ShareType string `json:"share_type"`
+	OaId      string `json:"oa_id"`
+	UserId    string `json:"user_id"`
+}

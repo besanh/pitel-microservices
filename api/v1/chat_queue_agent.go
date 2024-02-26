@@ -25,21 +25,7 @@ func NewChatQueueAgent(engine *gin.Engine, chatQueueAgent service.IChatQueueAgen
 }
 
 func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -72,21 +58,7 @@ func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
 }
 
 func (h *ChatQueueAgent) UpdateChatQueueAgentById(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

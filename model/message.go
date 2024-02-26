@@ -74,16 +74,6 @@ type ShareInfo struct {
 	District    string `json:"district"`
 }
 
-type ShareInfoRequest struct {
-	AppId       string `json:"app_id"`
-	OaId        string `json:"oa_id"`
-	Fullname    string `json:"fullname"`
-	PhoneNumber string `json:"phone_number"`
-	Address     string `json:"address"`
-	City        string `json:"city"`
-	District    string `json:"district"`
-}
-
 func (m *MessageRequest) Validate() error {
 	if len(m.ConversationId) < 1 {
 		return errors.New("conversation id is required")

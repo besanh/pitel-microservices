@@ -32,21 +32,7 @@ func NewChatRouting(engine *gin.Engine, chatRoutingService service.IChatRouting)
 }
 
 func (handler *ChatRouting) InsertChatRouting(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -78,21 +64,7 @@ func (handler *ChatRouting) InsertChatRouting(c *gin.Context) {
 }
 
 func (handler *ChatRouting) GetChatRoutings(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -125,21 +97,7 @@ func (handler *ChatRouting) GetChatRoutings(c *gin.Context) {
 }
 
 func (handler *ChatRouting) GetChatRoutingById(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -164,21 +122,7 @@ func (handler *ChatRouting) GetChatRoutingById(c *gin.Context) {
 }
 
 func (handler *ChatRouting) UpdateChatRoutingById(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -209,21 +153,11 @@ func (handler *ChatRouting) UpdateChatRoutingById(c *gin.Context) {
 }
 
 func (handler *ChatRouting) DeleteChatRoutingById(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
 	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

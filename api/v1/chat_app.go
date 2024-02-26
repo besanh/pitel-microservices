@@ -29,20 +29,7 @@ func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp) {
 }
 
 func (handler *ChatApp) InsertChatApp(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -74,21 +61,7 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 }
 
 func (handler *ChatApp) GetChatApp(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -111,21 +84,7 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 }
 
 func (handler *ChatApp) GetChatAppById(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -150,21 +109,7 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 }
 
 func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -194,21 +139,7 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 }
 
 func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return

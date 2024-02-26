@@ -29,21 +29,7 @@ func NewMessage(r *gin.Engine, messageService service.IMessage) {
 }
 
 func (h *Message) SendMessage(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -72,21 +58,7 @@ func (h *Message) SendMessage(c *gin.Context) {
 }
 
 func (h *Message) GetMessages(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -104,20 +76,7 @@ func (h *Message) GetMessages(c *gin.Context) {
 }
 
 func (h *Message) MarkReadMessages(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
@@ -141,20 +100,7 @@ func (h *Message) MarkReadMessages(c *gin.Context) {
 }
 
 func (h *Message) ShareInfo(c *gin.Context) {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator_header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-	res := api.AAAMiddleware(c, bssAuthRequest)
+	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
