@@ -72,6 +72,14 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		Source:  c.Query("source"),
 	}
 
+	if len(c.GetHeader("validator_header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+		}
+	}
+
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
