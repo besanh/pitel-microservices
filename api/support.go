@@ -26,6 +26,26 @@ var (
 	AAA_URL = "https://api.dev.fins.vn/aaa"
 )
 
+func AuthMiddleware(c *gin.Context) *model.AAAResponse {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth_url"),
+		Source:  c.Query("source"),
+	}
+
+	if len(c.GetHeader("validator_header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth_url"),
+			Source:  c.GetHeader("source"),
+		}
+	}
+
+	res := AAAMiddleware(c, bssAuthRequest)
+
+	return res
+}
+
 func MoveTokenToHeader() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		token := ctx.Query("token")

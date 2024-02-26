@@ -4,6 +4,7 @@ const (
 	// Version
 	VERSION      string = "1"
 	VERSION_NAME string = "Chat(BSS)"
+	PUBLIC_DIR   string = "/root/go/src/public/"
 )
 
 var (
