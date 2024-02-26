@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/tel4vn/fins-microservices/common/constant"
 	responsetime "github.com/tel4vn/fins-microservices/middleware/response"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +31,7 @@ func NewHTTPServer() *gin.Engine {
 			"time":    time.Now().Unix(),
 		})
 	})
+	engine.Static("/v1/images", constant.PUBLIC_DIR)
 	return engine
 }
 
