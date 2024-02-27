@@ -4,21 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"mime/multipart"
-	"os"
-	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
 type (
 	IShareInfo interface {
-		PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, files []*multipart.FileHeader) (int, any)
+		PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) (int, any)
 		PostRequestShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest) (int, any)
 	}
 	ShareInfo struct{}
@@ -28,29 +26,19 @@ func NewShareInfo() IShareInfo {
 	return &ShareInfo{}
 }
 
-func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, files []*multipart.FileHeader) (int, any) {
+func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) (int, any) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return response.OKResponse()
 	}
-	// Can upload to s3
-	dir := PUBLIC_DIR + data.OaId + "/share_info/" + data.Uid
-	var filePath string
-	for _, file := range files {
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			os.MkdirAll(dir, 0755)
-		}
-		filePath = dir + "/" + util.TimeToStringLayout(time.Now(), "2006_01_02_15_04") + "_" + file.Filename
-		var c *gin.Context
-		if err := c.SaveUploadedFile(file, filePath); err != nil {
-			continue
-		}
-	}
+
+	filePath := file.Filename
 
 	filter := model.ShareInfoFormFilter{
 		TenantId:  authUser.TenantId,
 		ShareType: data.ShareType,
+		AppId:     data.AppId,
 	}
 
 	total, _, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, -1, 0)
@@ -59,12 +47,14 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if total > 0 {
-		log.Error("share config " + data.OaId + " already exist")
+		log.Error("share config app_id " + data.AppId + " already exist")
+		return response.BadRequestMsg("share config app_id " + data.AppId + " already exist")
 	}
 
 	shareForm := model.ShareForm{}
 	if data.ShareType == "facebook" {
 	} else if data.ShareType == "zalo" {
+		shareForm.Zalo.AppId = data.AppId
 		shareForm.Zalo.ImageUrl = filePath
 		shareForm.Zalo.Title = data.Title
 		shareForm.Zalo.Subtitle = data.Subtitle
@@ -129,4 +119,14 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 	} else {
 		return response.ServiceUnavailableMsg(result.Message)
 	}
+}
+
+func GetAvatarPageShareInfo(ctx context.Context, fileName string) (string, error) {
+	input := storage.NewRetrieveInput(fileName)
+	_, err := storage.Instance.Retrieve(ctx, *input)
+	if err != nil {
+		log.Error(err)
+		return err.Error(), err
+	}
+	return "", nil
 }

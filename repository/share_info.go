@@ -33,6 +33,9 @@ func (s *ShareInfo) GetShareInfos(ctx context.Context, db sqlclient.ISqlClientCo
 	if len(filter.OaId) > 0 {
 		query.Where("share_form->?::text->'oa_id' = ?", filter.ShareType, filter.OaId)
 	}
+	if len(filter.AppId) > 0 {
+		query.Where("share_form->?->>'app_id' = ?", filter.ShareType, filter.AppId)
+	}
 	if len(filter.UserId) > 0 {
 		query.Where("user_id = ?", filter.UserId)
 	}

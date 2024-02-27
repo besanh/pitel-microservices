@@ -1,10 +1,15 @@
 package v1
 
 import (
+	"fmt"
+	"io"
+	"mime/multipart"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 )
@@ -22,6 +27,7 @@ func NewShareInfo(r *gin.Engine, shareInfo service.IShareInfo) {
 	{
 		Group.POST("config", handler.PostConfigForm)
 		Group.POST("", handler.PostRequestShareInfo)
+		Group.GET("image/:filename", handler.GetImageShareInfo)
 	}
 }
 
@@ -33,68 +39,30 @@ func (h *ShareInfo) PostConfigForm(c *gin.Context) {
 		return
 	}
 
-	form, err := c.MultipartForm()
-	if err != nil {
+	var data model.ShareInfoFormRequest
+	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
-		c.JSON(response.BadRequestMsg(err))
+		c.JSON(response.BadRequestMsg(err.Error()))
 		return
-	}
-
-	var shareType string
-	shareTypeTmp := form.Value["share_type"]
-	if len(shareTypeTmp) > 0 {
-		shareType = shareTypeTmp[0]
-	}
-	var appId string
-	appIdTmp := form.Value["app_id"]
-	if len(appIdTmp) > 0 {
-		appId = appIdTmp[0]
-	}
-
-	var oaId string
-	oaIdTmp := form.Value["oa_id"]
-	if len(oaIdTmp) > 0 {
-		oaId = oaIdTmp[0]
-	}
-
-	var uid string
-	uidTmp := form.Value["uid"]
-	if len(uidTmp) > 0 {
-		uid = uidTmp[0]
-	}
-
-	var title string
-	titleTmp := form.Value["title"]
-	if len(titleTmp) > 0 {
-		title = titleTmp[0]
-	}
-
-	var subTitle string
-	subTitleTmp := form.Value["subtitle"]
-	if len(subTitleTmp) > 0 {
-		subTitle = subTitleTmp[0]
-	}
-
-	data := model.ShareInfoFormRequest{
-		ShareType: shareType,
-		AppId:     appId,
-		OaId:      oaId,
-		Uid:       uid,
-		Title:     title,
-		Subtitle:  subTitle,
 	}
 	if err := data.Validate(); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	files := form.File["file"]
-	if len(files) < 1 {
-		log.Error("file not found")
-		c.JSON(response.BadRequestMsg("file not found"))
+	err := uploadShareInfo(c, res.Data, data.Files, true)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
-	code, result := h.shareInfo.PostConfigForm(c, res.Data, data, files)
+	code, result := h.shareInfo.PostConfigForm(c, res.Data, data, data.Files)
+	if code != 200 {
+		err := uploadShareInfo(c, res.Data, data.Files, false)
+		if err != nil {
+			c.JSON(response.ServiceUnavailableMsg(err.Error()))
+			return
+		}
+	}
 	c.JSON(code, result)
 }
 
@@ -115,4 +83,57 @@ func (s *ShareInfo) PostRequestShareInfo(c *gin.Context) {
 	log.Info("post share info payload -> ", &data)
 	code, result := s.shareInfo.PostRequestShareInfo(c, res.Data, data)
 	c.JSON(code, result)
+}
+
+func uploadShareInfo(c *gin.Context, authUser *model.AuthUser, file *multipart.FileHeader, isOk bool) error {
+	f, err := file.Open()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	fileBytes, err := io.ReadAll(f)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if isOk {
+		metaData := storage.NewStoreInput(fileBytes, file.Filename)
+		isSuccess, err := storage.Instance.Store(c, *metaData)
+		if err != nil || !isSuccess {
+			log.Error(err)
+			return err
+		}
+	} else {
+		err := storage.Instance.RemoveFile(c, storage.RetrieveInput{
+			Path: file.Filename,
+		})
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (h *ShareInfo) GetImageShareInfo(c *gin.Context) {
+	fileName := c.Param("filename")
+	if len(fileName) < 1 {
+		c.JSON(response.BadRequestMsg("filename is required"))
+		return
+	}
+	input := storage.NewRetrieveInput(fileName)
+	result, err := storage.Instance.Retrieve(c, *input)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition",
+		fmt.Sprintf("attachment; filename=%s", fileName))
+	c.Writer.Header().Add("Content-Type", c.GetHeader("Content-Type"))
+	_, err = c.Writer.Write(result)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.NotFoundMsg(err))
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -76,6 +77,7 @@ var Instance IStorage
 type IStorage interface {
 	Store(ctx context.Context, input StoreInput) (bool, error)
 	Retrieve(ctx context.Context, input RetrieveInput) ([]byte, error)
+	RemoveFile(ctx context.Context, input RetrieveInput) (err error)
 }
 
 type S3Storage struct {
@@ -87,7 +89,7 @@ func NewS3Storage(client *minio.Client, config S3Config) *S3Storage {
 	return &S3Storage{Client: client, Config: config}
 }
 
-func (s S3Storage) Store(ctx context.Context, input StoreInput) (result bool, err error) {
+func (s *S3Storage) Store(ctx context.Context, input StoreInput) (result bool, err error) {
 	cloudStorageConfig := s.Config
 	bucketName := cloudStorageConfig.BucketName
 	objectName := input.Path
@@ -122,7 +124,7 @@ func (s S3Storage) Store(ctx context.Context, input StoreInput) (result bool, er
 	return true, nil
 }
 
-func (s S3Storage) Retrieve(ctx context.Context, input RetrieveInput) ([]byte, error) {
+func (s *S3Storage) Retrieve(ctx context.Context, input RetrieveInput) ([]byte, error) {
 	cloudStorageConfig := s.Config
 	filePath := input.Path
 	bucketName := cloudStorageConfig.BucketName
@@ -156,4 +158,23 @@ func (s S3Storage) Retrieve(ctx context.Context, input RetrieveInput) ([]byte, e
 	log.Info("Retrieve file success")
 	return fileBytes, nil
 
+}
+
+func (s *S3Storage) RemoveFile(ctx context.Context, input RetrieveInput) (err error) {
+	cloudStorageConfig := s.Config
+	bucketName := cloudStorageConfig.BucketName
+	objectName := input.Path
+	minioClient := s.Client
+	exists, errBucketExists := s.Client.BucketExists(ctx, bucketName)
+	if errBucketExists == nil && exists {
+		err = minioClient.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{})
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		log.Infof("Successfully remove '%s' from cloud storage", objectName)
+		return
+	}
+	log.Errorf("Bucket '%s' not found", bucketName)
+	return errors.New("Bucket " + bucketName + " not found")
 }
