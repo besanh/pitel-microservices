@@ -71,3 +71,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	}
 	log.Println("TABLES WERE CREATED")
 }
+
+func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
+	if _, err := db.GetDB().NewAddColumn().Model((*model.ChatApp)(nil)).IfNotExists().ColumnExpr("set_default_app TEXT NOT NULL").Exec(ctx); err != nil {
+		panic(err)
+	}
+}

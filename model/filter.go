@@ -12,11 +12,12 @@ type AuthSourceFilter struct {
 }
 
 type AppFilter struct {
-	AppId   string `json:"app_id"`
-	AppName string `json:"app_name"`
-	OaId    string `json:"oa_id"`
-	AppType string `json:"app_type"`
-	Status  string `json:"status"`
+	AppId         string `json:"app_id"`
+	AppName       string `json:"app_name"`
+	OaId          string `json:"oa_id"`
+	AppType       string `json:"app_type"`
+	Status        string `json:"status"`
+	SetDefaultApp string `json:"set_default_app"`
 }
 
 type ChatConnectionAppFilter struct {

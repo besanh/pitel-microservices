@@ -49,6 +49,7 @@ type MessageRequest struct {
 }
 
 type MessageMarkRead struct {
+	AppId          string   `json:"app_id"`
 	ConversationId string   `json:"conversation_id"`
 	MessageIds     []string `json:"message_ids"`
 	ReadBy         string   `json:"read_by"`
@@ -67,6 +68,7 @@ type OaInfoMessage struct {
 }
 
 type ShareInfo struct {
+	AppId       string `json:"app_id"`
 	Fullname    string `json:"fullname"`
 	PhoneNumber string `json:"phone_number"`
 	Address     string `json:"address"`

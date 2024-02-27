@@ -11,13 +11,15 @@ type ChatApp struct {
 	bun.BaseModel `bun:"table:chat_app,alias:ca"`
 	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
 	Status        string   `json:"status" bun:"status,notnull"`
+	SetDefaultApp string   `json:"set_default_app" bun:"set_default_app,text,notnull"`
 	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
 }
 
 type ChatAppRequest struct {
-	AppName string   `json:"app_name"`
-	Status  string   `json:"status"` //active/deactive
-	InfoApp *InfoApp `json:"info_app"`
+	AppName       string   `json:"app_name"`
+	Status        string   `json:"status"` //active/deactive
+	SetDefaultApp string   `json:"set_default_app"`
+	InfoApp       *InfoApp `json:"info_app"`
 }
 
 type InfoApp struct {
@@ -48,6 +50,10 @@ type Facebook struct {
 func (m *ChatAppRequest) Validate() error {
 	if len(m.AppName) < 1 {
 		return errors.New("app name is required")
+	}
+
+	if len(m.SetDefaultApp) < 1 {
+		return errors.New("set default app is required")
 	}
 
 	var countOk int

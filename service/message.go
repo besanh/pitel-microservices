@@ -125,7 +125,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	log.Info("message to es: ", message)
 
 	// Should to queue
-	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, docId, message); err != nil {
+	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, message.AppId, docId, message); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -209,7 +209,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 					totalFail += 1
 					return response.ServiceUnavailableMsg(err.Error())
 				}
-				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.Id, esDoc); err != nil {
+				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.AppId, item.Id, esDoc); err != nil {
 					log.Error(err)
 					totalSuccess -= 1
 					totalFail += 1
@@ -264,7 +264,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 				totalFail += 1
 				listMessageIdFail[item] = err.Error()
 			}
-			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item, esDoc); err != nil {
+			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, data.AppId, item, esDoc); err != nil {
 				log.Error(err)
 				totalSuccess -= 1
 				totalFail += 1

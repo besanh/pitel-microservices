@@ -8,7 +8,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func InsertES(ctx context.Context, tenantId, index, docId string, data any) error {
+func InsertES(ctx context.Context, tenantId, index, appId, docId string, data any) error {
 	tmpBytes, err := json.Marshal(data)
 	if err != nil {
 		log.Error(err)
@@ -29,7 +29,7 @@ func InsertES(ctx context.Context, tenantId, index, docId string, data any) erro
 		}
 	}
 
-	err = repository.ESRepo.InsertLog(ctx, tenantId, ES_INDEX, docId, esDoc)
+	err = repository.ESRepo.InsertLog(ctx, tenantId, ES_INDEX, appId, docId, esDoc)
 	if err != nil {
 		log.Error(err)
 		return err
