@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
-	"github.com/tel4vn/fins-microservices/common/constant"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -36,7 +35,7 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 		return response.OKResponse()
 	}
 	// Can upload to s3
-	dir := constant.PUBLIC_DIR + data.OaId + "/share_info/" + data.Uid
+	dir := PUBLIC_DIR + data.OaId + "/share_info/" + data.Uid
 	var filePath string
 	for _, file := range files {
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
