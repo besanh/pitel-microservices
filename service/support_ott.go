@@ -21,7 +21,8 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 	var userLives []Subscriber
 	var agent Subscriber
 
-	agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + message.AppId + "_" + message.ExternalUserId)
+	newConversationId := GenerateConversationId(message.AppId, message.ExternalUserId)
+	agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + newConversationId)
 	if agentAllocationCache != nil {
 		agentTmp := Subscriber{}
 		if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
