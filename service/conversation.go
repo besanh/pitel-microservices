@@ -114,7 +114,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 }
 
 func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any) {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, "", ES_INDEX_CONVERSATION, id)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, id)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -133,7 +133,8 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, id, esDoc); err != nil {
+	newConversationId := GenerateConversationId(appId, id)
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}

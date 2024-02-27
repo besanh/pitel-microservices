@@ -209,7 +209,8 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 					totalFail += 1
 					return response.ServiceUnavailableMsg(err.Error())
 				}
-				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.AppId, item.Id, esDoc); err != nil {
+				newConversationId := GenerateConversationId(item.AppId, item.Id)
+				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.AppId, newConversationId, esDoc); err != nil {
 					log.Error(err)
 					totalSuccess -= 1
 					totalFail += 1
@@ -264,7 +265,8 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 				totalFail += 1
 				listMessageIdFail[item] = err.Error()
 			}
-			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, data.AppId, item, esDoc); err != nil {
+			newConversationId := GenerateConversationId(data.AppId, item)
+			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, data.AppId, newConversationId, esDoc); err != nil {
 				log.Error(err)
 				totalSuccess -= 1
 				totalFail += 1

@@ -11,7 +11,7 @@ type ChatApp struct {
 	bun.BaseModel `bun:"table:chat_app,alias:ca"`
 	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
 	Status        string   `json:"status" bun:"status,notnull"`
-	SetDefaultApp string   `json:"set_default_app" bun:"set_default_app,text,notnull"`
+	SetDefaultApp string   `json:"set_default_app" bun:"set_default_app,type:text,notnull"`
 	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
 }
 

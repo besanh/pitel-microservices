@@ -15,7 +15,7 @@ import (
 type (
 	IConversationES interface {
 		GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.ConversationView, error)
-		GetConversationById(ctx context.Context, appId, index, id string) (*model.Conversation, error)
+		GetConversationById(ctx context.Context, tenantId, index, appId, id string) (*model.Conversation, error)
 	}
 	ConversationES struct {
 	}
@@ -127,12 +127,15 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	return total, &result, nil
 }
 
-func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, index, id string) (*model.Conversation, error) {
+func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, index, appId, id string) (*model.Conversation, error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
 	if len(tenantId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+tenantId))
 		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
+	}
+	if len(appId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray([]string{appId})...))
 	}
 	filters = append(filters, elasticsearch.MatchQuery("_id", id))
 

@@ -107,7 +107,7 @@ func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, appId
 	}
 	req := esapi.CreateRequest{
 		Index:      index,
-		DocumentID: appId + "_" + docId,
+		DocumentID: docId,
 		Routing:    index + "_" + tenantId,
 		Body:       bytes.NewReader(body),
 		Refresh:    "true",
@@ -132,7 +132,7 @@ func (repo *Elasticsearch) UpdateDocById(ctx context.Context, index, appId, docI
 	}
 	req := esapi.UpdateRequest{
 		Index:      index,
-		DocumentID: appId + "_" + docId,
+		DocumentID: docId,
 		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, body))),
 		Refresh:    "true",
 	}
