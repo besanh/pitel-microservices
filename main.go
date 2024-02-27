@@ -167,6 +167,7 @@ func main() {
 	service.ES_INDEX = env.GetStringENV("ES_INDEX", "pitel_bss_chat")
 	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
 	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
+	service.PUBLIC_DIR = env.GetStringENV("PUBLIC_DIR", "/root/go/src/public/")
 	service.InitServices()
 
 	// Init storage

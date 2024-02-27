@@ -46,7 +46,8 @@ var (
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
-	OTT_URL string = ""
+	OTT_URL    string = ""
+	PUBLIC_DIR string = ""
 )
 
 type (
