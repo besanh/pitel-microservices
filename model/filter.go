@@ -101,6 +101,7 @@ type ConnectionQueueFilter struct {
 type ShareInfoFormFilter struct {
 	TenantId  string `json:"tenant_id"`
 	ShareType string `json:"share_type"`
+	AppId     string `json:"app_id"`
 	OaId      string `json:"oa_id"`
 	UserId    string `json:"user_id"`
 }
