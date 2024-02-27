@@ -21,7 +21,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 	var userLives []Subscriber
 	var agent Subscriber
 
-	agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + message.ExternalUserId)
+	agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + message.AppId + "_" + message.ExternalUserId)
 	if agentAllocationCache != nil {
 		agentTmp := Subscriber{}
 		if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
@@ -89,7 +89,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 								agent = *s
 							}
 						}
-						if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+						if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.AppId+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
 							log.Error(err)
 							return authInfo, err
 						}
@@ -159,7 +159,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 									return authInfo, err
 								}
 
-								if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+								if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.AppId+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
 									log.Error(err)
 									return authInfo, err
 								}
@@ -209,7 +209,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		if err := UpdateESAndCache(ctx, data.TenantId, data.ExternalUserId, *conversation.ShareInfo); err != nil {
+		if err := UpdateESAndCache(ctx, data.TenantId, data.AppId, data.ExternalUserId, *conversation.ShareInfo); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
@@ -217,6 +217,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 	} else {
 		filter := model.ConversationFilter{
 			ConversationId: []string{data.ExternalUserId},
+			AppId:          []string{data.AppId},
 		}
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
@@ -240,7 +241,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 				log.Error(err)
 				return conversation, isNew, err
 			}
-			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.ExternalUserId, esDoc); err != nil {
+			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ExternalUserId, esDoc); err != nil {
 				log.Error(err)
 				return conversation, isNew, err
 			}
@@ -301,7 +302,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 		log.Errorf("conversation %s not found", id)
 		return id, errors.New("conversation not found")
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, id, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, id, esDoc); err != nil {
 		log.Error(err)
 		return id, err
 	}
@@ -322,7 +323,7 @@ func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAlloc
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, tenantId, conversationId string, shareInfo model.ShareInfo) error {
+func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId string, shareInfo model.ShareInfo) error {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, conversationId)
 	if err != nil {
 		log.Error(err)
@@ -344,7 +345,7 @@ func UpdateESAndCache(ctx context.Context, tenantId, conversationId string, shar
 		log.Error(err)
 		return err
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversationId, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}

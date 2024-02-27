@@ -68,6 +68,6 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 
 	log.Info("update conversation payload -> ", shareInfo)
 
-	code, result := handler.conversationService.UpdateConversationById(c, res.Data, id, shareInfo)
+	code, result := handler.conversationService.UpdateConversationById(c, res.Data, shareInfo.AppId, id, shareInfo)
 	c.JSON(code, result)
 }

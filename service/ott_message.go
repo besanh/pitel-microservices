@@ -104,7 +104,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if len(conversation.ConversationId) > 0 {
 			message.ConversationId = conversation.ConversationId
 			message.IsRead = "deactive"
-			if err := InsertES(ctx, data.TenantId, ES_INDEX, docId, message); err != nil {
+			if err := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
@@ -143,7 +143,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if len(conversation.ConversationId) > 0 {
 			message.ConversationId = conversation.ConversationId
 			message.IsRead = "deactive"
-			if err := InsertES(ctx, data.TenantId, ES_INDEX, docId, message); err != nil {
+			if err := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}

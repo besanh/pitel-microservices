@@ -128,7 +128,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 		c.JSON(response.OKResponse())
 	} else if eventName == "submit_info" {
-		code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, shareInfo)
+		code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, externalUserId, shareInfo)
 		c.JSON(code, result)
 		return
 	} else {

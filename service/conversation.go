@@ -16,7 +16,7 @@ type (
 	IConversation interface {
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
-		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, id string, data model.ShareInfo) (int, any)
+		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any)
 	}
 	Conversation struct {
 	}
@@ -48,7 +48,7 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 			return docId, err
 		}
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX, docId, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX, conversation.AppId, docId, esDoc); err != nil {
 		log.Error(err)
 		return docId, err
 	}
@@ -113,7 +113,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	return response.Pagination(conversations, total, limit, offset)
 }
 
-func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, id string, data model.ShareInfo) (int, any) {
+func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any) {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, "", ES_INDEX_CONVERSATION, id)
 	if err != nil {
 		log.Error(err)
@@ -133,7 +133,7 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, id, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, id, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}

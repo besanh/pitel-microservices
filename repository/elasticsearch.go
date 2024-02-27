@@ -18,8 +18,8 @@ type (
 		CreateAlias(ctx context.Context, index, alias string) error
 		CreateDocRabbitMQ(ctx context.Context, index, tenant, routing, uuid string, esDoc map[string]any) (bool, error)
 		CreateAliasRabbitMQ(ctx context.Context, index, alias string) (bool, error)
-		InsertLog(ctx context.Context, tenantId, index, docId string, esDoc map[string]any) error
-		UpdateDocById(ctx context.Context, index, docId string, esDoc map[string]any) error
+		InsertLog(ctx context.Context, tenantId, index, appId, docId string, esDoc map[string]any) error
+		UpdateDocById(ctx context.Context, index, appId, docId string, esDoc map[string]any) error
 		BulkUpdateDoc(ctx context.Context, index string, esDoc map[string]any) error
 	}
 	Elasticsearch struct{}
@@ -100,14 +100,14 @@ func (repo *Elasticsearch) CreateDocRabbitMQ(ctx context.Context, index, tenant,
 	}
 }
 
-func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, docId string, esDoc map[string]any) error {
+func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, appId, docId string, esDoc map[string]any) error {
 	body, err := json.Marshal(esDoc)
 	if err != nil {
 		return err
 	}
 	req := esapi.CreateRequest{
 		Index:      index,
-		DocumentID: docId,
+		DocumentID: appId + "_" + docId,
 		Routing:    index + "_" + tenantId,
 		Body:       bytes.NewReader(body),
 		Refresh:    "true",
@@ -125,14 +125,14 @@ func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, docId
 	return nil
 }
 
-func (repo *Elasticsearch) UpdateDocById(ctx context.Context, index, docId string, esDoc map[string]any) error {
+func (repo *Elasticsearch) UpdateDocById(ctx context.Context, index, appId, docId string, esDoc map[string]any) error {
 	body, err := json.Marshal(esDoc)
 	if err != nil {
 		return err
 	}
 	req := esapi.UpdateRequest{
 		Index:      index,
-		DocumentID: docId,
+		DocumentID: appId + "_" + docId,
 		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, body))),
 		Refresh:    "true",
 	}
