@@ -202,7 +202,8 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 	}
 
 	isExisted := false
-	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.ExternalUserId)
+	newConversationId := GenerateConversationId(data.AppId, data.ExternalUserId)
+	conversationCache := cache.RCache.Get(CONVERSATION + "_" + newConversationId)
 	if conversationCache != nil {
 		isExisted = true
 		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
@@ -241,11 +242,12 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 				log.Error(err)
 				return conversation, isNew, err
 			}
-			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ExternalUserId, esDoc); err != nil {
+			newConversationId := GenerateConversationId(conversation.AppId, conversation.ExternalUserId)
+			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
 				log.Error(err)
 				return conversation, isNew, err
 			}
-			if err := cache.RCache.Set(CONVERSATION+"_"+data.ExternalUserId, conversation, CONVERSATION_EXPIRE); err != nil {
+			if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
 				return conversation, isNew, err
 			}
@@ -261,7 +263,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 			return conversation, isNew, err
 		}
 		conversation.ConversationId = id
-		if err := cache.RCache.Set(CONVERSATION+"_"+data.ExternalUserId, conversation, CONVERSATION_EXPIRE); err != nil {
+		if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
@@ -273,6 +275,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 
 func InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error) {
 	id = conversation.ExternalUserId
+	newConversationId := GenerateConversationId(conversation.AppId, id)
 	// id = uuid.NewString()
 	tmpBytes, err := json.Marshal(conversation)
 	if err != nil {
@@ -294,15 +297,15 @@ func InsertConversation(ctx context.Context, conversation model.Conversation) (i
 			return id, err
 		}
 	}
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, id)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId)
 	if err != nil {
 		log.Error(err)
 		return id, err
 	} else if len(conversationExist.ExternalUserId) > 0 {
 		log.Errorf("conversation %s not found", id)
-		return id, errors.New("conversation not found")
+		return id, errors.New("conversation " + id + " not found")
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, id, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
 		log.Error(err)
 		return id, err
 	}
@@ -324,13 +327,14 @@ func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAlloc
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
 func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId string, shareInfo model.ShareInfo) error {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, conversationId)
+	newConversationId := GenerateConversationId(appId, conversationId)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
 	if err != nil {
 		log.Error(err)
 		return err
 	} else if len(conversationExist.ExternalUserId) < 1 {
 		log.Errorf("conversation %s not found", conversationId)
-		return errors.New("conversation not found")
+		return errors.New("conversation " + conversationId + " not found")
 	}
 
 	conversationExist.ShareInfo = &shareInfo
@@ -345,15 +349,20 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId strin
 		log.Error(err)
 		return err
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
 
-	if err := cache.RCache.Set(CONVERSATION+"_"+conversationId, conversationExist, CONVERSATION_EXPIRE); err != nil {
+	if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversationExist, CONVERSATION_EXPIRE); err != nil {
 		log.Error(err)
 		return err
 	}
 
 	return nil
+}
+
+func GenerateConversationId(appId, conversationId string) (newConversationId string) {
+	newConversationId = appId + "_" + conversationId
+	return
 }
