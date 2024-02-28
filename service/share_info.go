@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"mime/multipart"
 
 	"github.com/go-resty/resty/v2"
@@ -16,8 +17,8 @@ import (
 
 type (
 	IShareInfo interface {
-		PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) (int, any)
-		PostRequestShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest) (int, any)
+		PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) error
+		PostRequestShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormSubmitRequest) error
 	}
 	ShareInfo struct{}
 )
@@ -26,11 +27,11 @@ func NewShareInfo() IShareInfo {
 	return &ShareInfo{}
 }
 
-func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) (int, any) {
+func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
-		log.Error(err)
-		return response.OKResponse()
+		err = errors.New(response.ERR_EMPTY_CONN)
+		return err
 	}
 
 	filePath := file.Filename
@@ -44,11 +45,12 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 	total, _, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return err
 	}
 	if total > 0 {
 		log.Error("share config app_id " + data.AppId + " already exist")
-		return response.BadRequestMsg("share config app_id " + data.AppId + " already exist")
+		err = errors.New("share config app_id " + data.AppId + " already exist")
+		return err
 	}
 
 	shareForm := model.ShareForm{}
@@ -69,32 +71,48 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 
 	if err := repository.ShareInfoRepo.Insert(ctx, dbCon, shareInfoForm); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return err
 	}
 
-	return response.OK(
-		map[string]any{
-			"id": shareInfoForm.GetId(),
-		},
-	)
+	return nil
 }
 
-func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest) (int, any) {
+func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormSubmitRequest) error {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		err = errors.New(response.ERR_EMPTY_CONN)
+		return err
+	}
+	filter := model.ShareInfoFormFilter{
+		TenantId:  authUser.TenantId,
+		ShareType: data.ShareType,
+		AppId:     data.AppId,
+	}
+	total, shareInfos, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if total < 1 {
+		log.Error("share config app_id " + data.AppId + " not exist")
+		err = errors.New("share config app_id " + data.AppId + " not exist")
+		return err
+	}
 	var result model.OttResponse
 	var body any
 	tmp := model.OttShareInfoRequest{
 		Type:      data.ShareType,
 		EventName: data.EventName,
 		AppId:     data.AppId,
-		OaId:      data.OaId,
-		Uid:       data.Uid,
-		ImageUrl:  data.ImageUrl,
-		Title:     data.Title,
-		Subtitle:  data.Subtitle,
+		OaId:      (*shareInfos)[0].ShareForm.Zalo.OaId,
+		Uid:       data.ExternalUserId,
+		ImageUrl:  API_SHARE_INFO_HOST + "/" + (*shareInfos)[0].ShareForm.Zalo.ImageUrl,
+		Title:     (*shareInfos)[0].ShareForm.Zalo.Title,
+		Subtitle:  (*shareInfos)[0].ShareForm.Zalo.Subtitle,
 	}
 	if err := util.ParseAnyToAny(tmp, &body); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return err
 	}
 
 	url := OTT_URL + "/ott/v1/crm"
@@ -107,17 +125,18 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 		Post(url)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return err
 	}
 
 	if err := json.Unmarshal([]byte(res.Body()), &result); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return err
 	}
 	if res.StatusCode() == 200 {
-		return response.OKResponse()
+		return nil
 	} else {
-		return response.ServiceUnavailableMsg(result.Message)
+		err = errors.New(result.Message)
+		return err
 	}
 }
 

@@ -55,15 +55,15 @@ func (h *ShareInfo) PostConfigForm(c *gin.Context) {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
-	code, result := h.shareInfo.PostConfigForm(c, res.Data, data, data.Files)
-	if code != 200 {
+	err = h.shareInfo.PostConfigForm(c, res.Data, data, data.Files)
+	if err != nil {
 		err := uploadShareInfo(c, res.Data, data.Files, false)
 		if err != nil {
 			c.JSON(response.ServiceUnavailableMsg(err.Error()))
 			return
 		}
 	}
-	c.JSON(code, result)
+	c.JSON(response.OKResponse())
 }
 
 func (s *ShareInfo) PostRequestShareInfo(c *gin.Context) {
@@ -74,15 +74,25 @@ func (s *ShareInfo) PostRequestShareInfo(c *gin.Context) {
 		return
 	}
 
-	var data model.ShareInfoFormRequest
+	var data model.ShareInfoFormSubmitRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 	log.Info("post share info payload -> ", &data)
-	code, result := s.shareInfo.PostRequestShareInfo(c, res.Data, data)
-	c.JSON(code, result)
+	if err := data.Validate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	err := s.shareInfo.PostRequestShareInfo(c, res.Data, data)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OKResponse())
 }
 
 func uploadShareInfo(c *gin.Context, authUser *model.AuthUser, file *multipart.FileHeader, isOk bool) error {
