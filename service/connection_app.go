@@ -68,10 +68,8 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	if total > 0 {
 		if data.ConnectionType == "facebook" {
 			connectionApp.AppId = (*app)[0].InfoApp.Facebook.AppId
-			connectionApp.OaInfo.Facebook[0].AppId = (*app)[0].InfoApp.Facebook.AppId
 		} else if data.ConnectionType == "zalo" {
 			connectionApp.AppId = (*app)[0].InfoApp.Zalo.AppId
-			connectionApp.OaInfo.Zalo[0].AppId = (*app)[0].InfoApp.Zalo.AppId
 		}
 	} else {
 		log.Error("app with type " + data.ConnectionType + " not found")
@@ -79,6 +77,11 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	}
 	connectionApp.QueueId = data.QueueId
 	connectionApp.OaInfo = *data.OaInfo
+	if data.ConnectionType == "facebook" {
+		connectionApp.OaInfo.Facebook[0].AppId = (*app)[0].InfoApp.Facebook.AppId
+	} else if data.ConnectionType == "zalo" {
+		connectionApp.OaInfo.Zalo[0].AppId = (*app)[0].InfoApp.Zalo.AppId
+	}
 	connectionApp.Status = data.Status
 
 	if err := repository.ChatConnectionAppRepo.Insert(ctx, dbCon, connectionApp); err != nil {
