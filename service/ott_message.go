@@ -20,7 +20,7 @@ type (
 	IOttMessage interface {
 		GetOttMessage(ctx context.Context, data model.OttMessage) (int, any)
 		GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any)
-		// GetShareInfo(ctx context.Context, )
+		PostShareInfoEvent(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
 	}
 	OttMessage struct{}
 )
@@ -80,19 +80,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 
-	var authInfo model.AuthUser
+	var authUser model.AuthUser
 
 	// TODO: check queue setting
-	authInfo, err := CheckChatSetting(ctx, message)
+	authUser, err := CheckChatSetting(ctx, message)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	data.TenantId = authInfo.TenantId
-	message.TenantId = authInfo.TenantId
+	data.TenantId = authUser.TenantId
+	message.TenantId = authUser.TenantId
 
-	if len(authInfo.UserId) > 0 {
+	if len(authUser.UserId) > 0 {
 		// TODO: check conversation and add message
 		conversation, isNew, err := UpSertConversation(ctx, data)
 		if err != nil {
@@ -122,7 +122,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					"conversation": conversation,
 				},
 			}
-			PublishMessageToOne(authInfo.UserId, event)
+			if err := PublishMessageToOne(authUser.UserId, event); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
 		}
 		event := map[string]any{
 			"event_name": "message_created",
@@ -130,7 +133,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				"message": message,
 			},
 		}
-		PublishMessageToOne(authInfo.UserId, event)
+		if err := PublishMessageToOne(authUser.UserId, event); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
 	} else {
 		// TODO: check conversation and add message
 		conversation, _, err := UpSertConversation(ctx, data)
@@ -177,4 +183,18 @@ func (s *OttMessage) GetCodeChallenge(ctx context.Context, authUser *model.AuthU
 	} else {
 		return response.ServiceUnavailableMsg(resp.String())
 	}
+}
+
+func (s *OttMessage) PostShareInfoEvent(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any) {
+	event := map[string]any{
+		"event_name": "share_info",
+		"event_data": map[string]any{
+			"share_info": data,
+		},
+	}
+	if err := PublishMessageToOne(authUser.UserId, event); err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	return response.OKResponse()
 }
