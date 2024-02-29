@@ -144,7 +144,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 									authInfo.UserId = agent.UserId
 								}
 							} else if strings.ToLower(chatRouting.RoutingAlias) == "round_robin_online" {
-								agentTmp, err := RoundRobinAgentOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId))
+								agentTmp, err := RoundRobinAgentOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId), queueAgents)
 								if err != nil {
 									log.Error(err)
 									return authInfo, err
@@ -233,7 +233,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 			ConversationId: []string{newConversationId},
 			AppId:          []string{data.AppId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
+		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return conversation, isNew, err
@@ -378,11 +378,11 @@ func GenerateConversationId(appId, conversationId string) (newConversationId str
 	return
 }
 
-func RoundRobinAgentOnline(ctx context.Context, conversationId string) (*Subscriber, error) {
+func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgents *[]model.ChatQueueAgent) (*Subscriber, error) {
 	userLive := Subscriber{}
 	userLives := []Subscriber{}
 	for s := range WsSubscribers.Subscribers {
-		if s.Level == "user" || s.Level == "agent" {
+		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueAgents, s.Id) {
 			userLives = append(userLives, *s)
 		}
 	}
@@ -434,4 +434,13 @@ func GetAgentIsRoundRobin(userLives []Subscriber, conversationId string) (bool, 
 	}
 	userLive = userLives[0]
 	return isOk, index, &userLive
+}
+
+func CheckInLive(queueAgents []model.ChatQueueAgent, id string) bool {
+	for _, item := range queueAgents {
+		if item.AgentId == id {
+			return true
+		}
+	}
+	return false
 }
