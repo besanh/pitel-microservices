@@ -31,7 +31,6 @@ func NewOttMessage(r *gin.Engine, messageService service.IOttMessage, connection
 	{
 		Group.POST("", handler.GetOttMessage)
 		Group.GET("code-challenge/:app_id", handler.GetCodeChallenge)
-		Group.POST("ask-info", handler.GetShareInfo)
 	}
 }
 
@@ -150,6 +149,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 		code, result := h.ottMessageService.GetOttMessage(c, message)
 		c.JSON(code, result)
+		return
 	}
 }
 
@@ -168,29 +168,4 @@ func (h *OttMessage) GetCodeChallenge(c *gin.Context) {
 
 	code, result := h.ottMessageService.GetCodeChallenge(c, res.Data, appId)
 	c.JSON(code, result)
-}
-
-func (h *OttMessage) GetShareInfo(c *gin.Context) {
-	// jsonBody := make(map[string]any, 0)
-	// if err := c.ShouldBindJSON(&jsonBody); err != nil {
-	// 	c.JSON(response.BadRequestMsg(err))
-	// 	return
-	// }
-	// log.Info("ott share info body: ", jsonBody)
-
-	// appId, _ := jsonBody["app_id"].(string)
-	// oaId, _ := jsonBody["oa_id"].(string)
-	// uid, _ := jsonBody["uid"].(string)
-	// imageUrl, _ := jsonBody["image_url"].(string)
-	// title, _ := jsonBody["title"].(string)
-	// subtitle, _ := jsonBody["subtitle"].(string)
-
-	// shareInfo := model.ShareInfo{
-	// 	Fullname:    title,
-	// 	PhoneNumber: uid,
-	// 	Address:     subtitle,
-	// 	City:        imageUrl,
-	// 	District:    oaId,
-	// }
-
 }
