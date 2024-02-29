@@ -87,6 +87,10 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 			filter := model.MessageFilter{
 				ConversationId: conv.ConversationId,
 				IsRead:         "deactive",
+				EventNameExlucde: []string{
+					"received",
+					"seen",
+				},
 			}
 			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
 			if err != nil {
