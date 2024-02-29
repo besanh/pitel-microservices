@@ -91,6 +91,7 @@ type MessageFilter struct {
 	ReadTime            string          `json:"read_time"`
 	ReadBy              json.RawMessage `json:"read_by"`
 	IsRead              string          `json:"is_read"`
+	EventNameExlucde    []string        `json:"event_name_exclude"`
 }
 
 type ConnectionQueueFilter struct {
