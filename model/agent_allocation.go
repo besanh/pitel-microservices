@@ -10,6 +10,7 @@ type AgentAllocation struct {
 	*Base
 	bun.BaseModel      `bun:"table:agent_allocation,alias:aa"`
 	TenantId           string `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	AppId              string `json:"app_id" bun:"app_id,type:text"`
 	ConversationId     string `json:"conversation_id" bun:"conversation_id,type:text,notnull"`
 	AgentId            string `json:"agent_id" bun:"agent_id,type:text,notnull"`
 	QueueId            string `json:"queue_id" bun:"queue_id,type:text,notnull"`

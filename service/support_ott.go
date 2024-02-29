@@ -124,7 +124,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 							return authInfo, err
 						}
 						if totalQueueAgents > 0 {
-							if strings.ToLower(chatRouting.RoutingName) == "random" {
+							if strings.ToLower(chatRouting.RoutingAlias) == "random" {
 								agentUuids := []string{}
 								for _, item := range *queueAgents {
 									agentUuids = append(agentUuids, item.AgentId)
@@ -143,24 +143,36 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 									authInfo.TenantId = agent.TenantId
 									authInfo.UserId = agent.UserId
 								}
-							} else {
+							} else if strings.ToLower(chatRouting.RoutingAlias) == "round_robin_online" {
+								agentTmp, err := RoundRobinAgentOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId))
+								if err != nil {
+									log.Error(err)
+									return authInfo, err
+								}
+								userLives = append(userLives, *agentTmp)
+								agent = *agentTmp
+								authInfo.TenantId = agent.TenantId
+								authInfo.UserId = agent.UserId
 							}
 
 							if len(userLives) > 0 {
+								newConversationId = GenerateConversationId(message.AppId, message.ExternalUserId)
 								agentAllocation := model.AgentAllocation{
 									Base:               model.InitBase(),
 									TenantId:           (*connectionApps)[0].TenantId,
-									ConversationId:     message.ExternalUserId,
+									ConversationId:     newConversationId,
+									AppId:              message.AppId,
 									AgentId:            agent.UserId,
 									QueueId:            queue.Id,
 									AllocatedTimestamp: time.Now().Unix(),
 								}
+								log.Info(agent.Username)
 								if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
 									log.Error(err)
 									return authInfo, err
 								}
 
-								if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.AppId+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+								if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+newConversationId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
 									log.Error(err)
 									return authInfo, err
 								}
@@ -181,7 +193,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 				}
 			} else {
 				log.Error("connection not found")
-				return authInfo, errors.New("connection " + message.OaId + " not found")
+				return authInfo, errors.New("connection " + newConversationId + " not found")
 			}
 		}
 	}
@@ -334,8 +346,8 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId strin
 		log.Error(err)
 		return err
 	} else if len(conversationExist.ExternalUserId) < 1 {
-		log.Errorf("conversation %s not found", conversationId)
-		return errors.New("conversation " + conversationId + " not found")
+		log.Errorf("conversation %s not found", newConversationId)
+		return errors.New("conversation " + newConversationId + " not found")
 	}
 
 	conversationExist.ShareInfo = &shareInfo
@@ -366,4 +378,62 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId strin
 func GenerateConversationId(appId, conversationId string) (newConversationId string) {
 	newConversationId = appId + "_" + conversationId
 	return
+}
+
+func RoundRobinAgentOnline(ctx context.Context, conversationId string) (*Subscriber, error) {
+	userLive := Subscriber{}
+	userLives := []Subscriber{}
+	for s := range WsSubscribers.Subscribers {
+		if s.Level == "user" || s.Level == "agent" {
+			userLives = append(userLives, *s)
+		}
+	}
+	if len(userLives) > 0 {
+		isOk, index, userAllocatePrevious := GetAgentIsRoundRobin(userLives, conversationId)
+		if isOk {
+			if (index+1)%len(userLives) <= len(userLives) {
+				userLive = userLives[(index+1)%len(userLives)]
+			} else {
+				userLive = userLives[0]
+			}
+		} else {
+			userLive = *userAllocatePrevious
+		}
+		if err := cache.RCache.Set(AGENT_ROUND_ROBIN_ONLINE+"_"+conversationId+"_"+userLive.Id, userLive, AGENT_ROUND_ROBIN_ONLINE_EXPIRE); err != nil {
+			log.Error(err)
+			return &userLive, err
+		}
+	} else {
+		return &userLive, errors.New("no user online")
+	}
+	return &userLive, nil
+}
+
+func GetAgentIsRoundRobin(userLives []Subscriber, conversationId string) (bool, int, *Subscriber) {
+	isOk := false
+	index := 0
+	userLive := Subscriber{}
+	for i, item := range userLives {
+		id := conversationId + "_" + item.Id
+		itemCache := cache.RCache.Get(AGENT_ROUND_ROBIN_ONLINE + "_" + id)
+		if itemCache != nil {
+			return isOk, index, &userLives[0]
+		} else if itemCache == nil {
+			return isOk, index, &userLives[0]
+		}
+		userLiveTmp := Subscriber{}
+		if err := util.ParseAnyToAny(itemCache, &userLiveTmp); err != nil {
+			log.Error(err)
+			return isOk, index, &userLives[0]
+		}
+		isOk = true
+		index = i
+		userLive = userLiveTmp
+		break
+	}
+	if isOk {
+		return isOk, index, &userLive
+	}
+	userLive = userLives[0]
+	return isOk, index, &userLive
 }
