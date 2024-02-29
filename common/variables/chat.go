@@ -41,6 +41,7 @@ var (
 	CHAT_ROUTING []string = []string{
 		"random",
 		"min_conversation",
+		"round_robin_online",
 	}
 
 	EVENT_NAME_SEND_MESSAGE = []string{

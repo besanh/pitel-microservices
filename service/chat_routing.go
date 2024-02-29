@@ -55,8 +55,8 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 		return chatRouting.GetId(), err
 	}
 	if total > 0 {
-		log.Error("chat routing already exists")
-		err = errors.New("chat routing already exists")
+		log.Error("chat routing already " + data.RoutingAlias + " exists")
+		err = errors.New("chat routing " + data.RoutingAlias + " already exists")
 		return chatRouting.GetId(), err
 	}
 

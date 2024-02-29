@@ -62,11 +62,12 @@ type ConversationFilter struct {
 }
 
 type AgentAllocationFilter struct {
-	TenantId       string `json:"tenant_id"`
-	ConversationId string
-	AgentId        []string
-	QueueId        string
-	AllocatedTime  int64
+	TenantId       string   `json:"tenant_id"`
+	AppId          string   `json:"app_id"`
+	ConversationId string   `json:"conversation_id"`
+	AgentId        []string `json:"agent_id"`
+	QueueId        string   `json:"queue_id"`
+	AllocatedTime  int64    `json:"allocated_time"`
 }
 
 type MessageFilter struct {

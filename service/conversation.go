@@ -114,12 +114,13 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 }
 
 func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any) {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, id)
+	newConversationId := GenerateConversationId(appId, id)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
-	} else if conversationExist == nil {
-		return response.NotFoundMsg("conversation not found")
+	} else if len(conversationExist.ConversationId) < 1 {
+		return response.NotFoundMsg("conversation " + newConversationId + " not found")
 	}
 	conversationExist.ShareInfo = &data
 	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
@@ -133,7 +134,6 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	newConversationId := GenerateConversationId(appId, id)
 	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())

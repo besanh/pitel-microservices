@@ -31,6 +31,9 @@ func (repo *AgentAllocation) GetAgentAllocations(ctx context.Context, db sqlclie
 	if len(filter.TenantId) > 0 {
 		query.Where("tenant_id = ?", filter.TenantId)
 	}
+	if len(filter.AppId) > 0 {
+		query.Where("app_id = ?", filter.AppId)
+	}
 	if len(filter.AgentId) > 0 {
 		query.Where("agent_id IN (?)", bun.In(filter.AgentId))
 	}
