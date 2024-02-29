@@ -38,13 +38,13 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 
 	if len(tenantId) > 0 {
 		filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
-		musts = append(musts, elasticsearch.MatchQuery("app_id", tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	if len(filter.AppId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray(filter.AppId)...))
 	}
 	if len(filter.ConversationId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("external_user_id", util.ParseToAnyArray(filter.ConversationId)...))
+		filters = append(filters, elasticsearch.TermsQuery("conversation_id", util.ParseToAnyArray(filter.ConversationId)...))
 	}
 	if len(filter.Username) > 0 {
 		// Search like

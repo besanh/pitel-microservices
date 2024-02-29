@@ -77,7 +77,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	}
 	filter.ConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
-	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
+	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
