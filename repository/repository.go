@@ -73,7 +73,7 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 }
 
 func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
-	if _, err := db.GetDB().NewAddColumn().Model((*model.ChatApp)(nil)).IfNotExists().ColumnExpr("set_default_app text not null").Exec(ctx); err != nil {
+	if _, err := db.GetDB().NewAddColumn().Model((*model.ChatApp)(nil)).IfNotExists().ColumnExpr("default_app text null").Exec(ctx); err != nil {
 		log.Info(err)
 		panic(err)
 	}

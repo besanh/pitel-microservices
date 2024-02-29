@@ -68,9 +68,10 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 	}
 
 	filter := model.AppFilter{
-		AppName: c.Query("app_name"),
-		AppType: c.Query("app_type"),
-		Status:  c.Query("status"),
+		AppName:    c.Query("app_name"),
+		AppType:    c.Query("app_type"),
+		Status:     c.Query("status"),
+		DefaultApp: c.Query("default_app"),
 	}
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))

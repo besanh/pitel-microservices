@@ -50,7 +50,7 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 	app.AppName = data.AppName
 	app.InfoApp = data.InfoApp
 	app.Status = data.Status
-	app.SetDefaultApp = data.SetDefaultApp
+	app.DefaultApp = data.DefaultApp
 
 	if err := repository.ChatAppRepo.Insert(ctx, dbCon, app); err != nil {
 		log.Error(err)
@@ -109,7 +109,7 @@ func (s *ChatApp) UpdateChatAppById(ctx context.Context, authUser *model.AuthUse
 	chatAppExist.AppName = data.AppName
 	chatAppExist.InfoApp = data.InfoApp
 	chatAppExist.Status = data.Status
-	chatAppExist.SetDefaultApp = data.SetDefaultApp
+	chatAppExist.DefaultApp = data.DefaultApp
 	err = repository.ChatAppRepo.Update(ctx, dbCon, *chatAppExist)
 	if err != nil {
 		log.Error(err)
