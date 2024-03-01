@@ -387,7 +387,7 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 		}
 	}
 	if len(userLives) > 0 {
-		isOk, index, userAllocatePrevious := GetAgentIsRoundRobin(userLives, conversationId)
+		isOk, index, userAllocatePrevious := GetAgentIsRoundRobin(userLives)
 		if isOk {
 			if (index+1)%len(userLives) <= len(userLives) {
 				userLive = userLives[(index+1)%len(userLives)]
@@ -397,9 +397,27 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 		} else {
 			userLive = *userAllocatePrevious
 		}
-		if err := cache.RCache.Set(AGENT_ROUND_ROBIN_ONLINE+"_"+conversationId+"_"+userLive.Id, userLive, AGENT_ROUND_ROBIN_ONLINE_EXPIRE); err != nil {
+		// Update current
+		jsonByteUserLive, err := json.Marshal(&userLive)
+		if err != nil {
 			log.Error(err)
 			return &userLive, err
+		}
+		if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userLive.Id, string(jsonByteUserLive)); err != nil {
+			log.Error(err)
+			return &userLive, err
+		}
+		// Update previous
+		if userAllocatePrevious.Id != userLive.Id {
+			jsonByteUserLivePrevious, err := json.Marshal(&userAllocatePrevious)
+			if err != nil {
+				log.Error(err)
+				return &userLive, err
+			}
+			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userAllocatePrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
+				log.Error(err)
+				return &userLive, err
+			}
 		}
 	} else {
 		return &userLive, errors.New("no user online")
@@ -407,27 +425,19 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 	return &userLive, nil
 }
 
-func GetAgentIsRoundRobin(userLives []Subscriber, conversationId string) (bool, int, *Subscriber) {
+func GetAgentIsRoundRobin(userLives []Subscriber) (bool, int, *Subscriber) {
 	isOk := false
 	index := 0
 	userLive := Subscriber{}
 	for i, item := range userLives {
-		id := conversationId + "_" + item.Id
-		itemCache := cache.RCache.Get(AGENT_ROUND_ROBIN_ONLINE + "_" + id)
-		if itemCache != nil {
-			return isOk, index, &userLives[0]
-		} else if itemCache == nil {
-			return isOk, index, &userLives[0]
+		if item.IsAssignRoundRobin {
+			if (i+1)%len(userLives) <= len(userLives) {
+				userLive = userLives[(i+1)%len(userLives)]
+				isOk = true
+				index = (i + 1) % len(userLives)
+				break
+			}
 		}
-		userLiveTmp := Subscriber{}
-		if err := util.ParseAnyToAny(itemCache, &userLiveTmp); err != nil {
-			log.Error(err)
-			return isOk, index, &userLives[0]
-		}
-		isOk = true
-		index = i
-		userLive = userLiveTmp
-		break
 	}
 	if isOk {
 		return isOk, index, &userLive
