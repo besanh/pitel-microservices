@@ -39,6 +39,8 @@ type OaInfo struct {
 		OaId        string `json:"oa_id"`
 		OaName      string `json:"oa_name"`
 		UrlOa       string `json:"url_oa"`
+		Avatar      string `json:"avatar"`
+		Cover       string `json:"cover"`
 		AccessToken string `json:"access_token"`
 		Status      string `json:"status"`
 	} `json:"facebook"`
