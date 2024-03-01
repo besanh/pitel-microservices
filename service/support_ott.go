@@ -381,22 +381,33 @@ func GenerateConversationId(appId, conversationId string) (newConversationId str
 func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgents *[]model.ChatQueueAgent) (*Subscriber, error) {
 	userLive := Subscriber{}
 	userLives := []Subscriber{}
-	for s := range WsSubscribers.Subscribers {
+	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
+	if err != nil {
+		log.Error(err)
+		return &userLive, err
+	}
+	for _, item := range subscribers {
+		s := Subscriber{}
+		if err := json.Unmarshal([]byte(item), &s); err != nil {
+			log.Error(err)
+			return &userLive, err
+		}
 		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueAgents, s.Id) {
-			userLives = append(userLives, *s)
+			userLives = append(userLives, s)
 		}
 	}
 	if len(userLives) > 0 {
-		isOk, index, userAllocatePrevious := GetAgentIsRoundRobin(userLives)
-		if isOk {
-			if (index+1)%len(userLives) <= len(userLives) {
-				userLive = userLives[(index+1)%len(userLives)]
-			} else {
-				userLive = userLives[0]
-			}
+		index, userAllocate := GetAgentIsRoundRobin(userLives)
+		userLive = *userAllocate
+		userLive.IsAssignRoundRobin = true
+		userPreviouse := Subscriber{}
+		if index < len(userLives) {
+			userPreviouse = userLives[(index+1)%len(userLives)]
 		} else {
-			userLive = *userAllocatePrevious
+			userPreviouse = userLives[0]
 		}
+		userPreviouse.IsAssignRoundRobin = false
+
 		// Update current
 		jsonByteUserLive, err := json.Marshal(&userLive)
 		if err != nil {
@@ -407,25 +418,26 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 			log.Error(err)
 			return &userLive, err
 		}
+
 		// Update previous
-		if userAllocatePrevious.Id != userLive.Id {
-			jsonByteUserLivePrevious, err := json.Marshal(&userAllocatePrevious)
+		if userPreviouse.Id != userLive.Id {
+			jsonByteUserLivePrevious, err := json.Marshal(&userPreviouse)
 			if err != nil {
 				log.Error(err)
 				return &userLive, err
 			}
-			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userAllocatePrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
+			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPreviouse.Id, string(jsonByteUserLivePrevious)); err != nil {
 				log.Error(err)
 				return &userLive, err
 			}
 		}
+		return &userLive, nil
 	} else {
 		return &userLive, errors.New("no user online")
 	}
-	return &userLive, nil
 }
 
-func GetAgentIsRoundRobin(userLives []Subscriber) (bool, int, *Subscriber) {
+func GetAgentIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
 	isOk := false
 	index := 0
 	userLive := Subscriber{}
@@ -436,14 +448,18 @@ func GetAgentIsRoundRobin(userLives []Subscriber) (bool, int, *Subscriber) {
 				isOk = true
 				index = (i + 1) % len(userLives)
 				break
+			} else {
+				isOk = true
+				userLive = userLives[0]
+				break
 			}
 		}
 	}
 	if isOk {
-		return isOk, index, &userLive
+		return index, &userLive
 	}
 	userLive = userLives[0]
-	return isOk, index, &userLive
+	return index, &userLive
 }
 
 func CheckInLive(queueAgents []model.ChatQueueAgent, id string) bool {
