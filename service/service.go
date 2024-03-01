@@ -24,27 +24,22 @@ var (
 	ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
 
 	// ES
-	ES_HOST               = "https://es.dev.fins.vn"
-	ES_USERNAME           = "elastic"
-	ES_PASSWORD           = "FinS##TEL4VN##ES#!2324"
 	ES_INDEX              = "" //             = "pitel_bss_chat"
 	ES_INDEX_CONVERSATION = "" // = "pitel_bss_conversation"
 
 	// Redis
-	CONVERSATION                    = "conversation"
-	CONVERSATION_EXPIRE             = 30 * time.Minute
-	CHAT_QUEUE                      = "chat_queue"
-	CHAT_QUEUE_EXPIRE               = 30 * time.Minute
-	CHAT_ROUTING                    = "chat_routing"
-	CHAT_ROUTING_EXPIRE             = 1 * time.Hour
-	CHAT_QUEUE_AGENT                = "chat_queue_agent"
-	CHAT_QUEUE_AGENT_EXPIRE         = 10 * time.Minute
-	CHAT_APP                        = "chat_app"
-	CHAT_APP_EXPIRE                 = 5 * time.Hour
-	AGENT_ALLOCATION                = "agent_allocation"
-	AGENT_ALLOCATION_EXPIRE         = 1 * time.Hour
-	AGENT_ROUND_ROBIN_ONLINE        = "agent_round_robin_online"
-	AGENT_ROUND_ROBIN_ONLINE_EXPIRE = 24 * time.Hour
+	CONVERSATION            = "conversation"
+	CONVERSATION_EXPIRE     = 30 * time.Minute
+	CHAT_QUEUE              = "chat_queue"
+	CHAT_QUEUE_EXPIRE       = 30 * time.Minute
+	CHAT_ROUTING            = "chat_routing"
+	CHAT_ROUTING_EXPIRE     = 1 * time.Hour
+	CHAT_QUEUE_AGENT        = "chat_queue_agent"
+	CHAT_QUEUE_AGENT_EXPIRE = 10 * time.Minute
+	CHAT_APP                = "chat_app"
+	CHAT_APP_EXPIRE         = 5 * time.Hour
+	AGENT_ALLOCATION        = "agent_allocation"
+	AGENT_ALLOCATION_EXPIRE = 1 * time.Hour
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
@@ -62,16 +57,17 @@ type (
 	}
 
 	Subscriber struct {
-		Id             string      `json:"id"`
-		TenantId       string      `json:"tenant_id"`
-		BusinessUnitId string      `json:"business_unit_id"`
-		UserId         string      `json:"user_id"`
-		Username       string      `json:"username"`
-		Services       []string    `json:"services"`
-		Level          string      `json:"level"`
-		Message        chan []byte `json:"-"`
-		CloseSlow      func()      `json:"-"`
-		SubscribeAt    time.Time   `json:"subscribe_at"`
+		Id                 string      `json:"id"`
+		TenantId           string      `json:"tenant_id"`
+		BusinessUnitId     string      `json:"business_unit_id"`
+		UserId             string      `json:"user_id"`
+		Username           string      `json:"username"`
+		Services           []string    `json:"services"`
+		Level              string      `json:"level"`
+		Message            chan []byte `json:"-"`
+		CloseSlow          func()      `json:"-"`
+		SubscribeAt        time.Time   `json:"subscribe_at"`
+		IsAssignRoundRobin bool        `json:"is_assign_round_robin"`
 	}
 
 	Subscribers struct {
