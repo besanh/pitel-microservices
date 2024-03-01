@@ -38,6 +38,7 @@ type OaInfo struct {
 		AppId       string `json:"app_id"`
 		OaId        string `json:"oa_id"`
 		OaName      string `json:"oa_name"`
+		UrlOa       string `json:"url_oa"`
 		AccessToken string `json:"access_token"`
 		Status      string `json:"status"`
 	} `json:"facebook"`
