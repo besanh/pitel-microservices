@@ -67,7 +67,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	eventName := "text"
 	if len(data.Attachments) > 0 {
 		for _, item := range data.Attachments {
-			eventNameTmp, ok := variables.ATTACHMENT_TYPE[item.AttachmentType]
+			eventNameTmp, ok := variables.ATTACHMENT_TYPE_MAP[item.AttachmentType]
 			if !ok {
 				break
 			}
@@ -80,6 +80,14 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 
 	docId := uuid.NewString()
+
+	// Upload to Docs
+	fileUrl, err := s.uploadDoc(ctx, authUser, data)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	data.Attachments[0].AttachmentFile.Url = fileUrl
 
 	// Send to OTT
 	ottMessage := model.SendMessageToOtt{

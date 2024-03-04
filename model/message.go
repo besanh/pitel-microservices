@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"mime/multipart"
 	"time"
 )
 
@@ -46,6 +47,13 @@ type MessageRequest struct {
 	ConversationId string                `json:"conversation_id"`
 	Content        string                `json:"content"`
 	Attachments    []*AttachmentsDetails `json:"attachments"`
+}
+
+type MessageFormRequest struct {
+	AppId          string                `form:"app_id" binding:"required"`
+	ConversationId string                `form:"conversation_id" binding:"required"`
+	Content        string                `form:"content"	binding:"required"`
+	File           *multipart.FileHeader `json:"file"`
 }
 
 type MessageMarkRead struct {

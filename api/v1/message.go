@@ -35,22 +35,32 @@ func (h *Message) SendMessage(c *gin.Context) {
 		return
 	}
 
-	jsonBody := make(map[string]any, 0)
-	if err := c.ShouldBindJSON(&jsonBody); err != nil {
-		c.JSON(response.BadRequestMsg(err))
-		return
-	}
-	log.Info("send message body: ", jsonBody)
+	message := model.MessageRequest{}
 
-	appId, _ := jsonBody["app_id"].(string)
-	conversationId, _ := jsonBody["conversation_id"].(string)
-	content, _ := jsonBody["content"].(string)
-	// attachment, _ := jsonBody["attachment"].(string)
-	message := model.MessageRequest{
-		AppId:          appId,
-		ConversationId: conversationId,
-		Content:        content,
-		// Attachments:     attachment,
+	if c.Param("event_name") == "text" {
+		jsonBody := make(map[string]any, 0)
+		if err := c.ShouldBind(&jsonBody); err != nil {
+			c.JSON(response.BadRequestMsg(err))
+			return
+		}
+		log.Info("send message body: ", jsonBody)
+
+		appId, _ := jsonBody["app_id"].(string)
+		conversationId, _ := jsonBody["conversation_id"].(string)
+		content, _ := jsonBody["content"].(string)
+		message = model.MessageRequest{
+			AppId:          appId,
+			ConversationId: conversationId,
+			Content:        content,
+		}
+	} else {
+		messageForm := model.MessageFormRequest{}
+		if err := c.ShouldBind(&messageForm); err != nil {
+			c.JSON(response.BadRequestMsg(err))
+			return
+		}
+
+		log.Info("send message body form: ", messageForm)
 	}
 
 	code, result := h.messageService.SendMessageToOTT(c, res.Data, message)
