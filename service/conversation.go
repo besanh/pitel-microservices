@@ -8,8 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"golang.org/x/exp/slices"
 )
 
 type (
@@ -108,7 +110,11 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				break
 			}
 			if totalTmp > 0 {
-				conv.LatestMessageContent = (*message)[0].Content
+				if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
+					conv.LatestMessageContent = (*message)[0].EventName
+				} else {
+					conv.LatestMessageContent = (*message)[0].Content
+				}
 			}
 
 			(*conversations)[k] = conv

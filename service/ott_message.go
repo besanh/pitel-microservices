@@ -61,7 +61,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			var attachmentMedia model.OttPayloadMedia
 			var attachmentDetail model.AttachmentsDetails
 			attachmentDetail.AttachmentType = val.AttType
-			if val.AttType == variables.ATTACHMENT_TYPE["file"] {
+			if val.AttType == variables.ATTACHMENT_TYPE_MAP["file"] {
 				if err := util.ParseAnyToAny(val.Payload, &attachmentFile); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())

@@ -27,8 +27,7 @@ var (
 		"receive": "receive",
 	}
 
-	ATTACHMENT_TYPE map[string]string = map[string]string{
-		"text":    "text",
+	ATTACHMENT_TYPE_MAP map[string]string = map[string]string{
 		"image":   "image",
 		"audio":   "audio",
 		"video":   "video",
@@ -38,13 +37,23 @@ var (
 		"gif":     "gif",
 	}
 
+	ATTACHMENT_TYPE []string = []string{
+		"image",
+		"audio",
+		"video",
+		"file",
+		"link",
+		"sticker",
+		"gif",
+	}
+
 	CHAT_ROUTING []string = []string{
 		"random",
 		"min_conversation",
 		"round_robin_online",
 	}
 
-	EVENT_NAME_SEND_MESSAGE = []string{
+	EVENT_NAME_SEND_MESSAGE []string = []string{
 		"text",
 		"image",
 		"audio",
