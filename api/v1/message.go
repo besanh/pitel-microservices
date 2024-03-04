@@ -37,7 +37,16 @@ func (h *Message) SendMessage(c *gin.Context) {
 
 	message := model.MessageRequest{}
 
-	if c.Param("event_name") == "text" {
+	if c.Query("event_name") == "form" {
+		messageForm := model.MessageFormRequest{}
+		if err := c.ShouldBind(&messageForm); err != nil {
+			c.JSON(response.BadRequestMsg(err))
+			return
+		}
+		messageForm.EventName = "attachment"
+
+		log.Info("send message body form: ", messageForm)
+	} else {
 		jsonBody := make(map[string]any, 0)
 		if err := c.ShouldBind(&jsonBody); err != nil {
 			c.JSON(response.BadRequestMsg(err))
@@ -49,18 +58,11 @@ func (h *Message) SendMessage(c *gin.Context) {
 		conversationId, _ := jsonBody["conversation_id"].(string)
 		content, _ := jsonBody["content"].(string)
 		message = model.MessageRequest{
+			EventName:      "text",
 			AppId:          appId,
 			ConversationId: conversationId,
 			Content:        content,
 		}
-	} else {
-		messageForm := model.MessageFormRequest{}
-		if err := c.ShouldBind(&messageForm); err != nil {
-			c.JSON(response.BadRequestMsg(err))
-			return
-		}
-
-		log.Info("send message body form: ", messageForm)
 	}
 
 	code, result := h.messageService.SendMessageToOTT(c, res.Data, message)

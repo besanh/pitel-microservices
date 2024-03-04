@@ -87,7 +87,9 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	data.Attachments[0].AttachmentFile.Url = fileUrl
+	if len(data.Attachments) > 0 && (len(data.EventName) > 0 && data.EventName == "attachment") {
+		data.Attachments[0].AttachmentFile.Url = fileUrl
+	}
 
 	// Send to OTT
 	ottMessage := model.SendMessageToOtt{
