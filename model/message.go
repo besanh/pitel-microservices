@@ -43,6 +43,7 @@ type AttachmentsDetails struct {
 }
 
 type MessageRequest struct {
+	EventName      string                `json:"event_name"`
 	AppId          string                `json:"app_id"`
 	ConversationId string                `json:"conversation_id"`
 	Content        string                `json:"content"`
@@ -50,10 +51,11 @@ type MessageRequest struct {
 }
 
 type MessageFormRequest struct {
+	EventName      string                `form:"event_name" binding:"required"`
 	AppId          string                `form:"app_id" binding:"required"`
 	ConversationId string                `form:"conversation_id" binding:"required"`
-	Content        string                `form:"content"	binding:"required"`
-	File           *multipart.FileHeader `json:"file"`
+	Content        string                `form:"content" binding:"required"`
+	File           *multipart.FileHeader `json:"file" binding:"required"`
 }
 
 type MessageMarkRead struct {
