@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"mime/multipart"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -36,19 +38,24 @@ func (h *Message) SendMessage(c *gin.Context) {
 	}
 
 	message := model.MessageRequest{}
+	var file *multipart.FileHeader
 
 	if c.Query("event_name") == "form" {
 		messageForm := model.MessageFormRequest{}
 		if err := c.ShouldBind(&messageForm); err != nil {
+			log.Error(err)
 			c.JSON(response.BadRequestMsg(err))
 			return
 		}
-		messageForm.EventName = "attachment"
 
 		log.Info("send message body form: ", messageForm)
+		message.EventName = messageForm.EventName
+		message.AppId = messageForm.AppId
+		message.ConversationId = messageForm.ConversationId
 	} else {
 		jsonBody := make(map[string]any, 0)
 		if err := c.ShouldBind(&jsonBody); err != nil {
+			log.Error(err)
 			c.JSON(response.BadRequestMsg(err))
 			return
 		}
@@ -65,7 +72,7 @@ func (h *Message) SendMessage(c *gin.Context) {
 		}
 	}
 
-	code, result := h.messageService.SendMessageToOTT(c, res.Data, message)
+	code, result := h.messageService.SendMessageToOTT(c, res.Data, message, file)
 	c.JSON(code, result)
 }
 

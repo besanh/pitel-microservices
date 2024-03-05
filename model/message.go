@@ -54,8 +54,7 @@ type MessageFormRequest struct {
 	EventName      string                `form:"event_name" binding:"required"`
 	AppId          string                `form:"app_id" binding:"required"`
 	ConversationId string                `form:"conversation_id" binding:"required"`
-	Content        string                `form:"content" binding:"required"`
-	File           *multipart.FileHeader `json:"file" binding:"required"`
+	File           *multipart.FileHeader `form:"file" binding:"required"`
 }
 
 type MessageMarkRead struct {
@@ -78,7 +77,6 @@ type OaInfoMessage struct {
 }
 
 type ShareInfo struct {
-	AppId       string `json:"app_id"`
 	Fullname    string `json:"fullname"`
 	PhoneNumber string `json:"phone_number"`
 	Address     string `json:"address"`
