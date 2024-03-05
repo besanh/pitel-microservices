@@ -34,7 +34,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 		authInfo.UserId = agent.UserId
 	} else {
 		filter := model.AgentAllocationFilter{
-			ConversationId: message.ExternalUserId,
+			ConversationId: newConversationId,
 		}
 		total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
@@ -74,7 +74,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 				}
 				if totalConnectionQueue > 0 {
 					filterAgentAllocation := model.AgentAllocationFilter{
-						ConversationId: message.ExternalUserId,
+						ConversationId: newConversationId,
 						QueueId:        (*connectionQueues)[0].QueueId,
 					}
 					totalAgentAllocation, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filterAgentAllocation, -1, 0)
@@ -90,7 +90,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 								agent = *s
 							}
 						}
-						if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+message.AppId+"_"+message.ExternalUserId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
+						if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+newConversationId, agent, AGENT_ALLOCATION_EXPIRE); err != nil {
 							log.Error(err)
 							return authInfo, err
 						}
