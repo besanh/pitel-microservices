@@ -158,10 +158,6 @@ func (handler *ChatRouting) DeleteChatRoutingById(c *gin.Context) {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {

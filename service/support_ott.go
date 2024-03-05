@@ -192,8 +192,8 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 					return authInfo, errors.New("queue not found")
 				}
 			} else {
-				log.Error("connection not found")
-				return authInfo, errors.New("connection " + newConversationId + " not found")
+				log.Error("connect for conversation " + newConversationId + " not found")
+				return authInfo, errors.New("connect for conversation " + newConversationId + " not found")
 			}
 		}
 	}

@@ -50,14 +50,14 @@ func (h *ShareInfo) PostConfigForm(c *gin.Context) {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	err := uploadShareInfo(c, res.Data, data.Files, true)
+	err := uploadShareInfo(c, data.Files, true)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
 	err = h.shareInfo.PostConfigForm(c, res.Data, data, data.Files)
 	if err != nil {
-		err := uploadShareInfo(c, res.Data, data.Files, false)
+		err := uploadShareInfo(c, data.Files, false)
 		if err != nil {
 			c.JSON(response.ServiceUnavailableMsg(err.Error()))
 			return
@@ -95,7 +95,7 @@ func (s *ShareInfo) PostRequestShareInfo(c *gin.Context) {
 	c.JSON(response.OKResponse())
 }
 
-func uploadShareInfo(c *gin.Context, authUser *model.AuthUser, file *multipart.FileHeader, isOk bool) error {
+func uploadShareInfo(c *gin.Context, file *multipart.FileHeader, isOk bool) error {
 	f, err := file.Open()
 	if err != nil {
 		log.Error(err)

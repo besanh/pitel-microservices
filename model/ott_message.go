@@ -29,7 +29,7 @@ type OttPayloadMedia struct {
 	Thubnail    string `json:"thumbnail"`
 	Description string `json:"description"`
 	Url         string `json:"url"`
-	Id          string `json:"id"` // only sticker
+	Id          string `json:"id"`
 }
 
 type OttPayloadFile struct {
@@ -41,18 +41,17 @@ type OttPayloadFile struct {
 }
 
 type SendMessageToOtt struct {
-	Type          string            `json:"type"`
-	EventName     string            `json:"event_name" bun:"event_name,type:text,notnull"`
-	AppId         string            `json:"app_id"`
-	OaId          string            `json:"oa_id"`
-	UserIdByApp   string            `json:"user_id_by_app"`
-	Uid           string            `json:"uid"`
-	SupporterId   string            `json:"supporter_id"`
-	SupporterName string            `json:"supporter_name"`
-	Timestamp     string            `json:"timestamp"`
-	MsgId         string            `json:"msg_id"`
-	Text          string            `json:"text"`
-	Attachments   []*OttAttachments `json:"attachments"`
+	Type          string `json:"type"`
+	EventName     string `json:"event_name"`
+	AppId         string `json:"app_id"`
+	OaId          string `json:"oa_id"`
+	UserIdByApp   string `json:"user_id_by_app"`
+	Uid           string `json:"uid"`
+	SupporterId   string `json:"supporter_id"`
+	SupporterName string `json:"supporter_name"`
+	Timestamp     string `json:"timestamp"`
+	MsgId         string `json:"msg_id"`
+	Text          string `json:"text"`
 }
 
 type OttResponse struct {

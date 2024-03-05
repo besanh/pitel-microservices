@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 
@@ -10,11 +9,14 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *Message) sendMessageToOTT(ctx context.Context, ott model.SendMessageToOtt) (model.OttResponse, error) {
+func (s *Message) sendMessageToOTT(ott model.SendMessageToOtt, attachment any) (model.OttResponse, error) {
 	var result model.OttResponse
-	var body any
+	var body map[string]any
 	if err := util.ParseAnyToAny(ott, &body); err != nil {
 		return result, err
+	}
+	if attachment != nil {
+		body["attachments"] = attachment
 	}
 
 	url := OTT_URL + "/ott/v1/crm"
