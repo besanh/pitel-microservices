@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -19,7 +20,7 @@ import (
 
 type (
 	IMessage interface {
-		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any)
+		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
 		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
@@ -31,7 +32,7 @@ func NewMessage() IMessage {
 	return &Message{}
 }
 
-func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest) (int, any) {
+func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any) {
 	conversation := model.Conversation{}
 	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.ConversationId)
 	if conversationCache != nil {
@@ -84,20 +85,19 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	docId := uuid.NewString()
 
-	// Upload to Docs
-	fileUrl, err := s.UploadDoc(authUser, data)
-	if err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
-	if len(data.Attachments) > 0 && (len(data.EventName) > 0 && data.EventName == "attachment") {
-		data.Attachments[0].AttachmentFile.Url = fileUrl
-	}
+	attachments := []model.OttAttachments{}
 
-	attachment := model.OttAttachments{
-		AttType: eventName,
-		Payload: data.Attachments,
-	}
+	// Upload to Docs
+	// fileUrl, err := s.UploadDoc(authUser, data, file)
+	// if err != nil {
+	// 	log.Error(err)
+	// 	return response.ServiceUnavailableMsg(err.Error())
+	// }
+	// if len(data.Attachments) > 0 && (len(data.EventName) > 0 && data.EventName != "text") {
+	// 	data.Attachments[0].AttachmentFile.Url = fileUrl
+	// 	data.AttType = eventName
+	// 	Payload: data.Attachments
+	// }
 
 	// Send to OTT
 	ottMessage := model.SendMessageToOtt{
@@ -114,7 +114,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	log.Info("message to ott: ", ottMessage)
 
-	resOtt, err := s.sendMessageToOTT(ottMessage, &attachment)
+	resOtt, err := s.sendMessageToOTT(ottMessage, &attachments)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())

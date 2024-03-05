@@ -31,6 +31,7 @@ func NewOttMessage(r *gin.Engine, messageService service.IOttMessage, connection
 	{
 		Group.POST("", handler.GetOttMessage)
 		Group.GET("code-challenge/:app_id", handler.GetCodeChallenge)
+		Group.POST("ask-info", handler.AskInfo)
 	}
 }
 
@@ -167,5 +168,33 @@ func (h *OttMessage) GetCodeChallenge(c *gin.Context) {
 	}
 
 	code, result := h.ottMessageService.GetCodeChallenge(c, res.Data, appId)
+	c.JSON(code, result)
+}
+
+func (h *OttMessage) AskInfo(c *gin.Context) {
+	jsonBody := make(map[string]any, 0)
+	if err := c.ShouldBindJSON(&jsonBody); err != nil {
+		c.JSON(response.BadRequestMsg(err))
+		return
+	}
+	log.Info("ott get ask info body: ", jsonBody)
+
+	appId, _ := jsonBody["app_id"].(string)
+	externalUserId, _ := jsonBody["uid"].(string)
+	shareInfoTmp, _ := jsonBody["share_info"].(map[string]any)
+	shareInfoName, _ := shareInfoTmp["name"].(string)
+	shareInfoPhoneNumber, _ := shareInfoTmp["phone"].(string)
+	shareInfoAddress, _ := shareInfoTmp["address"].(string)
+	shareInfoCity, _ := shareInfoTmp["city"].(string)
+	shareInfoDistrict, _ := shareInfoTmp["district"].(string)
+	shareInfo := model.ShareInfo{
+		Fullname:    shareInfoName,
+		PhoneNumber: shareInfoPhoneNumber,
+		Address:     shareInfoAddress,
+		City:        shareInfoCity,
+		District:    shareInfoDistrict,
+	}
+
+	code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, externalUserId, shareInfo)
 	c.JSON(code, result)
 }
