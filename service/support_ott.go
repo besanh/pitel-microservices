@@ -400,13 +400,13 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 		index, userAllocate := GetAgentIsRoundRobin(userLives)
 		userLive = *userAllocate
 		userLive.IsAssignRoundRobin = true
-		userPreviouse := Subscriber{}
+		userPrevious := Subscriber{}
 		if index < len(userLives) {
-			userPreviouse = userLives[(index+1)%len(userLives)]
+			userPrevious = userLives[(index+1)%len(userLives)]
 		} else {
-			userPreviouse = userLives[0]
+			userPrevious = userLives[0]
 		}
-		userPreviouse.IsAssignRoundRobin = false
+		userPrevious.IsAssignRoundRobin = false
 
 		// Update current
 		jsonByteUserLive, err := json.Marshal(&userLive)
@@ -420,13 +420,13 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 		}
 
 		// Update previous
-		if userPreviouse.Id != userLive.Id {
-			jsonByteUserLivePrevious, err := json.Marshal(&userPreviouse)
+		if userPrevious.Id != userLive.Id {
+			jsonByteUserLivePrevious, err := json.Marshal(&userPrevious)
 			if err != nil {
 				log.Error(err)
 				return &userLive, err
 			}
-			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPreviouse.Id, string(jsonByteUserLivePrevious)); err != nil {
+			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
 				log.Error(err)
 				return &userLive, err
 			}
