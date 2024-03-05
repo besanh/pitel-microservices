@@ -40,10 +40,13 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 	} else {
+		if len(data.ConversationId) < 1 {
+			return response.BadRequestMsg("conversation " + data.ConversationId + " is required")
+		}
 		filter := model.ConversationFilter{
 			ConversationId: []string{data.ConversationId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
+		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -82,13 +85,18 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	docId := uuid.NewString()
 
 	// Upload to Docs
-	fileUrl, err := s.uploadDoc(ctx, authUser, data)
+	fileUrl, err := s.UploadDoc(authUser, data)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if len(data.Attachments) > 0 && (len(data.EventName) > 0 && data.EventName == "attachment") {
 		data.Attachments[0].AttachmentFile.Url = fileUrl
+	}
+
+	attachment := model.OttAttachments{
+		AttType: eventName,
+		Payload: data.Attachments,
 	}
 
 	// Send to OTT
@@ -106,7 +114,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	log.Info("message to ott: ", ottMessage)
 
-	resOtt, err := s.sendMessageToOTT(ctx, ottMessage)
+	resOtt, err := s.sendMessageToOTT(ottMessage, attachment)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -144,7 +152,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 }
 
 func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any) {
-	total, messages, err := repository.MessageESRepo.GetMessages(ctx, "", ES_INDEX, filter, limit, offset)
+	total, messages, err := repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
