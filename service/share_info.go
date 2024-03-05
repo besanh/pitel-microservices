@@ -60,6 +60,7 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 		shareForm.Zalo.ImageUrl = filePath
 		shareForm.Zalo.Title = data.Title
 		shareForm.Zalo.Subtitle = data.Subtitle
+		shareForm.Zalo.OaId = data.OaId
 	}
 
 	shareInfoForm := model.ShareInfoForm{

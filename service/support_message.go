@@ -9,14 +9,14 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *Message) sendMessageToOTT(ott model.SendMessageToOtt, attachment model.OttAttachments) (model.OttResponse, error) {
+func (s *Message) sendMessageToOTT(ott model.SendMessageToOtt, attachment *model.OttAttachments) (model.OttResponse, error) {
 	var result model.OttResponse
-	var body map[string]any
+	var body any
 	if err := util.ParseAnyToAny(ott, &body); err != nil {
 		return result, err
 	}
 	// if attachment != nil {
-	// 	body["attachments"] = attachment
+	// 	body = append(body.([]any), attachment)
 	// }
 
 	url := OTT_URL + "/ott/v1/crm"

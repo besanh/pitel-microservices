@@ -30,6 +30,7 @@ type OttPayloadMedia struct {
 	Description string `json:"description"`
 	Url         string `json:"url"`
 	Id          string `json:"id"`
+	Title       string `json:"title"`
 }
 
 type OttPayloadFile struct {
