@@ -94,6 +94,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 							log.Error(err)
 							return authInfo, err
 						}
+						return authInfo, nil
 					} else {
 						// Connection prevent duplicate
 						// Meaning: 1 connection with page A in 1 app => only recieve one queue

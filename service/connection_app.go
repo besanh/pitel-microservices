@@ -180,6 +180,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 
 	if chatConnectionAppExist.ConnectionType == "zalo" && len(data.OaId) > 0 {
 		chatConnectionAppExist.OaInfo.Zalo[0].OaId = data.OaId
+		chatConnectionAppExist.OaInfo.Zalo[0].AppId = data.AppId
 		chatConnectionAppExist.OaInfo.Zalo[0].OaName = data.OaName
 		chatConnectionAppExist.OaInfo.Zalo[0].Avatar = data.Avatar
 		chatConnectionAppExist.OaInfo.Zalo[0].Cover = data.Cover
