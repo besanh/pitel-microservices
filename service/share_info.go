@@ -111,6 +111,9 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 		Title:     (*shareInfos)[0].ShareForm.Zalo.Title,
 		Subtitle:  (*shareInfos)[0].ShareForm.Zalo.Subtitle,
 	}
+
+	log.Info("request share info: ", tmp)
+
 	if err := util.ParseAnyToAny(tmp, &body); err != nil {
 		log.Error(err)
 		return err
