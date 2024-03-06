@@ -36,6 +36,9 @@ func (s *ChatApp) GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, f
 	if len(filter.AppType) > 0 {
 		query.Where("info_app :: jsonb -> ? ->> 'status' = 'active'", filter.AppType)
 	}
+	if len(filter.DefaultApp) > 0 {
+		query.Where("default_app = ?", filter.DefaultApp)
+	}
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
