@@ -266,7 +266,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage) (conversatio
 				return conversation, isNew, err
 			}
 			isExisted = true
-			return conversation, isExisted, nil
+			return conversation, isNew, nil
 		}
 	}
 
