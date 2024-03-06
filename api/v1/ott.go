@@ -112,6 +112,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 		connectionAppRequest := model.ChatConnectionAppRequest{
 			OaId:     oaId,
+			AppId:    appId,
 			Id:       oaInfoMessage.ConnectionId,
 			OaName:   oaInfoMessage.Name,
 			Avatar:   oaInfoMessage.Avatar,
