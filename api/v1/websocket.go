@@ -96,39 +96,39 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error
 		return errors.New("token is invalid")
 	}
 
-	ctx := wsCon.CloseRead(c)
 	if err := handler.subscriber.AddSubscriber(c, res.Data, s); err != nil {
 		log.Error(err)
 		return err
 	}
 	defer service.WsSubscribers.DeleteSubscriber(s)
 
-	go func(conn *websocket.Conn) {
-		defer func() {
-			if err := recover(); err != nil {
-				log.Error(err)
-			}
-		}()
+	// go func(conn *websocket.Conn) {
+	// 	defer func() {
+	// 		if err := recover(); err != nil {
+	// 			log.Error(err)
+	// 		}
+	// 	}()
 
-		for {
-			messageType, p, err := conn.Read(c)
-			if err != nil {
-				if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
-					websocket.CloseStatus(err) == websocket.StatusGoingAway {
-					// writeActionChan(callId, CLOSE)
-				} else if e, ok := err.(websocket.CloseError); ok {
-					log.Errorf("close socket code: %d reason: %s", e.Code, e.Reason)
-				} else {
-					log.Errorf("read: %v", err)
-				}
-				break
-			}
-			log.Infof("read: %s", string(p))
-			log.Infof("message type: %d", messageType)
-		}
+	// 	for {
+	// 		messageType, p, err := conn.Read(c)
+	// 		if err != nil {
+	// 			if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
+	// 				websocket.CloseStatus(err) == websocket.StatusGoingAway {
+	// 				// writeActionChan(callId, CLOSE)
+	// 			} else if e, ok := err.(websocket.CloseError); ok {
+	// 				log.Errorf("close socket code: %d reason: %s", e.Code, e.Reason)
+	// 			} else {
+	// 				log.Errorf("read: %v", err)
+	// 			}
+	// 			break
+	// 		}
+	// 		log.Infof("read: %s", string(p))
+	// 		log.Infof("message type: %d", messageType)
+	// 	}
 
-	}(wsCon)
+	// }(wsCon)
 
+	ctx := wsCon.CloseRead(c)
 	for {
 		select {
 		case msg := <-s.Message:

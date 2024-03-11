@@ -107,3 +107,8 @@ type ShareInfoFormFilter struct {
 	OaId      string `json:"oa_id"`
 	UserId    string `json:"user_id"`
 }
+
+type FacebookPageFilter struct {
+	OaId   string `json:"oa_id"`
+	OaName string `json:"oa_name"`
+}
