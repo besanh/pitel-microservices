@@ -57,8 +57,8 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	}
 
 	filter := model.AppFilter{
-		AppType: data.ConnectionType,
-		// SetDefaultApp: "true",
+		AppType:    data.ConnectionType,
+		DefaultApp: "active",
 	}
 	total, app, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
