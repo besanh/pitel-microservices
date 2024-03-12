@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"math/rand"
@@ -37,10 +36,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 	} else {
 		filter := model.AgentAllocationFilter{
 			ConversationId: newConversationId,
-			MainAllocate: sql.NullBool{
-				Valid: true,
-				Bool:  true,
-			},
+			MainAllocate:   "active",
 		}
 		total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
@@ -83,10 +79,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 					filterAgentAllocation := model.AgentAllocationFilter{
 						ConversationId: newConversationId,
 						QueueId:        (*connectionQueues)[0].QueueId,
-						MainAllocate: sql.NullBool{
-							Valid: true,
-							Bool:  true,
-						},
+						MainAllocate:   "active",
 					}
 					totalAgentAllocation, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filterAgentAllocation, -1, 0)
 					if err != nil {

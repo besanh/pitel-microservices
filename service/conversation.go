@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"time"
@@ -164,14 +163,16 @@ func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser 
 		return errors.New("conversation " + conversationId + " not found")
 	}
 
+	if conversationExist.IsDone {
+		log.Errorf("conversation %s is done", conversationId)
+		return errors.New("conversation " + conversationId + " is done")
+	}
+
 	// Update agent allocate
 	filter := model.AgentAllocationFilter{
 		AppId:          appId,
 		ConversationId: conversationId,
-		MainAllocate: sql.NullBool{
-			Valid: true,
-			Bool:  true,
-		},
+		MainAllocate:   "active",
 	}
 	total, agentAllocate, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
@@ -185,7 +186,7 @@ func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser 
 
 	agentAllocateTmp := (*agentAllocate)[0]
 
-	agentAllocateTmp.MainAllocate = false
+	agentAllocateTmp.MainAllocate = "active"
 	agentAllocateTmp.AllocatedTimestamp = time.Now().Unix()
 	agentAllocateTmp.UpdatedAt = time.Now()
 	if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocateTmp); err != nil {
