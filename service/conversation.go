@@ -218,13 +218,16 @@ func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser 
 }
 
 func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
-	if authUser.Level != "manager" {
+	if authUser.Source != "authen" {
+		return response.Pagination(nil, 0, limit, offset)
+	}
+
+	if authUser.Level != "manager" && authUser.Level != "admin" {
 		return response.Pagination(nil, 0, limit, offset)
 	}
 
 	url := API_CRM + "/v1/crm/user-crm?level=user&unit_uuid=" + authUser.UnitUuid
 	client := resty.New()
-	var result any
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Authorization", "Bearer "+authUser.Token).
@@ -236,34 +239,38 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	if err := json.Unmarshal([]byte(res.Body()), &result); err != nil {
-		log.Error(err)
-	}
 	if res.StatusCode() == 200 {
 		var responseData model.ResponseData
 		err = json.Unmarshal(res.Body(), &responseData)
 		if err != nil {
+			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 
-		userUUIDs := []string{}
+		userUuids := []string{}
 
 		for _, item := range responseData.Data {
-			userUUID, ok := item["user_uuid"].(string)
+			userUuid, ok := item["user_uuid"].(string)
+			log.Debug(userUuid)
 			if !ok {
 				log.Println("user_uuid not found or not a string")
 				continue
 			}
-			userUUIDs = append(userUUIDs, userUUID)
+			userUuids = append(userUuids, userUuid)
 		}
 
-		if len(userUUIDs) < 1 {
+		if len(userUuids) < 1 {
+			log.Error("list user not found")
 			return response.Pagination(nil, 0, limit, offset)
 		}
 
 		conversationIds := []string{}
 		conversationFilter := model.AgentAllocationFilter{
-			AgentId: userUUIDs,
+			AgentId: userUuids,
+			MainAllocate: sql.NullBool{
+				Valid: true,
+				Bool:  true,
+			},
 		}
 
 		total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, conversationFilter, -1, 0)
@@ -291,7 +298,6 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 			for k, conv := range *conversations {
 				filter := model.MessageFilter{
 					ConversationId: conv.ConversationId,
-					IsRead:         "deactive",
 					EventNameExlucde: []string{
 						"received",
 						"seen",
