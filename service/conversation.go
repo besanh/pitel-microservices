@@ -251,9 +251,8 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 
 		for _, item := range responseData.Data {
 			userUuid, ok := item["user_uuid"].(string)
-			log.Debug(userUuid)
 			if !ok {
-				log.Println("user_uuid not found or not a string")
+				log.Error("user_uuid not found or not a string")
 				continue
 			}
 			userUuids = append(userUuids, userUuid)
