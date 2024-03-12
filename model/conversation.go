@@ -64,3 +64,7 @@ type ElasticsearchChatResponse struct {
 		} `json:"hits"`
 	} `json:"hits"`
 }
+
+type ResponseData struct {
+	Data []map[string]any `json:"data"`
+}

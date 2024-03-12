@@ -46,6 +46,7 @@ var (
 	OTT_URL             string = ""
 	API_SHARE_INFO_HOST string = ""
 	API_DOC             string = ""
+	API_CRM             string = ""
 )
 
 type (
