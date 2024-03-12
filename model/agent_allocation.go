@@ -15,4 +15,5 @@ type AgentAllocation struct {
 	AgentId            string `json:"agent_id" bun:"agent_id,type:text,notnull"`
 	QueueId            string `json:"queue_id" bun:"queue_id,type:text,notnull"`
 	AllocatedTimestamp int64  `json:"allocated_timestamp" bun:"allocated_timestamp,notnull"`
+	MainAllocate       bool   `json:"main_allocate" bun:"main_allocate,type:bool,notnull,default:true"`
 }

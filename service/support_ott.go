@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"math/rand"
@@ -32,9 +33,14 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 		agent = agentTmp
 		authInfo.TenantId = agent.TenantId
 		authInfo.UserId = agent.UserId
+		return authInfo, nil
 	} else {
 		filter := model.AgentAllocationFilter{
 			ConversationId: newConversationId,
+			MainAllocate: sql.NullBool{
+				Valid: true,
+				Bool:  true,
+			},
 		}
 		total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
@@ -44,6 +50,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 		if total > 0 {
 			authInfo.TenantId = (*agentAllocations)[0].TenantId
 			authInfo.UserId = (*agentAllocations)[0].AgentId
+			return authInfo, nil
 		} else {
 			// Get connection
 			connectionType := ""
@@ -76,6 +83,10 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 					filterAgentAllocation := model.AgentAllocationFilter{
 						ConversationId: newConversationId,
 						QueueId:        (*connectionQueues)[0].QueueId,
+						MainAllocate: sql.NullBool{
+							Valid: true,
+							Bool:  true,
+						},
 					}
 					totalAgentAllocation, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filterAgentAllocation, -1, 0)
 					if err != nil {
@@ -167,7 +178,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 									QueueId:            queue.Id,
 									AllocatedTimestamp: time.Now().Unix(),
 								}
-								log.Info(agent.Username)
+								log.Infof("conversation %s allocated to agent %s", newConversationId, agent.Username)
 								if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
 									log.Error(err)
 									return authInfo, err
@@ -198,7 +209,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 			}
 		}
 	}
-	return authInfo, nil
 }
 
 func UpSertConversation(ctx context.Context, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
