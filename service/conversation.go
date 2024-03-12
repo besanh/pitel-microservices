@@ -254,7 +254,6 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 				}
 				userUuids = append(userUuids, userUuid)
 			}
-			log.Debug(userUuids)
 			if len(userUuids) < 1 {
 				log.Error("list user not found")
 				return response.Pagination(nil, 0, limit, offset)
