@@ -168,6 +168,7 @@ func main() {
 	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
 	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
 	service.API_SHARE_INFO_HOST = env.GetStringENV("API_SHARE_INFO_HOST", "https://api.dev.fins.vn")
+	service.API_CRM = env.GetStringENV("API_CRM", "")
 	service.InitServices()
 
 	// Init storage
