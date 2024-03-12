@@ -262,11 +262,8 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 
 			conversationIds := []string{}
 			conversationFilter := model.AgentAllocationFilter{
-				AgentId: userUuids,
-				MainAllocate: sql.NullBool{
-					Valid: true,
-					Bool:  true,
-				},
+				AgentId:      userUuids,
+				MainAllocate: "active",
 			}
 
 			total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, conversationFilter, -1, 0)
