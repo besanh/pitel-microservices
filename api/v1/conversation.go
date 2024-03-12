@@ -21,6 +21,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 	Group := engine.Group("bss-message/v1/conversation")
 	{
 		Group.GET("", handler.GetConversations)
+		Group.GET("/manager", handler.GetConversationsByManager)
 		Group.PUT(":id", handler.UpdateConversation)
 	}
 }
@@ -69,5 +70,27 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 	log.Info("update conversation payload -> ", shareInfo)
 
 	code, result := handler.conversationService.UpdateConversationById(c, res.Data, "", id, shareInfo)
+	c.JSON(code, result)
+}
+
+func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	limit := util.ParseLimit(c.Query("limit"))
+	offset := util.ParseOffset(c.Query("offset"))
+
+	filter := model.ConversationFilter{
+		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
+		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
+		Username:       c.Query("username"),
+		PhoneNumber:    c.Query("phone_number"),
+		Email:          c.Query("email"),
+	}
+
+	code, result := handler.conversationService.GetConversationsByManager(c, res.Data, filter, limit, offset)
 	c.JSON(code, result)
 }

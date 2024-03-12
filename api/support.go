@@ -172,6 +172,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 				Level:    agentInfo.Level,
 				Source:   bssAuthRequest.Source,
 				Token:    bssAuthRequest.Token,
+				UnitUuid: agentInfo.UnitUuid,
 			},
 		}
 	} else {
