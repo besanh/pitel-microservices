@@ -16,6 +16,8 @@ type FacebookPage struct {
 	OaName        string `json:"oa_name" bun:"oa_name,type:text,notnull"`
 	TokenType     string `json:"token_type" bun:"token_type,type:text,notnull"`
 	AccessToken   string `json:"access_token" bun:"access_token,type:text,notnull"`
+	Avatar        string `json:"avatar" bun:"avatar,type:text,notnull"`
+	Status        string `json:"status" bun:"status,notnull"`
 }
 
 type FacebookPageInfo struct {
@@ -23,6 +25,8 @@ type FacebookPageInfo struct {
 	OaName      string `json:"oa_name"`
 	TokenType   string `json:"token_type"`
 	AccessToken string `json:"access_token"`
+	Avatar      string `json:"avatar"`
+	Status      string `json:"status"`
 }
 
 func (m *FacebookPageInfo) Validate() (err error) {
@@ -43,6 +47,14 @@ func (m *FacebookPageInfo) Validate() (err error) {
 
 	if len(m.AccessToken) < 1 {
 		err = errors.New("access_token is required")
+	}
+
+	if len(m.Avatar) < 1 {
+		err = errors.New("avatar is required")
+	}
+
+	if len(m.Status) < 1 {
+		err = errors.New("status is required")
 	}
 
 	return

@@ -22,6 +22,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 	{
 		Group.GET("", handler.GetConversations)
 		Group.PUT(":id", handler.UpdateConversation)
+		Group.POST("make-done", handler.UpdateMakeDoneConversation)
 	}
 }
 
@@ -70,4 +71,27 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 
 	code, result := handler.conversationService.UpdateConversationById(c, res.Data, "", id, shareInfo)
 	c.JSON(code, result)
+}
+
+func (handler *Conversation) UpdateMakeDoneConversation(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	jsonBody := make(map[string]any, 0)
+	if err := c.ShouldBindJSON(&jsonBody); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	appId, _ := jsonBody["app_id"].(string)
+	conversationId, _ := jsonBody["conversation_id"].(string)
+
+	err := handler.conversationService.UpdateMakeDoneConversation(c, res.Data, appId, conversationId, res.Data.UserId)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }
