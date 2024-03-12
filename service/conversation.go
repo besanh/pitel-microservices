@@ -225,12 +225,12 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 	url := API_CRM + "/v1/crm/user-crm?level=user&unit_uuid=" + authUser.UnitUuid
 	client := resty.New()
 	var result any
-	log.Debug("TEST: ", authUser.UnitUuid)
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Authorization", "Bearer "+authUser.Token).
 		// SetHeader("Authorization", "Bearer "+token).
 		Get(url)
+
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -243,11 +243,11 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 		var responseData model.ResponseData
 		err = json.Unmarshal(res.Body(), &responseData)
 		if err != nil {
-			log.Fatalf("Error parsing JSON: %v", err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 
 		userUUIDs := []string{}
+
 		for _, item := range responseData.Data {
 			userUUID, ok := item["user_uuid"].(string)
 			if !ok {
@@ -256,14 +256,16 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 			}
 			userUUIDs = append(userUUIDs, userUUID)
 		}
+
 		if len(userUUIDs) < 1 {
 			return response.Pagination(nil, 0, limit, offset)
 		}
+
 		conversationIds := []string{}
 		conversationFilter := model.AgentAllocationFilter{
 			AgentId: userUUIDs,
 		}
-		log.Debug(conversationFilter)
+
 		total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, conversationFilter, -1, 0)
 		if err != nil {
 			log.Error(err)
