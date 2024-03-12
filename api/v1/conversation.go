@@ -23,6 +23,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.GET("", handler.GetConversations)
 		Group.GET("/manager", handler.GetConversationsByManager)
 		Group.PUT(":id", handler.UpdateConversation)
+		Group.POST("make-done", handler.UpdateMakeDoneConversation)
 	}
 }
 
@@ -73,24 +74,25 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 	c.JSON(code, result)
 }
 
-func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
+func (handler *Conversation) UpdateMakeDoneConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
 
-	limit := util.ParseLimit(c.Query("limit"))
-	offset := util.ParseOffset(c.Query("offset"))
-
-	filter := model.ConversationFilter{
-		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
-		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
-		Username:       c.Query("username"),
-		PhoneNumber:    c.Query("phone_number"),
-		Email:          c.Query("email"),
+	jsonBody := make(map[string]any, 0)
+	if err := c.ShouldBindJSON(&jsonBody); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
 	}
+	appId, _ := jsonBody["app_id"].(string)
+	conversationId, _ := jsonBody["conversation_id"].(string)
 
-	code, result := handler.conversationService.GetConversationsByManager(c, res.Data, filter, limit, offset)
-	c.JSON(code, result)
+	err := handler.conversationService.UpdateMakeDoneConversation(c, res.Data, appId, conversationId, res.Data.UserId)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }

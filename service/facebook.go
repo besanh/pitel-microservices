@@ -52,6 +52,8 @@ func (s *Facebook) InsertFacebookPage(ctx context.Context, authUser *model.AuthU
 	facebook.OaName = data.OaName
 	facebook.TokenType = data.TokenType
 	facebook.AccessToken = data.AccessToken
+	facebook.Avatar = data.Avatar
+	facebook.Status = data.Status
 
 	if err := repository.NewFacebook().Insert(ctx, dbConn, facebook); err != nil {
 		log.Error(err)
@@ -101,6 +103,8 @@ func (s *Facebook) BulkInsertFacebookPage(ctx context.Context, authUser *model.A
 				OaName:      item.OaName,
 				TokenType:   item.TokenType,
 				AccessToken: item.AccessToken,
+				Avatar:      item.Avatar,
+				Status:      item.Status,
 			}
 
 			facebooks = append(facebooks, facebook)

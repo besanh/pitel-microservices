@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -21,6 +23,7 @@ type (
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		GetConversationsByManager(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any)
+		UpdateMakeDoneConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy string) error
 	}
 	Conversation struct {
 	}
@@ -153,6 +156,67 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 	return response.OKResponse()
 }
 
+func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId, updatedBy string) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found", conversationId)
+		return errors.New("conversation " + conversationId + " not found")
+	}
+
+	// Update agent allocate
+	filter := model.AgentAllocationFilter{
+		AppId:          appId,
+		ConversationId: conversationId,
+		MainAllocate: sql.NullBool{
+			Valid: true,
+			Bool:  true,
+		},
+	}
+	total, agentAllocate, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if total < 1 {
+		log.Errorf("conversation %s not found", conversationId)
+		return errors.New("conversation " + conversationId + " not found")
+	}
+
+	agentAllocateTmp := (*agentAllocate)[0]
+
+	agentAllocateTmp.MainAllocate = false
+	agentAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+	agentAllocateTmp.UpdatedAt = time.Now()
+	if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocateTmp); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	conversationExist.IsDoneBy = updatedBy
+	conversationExist.IsDoneAt = time.Now()
+	tmpBytes, err := json.Marshal(conversationExist)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	esDoc := map[string]any{}
+	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		log.Error(err)
+		return err
+	}
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+		log.Error(err)
+		if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, (*agentAllocate)[0]); err != nil {
+			log.Error(err)
+		}
+		return err
+	}
+	return nil
+}
+
 func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	if authUser.Level != "manager" {
 		return response.Pagination(nil, 0, limit, offset)
@@ -262,5 +326,4 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 	} else {
 		return response.ServiceUnavailableMsg("Can not get user crm")
 	}
-
 }
