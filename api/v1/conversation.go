@@ -21,7 +21,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 	Group := engine.Group("bss-message/v1/conversation")
 	{
 		Group.GET("", handler.GetConversations)
-		Group.GET("/manager", handler.GetConversationsByManager)
+		Group.GET("manager", handler.GetConversationsByManager)
 		Group.PUT(":id", handler.UpdateConversation)
 		Group.POST("make-done", handler.UpdateMakeDoneConversation)
 	}
