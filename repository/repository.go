@@ -88,4 +88,8 @@ func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
 		log.Info(err)
 		panic(err)
 	}
+	if _, err := db.GetDB().NewAddColumn().Model((*model.AgentAllocation)(nil)).IfNotExists().ColumnExpr("source text").Exec(ctx); err != nil {
+		log.Info(err)
+		panic(err)
+	}
 }

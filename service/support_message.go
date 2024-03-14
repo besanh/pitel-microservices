@@ -12,12 +12,26 @@ import (
 func (s *Message) sendMessageToOTT(ott model.SendMessageToOtt, attachment *[]model.OttAttachments) (model.OttResponse, error) {
 	var result model.OttResponse
 	var body any
-	if err := util.ParseAnyToAny(ott, &body); err != nil {
+	var resMix model.SendMessageToOttWithAttachment
+	resMix.Type = ott.Type
+	resMix.EventName = ott.EventName
+	resMix.AppId = ott.AppId
+	resMix.OaId = ott.OaId
+	resMix.UserIdByApp = ott.UserIdByApp
+	resMix.Uid = ott.Uid
+	resMix.SupporterId = ott.SupporterId
+	resMix.SupporterName = ott.SupporterName
+	resMix.Text = ott.Text
+	resMix.Timestamp = ott.Timestamp
+	resMix.MsgId = ott.MsgId
+
+	if attachment != nil {
+		resMix.Attachments = attachment
+	}
+
+	if err := util.ParseAnyToAny(resMix, &body); err != nil {
 		return result, err
 	}
-	// if attachment != nil {
-	// 	body = append(body.([]any), attachment)
-	// }
 
 	url := OTT_URL + "/ott/v1/crm"
 	client := resty.New()

@@ -32,6 +32,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 		agent = agentTmp
 		authInfo.TenantId = agent.TenantId
 		authInfo.UserId = agent.UserId
+		authInfo.Source = agent.Source
 		return authInfo, nil
 	} else {
 		filter := model.AgentAllocationFilter{
@@ -89,6 +90,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 					if totalAgentAllocation > 0 {
 						authInfo.TenantId = (*agentAllocations)[0].TenantId
 						authInfo.UserId = (*agentAllocations)[0].AgentId
+						authInfo.Source = (*agentAllocations)[0].Source
 						for s := range WsSubscribers.Subscribers {
 							if s.UserId == authInfo.UserId && (s.Level == "user" || s.Level == "agent") {
 								agent = *s
@@ -147,6 +149,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 									agent = userLives[randomIndex]
 									authInfo.TenantId = agent.TenantId
 									authInfo.UserId = agent.UserId
+									authInfo.Source = agent.Source
 								}
 							} else if strings.ToLower(chatRouting.RoutingAlias) == "round_robin_online" {
 								agentTmp, err := RoundRobinAgentOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId), queueAgents)
@@ -158,6 +161,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 								agent = *agentTmp
 								authInfo.TenantId = agent.TenantId
 								authInfo.UserId = agent.UserId
+								authInfo.Source = agent.Source
 							}
 
 							if len(userLives) > 0 {
@@ -170,6 +174,8 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.AuthUse
 									AgentId:            agent.UserId,
 									QueueId:            queue.Id,
 									AllocatedTimestamp: time.Now().Unix(),
+									MainAllocate:       "active",
+									Source:             agent.Source,
 								}
 								log.Infof("conversation %s allocated to agent %s", newConversationId, agent.Username)
 								if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
