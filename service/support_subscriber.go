@@ -7,6 +7,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"golang.org/x/exp/slices"
 )
 
 var WsSubscribers *Subscribers
@@ -47,6 +48,31 @@ func PublishMessageToOne(id string, message any) error {
 	isExisted := false
 	for s := range WsSubscribers.Subscribers {
 		if s.Id == id {
+			isExisted = true
+			select {
+			case s.Message <- msgBytes:
+			default:
+				go s.CloseSlow()
+			}
+		}
+	}
+	if !isExisted {
+		return errors.New("subscriber is not existed")
+	}
+	return nil
+}
+
+func PublishMessageToMany(ids []string, message any) error {
+	WsSubscribers.SubscribersMu.Lock()
+	defer WsSubscribers.SubscribersMu.Unlock()
+	msgBytes, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+	WsSubscribers.PublishLimiter.Wait(context.Background())
+	isExisted := false
+	for s := range WsSubscribers.Subscribers {
+		if slices.Contains(ids, s.Id) {
 			isExisted = true
 			select {
 			case s.Message <- msgBytes:

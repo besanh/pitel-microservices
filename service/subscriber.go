@@ -41,6 +41,7 @@ func (s *SubscriberService) AddSubscriber(ctx context.Context, authUser *model.A
 	subscriber.Username = authUser.Username
 	subscriber.Level = authUser.Level
 	subscriber.Services = authUser.Services
+	subscriber.Source = authUser.Source
 	subscriber.SubscribeAt = time.Now()
 
 	WsSubscribers.AddSubscriber(ctx, subscriber)
