@@ -21,8 +21,8 @@ type OttMessage struct {
 }
 
 type OttAttachments struct {
-	Payload *OttAttachmentsPayload `json:"payload"`
-	AttType string                 `json:"att_type"` // image/audio/video/link/sticker/gif/file
+	Payload *OttPayloadMedia `json:"payload"`
+	AttType string           `json:"att_type"` // image/audio/video/link/sticker/gif/file
 }
 
 type OttAttachmentsPayload struct {
@@ -71,7 +71,7 @@ type SendMessageToOttWithAttachment struct {
 	Timestamp     string            `json:"timestamp"`
 	MsgId         string            `json:"msg_id"`
 	Text          string            `json:"text"`
-	Attachments   *[]OttAttachments `json:"attachments"`
+	Attachments   []*OttAttachments `json:"attachments"`
 }
 
 type OttResponse struct {
