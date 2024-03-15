@@ -200,6 +200,22 @@ func MustQuery(queries ...map[string]any) map[string]any {
 	return query
 }
 
+func MustNotQuery(queries ...map[string]any) map[string]any {
+	query := map[string]any{
+		"must_not": map[string]any{},
+	}
+	if len(queries) == 1 {
+		query["must_not"] = queries[0]
+	} else if len(queries) > 1 {
+		var clauses []any
+		for _, subQuery := range queries {
+			clauses = append(clauses, subQuery)
+		}
+		query["must_not"] = clauses
+	}
+	return query
+}
+
 func Order(field string, isAsc bool) map[string]any {
 	order := "asc"
 	if !isAsc {

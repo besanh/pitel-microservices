@@ -21,8 +21,12 @@ type OttMessage struct {
 }
 
 type OttAttachments struct {
-	Payload any    `json:"payload"`
-	AttType string `json:"att_type"` // image/audio/video/link/sticker/gif/file
+	Payload *OttPayloadMedia `json:"payload"`
+	AttType string           `json:"att_type"` // image/audio/video/link/sticker/gif/file
+}
+
+type OttAttachmentsPayload struct {
+	Url string `json:"url"`
 }
 
 type OttPayloadMedia struct {
@@ -53,6 +57,21 @@ type SendMessageToOtt struct {
 	Timestamp     string `json:"timestamp"`
 	MsgId         string `json:"msg_id"`
 	Text          string `json:"text"`
+}
+
+type SendMessageToOttWithAttachment struct {
+	Type          string            `json:"type"`
+	EventName     string            `json:"event_name"`
+	AppId         string            `json:"app_id"`
+	OaId          string            `json:"oa_id"`
+	UserIdByApp   string            `json:"user_id_by_app"`
+	Uid           string            `json:"uid"`
+	SupporterId   string            `json:"supporter_id"`
+	SupporterName string            `json:"supporter_name"`
+	Timestamp     string            `json:"timestamp"`
+	MsgId         string            `json:"msg_id"`
+	Text          string            `json:"text"`
+	Attachments   []*OttAttachments `json:"attachments"`
 }
 
 type OttResponse struct {
@@ -90,4 +109,8 @@ type OttShareInfo struct {
 	City        string `json:"city"`
 	District    string `json:"district"`
 	PhoneNumber string `json:"phone_number"`
+}
+
+type OttUploadResponse struct {
+	Data []string `json:"data"`
 }

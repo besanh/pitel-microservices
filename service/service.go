@@ -70,6 +70,7 @@ type (
 		CloseSlow          func()      `json:"-"`
 		SubscribeAt        time.Time   `json:"subscribe_at"`
 		IsAssignRoundRobin bool        `json:"is_assign_round_robin"`
+		Source             string      `json:"source"`
 	}
 
 	Subscribers struct {

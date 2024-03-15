@@ -121,6 +121,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 					conv.LatestMessageContent = (*message)[0].Content
 				}
 			}
+			conv.LatestMessageDirection = (*message)[0].Direction
 
 			(*conversations)[k] = conv
 		}

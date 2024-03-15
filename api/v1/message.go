@@ -52,6 +52,7 @@ func (h *Message) SendMessage(c *gin.Context) {
 		message.EventName = messageForm.EventName
 		message.AppId = messageForm.AppId
 		message.ConversationId = messageForm.ConversationId
+		file = messageForm.File
 	} else {
 		jsonBody := make(map[string]any, 0)
 		if err := c.ShouldBind(&jsonBody); err != nil {

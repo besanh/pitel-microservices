@@ -69,35 +69,43 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	timestampTmp := time.Now().UnixMilli()
 	timestamp := fmt.Sprintf("%d", timestampTmp)
 	eventName := "text"
-	if len(data.Attachments) > 0 {
-		for _, item := range data.Attachments {
-			eventNameTmp, ok := variables.ATTACHMENT_TYPE_MAP[item.AttachmentType]
-			if !ok {
-				break
-			}
-			eventName = eventNameTmp
-		}
+	if len(data.EventName) > 0 {
+		eventName = data.EventName
 	}
-	if len(eventName) < 1 {
-		log.Errorf("event name %s not found", eventName)
-		return response.BadRequestMsg("event name " + eventName + " not found")
-	}
+	// if len(data.Attachments) > 0 {
+	// 	for _, item := range data.Attachments {
+	// 		eventNameTmp, ok := variables.ATTACHMENT_TYPE_MAP[item.AttachmentType]
+	// 		if !ok {
+	// 			break
+	// 		}
+	// 		eventName = eventNameTmp
+	// 	}
+	// }
+	// if len(eventName) < 1 {
+	// 	log.Errorf("event name %s not found", eventName)
+	// 	return response.BadRequestMsg("event name " + eventName + " not found")
+	// }
 
 	docId := uuid.NewString()
 
-	attachments := []model.OttAttachments{}
+	attachments := make([]*model.OttAttachments, 0)
 
 	// Upload to Docs
-	// fileUrl, err := s.UploadDoc(authUser, data, file)
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return response.ServiceUnavailableMsg(err.Error())
-	// }
-	// if len(data.Attachments) > 0 && (len(data.EventName) > 0 && data.EventName != "text") {
-	// 	data.Attachments[0].AttachmentFile.Url = fileUrl
-	// 	data.AttType = eventName
-	// 	Payload: data.Attachments
-	// }
+	if len(data.EventName) > 0 && data.EventName != "text" {
+		fileUrl, err := s.UploadDoc(ctx, file)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		// var payload model.
+		att := model.OttAttachments{
+			Payload: &model.OttPayloadMedia{
+				Url: fileUrl,
+			},
+			AttType: data.EventName,
+		}
+		attachments = append(attachments, &att)
+	}
 
 	// Send to OTT
 	ottMessage := model.SendMessageToOtt{
@@ -114,7 +122,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	log.Info("message to ott: ", ottMessage)
 
-	resOtt, err := s.sendMessageToOTT(ottMessage, &attachments)
+	resOtt, err := s.sendMessageToOTT(ottMessage, attachments)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -138,7 +146,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		SendTime:            time.Now(),
 		SendTimestamp:       timestampTmp,
 		Content:             data.Content,
-		Attachments:         data.Attachments,
+		Attachments:         attachments,
 	}
 	log.Info("message to es: ", message)
 

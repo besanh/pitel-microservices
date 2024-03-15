@@ -59,22 +59,23 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		for _, val := range *data.Attachments {
 			var attachmentFile model.OttPayloadFile
 			var attachmentMedia model.OttPayloadMedia
-			var attachmentDetail model.AttachmentsDetails
-			attachmentDetail.AttachmentType = val.AttType
+			var attachmentDetail model.OttAttachments
+			var payload model.OttPayloadMedia
+			attachmentDetail.AttType = val.AttType
 			if val.AttType == variables.ATTACHMENT_TYPE_MAP["file"] {
-				if err := util.ParseAnyToAny(val.Payload, &attachmentFile); err != nil {
+				if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 				attachmentFile.Url = strings.ReplaceAll(attachmentFile.Url, "u0026", "&")
-				attachmentDetail.AttachmentFile = &attachmentFile
+				attachmentDetail.Payload = &payload
 			} else {
-				if err := util.ParseAnyToAny(val.Payload, &attachmentMedia); err != nil {
+				if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 				attachmentMedia.Url = strings.ReplaceAll(attachmentMedia.Url, "u0026", "&")
-				attachmentDetail.AttachmentMedia = &attachmentMedia
+				attachmentDetail.Payload = &payload
 			}
 			message.Attachments = append(message.Attachments, &attachmentDetail)
 		}
@@ -85,6 +86,21 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	// TODO: check queue setting
 	authUser, err := CheckChatSetting(ctx, message)
 	if err != nil {
+		// conversation, _, errConv := UpSertConversation(ctx, data)
+		// if errConv != nil {
+		// 	log.Error(errConv)
+		// 	return response.ServiceUnavailableMsg(errConv.Error())
+		// }
+
+		// // TODO: add rabbitmq message
+		// if len(conversation.ConversationId) > 0 {
+		// 	message.ConversationId = conversation.ConversationId
+		// 	message.IsRead = "deactive"
+		// 	if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
+		// 		log.Error(errMsg)
+		// 		return response.ServiceUnavailableMsg(errMsg.Error())
+		// 	}
+		// }
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -137,6 +153,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
+		// if authUser.Source == "authen" {
+		// TODO: send to admin crm
+		// go SendMessageToAdminCrm(ctx, event, &authUser)
+		// }
 	} else {
 		// TODO: check conversation and add message
 		conversation, _, err := UpSertConversation(ctx, data)
