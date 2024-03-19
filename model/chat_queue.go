@@ -16,8 +16,8 @@ type ChatQueue struct {
 	ChatRouting          *ChatRouting          `json:"chat_routing" bun:"rel:has-one,join:chat_routing_id=id"`
 	ConnectionQueues     []*ConnectionQueue    `json:"connection_queues" bun:"rel:has-many,join:id=queue_id"`
 	ChatQueueAgent       []*ChatQueueAgent     `json:"chat_queue_agent" bun:"rel:has-many,join:id=queue_id"`
-	ManageQueueUuid      string                `json:"manage_queue_uuid" bun:"manage_queue_uuid,type:uuid"`
-	ChatManageQueueAgent *ChatManageQueueAgent `json:"manage_queue_agent" bun:"rel:has-one,join:manage_queue_uuid=id"`
+	ManageQueueId        string                `json:"manage_queue_id" bun:"manage_queue_id,type:uuid,default:null"`
+	ChatManageQueueAgent *ChatManageQueueAgent `json:"manage_queue_agent" bun:"rel:has-one,join:manage_queue_id=id"`
 	Status               string                `json:"status" bun:"status,notnull"`
 }
 

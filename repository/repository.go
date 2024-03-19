@@ -96,8 +96,4 @@ func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
 		log.Info(err)
 		panic(err)
 	}
-	if _, err := db.GetDB().NewAddColumn().Model((*model.ChatQueue)(nil)).IfNotExists().ColumnExpr("manage_queue_uuid uuid").Exec(ctx); err != nil {
-		log.Info(err)
-		panic(err)
-	}
 }

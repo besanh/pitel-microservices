@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 	"github.com/tel4vn/fins-microservices/service/common"
@@ -40,7 +39,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 		log.Error(err)
 		return chatQueue.Base.GetId(), err
 	} else if routingExist == nil {
-		err = errors.New(response.ERR_DATA_NOT_FOUND)
+		err = errors.New("chat routing not found")
 		return chatQueue.Base.GetId(), err
 	}
 
