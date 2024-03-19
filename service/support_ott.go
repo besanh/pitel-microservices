@@ -225,6 +225,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 
 								user.IsOk = true
 								user.AuthUser = &authInfo
+								user.ConnectionId = (*connectionQueues)[0].ConnectionId
 
 								return user, nil
 							} else {
@@ -331,6 +332,13 @@ func UpSertConversation(ctx context.Context, data model.OttMessage, connectionId
 			return conversation, isNew, err
 		}
 		conversation.ConversationId = id
+		if len(connectionId) > 0 {
+			conversation, err = CacheConnection(ctx, connectionId, conversation)
+			if err != nil {
+				log.Error(err)
+				return conversation, isNew, err
+			}
+		}
 		if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
