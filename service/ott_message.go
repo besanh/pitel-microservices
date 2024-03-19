@@ -81,51 +81,52 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 
-	var authUser model.AuthUser
+	var isNew bool
+	var conversation model.Conversation
 
 	// TODO: check queue setting
-	authUser, err := CheckChatSetting(ctx, message)
-	if err != nil {
-		// conversation, _, errConv := UpSertConversation(ctx, data)
-		// if errConv != nil {
-		// 	log.Error(errConv)
-		// 	return response.ServiceUnavailableMsg(errConv.Error())
-		// }
+	user, err := CheckChatSetting(ctx, message)
+	if user.IsOk {
+		conversationTmp, isNewTmp, errConv := UpSertConversation(ctx, data, user.ConnectionId)
+		if errConv != nil {
+			log.Error(errConv)
+			return response.ServiceUnavailableMsg(errConv.Error())
+		}
+		conversation = conversationTmp
+		isNew = isNewTmp
 
-		// // TODO: add rabbitmq message
-		// if len(conversation.ConversationId) > 0 {
-		// 	message.ConversationId = conversation.ConversationId
-		// 	message.IsRead = "deactive"
-		// 	if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
-		// 		log.Error(errMsg)
-		// 		return response.ServiceUnavailableMsg(errMsg.Error())
-		// 	}
-		// }
+		// TODO: add rabbitmq message
+		if len(conversation.ConversationId) > 0 {
+			message.ConversationId = conversation.ConversationId
+			message.IsRead = "deactive"
+			if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
+				log.Error(errMsg)
+				return response.ServiceUnavailableMsg(errMsg.Error())
+			}
+		}
+	}
+	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	data.TenantId = authUser.TenantId
-	message.TenantId = authUser.TenantId
+	data.TenantId = user.AuthUser.TenantId
+	message.TenantId = user.AuthUser.TenantId
 
-	if len(authUser.UserId) > 0 {
-		// TODO: check conversation and add message
-		conversation, isNew, err := UpSertConversation(ctx, data)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
+	if len(user.AuthUser.UserId) > 0 {
+		// TODO: publish message to manager
+		// if len(authUser.QueueId) > 0 {
+		// 	queue := cache.RCache.Get(MANAGE_QUEUE_AGENT + "_" + authUser.QueueId)
+		// 	if queue != nil {
+		// 		agentTmp := Subscriber{}
+		// 		if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
+		// 			log.Error(err)
+		// 			return authInfo, isOk, err
+		// 		}
+		// 	}
+		// }
 
-		//  TODO: add rabbitmq message
-		if len(conversation.ConversationId) > 0 {
-			message.ConversationId = conversation.ConversationId
-			message.IsRead = "deactive"
-			if err := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); err != nil {
-				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
-			}
-		}
-
+		// TODO: publish to rmq
 		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
 		// 	log.Error(err)
 		// 	return response.ServiceUnavailableMsg(err.Error())
@@ -138,7 +139,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					"conversation": conversation,
 				},
 			}
-			if err := PublishMessageToOne(authUser.UserId, event); err != nil {
+			if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
@@ -149,17 +150,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				"message": message,
 			},
 		}
-		if err := PublishMessageToOne(authUser.UserId, event); err != nil {
+		if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		// if authUser.Source == "authen" {
-		// TODO: send to admin crm
-		// go SendMessageToAdminCrm(ctx, event, &authUser)
-		// }
 	} else {
+		// TODO: publish message to manager
+
 		// TODO: check conversation and add message
-		conversation, _, err := UpSertConversation(ctx, data)
+		conversation, _, err := UpSertConversation(ctx, data, user.ConnectionId)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
