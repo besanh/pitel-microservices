@@ -30,6 +30,7 @@ func InitRepositories() {
 	AgentAllocationRepo = NewAgentAllocation()
 	ConnectionQueueRepo = NewConnectionQueue()
 	ShareInfoRepo = NewShareInfo()
+	ManageQueueRepo = NewManageQueue()
 }
 
 func InitRepositoriesES() {
@@ -72,6 +73,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.FacebookPage)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatManageQueueAgent)(nil)); err != nil {
+		log.Error(err)
+	}
 	log.Println("TABLES WERE CREATED")
 }
 
@@ -89,6 +93,10 @@ func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
 		panic(err)
 	}
 	if _, err := db.GetDB().NewAddColumn().Model((*model.AgentAllocation)(nil)).IfNotExists().ColumnExpr("source text").Exec(ctx); err != nil {
+		log.Info(err)
+		panic(err)
+	}
+	if _, err := db.GetDB().NewAddColumn().Model((*model.ChatQueue)(nil)).IfNotExists().ColumnExpr("manage_queue_uuid uuid").Exec(ctx); err != nil {
 		log.Info(err)
 		panic(err)
 	}
