@@ -33,6 +33,7 @@ func (repo *ChatQueue) GetById(ctx context.Context, db sqlclient.ISqlClientConn,
 		}).
 		Relation("ChatRouting").
 		Relation("ChatQueueAgent").
+		Relation("ChatManageQueueAgent").
 		Where("cq.id = ?", id)
 
 	err := query.Scan(ctx)
