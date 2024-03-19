@@ -8,6 +8,7 @@ type Conversation struct {
 	ConversationType string     `json:"conversation_type"`
 	AppId            string     `json:"app_id"`
 	OaId             string     `json:"oa_id"`
+	OaName           string     `json:"oa_name"`
 	ShareInfo        *ShareInfo `json:"share_info"`
 	ExternalUserId   string     `json:"external_user_id"`
 	Username         string     `json:"username"`
@@ -25,6 +26,7 @@ type ConversationView struct {
 	ConversationType       string     `json:"conversation_type"`
 	AppId                  string     `json:"app_id"`
 	OaId                   string     `json:"oa_id"`
+	OaName                 string     `json:"oa_name"`
 	ShareInfo              *ShareInfo `json:"share_info"`
 	ExternalUserId         string     `json:"external_user_id"`
 	Username               string     `json:"username"`
