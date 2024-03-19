@@ -17,4 +17,6 @@ type AgentAllocation struct {
 	AllocatedTimestamp int64  `json:"allocated_timestamp" bun:"allocated_timestamp,notnull"`
 	MainAllocate       string `json:"main_allocate" bun:"main_allocate,type:string,notnull"`
 	Source             string `json:"source" bun:"source,type:text,notnull"`
+	ConnectionId       string `json:"connection_id" bun:"connection_id,type:text,notnull"`
+	Username           string `json:"username" bun:"-"`
 }
