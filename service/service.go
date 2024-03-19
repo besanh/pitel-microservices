@@ -28,18 +28,20 @@ var (
 	ES_INDEX_CONVERSATION = "" // = "pitel_bss_conversation"
 
 	// Redis
-	CONVERSATION            = "conversation"
-	CONVERSATION_EXPIRE     = 30 * time.Minute
-	CHAT_QUEUE              = "chat_queue"
-	CHAT_QUEUE_EXPIRE       = 30 * time.Minute
-	CHAT_ROUTING            = "chat_routing"
-	CHAT_ROUTING_EXPIRE     = 1 * time.Hour
-	CHAT_QUEUE_AGENT        = "chat_queue_agent"
-	CHAT_QUEUE_AGENT_EXPIRE = 10 * time.Minute
-	CHAT_APP                = "chat_app"
-	CHAT_APP_EXPIRE         = 5 * time.Hour
-	AGENT_ALLOCATION        = "agent_allocation"
-	AGENT_ALLOCATION_EXPIRE = 1 * time.Hour
+	CONVERSATION              = "conversation"
+	CONVERSATION_EXPIRE       = 30 * time.Minute
+	CHAT_QUEUE                = "chat_queue"
+	CHAT_QUEUE_EXPIRE         = 30 * time.Minute
+	CHAT_ROUTING              = "chat_routing"
+	CHAT_ROUTING_EXPIRE       = 1 * time.Hour
+	CHAT_QUEUE_AGENT          = "chat_queue_agent"
+	CHAT_QUEUE_AGENT_EXPIRE   = 10 * time.Minute
+	CHAT_APP                  = "chat_app"
+	CHAT_APP_EXPIRE           = 5 * time.Hour
+	AGENT_ALLOCATION          = "agent_allocation"
+	AGENT_ALLOCATION_EXPIRE   = 1 * time.Hour
+	MANAGE_QUEUE_AGENT        = "manage_queue_agent"
+	MANAGE_QUEUE_AGENT_EXPIRE = 1 * time.Hour
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
@@ -71,6 +73,7 @@ type (
 		SubscribeAt        time.Time   `json:"subscribe_at"`
 		IsAssignRoundRobin bool        `json:"is_assign_round_robin"`
 		Source             string      `json:"source"`
+		QueueId            string      `json:"queue_id"` //use for allocate manager
 	}
 
 	Subscribers struct {
@@ -138,6 +141,9 @@ func GetDBConnOfUser(user model.AuthUser) (dbConn sqlclient.ISqlClientConn, err 
 
 func HandleGetDBConSource(authUser *model.AuthUser) (sqlclient.ISqlClientConn, error) {
 	var dbCon sqlclient.ISqlClientConn
+	if authUser == nil {
+		return nil, errors.New("authUser is nil")
+	}
 	if len(authUser.Source) < 1 || authUser.Source == "authen" {
 		dbCon = repository.DBConn
 	} else {

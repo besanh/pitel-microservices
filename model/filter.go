@@ -113,3 +113,8 @@ type FacebookPageFilter struct {
 	OaId   string `json:"oa_id"`
 	OaName string `json:"oa_name"`
 }
+
+type ManageQueueAgentFilter struct {
+	QueueId string `json:"queue_id"`
+	AgentId string `json:"agent_id"`
+}
