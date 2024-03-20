@@ -21,6 +21,7 @@ type (
 		InsertLog(ctx context.Context, tenantId, index, appId, docId string, esDoc map[string]any) error
 		UpdateDocById(ctx context.Context, index, appId, docId string, esDoc map[string]any) error
 		BulkUpdateDoc(ctx context.Context, index string, esDoc map[string]any) error
+		DeleteById(ctx context.Context, index, docId string) error
 	}
 	Elasticsearch struct{}
 )
@@ -168,6 +169,26 @@ func (repo *Elasticsearch) BulkUpdateDoc(ctx context.Context, index string, esDo
 
 	if res.IsError() {
 		return fmt.Errorf("bulk update: response: %s", res.String())
+	}
+
+	return nil
+}
+
+func (repo *Elasticsearch) DeleteById(ctx context.Context, index, docId string) error {
+	req := esapi.DeleteRequest{
+		Index:      index,
+		DocumentID: docId,
+	}
+
+	res, err := req.Do(ctx, ESClient.GetClient())
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return fmt.Errorf("delete: response: %s", res.String())
 	}
 
 	return nil
