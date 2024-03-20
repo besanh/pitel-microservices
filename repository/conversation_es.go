@@ -36,8 +36,8 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		Valid: true,
 	}
 
+	filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
 	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
 		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	if len(filter.AppId) > 0 {
