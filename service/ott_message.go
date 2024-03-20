@@ -86,6 +86,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 	// TODO: check queue setting
 	user, err := CheckChatSetting(ctx, message)
+	data.TenantId = user.AuthUser.TenantId
+	message.TenantId = user.AuthUser.TenantId
 	if user.IsOk {
 		conversationTmp, isNewTmp, errConv := UpSertConversation(ctx, data, user.ConnectionId)
 		if errConv != nil {
@@ -109,9 +111,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-
-	data.TenantId = user.AuthUser.TenantId
-	message.TenantId = user.AuthUser.TenantId
 
 	if len(user.AuthUser.UserId) > 0 {
 		// TODO: publish to rmq
@@ -138,9 +137,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				"message": message,
 			},
 		}
-		if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+
+		for s := range WsSubscribers.Subscribers {
+			if s.Id == user.AuthUser.UserId {
+				if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+				break
+			}
 		}
 	} else {
 		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
@@ -173,9 +178,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if err := PublishMessageToOne(manageQueueAgent.AgentId, message); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+
+		for s := range WsSubscribers.Subscribers {
+			if s.Id == user.AuthUser.UserId {
+				if err := PublishMessageToOne(manageQueueAgent.AgentId, message); err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+				break
+			}
 		}
 	}
 
