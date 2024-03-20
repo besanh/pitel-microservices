@@ -86,8 +86,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 	// TODO: check queue setting
 	user, err := CheckChatSetting(ctx, message)
-	data.TenantId = user.AuthUser.TenantId
-	message.TenantId = user.AuthUser.TenantId
+	if user.AuthUser != nil {
+		data.TenantId = user.AuthUser.TenantId
+		message.TenantId = user.AuthUser.TenantId
+	}
 	if user.IsOk {
 		conversationTmp, isNewTmp, errConv := UpSertConversation(ctx, data, user.ConnectionId)
 		if errConv != nil {
@@ -106,13 +108,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				return response.ServiceUnavailableMsg(errMsg.Error())
 			}
 		}
-	}
-	if err != nil {
+	} else if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	if len(user.AuthUser.UserId) > 0 {
+	if user.AuthUser != nil {
 		// TODO: publish to rmq
 		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
 		// 	log.Error(err)
@@ -147,28 +148,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				break
 			}
 		}
-	} else {
-		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
-
-		// TODO: check conversation and add message
-		conversation, _, err := UpSertConversation(ctx, data, user.ConnectionId)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-
-		// TODO: add rabbitmq message
-		if len(conversation.ConversationId) > 0 {
-			message.ConversationId = conversation.ConversationId
-			message.IsRead = "deactive"
-			if err := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); err != nil {
-				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
-			}
-		}
 	}
 
 	// TODO: publish message to manager
@@ -177,12 +156,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
-		} else if manageQueueAgent == nil {
+		} else if len(manageQueueAgent.Id) < 1 {
+			log.Error("queue " + user.QueueId + " not found")
 			return response.NotFoundMsg("queue " + user.QueueId + " not found")
 		}
 
 		for s := range WsSubscribers.Subscribers {
-			if s.Id == user.AuthUser.UserId {
+			if s.Id == manageQueueAgent.AgentId {
 				if err := PublishMessageToOne(manageQueueAgent.AgentId, message); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())

@@ -229,6 +229,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 								return user, nil
 							} else {
 								log.Error("agent not available")
+								user.IsOk = true
 								return user, errors.New("agent not available")
 							}
 						} else {
@@ -281,7 +282,7 @@ func UpSertConversation(ctx context.Context, data model.OttMessage, connectionId
 			ConversationId: []string{newConversationId},
 			AppId:          []string{data.AppId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, data.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
+		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return conversation, isNew, err
@@ -377,7 +378,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 			return id, err
 		}
 	}
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, id)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, "", ES_INDEX_CONVERSATION, conversation.AppId, id)
 	if err != nil {
 		log.Error(err)
 		return id, err
@@ -385,7 +386,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 		log.Errorf("conversation %s not found", id)
 		return id, errors.New("conversation " + id + " not found")
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, id, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, "", ES_INDEX_CONVERSATION, conversation.AppId, id, esDoc); err != nil {
 		log.Error(err)
 		return id, err
 	}
@@ -413,8 +414,19 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId strin
 		log.Error(err)
 		return err
 	} else if len(conversationExist.ExternalUserId) < 1 {
-		log.Errorf("conversation %s not found", newConversationId)
-		return errors.New("conversation " + newConversationId + " not found")
+		// Use when routing is pitel_bss_conversation_
+		conversationExistSecond, err := repository.ConversationESRepo.GetConversationById(ctx, "", ES_INDEX_CONVERSATION, appId, newConversationId)
+		if err != nil {
+			log.Error(err)
+			return err
+		} else if len(conversationExistSecond.ExternalUserId) < 1 {
+			log.Errorf("conversation %s not found", newConversationId)
+			return errors.New("conversation " + newConversationId + " not found")
+		}
+		if err := util.ParseAnyToAny(conversationExistSecond, &conversationExist); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	conversationExist.ShareInfo = &shareInfo
