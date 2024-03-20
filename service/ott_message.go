@@ -114,18 +114,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	message.TenantId = user.AuthUser.TenantId
 
 	if len(user.AuthUser.UserId) > 0 {
-		// TODO: publish message to manager
-		// if len(authUser.QueueId) > 0 {
-		// 	queue := cache.RCache.Get(MANAGE_QUEUE_AGENT + "_" + authUser.QueueId)
-		// 	if queue != nil {
-		// 		agentTmp := Subscriber{}
-		// 		if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
-		// 			log.Error(err)
-		// 			return authInfo, isOk, err
-		// 		}
-		// 	}
-		// }
-
 		// TODO: publish to rmq
 		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
 		// 	log.Error(err)
@@ -155,7 +143,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 	} else {
-		// TODO: publish message to manager
+		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
+		// 	log.Error(err)
+		// 	return response.ServiceUnavailableMsg(err.Error())
+		// }
 
 		// TODO: check conversation and add message
 		conversation, _, err := UpSertConversation(ctx, data, user.ConnectionId)
@@ -173,11 +164,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 		}
+	}
 
-		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
+	// TODO: publish message to manager
+	if len(user.QueueId) > 0 {
+		manageQueueAgent, err := GetManageQueueAgent(ctx, user.QueueId)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if err := PublishMessageToOne(manageQueueAgent.AgentId, message); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
 	}
 
 	return response.OKResponse()
