@@ -177,6 +177,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
+		} else if manageQueueAgent == nil {
+			return response.NotFoundMsg("queue " + user.QueueId + " not found")
 		}
 
 		for s := range WsSubscribers.Subscribers {
