@@ -15,7 +15,6 @@ type AuthUser struct {
 	Source           string   `json:"source"`
 	Token            string   `json:"token"`
 	UnitUuid         string   `json:"unit_uuid"` //only for user crm
-	QueueId          string   `json:"queue_id"`  //use for allocate manager
 }
 
 type AAAResponse struct {

@@ -37,11 +37,11 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 		authInfo.TenantId = agent.TenantId
 		authInfo.UserId = agent.AgentId
 		authInfo.Source = agent.Source
-		authInfo.QueueId = agent.QueueId
 		authInfo.Username = agent.Username
 		user.AuthUser = &authInfo
 		user.IsOk = true
 		user.ConnectionId = agent.ConnectionId
+		user.QueueId = agent.QueueId
 
 		return user, nil
 	} else {
@@ -58,10 +58,10 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 			authInfo.TenantId = (*agentAllocations)[0].TenantId
 			authInfo.UserId = (*agentAllocations)[0].AgentId
 			authInfo.Source = (*agentAllocations)[0].Source
-			authInfo.QueueId = (*agentAllocations)[0].QueueId
 			user.AuthUser = &authInfo
 			user.IsOk = true
 			user.ConnectionId = (*agentAllocations)[0].ConnectionId
+			user.QueueId = (*agentAllocations)[0].QueueId
 
 			if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+newConversationId, (*agentAllocations)[0], AGENT_ALLOCATION_EXPIRE); err != nil {
 				log.Error(err)
@@ -112,7 +112,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 						authInfo.TenantId = (*agentAllocations)[0].TenantId
 						authInfo.UserId = (*agentAllocations)[0].AgentId
 						authInfo.Source = (*agentAllocations)[0].Source
-						authInfo.QueueId = (*agentAllocations)[0].QueueId
 
 						for s := range WsSubscribers.Subscribers {
 							if s.UserId == authInfo.UserId && (s.Level == "user" || s.Level == "agent") {
@@ -126,6 +125,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 						user.IsOk = true
 						user.AuthUser = &authInfo
 						user.ConnectionId = (*agentAllocations)[0].ConnectionId
+						user.QueueId = (*agentAllocations)[0].QueueId
 
 						return user, nil
 					} else {
@@ -180,7 +180,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 
 									authInfo.TenantId = agent.TenantId
 									authInfo.UserId = agent.AgentId
-									authInfo.QueueId = queue.Id
 								}
 							} else if strings.ToLower(chatRouting.RoutingAlias) == "round_robin_online" {
 								agentTmp, err := RoundRobinAgentOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId), queueAgents)
@@ -195,7 +194,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 
 								authInfo.TenantId = agent.TenantId
 								authInfo.Source = agent.Source
-								authInfo.QueueId = queue.Id
 							}
 
 							if len(userLives) > 0 {
@@ -226,6 +224,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 								user.IsOk = true
 								user.AuthUser = &authInfo
 								user.ConnectionId = (*connectionQueues)[0].ConnectionId
+								user.QueueId = (*connectionQueues)[0].QueueId
 
 								return user, nil
 							} else {
