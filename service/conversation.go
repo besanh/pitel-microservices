@@ -216,5 +216,33 @@ func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser 
 		}
 		return err
 	}
+
+	// Event to manager
+	manageQueueAgent, err := GetManageQueueAgent(ctx, agentAllocateTmp.QueueId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(manageQueueAgent.Id) < 1 {
+		log.Error("queue " + agentAllocateTmp.QueueId + " not found")
+		return errors.New("queue " + agentAllocateTmp.QueueId + " not found")
+	}
+
+	for s := range WsSubscribers.Subscribers {
+		if s.Id == manageQueueAgent.AgentId {
+			// TODO: publish message to manager
+			event := map[string]any{
+				"event_name": variables.EVENT_CHAT["message_created"],
+				"event_data": map[string]any{
+					"message": conversationExist,
+				},
+			}
+			if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
+				log.Error(err)
+				return err
+			}
+			break
+		}
+	}
+
 	return nil
 }
