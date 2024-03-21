@@ -39,7 +39,7 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 	filter := model.ShareInfoFormFilter{
 		TenantId:  authUser.TenantId,
 		ShareType: data.ShareType,
-		AppId:     data.AppId,
+		OaId:      data.OaId,
 	}
 
 	total, _, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, -1, 0)
