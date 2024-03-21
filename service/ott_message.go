@@ -91,7 +91,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		message.TenantId = user.AuthUser.TenantId
 	}
 	if user.IsOk {
-		conversationTmp, isNewTmp, errConv := UpSertConversation(ctx, data, user.ConnectionId)
+		conversationTmp, isNewTmp, errConv := UpSertConversation(ctx, user.ConnectionId, data)
 		if errConv != nil {
 			log.Error(errConv)
 			return response.ServiceUnavailableMsg(errConv.Error())

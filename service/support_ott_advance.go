@@ -12,7 +12,7 @@ import (
 )
 
 func GetManageQueueAgent(ctx context.Context, queueId string) (manageQueueAgent model.ChatManageQueueAgent, err error) {
-	manageQueueAgentCache := cache.RCache.Get(MANAGE_QUEUE_AGENT + queueId)
+	manageQueueAgentCache := cache.RCache.Get(MANAGE_QUEUE_AGENT + "_" + queueId)
 	if manageQueueAgentCache != nil {
 		if err = json.Unmarshal([]byte(manageQueueAgentCache.(string)), &manageQueueAgent); err != nil {
 			log.Error(err)
@@ -28,7 +28,7 @@ func GetManageQueueAgent(ctx context.Context, queueId string) (manageQueueAgent 
 	}
 	if total > 0 {
 		manageQueueAgent = (*manageQueueAgents)[0]
-		if err = cache.RCache.Set(MANAGE_QUEUE_AGENT+queueId, manageQueueAgent, MANAGE_QUEUE_AGENT_EXPIRE); err != nil {
+		if err = cache.RCache.Set(MANAGE_QUEUE_AGENT+"_"+queueId, manageQueueAgent, MANAGE_QUEUE_AGENT_EXPIRE); err != nil {
 			log.Error(err)
 			return
 		}

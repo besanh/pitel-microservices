@@ -249,7 +249,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 	}
 }
 
-func UpSertConversation(ctx context.Context, data model.OttMessage, connectionId string) (conversation model.Conversation, isNew bool, err error) {
+func UpSertConversation(ctx context.Context, connectionId string, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
 	newConversationId := GenerateConversationId(data.AppId, data.ExternalUserId)
 	conversation = model.Conversation{
 		TenantId:         data.TenantId,
@@ -434,6 +434,7 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId, conn
 
 	conversationExist.ShareInfo = &shareInfo
 	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
+	conversationExist.TenantId = tenantId
 	if len(connectionId) > 0 {
 		*conversationExist, err = CacheConnection(ctx, connectionId, *conversationExist)
 		if err != nil {
@@ -451,6 +452,9 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId, conn
 		log.Error(err)
 		return err
 	}
+
+	// PROBLEM: Use for conv have not authUser and then having authUser
+	// TODO: insert new conv
 	if isUpdate {
 		if err := repository.ESRepo.DeleteById(ctx, ES_INDEX_CONVERSATION, newConversationId); err != nil {
 			log.Error(err)
