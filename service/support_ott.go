@@ -263,67 +263,79 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		ExternalUserId:   data.ExternalUserId,
 		CreatedAt:        time.Now().Format(time.RFC3339),
 	}
+	shareInfo := data.ShareInfo
 
 	isExisted := false
-	conversationCache := cache.RCache.Get(CONVERSATION + "_" + newConversationId)
-	if conversationCache != nil {
-		isExisted = true
-		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		if err := UpdateESAndCache(ctx, data.TenantId, data.AppId, data.ExternalUserId, connectionId, *conversation.ShareInfo); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		return conversation, isNew, nil
-	} else {
-		filter := model.ConversationFilter{
-			ConversationId: []string{newConversationId},
-			AppId:          []string{data.AppId},
-		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
-		if err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		if total > 0 {
-			if err := util.ParseAnyToAny((*conversations)[0], &conversation); err != nil {
-				log.Error(err)
-				return conversation, isNew, err
-			}
-			conversation.ShareInfo = data.ShareInfo
-			if len(connectionId) > 0 {
-				conversation, err = CacheConnection(ctx, connectionId, conversation)
-				if err != nil {
-					log.Error(err)
-					return conversation, isNew, err
-				}
-			}
+	// conversationCache := cache.RCache.Get(CONVERSATION + "_" + newConversationId)
+	// if conversationCache != nil {
+	// 	isExisted = true
+	// 	if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
+	// 		log.Error(err)
+	// 		return conversation, isNew, err
+	// 	}
+	// 	if err := UpdateESAndCache(ctx, data.TenantId, data.AppId, data.ExternalUserId, connectionId, *conversation.ShareInfo); err != nil {
+	// 		log.Error(err)
+	// 		return conversation, isNew, err
+	// 	}
+	// 	return conversation, isNew, nil
+	// } else {
+	log.Info("zz", data.ShareInfo)
+	filter := model.ConversationFilter{
+		ConversationId: []string{newConversationId},
+		AppId:          []string{data.AppId},
+	}
+	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return conversation, isNew, err
+	}
+	if total > 0 {
+		conversation.TenantId = (*conversations)[0].TenantId
+		conversation.ConversationId = (*conversations)[0].ConversationId
+		conversation.ConversationType = (*conversations)[0].ConversationType
+		conversation.AppId = (*conversations)[0].AppId
+		conversation.OaId = (*conversations)[0].OaId
+		conversation.OaName = (*conversations)[0].OaName
+		conversation.OaAvatar = (*conversations)[0].OaAvatar
+		conversation.ExternalUserId = (*conversations)[0].ExternalUserId
+		conversation.Username = (*conversations)[0].Username
+		conversation.Username = (*conversations)[0].Username
+		conversation.Avatar = (*conversations)[0].Avatar
+		conversation.IsDone = (*conversations)[0].IsDone
+		conversation.IsDoneBy = (*conversations)[0].IsDoneBy
 
-			tmpBytes, err := json.Marshal(conversation)
+		conversation.ShareInfo = shareInfo
+		if len(connectionId) > 0 {
+			conversation, err = CacheConnection(ctx, connectionId, conversation)
 			if err != nil {
 				log.Error(err)
 				return conversation, isNew, err
 			}
-			esDoc := map[string]any{}
-			if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-				log.Error(err)
-				return conversation, isNew, err
-			}
-			newConversationId := GenerateConversationId(conversation.AppId, conversation.ExternalUserId)
-			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
-				log.Error(err)
-				return conversation, isNew, err
-			}
-			if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
-				log.Error(err)
-				return conversation, isNew, err
-			}
-			isExisted = true
-			return conversation, isNew, nil
 		}
+
+		tmpBytes, err := json.Marshal(conversation)
+		if err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
+		esDoc := map[string]any{}
+		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
+		newConversationId := GenerateConversationId(conversation.AppId, conversation.ExternalUserId)
+		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
+		if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
+		isExisted = true
+		return conversation, isNew, nil
 	}
+	// }
 
 	if !isExisted {
 		id, err := InsertConversation(ctx, conversation, connectionId)
