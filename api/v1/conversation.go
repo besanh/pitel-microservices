@@ -8,6 +8,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
+	"golang.org/x/exp/slices"
 )
 
 type Conversation struct {
@@ -23,7 +24,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.GET("", handler.GetConversations)
 		Group.GET("manager", handler.GetConversationsByManager)
 		Group.PUT(":id", handler.UpdateConversation)
-		Group.POST("make-done", handler.UpdateMakeDoneConversation)
+		Group.POST("status", handler.UpdateStatusConversation)
 	}
 }
 
@@ -74,7 +75,7 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 	c.JSON(code, result)
 }
 
-func (handler *Conversation) UpdateMakeDoneConversation(c *gin.Context) {
+func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
@@ -88,8 +89,16 @@ func (handler *Conversation) UpdateMakeDoneConversation(c *gin.Context) {
 	}
 	appId, _ := jsonBody["app_id"].(string)
 	conversationId, _ := jsonBody["conversation_id"].(string)
+	status, _ := jsonBody["status"].(string)
 
-	err := handler.conversationService.UpdateMakeDoneConversation(c, res.Data, appId, conversationId, res.Data.UserId)
+	log.Info("update status conversation payload -> ", jsonBody)
+
+	if !slices.Contains([]string{"done", "reopen"}, status) {
+		c.JSON(response.BadRequestMsg("status is invalid"))
+		return
+	}
+
+	err := handler.conversationService.UpdateStatusConversation(c, res.Data, appId, conversationId, res.Data.UserId, status)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return

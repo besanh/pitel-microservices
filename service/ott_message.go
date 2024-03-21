@@ -133,7 +133,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			}
 		}
 		event := map[string]any{
-			"event_name": "message_created",
+			"event_name": variables.EVENT_CHAT["message_created"],
 			"event_data": map[string]any{
 				"message": message,
 			},
@@ -166,7 +166,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				// TODO: publish message to manager
 				if isNew {
 					event := map[string]any{
-						"event_name": "conversation_created",
+						"event_name": variables.EVENT_CHAT["conversation_created"],
 						"event_data": map[string]any{
 							"conversation": conversation,
 						},
@@ -177,7 +177,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					}
 				}
 				event := map[string]any{
-					"event_name": "message_created",
+					"event_name": variables.EVENT_CHAT["message_created"],
 					"event_data": map[string]any{
 						"message": message,
 					},

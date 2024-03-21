@@ -69,4 +69,18 @@ var (
 		"submit_info":   "submit_info",
 		"ask_info":      "ask_info",
 	}
+
+	EVENT_CHAT map[string]string = map[string]string{
+		"oa_connection":        "oa_connection",
+		"submit_info":          "submit_info",
+		"ask_info":             "ask_info",
+		"message_created":      "message_created",
+		"conversation_created": "conversation_created",
+		"conversation_done":    "conversation_done",
+	}
+
+	STATUS_CONVERSATION map[string]string = map[string]string{
+		"reopen": "reopen",
+		"done":   "done",
+	}
 )
