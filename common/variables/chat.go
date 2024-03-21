@@ -78,4 +78,9 @@ var (
 		"conversation_created": "conversation_created",
 		"conversation_done":    "conversation_done",
 	}
+
+	STATUS_CONVERSATION map[string]string = map[string]string{
+		"reopen": "reopen",
+		"done":   "done",
+	}
 )

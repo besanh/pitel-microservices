@@ -59,6 +59,7 @@ type ConversationFilter struct {
 	PhoneNumber    string   `json:"phone_number"`
 	Email          string   `json:"email"`
 	Insensitive    string   `json:"insensitive"`
+	IsDone         string   `json:"is_done"`
 }
 
 type AgentAllocationFilter struct {

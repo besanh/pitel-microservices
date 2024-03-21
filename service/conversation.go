@@ -21,7 +21,7 @@ type (
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		GetConversationsByManager(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any)
-		UpdateMakeDoneConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy string) error
+		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 	}
 	Conversation struct {
 	}
@@ -156,7 +156,7 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 	return response.OKResponse()
 }
 
-func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId, updatedBy string) error {
+func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId, updatedBy, status string) error {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
@@ -166,16 +166,23 @@ func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser 
 		return errors.New("conversation " + conversationId + " not found")
 	}
 
-	if conversationExist.IsDone {
-		log.Errorf("conversation %s is done", conversationId)
-		return errors.New("conversation " + conversationId + " is done")
+	if status != "reopen" {
+		if conversationExist.IsDone {
+			log.Errorf("conversation %s is done", conversationId)
+			return errors.New("conversation " + conversationId + " is done")
+		}
+	}
+
+	statusAllocate := "active"
+	if status == "reopen" {
+		statusAllocate = "deactive"
 	}
 
 	// Update agent allocate
 	filter := model.AgentAllocationFilter{
 		AppId:          appId,
 		ConversationId: conversationId,
-		MainAllocate:   "active",
+		MainAllocate:   statusAllocate,
 	}
 	total, agentAllocate, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
@@ -183,38 +190,60 @@ func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser 
 		return err
 	}
 	if total < 1 {
-		log.Errorf("conversation %s not found", conversationId)
-		return errors.New("conversation " + conversationId + " not found")
+		log.Errorf("conversation %s not found with active agent", conversationId)
+		return errors.New("conversation " + conversationId + " not found with active agent")
 	}
 
 	agentAllocateTmp := (*agentAllocate)[0]
 
-	agentAllocateTmp.MainAllocate = "deactive"
-	agentAllocateTmp.AllocatedTimestamp = time.Now().Unix()
-	agentAllocateTmp.UpdatedAt = time.Now()
-	if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocateTmp); err != nil {
-		log.Error(err)
-		return err
+	if status == "done" {
+		agentAllocateTmp.MainAllocate = "deactive"
+		agentAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		agentAllocateTmp.UpdatedAt = time.Now()
+		if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocateTmp); err != nil {
+			log.Error(err)
+			return err
+		}
+		conversationExist.IsDone = true
+		conversationExist.IsDoneBy = updatedBy
+		conversationExist.IsDoneAt = time.Now()
+	} else if status == "reopen" {
+		agentAllocateTmp.MainAllocate = "active"
+		agentAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		agentAllocateTmp.UpdatedAt = time.Now()
+		if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocateTmp); err != nil {
+			log.Error(err)
+			return err
+		}
+
+		conversationExist.IsDone = false
+		conversationExist.IsDoneBy = ""
+		isDoneAt, err := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		conversationExist.IsDoneAt = isDoneAt
 	}
 
-	conversationExist.IsDoneBy = updatedBy
-	conversationExist.IsDoneAt = time.Now()
-	tmpBytes, err := json.Marshal(conversationExist)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	esDoc := map[string]any{}
-	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
-		log.Error(err)
-		if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, (*agentAllocate)[0]); err != nil {
+	if slices.Contains([]string{"done", "reopen"}, status) {
+		tmpBytes, err := json.Marshal(conversationExist)
+		if err != nil {
 			log.Error(err)
+			return err
 		}
-		return err
+		esDoc := map[string]any{}
+		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+			log.Error(err)
+			return err
+		}
+		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+			log.Error(err)
+			if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, (*agentAllocate)[0]); err != nil {
+				log.Error(err)
+			}
+			return err
+		}
 	}
 
 	// Event to manager
@@ -231,7 +260,7 @@ func (s *Conversation) UpdateMakeDoneConversation(ctx context.Context, authUser 
 		if s.Id == manageQueueAgent.AgentId {
 			// TODO: publish message to manager
 			event := map[string]any{
-				"event_name": variables.EVENT_CHAT["message_created"],
+				"event_name": variables.EVENT_CHAT["conversation_done"],
 				"event_data": map[string]any{
 					"message": conversationExist,
 				},
