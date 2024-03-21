@@ -163,7 +163,26 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 		for s := range WsSubscribers.Subscribers {
 			if s.Id == manageQueueAgent.AgentId {
-				if err := PublishMessageToOne(manageQueueAgent.AgentId, message); err != nil {
+				// TODO: publish message to manager
+				if isNew {
+					event := map[string]any{
+						"event_name": "conversation_created",
+						"event_data": map[string]any{
+							"conversation": conversation,
+						},
+					}
+					if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
+				}
+				event := map[string]any{
+					"event_name": "message_created",
+					"event_data": map[string]any{
+						"message": message,
+					},
+				}
+				if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}
