@@ -117,7 +117,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		SupporterId:   authUser.UserId,
 		SupporterName: authUser.Username,
 		Timestamp:     timestamp,
-		Text:          data.Content,
+		Text:          file.Filename,
 	}
 
 	log.Info("message to ott: ", ottMessage)

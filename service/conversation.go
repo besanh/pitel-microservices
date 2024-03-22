@@ -63,7 +63,7 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 
 func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	conversationIds := []string{}
-	conversationFilter := model.AgentAllocationFilter{
+	conversationFilter := model.AgentAllocateFilter{
 		AgentId:      []string{authUser.UserId},
 		MainAllocate: "active",
 	}
@@ -179,7 +179,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// Update agent allocate
-	filter := model.AgentAllocationFilter{
+	filter := model.AgentAllocateFilter{
 		AppId:          appId,
 		ConversationId: conversationId,
 		MainAllocate:   statusAllocate,

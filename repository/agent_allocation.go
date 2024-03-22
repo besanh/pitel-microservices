@@ -11,11 +11,11 @@ import (
 
 type (
 	IAgentAllocation interface {
-		IRepo[model.AgentAllocation]
-		GetAgentAllocations(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AgentAllocationFilter, limit, offset int) (int, *[]model.AgentAllocation, error)
+		IRepo[model.AgentAllocate]
+		GetAgentAllocations(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AgentAllocateFilter, limit, offset int) (int, *[]model.AgentAllocate, error)
 	}
 	AgentAllocation struct {
-		Repo[model.AgentAllocation]
+		Repo[model.AgentAllocate]
 	}
 )
 
@@ -25,8 +25,8 @@ func NewAgentAllocation() IAgentAllocation {
 	return &AgentAllocation{}
 }
 
-func (repo *AgentAllocation) GetAgentAllocations(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AgentAllocationFilter, limit, offset int) (int, *[]model.AgentAllocation, error) {
-	result := new([]model.AgentAllocation)
+func (repo *AgentAllocation) GetAgentAllocations(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AgentAllocateFilter, limit, offset int) (int, *[]model.AgentAllocate, error) {
+	result := new([]model.AgentAllocate)
 	query := db.GetDB().NewSelect().Model(result)
 	if len(filter.TenantId) > 0 {
 		query.Where("tenant_id = ?", filter.TenantId)

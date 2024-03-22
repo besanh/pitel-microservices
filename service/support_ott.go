@@ -20,13 +20,13 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 	var user model.User
 	var authInfo model.AuthUser
 	var userLives []Subscriber
-	var agent model.AgentAllocation
+	var agent model.AgentAllocate
 	var isOk bool
 
 	newConversationId := GenerateConversationId(message.AppId, message.ExternalUserId)
 	agentAllocationCache := cache.RCache.Get(AGENT_ALLOCATION + "_" + newConversationId)
 	if agentAllocationCache != nil {
-		agentTmp := model.AgentAllocation{}
+		agentTmp := model.AgentAllocate{}
 		if err := json.Unmarshal([]byte(agentAllocationCache.(string)), &agentTmp); err != nil {
 			log.Error(err)
 			user.AuthUser = &authInfo
@@ -36,7 +36,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 		agent = agentTmp
 		authInfo.TenantId = agent.TenantId
 		authInfo.UserId = agent.AgentId
-		authInfo.Source = agent.Source
 		authInfo.Username = agent.Username
 		user.AuthUser = &authInfo
 		user.IsOk = true
@@ -45,7 +44,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 
 		return user, nil
 	} else {
-		filter := model.AgentAllocationFilter{
+		filter := model.AgentAllocateFilter{
 			ConversationId: newConversationId,
 			MainAllocate:   "active",
 		}
@@ -57,7 +56,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 		if total > 0 {
 			authInfo.TenantId = (*agentAllocations)[0].TenantId
 			authInfo.UserId = (*agentAllocations)[0].AgentId
-			authInfo.Source = (*agentAllocations)[0].Source
 			user.AuthUser = &authInfo
 			user.IsOk = true
 			user.ConnectionId = (*agentAllocations)[0].ConnectionId
@@ -98,7 +96,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 					return user, err
 				}
 				if totalConnectionQueue > 0 {
-					filterAgentAllocation := model.AgentAllocationFilter{
+					filterAgentAllocation := model.AgentAllocateFilter{
 						ConversationId: newConversationId,
 						QueueId:        (*connectionQueues)[0].QueueId,
 						MainAllocate:   "active",
@@ -111,7 +109,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 					if totalAgentAllocation > 0 {
 						authInfo.TenantId = (*agentAllocations)[0].TenantId
 						authInfo.UserId = (*agentAllocations)[0].AgentId
-						authInfo.Source = (*agentAllocations)[0].Source
 
 						for s := range WsSubscribers.Subscribers {
 							if s.UserId == authInfo.UserId && (s.Level == "user" || s.Level == "agent") {
@@ -193,12 +190,11 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 								agent.Username = agentTmp.Username
 
 								authInfo.TenantId = agent.TenantId
-								authInfo.Source = agent.Source
 							}
 
 							if len(userLives) > 0 {
 								newConversationId = GenerateConversationId(message.AppId, message.ExternalUserId)
-								agentAllocation := model.AgentAllocation{
+								agentAllocation := model.AgentAllocate{
 									Base:               model.InitBase(),
 									TenantId:           (*connectionApps)[0].TenantId,
 									ConversationId:     newConversationId,
@@ -207,7 +203,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 									QueueId:            queue.Id,
 									AllocatedTimestamp: time.Now().Unix(),
 									MainAllocate:       "active",
-									Source:             agent.Source,
 									ConnectionId:       (*connectionQueues)[0].ConnectionId,
 								}
 								log.Infof("conversation %s allocated to agent %s", newConversationId, agent.Username)
@@ -406,7 +401,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 	return id, nil
 }
 
-func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAllocation) bool {
+func CheckConversationInAgent(userId string, allocationAgent []*model.AgentAllocate) bool {
 	for _, item := range allocationAgent {
 		if item.ConversationId == userId {
 			return true
