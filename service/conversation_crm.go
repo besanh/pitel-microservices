@@ -18,8 +18,12 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 		if authUser.Level != "manager" && authUser.Level != "admin" {
 			return response.Pagination(nil, 0, limit, offset)
 		}
-
-		url := API_CRM + "/v1/crm/user-crm?level=user&unit_uuid=" + authUser.UnitUuid
+		url := API_CRM + "/v1/crm/user-crm"
+		if authUser.Level == "manager" {
+			url += "?level=user&unit_uuid=" + authUser.UnitUuid + "&limit=-1&offset=0"
+		} else {
+			url += "?limit=-1&offset=0"
+		}
 		client := resty.New()
 		res, err := client.R().
 			SetHeader("Content-Type", "application/json").
