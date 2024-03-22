@@ -31,6 +31,10 @@ func NewOttMessage() IOttMessage {
 	return &OttMessage{}
 }
 
+/**
+* PROBLEM: chat vao thi sao biet user thuoc db nao
+* Khi chuyen qua fins thi lam sao biet setting nay cua db nao
+ */
 func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (int, any) {
 	docId := uuid.NewString()
 	timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
@@ -220,34 +224,32 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			}
 		}
 
-		for s := range WsSubscribers.Subscribers {
-			if s.Id == manageQueueAgent.AgentId {
-				// TODO: publish message to manager
-				if isNew {
-					event := map[string]any{
-						"event_name": variables.EVENT_CHAT["conversation_created"],
-						"event_data": map[string]any{
-							"conversation": conversation,
-						},
-					}
-					if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
-						log.Error(err)
-						return response.ServiceUnavailableMsg(err.Error())
-					}
-				}
-				event := map[string]any{
-					"event_name": variables.EVENT_CHAT["message_created"],
-					"event_data": map[string]any{
-						"message": message,
-					},
-				}
-				if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
-					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
-				}
-				break
+		// TODO: publish message to manager
+		if isNew {
+			event := map[string]any{
+				"event_name": variables.EVENT_CHAT["conversation_created"],
+				"event_data": map[string]any{
+					"conversation": conversation,
+				},
+			}
+			if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
 			}
 		}
+		event := map[string]any{
+			"event_name": variables.EVENT_CHAT["message_created"],
+			"event_data": map[string]any{
+				"message": message,
+			},
+		}
+		if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+
+		// TODO: publish to admin
+		// go
 	}
 
 	return response.OKResponse()
