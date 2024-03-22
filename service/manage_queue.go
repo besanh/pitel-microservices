@@ -12,8 +12,8 @@ import (
 
 type (
 	IManageQueue interface {
-		PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ManageQueueAgentRequest) (id string, err error)
-		UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ManageQueueAgentRequest) error
+		PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatManageQueueAgentRequest) (id string, err error)
+		UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatManageQueueAgentRequest) error
 		DeleteManageQueueById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
 	ManageQueue struct{}
@@ -23,7 +23,7 @@ func NewManageQueue() IManageQueue {
 	return &ManageQueue{}
 }
 
-func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ManageQueueAgentRequest) (id string, err error) {
+func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatManageQueueAgentRequest) (id string, err error) {
 	manageQueue := model.ChatManageQueueAgent{
 		Base: model.InitBase(),
 	}
@@ -34,6 +34,7 @@ func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthU
 	}
 
 	manageQueue.TenantId = authUser.TenantId
+	manageQueue.ConnectionId = data.ConnectionId
 	manageQueue.QueueId = data.QueueId
 	manageQueue.AgentId = data.AgentId
 
@@ -59,7 +60,7 @@ func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthU
 	return manageQueue.GetId(), nil
 }
 
-func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ManageQueueAgentRequest) (err error) {
+func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatManageQueueAgentRequest) (err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -84,6 +85,7 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 	}
 	queueExist.ManageQueueId = manageQueueExist.GetId()
 
+	manageQueueExist.ConnectionId = data.ConnectionId
 	manageQueueExist.QueueId = data.QueueId
 	manageQueueExist.AgentId = data.AgentId
 	manageQueueExist.UpdatedAt = time.Now()

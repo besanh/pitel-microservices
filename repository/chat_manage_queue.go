@@ -9,27 +9,30 @@ import (
 )
 
 type (
-	IManageQueue interface {
+	IChatManageQueue interface {
 		IRepo[model.ChatManageQueueAgent]
-		GetManageQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error)
+		GetManageQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error)
 	}
-	ManageQueue struct {
+	ChatManageQueue struct {
 		Repo[model.ChatManageQueueAgent]
 	}
 )
 
-var ManageQueueRepo IManageQueue
+var ManageQueueRepo IChatManageQueue
 
-func NewManageQueue() IManageQueue {
-	return &ManageQueue{}
+func NewManageQueue() IChatManageQueue {
+	return &ChatManageQueue{}
 }
 
-func (repo *ManageQueue) GetManageQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error) {
+func (repo *ChatManageQueue) GetManageQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error) {
 	entries := new([]model.ChatManageQueueAgent)
 	query := db.GetDB().NewSelect().
 		Model(entries).
 		Limit(limit).
 		Offset(offset)
+	if len(filter.ConnectionId) > 0 {
+		query.Where("connection_id = ?", filter.ConnectionId)
+	}
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
 	}

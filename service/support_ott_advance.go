@@ -18,7 +18,7 @@ func GetManageQueueAgent(ctx context.Context, queueId string) (manageQueueAgent 
 			log.Error(err)
 		}
 	}
-	filter := model.ManageQueueAgentFilter{
+	filter := model.ChatManageQueueAgentFilter{
 		QueueId: queueId,
 	}
 	total, manageQueueAgents, err := repository.ManageQueueRepo.GetManageQueue(ctx, repository.DBConn, filter, 1, 0)
