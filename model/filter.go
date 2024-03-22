@@ -62,7 +62,7 @@ type ConversationFilter struct {
 	IsDone         string   `json:"is_done"`
 }
 
-type AgentAllocationFilter struct {
+type AgentAllocateFilter struct {
 	TenantId       string   `json:"tenant_id"`
 	AppId          string   `json:"app_id"`
 	ConversationId string   `json:"conversation_id"`

@@ -56,7 +56,7 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 			}
 
 			conversationIds := []string{}
-			conversationFilter := model.AgentAllocationFilter{
+			conversationFilter := model.AgentAllocateFilter{
 				AgentId:      userUuids,
 				MainAllocate: "active",
 			}
