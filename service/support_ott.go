@@ -274,7 +274,6 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 	// 	}
 	// 	return conversation, isNew, nil
 	// } else {
-	log.Info("zz", data.ShareInfo)
 	filter := model.ConversationFilter{
 		ConversationId: []string{newConversationId},
 		AppId:          []string{data.AppId},

@@ -13,6 +13,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/fins-microservices/repository"
 	"golang.org/x/exp/slices"
 )
 
@@ -90,6 +91,29 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	if user.AuthUser != nil {
 		data.TenantId = user.AuthUser.TenantId
 		message.TenantId = user.AuthUser.TenantId
+	} else {
+		filter := model.ChatConnectionAppFilter{
+			AppId: data.AppId,
+			OaId:  data.OaId,
+		}
+		total, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if total > 0 {
+			data.TenantId = (*connection)[0].TenantId
+			message.TenantId = (*connection)[0].TenantId
+		}
+		filterChatManageQueueAgent := model.ChatManageQueueAgentFilter{}
+		totalManageQueueAgent, manageQueueAgent, err := repository.ManageQueueRepo.GetManageQueue(ctx, repository.DBConn, filterChatManageQueueAgent, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if totalManageQueueAgent > 0 {
+			user.QueueId = (*manageQueueAgent)[0].QueueId
+		}
 	}
 	if user.IsOk {
 		conversationTmp, isNewTmp, errConv := UpSertConversation(ctx, user.ConnectionId, data)

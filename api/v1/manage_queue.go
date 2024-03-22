@@ -32,7 +32,7 @@ func (handler *ManageQueue) PostManageQueue(c *gin.Context) {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
-	data := model.ManageQueueAgentRequest{}
+	data := model.ChatManageQueueAgentRequest{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -69,7 +69,7 @@ func (handler *ManageQueue) UpdateManageQueueById(c *gin.Context) {
 		return
 	}
 
-	data := model.ManageQueueAgentRequest{}
+	data := model.ChatManageQueueAgentRequest{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
