@@ -40,7 +40,9 @@ func (s *Conversation) GetConversationsByManager(ctx context.Context, authUser *
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 
-			userUuids := []string{}
+			userUuids := []string{
+				authUser.UserId,
+			}
 
 			for _, item := range responseData.Data {
 				userUuid, ok := item["user_uuid"].(string)
