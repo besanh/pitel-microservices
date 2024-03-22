@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -184,6 +185,39 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		} else if len(manageQueueAgent.Id) < 1 {
 			log.Error("queue " + user.QueueId + " not found")
 			return response.NotFoundMsg("queue " + user.QueueId + " not found")
+		}
+
+		filter := model.AgentAllocateFilter{
+			AppId:          conversation.AppId,
+			ConversationId: conversation.ConversationId,
+			MainAllocate:   "active",
+		}
+		totalAgentAllocate, _, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if totalAgentAllocate < 1 {
+			agentAllocation := model.AgentAllocate{
+				Base:               model.InitBase(),
+				TenantId:           conversation.TenantId,
+				ConversationId:     conversation.ConversationId,
+				AppId:              message.AppId,
+				AgentId:            manageQueueAgent.AgentId,
+				QueueId:            manageQueueAgent.QueueId,
+				AllocatedTimestamp: time.Now().Unix(),
+				MainAllocate:       "active",
+				ConnectionId:       manageQueueAgent.ConnectionId,
+			}
+			if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+
+			if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+conversation.ConversationId, agentAllocation, AGENT_ALLOCATION_EXPIRE); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
 		}
 
 		for s := range WsSubscribers.Subscribers {
