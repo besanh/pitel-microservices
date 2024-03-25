@@ -11,7 +11,7 @@ import (
 type (
 	IChatManageQueue interface {
 		IRepo[model.ChatManageQueueAgent]
-		GetManageQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error)
+		GetManageQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error)
 	}
 	ChatManageQueue struct {
 		Repo[model.ChatManageQueueAgent]
@@ -24,7 +24,7 @@ func NewManageQueue() IChatManageQueue {
 	return &ChatManageQueue{}
 }
 
-func (repo *ChatManageQueue) GetManageQueue(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error) {
+func (repo *ChatManageQueue) GetManageQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error) {
 	entries := new([]model.ChatManageQueueAgent)
 	query := db.GetDB().NewSelect().
 		Model(entries).
@@ -36,8 +36,8 @@ func (repo *ChatManageQueue) GetManageQueue(ctx context.Context, db sqlclient.IS
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
 	}
-	if len(filter.AgentId) > 0 {
-		query.Where("agent_id = ?", filter.AgentId)
+	if len(filter.ManageId) > 0 {
+		query.Where("manage_id = ?", filter.ManageId)
 	}
 	total, err := query.ScanAndCount(ctx)
 	if err != nil && err != sql.ErrNoRows {

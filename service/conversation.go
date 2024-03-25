@@ -19,7 +19,7 @@ type (
 	IConversation interface {
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
-		GetConversationsByManager(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
+		GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 	}
@@ -257,7 +257,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	for s := range WsSubscribers.Subscribers {
-		if s.Id == manageQueueAgent.AgentId {
+		if s.Id == manageQueueAgent.ManageId {
 			// TODO: publish message to manager
 			event := map[string]any{
 				"event_name": variables.EVENT_CHAT["conversation_done"],
@@ -265,7 +265,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 					"message": conversationExist,
 				},
 			}
-			if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
+			if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
 				log.Error(err)
 				return err
 			}
