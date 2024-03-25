@@ -243,9 +243,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				Message: message,
 			},
 		}
-		if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+		for s := range WsSubscribers.Subscribers {
+			if s.Id == manageQueueAgent.ManageId {
+				if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+			}
 		}
 
 		// TODO: publish to admin

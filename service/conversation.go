@@ -256,12 +256,10 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return errors.New("queue " + agentAllocateTmp.QueueId + " not found")
 	}
 
-	event := model.Event{}
-
 	for s := range WsSubscribers.Subscribers {
 		if s.Id == manageQueueAgent.ManageId {
 			// TODO: publish message to manager
-			event = model.Event{
+			event := model.Event{
 				EventName: variables.EVENT_CHAT[5],
 				EventData: &model.EventData{
 					Conversation: conversationExist,
@@ -285,7 +283,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 
 		if len(userUuids) > 0 {
-			event = model.Event{
+			event := model.Event{
 				EventName: variables.EVENT_CHAT[5],
 				EventData: &model.EventData{
 					Conversation: conversationExist,
