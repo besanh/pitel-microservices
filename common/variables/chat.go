@@ -3,19 +3,19 @@ package variables
 var (
 	CONNECTION_TYPE []string = []string{"facebook", "zalo", "telegram"}
 
-	EVENT_NAME map[string]string = map[string]string{
-		"user_send_text":        "user_send_text",
-		"user_send_image":       "user_send_image",
-		"user_send_link":        "user_send_link",
-		"user_send_sticker":     "user_send_sticker",
-		"user_send_gif":         "user_send_gif",
-		"user_send_audio":       "user_send_audio",
-		"user_send_video":       "user_send_video",
-		"user_send_file":        "user_send_file",
-		"user_received_message": "user_received_message",
-		"user_seen_message":     "user_seen_message",
-		"oa_connection":         "oa_connection",
-		"submit_info":           "submit_info",
+	EVENT_NAME []string = []string{
+		"user_send_text",
+		"user_send_image",
+		"user_send_link",
+		"user_send_sticker",
+		"user_send_gif",
+		"user_send_audio",
+		"user_send_video",
+		"user_send_file",
+		"user_received_message",
+		"user_seen_message",
+		"oa_connection",
+		"submit_info",
 	}
 
 	EVENT_READ_MESSAGE []string = []string{
@@ -27,14 +27,14 @@ var (
 		"receive": "receive",
 	}
 
-	ATTACHMENT_TYPE_MAP map[string]string = map[string]string{
-		"image":   "image",
-		"audio":   "audio",
-		"video":   "video",
-		"file":    "file",
-		"link":    "link",
-		"sticker": "sticker",
-		"gif":     "gif",
+	ATTACHMENT_TYPE_MAP []string = []string{
+		"image",
+		"audio",
+		"video",
+		"file",
+		"link",
+		"sticker",
+		"gif",
 	}
 
 	ATTACHMENT_TYPE []string = []string{
@@ -64,23 +64,23 @@ var (
 		"gif",
 	}
 
-	EVENT_NAME_EXCLUDE map[string]string = map[string]string{
-		"oa_connection": "oa_connection",
-		"submit_info":   "submit_info",
-		"ask_info":      "ask_info",
+	EVENT_NAME_EXCLUDE []string = []string{
+		"oa_connection",
+		"submit_info",
+		"ask_info",
 	}
 
-	EVENT_CHAT map[string]string = map[string]string{
-		"oa_connection":        "oa_connection",
-		"submit_info":          "submit_info",
-		"ask_info":             "ask_info",
-		"message_created":      "message_created",
-		"conversation_created": "conversation_created",
-		"conversation_done":    "conversation_done",
+	EVENT_CHAT []string = []string{
+		"oa_connection",
+		"submit_info",
+		"ask_info",
+		"message_created",
+		"conversation_created",
+		"conversation_done",
 	}
 
-	STATUS_CONVERSATION map[string]string = map[string]string{
-		"reopen": "reopen",
-		"done":   "done",
+	STATUS_CONVERSATION []string = []string{
+		"reopen",
+		"done",
 	}
 )

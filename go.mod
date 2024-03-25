@@ -69,6 +69,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-resty/resty/v2 v2.11.0
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/google/go-querystring v1.1.0
 	github.com/google/uuid v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/jellydator/ttlcache/v3 v3.1.0
