@@ -52,14 +52,14 @@ type ChatRoutingFilter struct {
 }
 
 type ConversationFilter struct {
-	AppId          []string `json:"app_id"`
-	TenantId       string   `json:"tenant_id"`
-	ConversationId []string `json:"conversation_id"`
-	Username       string   `json:"username"`
-	PhoneNumber    string   `json:"phone_number"`
-	Email          string   `json:"email"`
-	Insensitive    string   `json:"insensitive"`
-	IsDone         string   `json:"is_done"`
+	AppId          []string     `json:"app_id"`
+	TenantId       string       `json:"tenant_id"`
+	ConversationId []string     `json:"conversation_id"`
+	Username       string       `json:"username"`
+	PhoneNumber    string       `json:"phone_number"`
+	Email          string       `json:"email"`
+	Insensitive    string       `json:"insensitive"`
+	IsDone         sql.NullBool `json:"is_done"`
 }
 
 type AgentAllocateFilter struct {
