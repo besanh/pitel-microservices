@@ -64,8 +64,12 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	conversationIds := []string{}
 	conversationFilter := model.AgentAllocateFilter{
-		AgentId:      []string{authUser.UserId},
-		MainAllocate: "active",
+		AgentId: []string{authUser.UserId},
+	}
+	if filter.IsDone.Valid {
+		conversationFilter.MainAllocate = "deactive"
+	} else {
+		conversationFilter.MainAllocate = "active"
 	}
 	total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
