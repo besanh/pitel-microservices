@@ -36,7 +36,7 @@ func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthU
 	manageQueue.TenantId = authUser.TenantId
 	manageQueue.ConnectionId = data.ConnectionId
 	manageQueue.QueueId = data.QueueId
-	manageQueue.AgentId = data.AgentId
+	manageQueue.ManageId = data.ManageId
 
 	queueExist, err := repository.ChatQueueRepo.GetById(ctx, dbCon, data.QueueId)
 	if err != nil {
@@ -87,7 +87,7 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 
 	manageQueueExist.ConnectionId = data.ConnectionId
 	manageQueueExist.QueueId = data.QueueId
-	manageQueueExist.AgentId = data.AgentId
+	manageQueueExist.ManageId = data.ManageId
 	manageQueueExist.UpdatedAt = time.Now()
 	if err = repository.ManageQueueRepo.Update(ctx, dbCon, *manageQueueExist); err != nil {
 		log.Error(err)

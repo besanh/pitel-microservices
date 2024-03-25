@@ -111,7 +111,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			message.TenantId = (*connection)[0].TenantId
 		}
 		filterChatManageQueueAgent := model.ChatManageQueueAgentFilter{}
-		totalManageQueueAgent, manageQueueAgent, err := repository.ManageQueueRepo.GetManageQueue(ctx, repository.DBConn, filterChatManageQueueAgent, 1, 0)
+		totalManageQueueAgent, manageQueueAgent, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueAgent, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -207,7 +207,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				TenantId:           conversation.TenantId,
 				ConversationId:     conversation.ConversationId,
 				AppId:              message.AppId,
-				AgentId:            manageQueueAgent.AgentId,
+				AgentId:            manageQueueAgent.ManageId,
 				QueueId:            manageQueueAgent.QueueId,
 				AllocatedTimestamp: time.Now().Unix(),
 				MainAllocate:       "active",
@@ -232,7 +232,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					"conversation": conversation,
 				},
 			}
-			if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
+			if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
@@ -243,7 +243,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				"message": message,
 			},
 		}
-		if err := PublishMessageToOne(manageQueueAgent.AgentId, event); err != nil {
+		if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}

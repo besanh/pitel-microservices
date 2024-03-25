@@ -124,6 +124,6 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		Email:          c.Query("email"),
 	}
 
-	code, result := handler.conversationService.GetConversationsByManager(c, res.Data, filter, limit, offset)
+	code, result := handler.conversationService.GetConversationsByManage(c, res.Data, filter, limit, offset)
 	c.JSON(code, result)
 }

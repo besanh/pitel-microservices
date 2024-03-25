@@ -21,7 +21,7 @@ func GetManageQueueAgent(ctx context.Context, queueId string) (manageQueueAgent 
 	filter := model.ChatManageQueueAgentFilter{
 		QueueId: queueId,
 	}
-	total, manageQueueAgents, err := repository.ManageQueueRepo.GetManageQueue(ctx, repository.DBConn, filter, 1, 0)
+	total, manageQueueAgents, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
@@ -152,3 +152,6 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 	}
 	return conversation, nil
 }
+
+// TODO: push event to admin
+// func PushEventToAdmin(ctx context.Context)

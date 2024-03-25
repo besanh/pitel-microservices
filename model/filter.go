@@ -118,5 +118,5 @@ type FacebookPageFilter struct {
 type ChatManageQueueAgentFilter struct {
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
-	AgentId      string `json:"agent_id"`
+	ManageId     string `json:"manage_id"`
 }
