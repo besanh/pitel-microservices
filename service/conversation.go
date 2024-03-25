@@ -256,13 +256,15 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return errors.New("queue " + agentAllocateTmp.QueueId + " not found")
 	}
 
+	event := model.Event{}
+
 	for s := range WsSubscribers.Subscribers {
 		if s.Id == manageQueueAgent.ManageId {
 			// TODO: publish message to manager
-			event := map[string]any{
-				"event_name": variables.EVENT_CHAT["conversation_done"],
-				"event_data": map[string]any{
-					"message": conversationExist,
+			event = model.Event{
+				EventName: variables.EVENT_CHAT[5],
+				EventData: &model.EventData{
+					Conversation: conversationExist,
 				},
 			}
 			if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
@@ -270,6 +272,29 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 				return err
 			}
 			break
+		}
+	}
+
+	// Event to admin
+	if ENABLE_PUBLISH_ADMIN {
+		userUuids := []string{}
+		for s := range WsSubscribers.Subscribers {
+			if s.TenantId == manageQueueAgent.TenantId && s.Level == "admin" {
+				userUuids = append(userUuids, s.Id)
+			}
+		}
+
+		if len(userUuids) > 0 {
+			event = model.Event{
+				EventName: variables.EVENT_CHAT[5],
+				EventData: &model.EventData{
+					Conversation: conversationExist,
+				},
+			}
+			if err := PublishMessageToMany(userUuids, event); err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	}
 

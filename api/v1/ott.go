@@ -92,7 +92,8 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	// }
 
 	var message model.OttMessage
-	if eventName == variables.EVENT_NAME_EXCLUDE["oa_connection"] {
+	// if eventName == variables.EVENT_NAME_EXCLUDE["oa_connection"] {
+	if eventName == "oa_connection" {
 		oaInfoMessageTmp, _ := jsonBody["oa_info"].(map[string]any)
 		oaInfoMessageCode, _ := oaInfoMessageTmp["code"].(float64)
 		oaInfoMessage := model.OaInfoMessage{}

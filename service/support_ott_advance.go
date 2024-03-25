@@ -152,6 +152,3 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 	}
 	return conversation, nil
 }
-
-// TODO: push event to admin
-// func PushEventToAdmin(ctx context.Context)

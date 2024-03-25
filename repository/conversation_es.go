@@ -66,7 +66,7 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 						"bool": map[string]any{
 							"must": map[string]any{
 								"wildcard": map[string]any{
-									"is_done": "*" + strconv.FormatBool(filter.IsDone.Bool),
+									"is_done": strconv.FormatBool(filter.IsDone.Bool),
 								},
 							},
 						},

@@ -69,7 +69,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			var attachmentDetail model.OttAttachments
 			var payload model.OttPayloadMedia
 			attachmentDetail.AttType = val.AttType
-			if val.AttType == variables.ATTACHMENT_TYPE_MAP["file"] {
+			if val.AttType == "file" {
 				if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
@@ -151,10 +151,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		// }
 
 		if isNew {
-			event := map[string]any{
-				"event_name": "conversation_created",
-				"event_data": map[string]any{
-					"conversation": conversation,
+			event := model.Event{
+				EventName: variables.EVENT_CHAT[4],
+				EventData: &model.EventData{
+					Conversation: conversation,
 				},
 			}
 			if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
@@ -162,10 +162,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 		}
-		event := map[string]any{
-			"event_name": variables.EVENT_CHAT["message_created"],
-			"event_data": map[string]any{
-				"message": message,
+		event := model.Event{
+			EventName: variables.EVENT_CHAT[3],
+			EventData: &model.EventData{
+				Message: message,
 			},
 		}
 
@@ -226,10 +226,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 		// TODO: publish message to manager
 		if isNew {
-			event := map[string]any{
-				"event_name": variables.EVENT_CHAT["conversation_created"],
-				"event_data": map[string]any{
-					"conversation": conversation,
+			event := model.Event{
+				EventName: variables.EVENT_CHAT[0],
+				EventData: &model.EventData{
+					Conversation: conversation,
 				},
 			}
 			if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
@@ -237,10 +237,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 		}
-		event := map[string]any{
-			"event_name": variables.EVENT_CHAT["message_created"],
-			"event_data": map[string]any{
-				"message": message,
+		event := model.Event{
+			EventName: variables.EVENT_CHAT[3],
+			EventData: &model.EventData{
+				Message: message,
 			},
 		}
 		if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
@@ -249,7 +249,34 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		// TODO: publish to admin
-		// go
+		if ENABLE_PUBLISH_ADMIN {
+			userUuids := []string{}
+			for s := range WsSubscribers.Subscribers {
+				if s.TenantId == conversation.TenantId && s.Level == "admin" {
+					userUuids = append(userUuids, s.Id)
+				}
+			}
+
+			if len(userUuids) > 0 {
+				if isNew {
+					eventConversation := model.Event{
+						EventName: variables.EVENT_CHAT[4],
+						EventData: &model.EventData{
+							Conversation: conversation,
+						},
+					}
+					if err := PublishMessageToMany(userUuids, eventConversation); err != nil {
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
+				}
+
+				if err := PublishMessageToMany(userUuids, event); err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+			}
+		}
 	}
 
 	return response.OKResponse()
@@ -277,6 +304,7 @@ func (s *OttMessage) GetCodeChallenge(ctx context.Context, authUser *model.AuthU
 }
 
 func (s *OttMessage) PostShareInfoEvent(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any) {
+	// Because submit info is used sometimes, not to use struct
 	event := map[string]any{
 		"event_name": "share_info",
 		"event_data": map[string]any{
