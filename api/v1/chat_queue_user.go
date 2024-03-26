@@ -17,7 +17,7 @@ func NewChatQueueUser(engine *gin.Engine, chatQueueUser service.IChatQueueUser) 
 	handler := &ChatQueueUser{
 		chatQueueUser: chatQueueUser,
 	}
-	Group := engine.Group("bss-message/v1/chat-queue-User")
+	Group := engine.Group("bss-message/v1/chat-queue-user")
 	{
 		Group.POST("", handler.InsertChatQueueUser)
 		Group.PUT(":id", handler.UpdateChatQueueUserById)
