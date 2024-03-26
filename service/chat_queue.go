@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 	"github.com/tel4vn/fins-microservices/service/common"
@@ -40,26 +39,26 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 		log.Error(err)
 		return chatQueue.Base.GetId(), err
 	} else if routingExist == nil {
-		err = errors.New(response.ERR_DATA_NOT_FOUND)
+		err = errors.New("chat routing not found")
 		return chatQueue.Base.GetId(), err
 	}
 
-	connectionAgents := []model.ConnectionQueue{}
+	connectionUsers := []model.ConnectionQueue{}
 	if len(data.ConnectionId) > 0 {
 		for _, item := range data.ConnectionId {
-			connectionAgent := model.ConnectionQueue{
+			connectionUser := model.ConnectionQueue{
 				Base:         model.InitBase(),
 				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      chatQueue.Base.GetId(),
 				Status:       data.Status,
 			}
-			connectionAgents = append(connectionAgents, connectionAgent)
+			connectionUsers = append(connectionUsers, connectionUser)
 		}
 	}
 
-	if len(connectionAgents) > 0 {
-		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
+	if len(connectionUsers) > 0 {
+		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionUsers); err != nil {
 			log.Error(err)
 			return chatQueue.Base.GetId(), err
 		}
@@ -96,9 +95,9 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 	if len(token) > 0 {
 		if total > 0 {
 			for i, item := range *queues {
-				for j, val := range item.ChatQueueAgent {
+				for j, val := range item.ChatQueueUser {
 					if val.Source == "authen" {
-						authUser, err := common.GetUserAuthenticated(bssAuthRequest.AuthUrl, token, val.AgentId)
+						authUser, err := common.GetUserAuthenticated(bssAuthRequest.AuthUrl, token, val.UserId)
 						if err != nil {
 							log.Error(err)
 							return 0, nil, err
@@ -113,7 +112,7 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 						if len(authUser.LastName) > 0 {
 							val.Fullname += " " + authUser.LastName
 						}
-						item.ChatQueueAgent[j] = val
+						item.ChatQueueUser[j] = val
 					}
 				}
 				(*queues)[i] = item
@@ -181,18 +180,18 @@ func (s *ChatQueue) UpdateChatQueueById(ctx context.Context, authUser *model.Aut
 	}
 
 	if len(data.ConnectionId) > 0 {
-		connectionAgents := []model.ConnectionQueue{}
+		connectionUsers := []model.ConnectionQueue{}
 		for _, item := range data.ConnectionId {
-			connectionAgent := model.ConnectionQueue{
+			connectionUser := model.ConnectionQueue{
 				Base:         model.InitBase(),
 				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      queueExist.Id,
 				Status:       data.Status,
 			}
-			connectionAgents = append(connectionAgents, connectionAgent)
+			connectionUsers = append(connectionUsers, connectionUser)
 		}
-		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
+		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionUsers); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -219,8 +218,8 @@ func (s *ChatQueue) DeleteChatQueueById(ctx context.Context, authUser *model.Aut
 		return err
 	}
 
-	// Delete queue agent
-	if err := repository.ChatQueueAgentRepo.DeleteChatQueueAgents(ctx, dbCon, id); err != nil {
+	// Delete queue User
+	if err := repository.ChatQueueUserRepo.DeleteChatQueueUsers(ctx, dbCon, id); err != nil {
 		log.Error(err)
 		return err
 	}

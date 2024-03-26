@@ -10,24 +10,24 @@ import (
 )
 
 type (
-	IChatQueueAgent interface {
-		IRepo[model.ChatQueueAgent]
-		GetChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatQueueAgentFilter, limit, offset int) (int, *[]model.ChatQueueAgent, error)
-		DeleteChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, queueId string) error
+	IChatQueueUser interface {
+		IRepo[model.ChatQueueUser]
+		GetChatQueueUsers(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatQueueUserFilter, limit, offset int) (int, *[]model.ChatQueueUser, error)
+		DeleteChatQueueUsers(ctx context.Context, db sqlclient.ISqlClientConn, queueId string) error
 	}
-	ChatQueueAgent struct {
-		Repo[model.ChatQueueAgent]
+	ChatQueueUser struct {
+		Repo[model.ChatQueueUser]
 	}
 )
 
-var ChatQueueAgentRepo IChatQueueAgent
+var ChatQueueUserRepo IChatQueueUser
 
-func NewChatQueueAgent() IChatQueueAgent {
-	return &ChatQueueAgent{}
+func NewChatQueueUser() IChatQueueUser {
+	return &ChatQueueUser{}
 }
 
-func (repo *ChatQueueAgent) GetChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatQueueAgentFilter, limit, offset int) (int, *[]model.ChatQueueAgent, error) {
-	result := new([]model.ChatQueueAgent)
+func (repo *ChatQueueUser) GetChatQueueUsers(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatQueueUserFilter, limit, offset int) (int, *[]model.ChatQueueUser, error) {
+	result := new([]model.ChatQueueUser)
 	query := db.GetDB().NewSelect().Model(result)
 	if len(filter.TenantId) > 0 {
 		query.Where("tenant_id = ?", filter.TenantId)
@@ -35,8 +35,8 @@ func (repo *ChatQueueAgent) GetChatQueueAgents(ctx context.Context, db sqlclient
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id IN (?)", bun.In(filter.QueueId))
 	}
-	if len(filter.AgentId) > 0 {
-		query.Where("agent_id IN (?)", bun.In(filter.AgentId))
+	if len(filter.UserId) > 0 {
+		query.Where("user_id IN (?)", bun.In(filter.UserId))
 	}
 	if len(filter.Source) > 0 {
 		query.Where("source = ?", filter.Source)
@@ -54,7 +54,7 @@ func (repo *ChatQueueAgent) GetChatQueueAgents(ctx context.Context, db sqlclient
 	return total, result, nil
 }
 
-func (repo *ChatQueueAgent) DeleteChatQueueAgents(ctx context.Context, db sqlclient.ISqlClientConn, queueId string) error {
-	_, err := db.GetDB().NewDelete().Model(new(model.ChatQueueAgent)).Where("queue_id = ?", queueId).Exec(ctx)
+func (repo *ChatQueueUser) DeleteChatQueueUsers(ctx context.Context, db sqlclient.ISqlClientConn, queueId string) error {
+	_, err := db.GetDB().NewDelete().Model(new(model.ChatQueueUser)).Where("queue_id = ?", queueId).Exec(ctx)
 	return err
 }

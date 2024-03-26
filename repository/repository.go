@@ -25,11 +25,12 @@ func InitRepositories() {
 	ChatAppRepo = NewChatApp()
 	ChatConnectionAppRepo = NewConnectionApp()
 	ChatQueueRepo = NewChatQueue()
-	ChatQueueAgentRepo = NewChatQueueAgent()
+	ChatQueueUserRepo = NewChatQueueUser()
 	ChatRoutingRepo = NewChatRouting()
-	AgentAllocationRepo = NewAgentAllocation()
+	UserAllocateRepo = NewUserAllocate()
 	ConnectionQueueRepo = NewConnectionQueue()
 	ShareInfoRepo = NewShareInfo()
+	ManageQueueRepo = NewManageQueue()
 }
 
 func InitRepositoriesES() {
@@ -57,10 +58,10 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatRouting)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.ChatQueueAgent)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.ChatQueueUser)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.AgentAllocation)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.UserAllocate)(nil)); err != nil {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ConnectionQueue)(nil)); err != nil {
@@ -72,23 +73,14 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.FacebookPage)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatManageQueueUser)(nil)); err != nil {
+		log.Error(err)
+	}
 	log.Println("TABLES WERE CREATED")
 }
 
 func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
 	if _, err := db.GetDB().NewAddColumn().Model((*model.ChatApp)(nil)).IfNotExists().ColumnExpr("default_app text null").Exec(ctx); err != nil {
-		log.Info(err)
-		panic(err)
-	}
-	if _, err := db.GetDB().NewAddColumn().Model((*model.AgentAllocation)(nil)).IfNotExists().ColumnExpr("app_id text").Exec(ctx); err != nil {
-		log.Info(err)
-		panic(err)
-	}
-	if _, err := db.GetDB().NewAddColumn().Model((*model.AgentAllocation)(nil)).IfNotExists().ColumnExpr("main_allocate text not null default active").Exec(ctx); err != nil {
-		log.Info(err)
-		panic(err)
-	}
-	if _, err := db.GetDB().NewAddColumn().Model((*model.AgentAllocation)(nil)).IfNotExists().ColumnExpr("source text").Exec(ctx); err != nil {
 		log.Info(err)
 		panic(err)
 	}

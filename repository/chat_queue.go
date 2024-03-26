@@ -32,7 +32,8 @@ func (repo *ChatQueue) GetById(ctx context.Context, db sqlclient.ISqlClientConn,
 			return q.Order("created_at desc")
 		}).
 		Relation("ChatRouting").
-		Relation("ChatQueueAgent").
+		Relation("ChatQueueUser").
+		Relation("ChatManageQueueUser").
 		Where("cq.id = ?", id)
 
 	err := query.Scan(ctx)
@@ -52,7 +53,8 @@ func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientCon
 			return q.Order("created_at desc")
 		}).
 		Relation("ChatRouting").
-		Relation("ChatQueueAgent")
+		Relation("ChatQueueUser").
+		Relation("ChatManageQueueUser")
 	if len(filter.TenantId) > 0 {
 		query.Where("cq.tenant_id = ?", filter.TenantId)
 	}

@@ -9,29 +9,29 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type ChatQueueAgent struct {
-	chatQueueAgent service.IChatQueueAgent
+type ChatQueueUser struct {
+	chatQueueUser service.IChatQueueUser
 }
 
-func NewChatQueueAgent(engine *gin.Engine, chatQueueAgent service.IChatQueueAgent) {
-	handler := &ChatQueueAgent{
-		chatQueueAgent: chatQueueAgent,
+func NewChatQueueUser(engine *gin.Engine, chatQueueUser service.IChatQueueUser) {
+	handler := &ChatQueueUser{
+		chatQueueUser: chatQueueUser,
 	}
-	Group := engine.Group("bss-message/v1/chat-queue-agent")
+	Group := engine.Group("bss-message/v1/chat-queue-user")
 	{
-		Group.POST("", handler.InsertChatQueueAgent)
-		Group.PUT(":id", handler.UpdateChatQueueAgentById)
+		Group.POST("", handler.InsertChatQueueUser)
+		Group.PUT(":id", handler.UpdateChatQueueUserById)
 	}
 }
 
-func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
+func (h *ChatQueueUser) InsertChatQueueUser(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
 
-	var data model.ChatQueueAgentRequest
+	var data model.ChatQueueUserRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -39,7 +39,7 @@ func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
 	}
 	data.Source = res.Data.Source
 
-	log.Info("insert chat queue agent payload -> ", data)
+	log.Info("insert chat queue user payload -> ", data)
 
 	if err := data.Validate(); err != nil {
 		log.Error(err)
@@ -47,7 +47,7 @@ func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
 		return
 	}
 
-	err := h.chatQueueAgent.InsertChatQueueAgent(c, res.Data, data)
+	err := h.chatQueueUser.InsertChatQueueUser(c, res.Data, data)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
@@ -57,23 +57,23 @@ func (h *ChatQueueAgent) InsertChatQueueAgent(c *gin.Context) {
 	c.JSON(response.OKResponse())
 }
 
-func (h *ChatQueueAgent) UpdateChatQueueAgentById(c *gin.Context) {
+func (h *ChatQueueUser) UpdateChatQueueUserById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
 
-	var data model.ChatQueueAgentRequest
+	var data model.ChatQueueUserRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	log.Info("update chat queue agent payload -> ", data)
+	log.Info("update chat queue User payload -> ", data)
 
-	result, err := h.chatQueueAgent.UpdateChatQueueAgentById(c, res.Data, data)
+	result, err := h.chatQueueUser.UpdateChatQueueUserById(c, res.Data, data)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))

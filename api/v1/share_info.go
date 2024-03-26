@@ -57,11 +57,13 @@ func (h *ShareInfo) PostConfigForm(c *gin.Context) {
 	}
 	err = h.shareInfo.PostConfigForm(c, res.Data, data, data.Files)
 	if err != nil {
-		err := uploadShareInfo(c, data.Files, false)
-		if err != nil {
+		errUpload := uploadShareInfo(c, data.Files, false)
+		if errUpload != nil {
 			c.JSON(response.ServiceUnavailableMsg(err.Error()))
 			return
 		}
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
 	}
 	c.JSON(response.OKResponse())
 }

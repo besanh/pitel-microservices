@@ -7,9 +7,9 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func CheckAgentExist(id string, agents []string) bool {
-	for _, agent := range agents {
-		if agent == id {
+func CheckUserExist(id string, Users []string) bool {
+	for _, User := range Users {
+		if User == id {
 			return true
 		}
 	}

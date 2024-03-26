@@ -34,6 +34,7 @@ type Message struct {
 	Attachments         []*OttAttachments `json:"attachments"`
 	CreatedAt           time.Time         `json:"created_at"`
 	UpdatedAt           time.Time         `json:"updated_at"`
+	ShareInfo           *ShareInfo        `json:"share_info"`
 }
 
 type AttachmentsDetails struct {

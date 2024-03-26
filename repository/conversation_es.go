@@ -36,8 +36,9 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		Valid: true,
 	}
 
+	// Remove because routing maybe having pitel_conversation_
+	// filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
 	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
 		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	if len(filter.AppId) > 0 {
@@ -56,6 +57,24 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	}
 	if len(filter.Email) > 0 {
 		filters = append(filters, elasticsearch.WildcardQuery("email", "*"+filter.Email, insensitive))
+	}
+	if filter.IsDone.Valid {
+		bq := map[string]any{
+			"bool": map[string]any{
+				"filter": []map[string]any{
+					{
+						"bool": map[string]any{
+							"must": map[string]any{
+								"wildcard": map[string]any{
+									"is_done": strconv.FormatBool(filter.IsDone.Bool),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		filters = append(filters, bq)
 	}
 
 	boolQuery := map[string]any{
