@@ -205,7 +205,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 									MainAllocate:       "active",
 									ConnectionId:       (*connectionQueues)[0].ConnectionId,
 								}
-								log.Infof("conversation %s allocated to User %s", newConversationId, User.Username)
+								log.Infof("conversation %s allocated to user %s", newConversationId, User.Username)
 								if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
 									log.Error(err)
 									return user, err

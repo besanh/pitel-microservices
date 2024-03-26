@@ -72,19 +72,6 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	if len(data.EventName) > 0 {
 		eventName = data.EventName
 	}
-	// if len(data.Attachments) > 0 {
-	// 	for _, item := range data.Attachments {
-	// 		eventNameTmp, ok := variables.ATTACHMENT_TYPE_MAP[item.AttachmentType]
-	// 		if !ok {
-	// 			break
-	// 		}
-	// 		eventName = eventNameTmp
-	// 	}
-	// }
-	// if len(eventName) < 1 {
-	// 	log.Errorf("event name %s not found", eventName)
-	// 	return response.BadRequestMsg("event name " + eventName + " not found")
-	// }
 
 	docId := uuid.NewString()
 
@@ -182,7 +169,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 
 	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-		ConnectionId: (*connection)[0].Id,
+		QueueId: (*connection)[0].QueueId,
 	}
 	totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 	if err != nil {
