@@ -146,4 +146,10 @@ func (hanlder *Conversation) ReassignConversation(c *gin.Context) {
 		return
 	}
 
+	id := c.Param("id")
+	if len(id) < 1 {
+		c.JSON(response.BadRequestMsg("id is required"))
+		return
+	}
+
 }
