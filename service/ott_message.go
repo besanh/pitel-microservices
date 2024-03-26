@@ -114,7 +114,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			message.TenantId = (*connection)[0].TenantId
 		}
 		filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-			ConnectionId: (*connection)[0].Id,
+			QueueId: (*connection)[0].QueueId,
 		}
 		totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 		if err != nil {
