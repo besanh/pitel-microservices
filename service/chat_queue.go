@@ -43,22 +43,22 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 		return chatQueue.Base.GetId(), err
 	}
 
-	connectionAgents := []model.ConnectionQueue{}
+	connectionUsers := []model.ConnectionQueue{}
 	if len(data.ConnectionId) > 0 {
 		for _, item := range data.ConnectionId {
-			connectionAgent := model.ConnectionQueue{
+			connectionUser := model.ConnectionQueue{
 				Base:         model.InitBase(),
 				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      chatQueue.Base.GetId(),
 				Status:       data.Status,
 			}
-			connectionAgents = append(connectionAgents, connectionAgent)
+			connectionUsers = append(connectionUsers, connectionUser)
 		}
 	}
 
-	if len(connectionAgents) > 0 {
-		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
+	if len(connectionUsers) > 0 {
+		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionUsers); err != nil {
 			log.Error(err)
 			return chatQueue.Base.GetId(), err
 		}
@@ -180,18 +180,18 @@ func (s *ChatQueue) UpdateChatQueueById(ctx context.Context, authUser *model.Aut
 	}
 
 	if len(data.ConnectionId) > 0 {
-		connectionAgents := []model.ConnectionQueue{}
+		connectionUsers := []model.ConnectionQueue{}
 		for _, item := range data.ConnectionId {
-			connectionAgent := model.ConnectionQueue{
+			connectionUser := model.ConnectionQueue{
 				Base:         model.InitBase(),
 				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      queueExist.Id,
 				Status:       data.Status,
 			}
-			connectionAgents = append(connectionAgents, connectionAgent)
+			connectionUsers = append(connectionUsers, connectionUser)
 		}
-		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionAgents); err != nil {
+		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionUsers); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -218,7 +218,7 @@ func (s *ChatQueue) DeleteChatQueueById(ctx context.Context, authUser *model.Aut
 		return err
 	}
 
-	// Delete queue agent
+	// Delete queue User
 	if err := repository.ChatQueueUserRepo.DeleteChatQueueUsers(ctx, dbCon, id); err != nil {
 		log.Error(err)
 		return err
