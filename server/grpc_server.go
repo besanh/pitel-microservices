@@ -119,7 +119,7 @@ func NewGRPCServer(port string) {
 	v1.NewChatConnectionApp(httpServer, service.NewChatConnectionApp())
 	v1.NewChatRouting(httpServer, service.NewChatRouting())
 	v1.NewChatQueue(httpServer, service.NewChatQueue())
-	v1.NewChatQueueAgent(httpServer, service.NewChatQueueAgent())
+	v1.NewChatQueueUser(httpServer, service.NewChatQueueUser())
 	v1.NewShareInfo(httpServer, service.NewShareInfo())
 	v1.NewFacebook(httpServer, service.NewFacebook())
 	v1.NewManageQueue(httpServer, service.NewManageQueue())

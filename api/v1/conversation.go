@@ -28,6 +28,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.GET("manager", handler.GetConversationsByManager)
 		Group.PUT(":id", handler.UpdateConversation)
 		Group.POST("status", handler.UpdateStatusConversation)
+		Group.PATCH(":id/reassign", handler.ReassignConversation)
 	}
 }
 
@@ -136,4 +137,13 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 
 	code, result := handler.conversationService.GetConversationsByManage(c, res.Data, filter, limit, offset)
 	c.JSON(code, result)
+}
+
+func (hanlder *Conversation) ReassignConversation(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
 }

@@ -10,11 +10,11 @@ import (
 
 type (
 	IChatManageQueue interface {
-		IRepo[model.ChatManageQueueAgent]
-		GetManageQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error)
+		IRepo[model.ChatManageQueueUser]
+		GetManageQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueUserFilter, limit, offset int) (int, *[]model.ChatManageQueueUser, error)
 	}
 	ChatManageQueue struct {
-		Repo[model.ChatManageQueueAgent]
+		Repo[model.ChatManageQueueUser]
 	}
 )
 
@@ -24,8 +24,8 @@ func NewManageQueue() IChatManageQueue {
 	return &ChatManageQueue{}
 }
 
-func (repo *ChatManageQueue) GetManageQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueAgentFilter, limit, offset int) (int, *[]model.ChatManageQueueAgent, error) {
-	entries := new([]model.ChatManageQueueAgent)
+func (repo *ChatManageQueue) GetManageQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueUserFilter, limit, offset int) (int, *[]model.ChatManageQueueUser, error) {
+	entries := new([]model.ChatManageQueueUser)
 	query := db.GetDB().NewSelect().
 		Model(entries).
 		Limit(limit).

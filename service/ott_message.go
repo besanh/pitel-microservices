@@ -110,14 +110,14 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			data.TenantId = (*connection)[0].TenantId
 			message.TenantId = (*connection)[0].TenantId
 		}
-		filterChatManageQueueAgent := model.ChatManageQueueAgentFilter{}
-		totalManageQueueAgent, manageQueueAgent, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueAgent, 1, 0)
+		filterChatManageQueueUser := model.ChatManageQueueUserFilter{}
+		totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if totalManageQueueAgent > 0 {
-			user.QueueId = (*manageQueueAgent)[0].QueueId
+		if totalManageQueueUser > 0 {
+			user.QueueId = (*manageQueueUser)[0].QueueId
 		}
 	}
 	if user.IsOk {
@@ -182,43 +182,43 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 	// TODO: publish message to manager
 	if len(user.QueueId) > 0 {
-		manageQueueAgent, err := GetManageQueueAgent(ctx, user.QueueId)
+		manageQueueUser, err := GetManageQueueUser(ctx, user.QueueId)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
-		} else if len(manageQueueAgent.Id) < 1 {
+		} else if len(manageQueueUser.Id) < 1 {
 			log.Error("queue " + user.QueueId + " not found")
 			return response.NotFoundMsg("queue " + user.QueueId + " not found")
 		}
 
-		filter := model.AgentAllocateFilter{
+		filter := model.UserAllocateFilter{
 			AppId:          conversation.AppId,
 			ConversationId: conversation.ConversationId,
 			MainAllocate:   "active",
 		}
-		totalAgentAllocate, _, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+		totalUserAllocate, _, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if totalAgentAllocate < 1 {
-			agentAllocation := model.AgentAllocate{
+		if totalUserAllocate < 1 {
+			UserAllocation := model.UserAllocate{
 				Base:               model.InitBase(),
 				TenantId:           conversation.TenantId,
 				ConversationId:     conversation.ConversationId,
 				AppId:              message.AppId,
-				AgentId:            manageQueueAgent.ManageId,
-				QueueId:            manageQueueAgent.QueueId,
+				UserId:             manageQueueUser.ManageId,
+				QueueId:            manageQueueUser.QueueId,
 				AllocatedTimestamp: time.Now().Unix(),
 				MainAllocate:       "active",
-				ConnectionId:       manageQueueAgent.ConnectionId,
+				ConnectionId:       manageQueueUser.ConnectionId,
 			}
-			if err := repository.AgentAllocationRepo.Insert(ctx, repository.DBConn, agentAllocation); err != nil {
+			if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, UserAllocation); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 
-			if err := cache.RCache.Set(AGENT_ALLOCATION+"_"+conversation.ConversationId, agentAllocation, AGENT_ALLOCATION_EXPIRE); err != nil {
+			if err := cache.RCache.Set(USER_ALLOCATE+"_"+conversation.ConversationId, UserAllocation, USER_ALLOCATE_EXPIRE); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
@@ -232,7 +232,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					Conversation: conversation,
 				},
 			}
-			if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
+			if err := PublishMessageToOne(manageQueueUser.ManageId, event); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
@@ -244,8 +244,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			},
 		}
 		for s := range WsSubscribers.Subscribers {
-			if s.Id == manageQueueAgent.ManageId {
-				if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
+			if s.Id == manageQueueUser.ManageId {
+				if err := PublishMessageToOne(manageQueueUser.ManageId, event); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}

@@ -22,10 +22,6 @@ const (
 	AGENT_INFO   = "agent_info"
 )
 
-var (
-	AAA_URL = "https://api.dev.fins.vn/aaa"
-)
-
 func AuthMiddleware(c *gin.Context) *model.AAAResponse {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),

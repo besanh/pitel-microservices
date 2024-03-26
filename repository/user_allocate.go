@@ -10,23 +10,23 @@ import (
 )
 
 type (
-	IAgentAllocation interface {
-		IRepo[model.AgentAllocate]
-		GetAgentAllocations(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AgentAllocateFilter, limit, offset int) (int, *[]model.AgentAllocate, error)
+	IUserAllocate interface {
+		IRepo[model.UserAllocate]
+		GetUserAllocates(ctx context.Context, db sqlclient.ISqlClientConn, filter model.UserAllocateFilter, limit, offset int) (int, *[]model.UserAllocate, error)
 	}
-	AgentAllocation struct {
-		Repo[model.AgentAllocate]
+	UserAllocate struct {
+		Repo[model.UserAllocate]
 	}
 )
 
-var AgentAllocationRepo IAgentAllocation
+var UserAllocateRepo IUserAllocate
 
-func NewAgentAllocation() IAgentAllocation {
-	return &AgentAllocation{}
+func NewUserAllocate() IUserAllocate {
+	return &UserAllocate{}
 }
 
-func (repo *AgentAllocation) GetAgentAllocations(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AgentAllocateFilter, limit, offset int) (int, *[]model.AgentAllocate, error) {
-	result := new([]model.AgentAllocate)
+func (repo *UserAllocate) GetUserAllocates(ctx context.Context, db sqlclient.ISqlClientConn, filter model.UserAllocateFilter, limit, offset int) (int, *[]model.UserAllocate, error) {
+	result := new([]model.UserAllocate)
 	query := db.GetDB().NewSelect().Model(result)
 	if len(filter.TenantId) > 0 {
 		query.Where("tenant_id = ?", filter.TenantId)
@@ -34,8 +34,8 @@ func (repo *AgentAllocation) GetAgentAllocations(ctx context.Context, db sqlclie
 	if len(filter.AppId) > 0 {
 		query.Where("app_id = ?", filter.AppId)
 	}
-	if len(filter.AgentId) > 0 {
-		query.Where("agent_id IN (?)", bun.In(filter.AgentId))
+	if len(filter.UserId) > 0 {
+		query.Where("user_id IN (?)", bun.In(filter.UserId))
 	}
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)

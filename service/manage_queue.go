@@ -12,8 +12,8 @@ import (
 
 type (
 	IManageQueue interface {
-		PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatManageQueueAgentRequest) (id string, err error)
-		UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatManageQueueAgentRequest) error
+		PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatManageQueueUserRequest) (id string, err error)
+		UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatManageQueueUserRequest) error
 		DeleteManageQueueById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
 	ManageQueue struct{}
@@ -23,8 +23,8 @@ func NewManageQueue() IManageQueue {
 	return &ManageQueue{}
 }
 
-func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatManageQueueAgentRequest) (id string, err error) {
-	manageQueue := model.ChatManageQueueAgent{
+func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatManageQueueUserRequest) (id string, err error) {
+	manageQueue := model.ChatManageQueueUser{
 		Base: model.InitBase(),
 	}
 	dbCon, err := HandleGetDBConSource(authUser)
@@ -60,7 +60,7 @@ func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthU
 	return manageQueue.GetId(), nil
 }
 
-func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatManageQueueAgentRequest) (err error) {
+func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatManageQueueUserRequest) (err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)

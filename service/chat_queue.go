@@ -95,9 +95,9 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 	if len(token) > 0 {
 		if total > 0 {
 			for i, item := range *queues {
-				for j, val := range item.ChatQueueAgent {
+				for j, val := range item.ChatQueueUser {
 					if val.Source == "authen" {
-						authUser, err := common.GetUserAuthenticated(bssAuthRequest.AuthUrl, token, val.AgentId)
+						authUser, err := common.GetUserAuthenticated(bssAuthRequest.AuthUrl, token, val.UserId)
 						if err != nil {
 							log.Error(err)
 							return 0, nil, err
@@ -112,7 +112,7 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 						if len(authUser.LastName) > 0 {
 							val.Fullname += " " + authUser.LastName
 						}
-						item.ChatQueueAgent[j] = val
+						item.ChatQueueUser[j] = val
 					}
 				}
 				(*queues)[i] = item
@@ -219,7 +219,7 @@ func (s *ChatQueue) DeleteChatQueueById(ctx context.Context, authUser *model.Aut
 	}
 
 	// Delete queue agent
-	if err := repository.ChatQueueAgentRepo.DeleteChatQueueAgents(ctx, dbCon, id); err != nil {
+	if err := repository.ChatQueueUserRepo.DeleteChatQueueUsers(ctx, dbCon, id); err != nil {
 		log.Error(err)
 		return err
 	}

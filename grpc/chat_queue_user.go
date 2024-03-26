@@ -28,7 +28,7 @@ func (g *GRPCChatQueueAgent) InsertQueueAgent(ctx context.Context, req *pb.Queue
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	var payload model.ChatQueueAgentRequest
+	var payload model.ChatQueueUserRequest
 	if err = util.ParseAnyToAny(req, &payload); err != nil {
 		result = &pb.QueueAgentResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
@@ -38,7 +38,7 @@ func (g *GRPCChatQueueAgent) InsertQueueAgent(ctx context.Context, req *pb.Queue
 	}
 
 	log.Println("payload -->", payload)
-	err = service.NewChatQueueAgent().InsertChatQueueAgent(ctx, authUser, payload)
+	err = service.NewChatQueueUser().InsertChatQueueUser(ctx, authUser, payload)
 	if err != nil {
 		result = &pb.QueueAgentResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,

@@ -11,29 +11,29 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func GetManageQueueAgent(ctx context.Context, queueId string) (manageQueueAgent model.ChatManageQueueAgent, err error) {
-	manageQueueAgentCache := cache.RCache.Get(MANAGE_QUEUE_AGENT + "_" + queueId)
-	if manageQueueAgentCache != nil {
-		if err = json.Unmarshal([]byte(manageQueueAgentCache.(string)), &manageQueueAgent); err != nil {
+func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser model.ChatManageQueueUser, err error) {
+	manageQueueUserCache := cache.RCache.Get(MANAGE_QUEUE_USER + "_" + queueId)
+	if manageQueueUserCache != nil {
+		if err = json.Unmarshal([]byte(manageQueueUserCache.(string)), &manageQueueUser); err != nil {
 			log.Error(err)
 		}
 	}
-	filter := model.ChatManageQueueAgentFilter{
+	filter := model.ChatManageQueueUserFilter{
 		QueueId: queueId,
 	}
-	total, manageQueueAgents, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
+	total, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	if total > 0 {
-		manageQueueAgent = (*manageQueueAgents)[0]
-		if err = cache.RCache.Set(MANAGE_QUEUE_AGENT+"_"+queueId, manageQueueAgent, MANAGE_QUEUE_AGENT_EXPIRE); err != nil {
+		manageQueueUser = (*manageQueueUsers)[0]
+		if err = cache.RCache.Set(MANAGE_QUEUE_USER+"_"+queueId, manageQueueUser, MANAGE_QUEUE_USER_EXPIRE); err != nil {
 			log.Error(err)
 			return
 		}
 	}
-	return manageQueueAgent, nil
+	return manageQueueUser, nil
 }
 
 func GenerateConversationId(appId, conversationId string) (newConversationId string) {
@@ -41,7 +41,7 @@ func GenerateConversationId(appId, conversationId string) (newConversationId str
 	return
 }
 
-func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgents *[]model.ChatQueueAgent) (*Subscriber, error) {
+func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers *[]model.ChatQueueUser) (*Subscriber, error) {
 	userLive := Subscriber{}
 	userLives := []Subscriber{}
 	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
@@ -55,12 +55,12 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 			log.Error(err)
 			return &userLive, err
 		}
-		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueAgents, s.Id) {
+		if (s.Level == "user" || s.Level == "User") && CheckInLive(*queueUsers, s.Id) {
 			userLives = append(userLives, s)
 		}
 	}
 	if len(userLives) > 0 {
-		index, userAllocate := GetAgentIsRoundRobin(userLives)
+		index, userAllocate := GetUserIsRoundRobin(userLives)
 		userLive = *userAllocate
 		userLive.IsAssignRoundRobin = true
 		userPrevious := Subscriber{}
@@ -100,7 +100,7 @@ func RoundRobinAgentOnline(ctx context.Context, conversationId string, queueAgen
 	}
 }
 
-func GetAgentIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
+func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
 	isOk := false
 	index := 0
 	userLive := Subscriber{}
@@ -125,9 +125,9 @@ func GetAgentIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
 	return index, &userLive
 }
 
-func CheckInLive(queueAgents []model.ChatQueueAgent, id string) bool {
-	for _, item := range queueAgents {
-		if item.AgentId == id {
+func CheckInLive(queueUsers []model.ChatQueueUser, id string) bool {
+	for _, item := range queueUsers {
+		if item.UserId == id {
 			return true
 		}
 	}
