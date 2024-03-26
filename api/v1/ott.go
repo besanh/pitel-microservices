@@ -75,14 +75,13 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	}
 
 	shareInfoTmp, _ := jsonBody["share_info"].(map[string]any)
-	shareInfo := model.ShareInfo{}
 	// if eventName != variables.EVENT_NAME_EXCLUDE["oa_connection"] && shareInfoTmp != nil {
 	shareInfoName, _ := shareInfoTmp["name"].(string)
 	shareInfoPhoneNumber, _ := shareInfoTmp["phone"].(string)
 	shareInfoAddress, _ := shareInfoTmp["address"].(string)
 	shareInfoCity, _ := shareInfoTmp["city"].(string)
 	shareInfoDistrict, _ := shareInfoTmp["district"].(string)
-	shareInfo = model.ShareInfo{
+	shareInfo := model.ShareInfo{
 		Fullname:    shareInfoName,
 		PhoneNumber: shareInfoPhoneNumber,
 		Address:     shareInfoAddress,

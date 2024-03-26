@@ -6,22 +6,22 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type ChatManageQueueAgent struct {
+type ChatManageQueueUser struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_manage_queue_agent,alias:cmqa"`
+	bun.BaseModel `bun:"table:chat_manage_queue_user,alias:cmqa"`
 	TenantId      string `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	ConnectionId  string `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
 	QueueId       string `json:"queue_id" bun:"queue_id,type:uuid,notnull"`
 	ManageId      string `json:"manage_id" bun:"manage_id,type:uuid,notnull"`
 }
 
-type ChatManageQueueAgentRequest struct {
+type ChatManageQueueUserRequest struct {
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
 	ManageId     string `json:"manage_id"`
 }
 
-func (m *ChatManageQueueAgentRequest) Validate() (err error) {
+func (m *ChatManageQueueUserRequest) Validate() (err error) {
 	if len(m.ConnectionId) < 1 {
 		err = errors.New("connection id is required")
 	}

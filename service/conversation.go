@@ -63,21 +63,21 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 
 func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	conversationIds := []string{}
-	conversationFilter := model.AgentAllocateFilter{
-		AgentId: []string{authUser.UserId},
+	conversationFilter := model.UserAllocateFilter{
+		UserId: []string{authUser.UserId},
 	}
 	if filter.IsDone.Valid {
 		conversationFilter.MainAllocate = "deactive"
 	} else {
 		conversationFilter.MainAllocate = "active"
 	}
-	total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, UserAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if total > 0 {
-		for _, item := range *agentAllocations {
+		for _, item := range *UserAllocations {
 			conversationIds = append(conversationIds, item.ConversationId)
 		}
 	}
@@ -182,29 +182,29 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		statusAllocate = "deactive"
 	}
 
-	// Update agent allocate
-	filter := model.AgentAllocateFilter{
+	// Update User allocate
+	filter := model.UserAllocateFilter{
 		AppId:          appId,
 		ConversationId: conversationId,
 		MainAllocate:   statusAllocate,
 	}
-	total, agentAllocate, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, filter, 1, 0)
+	total, UserAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 	if total < 1 {
-		log.Errorf("conversation %s not found with active agent", conversationId)
-		return errors.New("conversation " + conversationId + " not found with active agent")
+		log.Errorf("conversation %s not found with active User", conversationId)
+		return errors.New("conversation " + conversationId + " not found with active User")
 	}
 
-	agentAllocateTmp := (*agentAllocate)[0]
+	UserAllocateTmp := (*UserAllocate)[0]
 
 	if status == "done" {
-		agentAllocateTmp.MainAllocate = "deactive"
-		agentAllocateTmp.AllocatedTimestamp = time.Now().Unix()
-		agentAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocateTmp); err != nil {
+		UserAllocateTmp.MainAllocate = "deactive"
+		UserAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		UserAllocateTmp.UpdatedAt = time.Now()
+		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, UserAllocateTmp); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -212,10 +212,10 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		conversationExist.IsDoneBy = updatedBy
 		conversationExist.IsDoneAt = time.Now()
 	} else if status == "reopen" {
-		agentAllocateTmp.MainAllocate = "active"
-		agentAllocateTmp.AllocatedTimestamp = time.Now().Unix()
-		agentAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, agentAllocateTmp); err != nil {
+		UserAllocateTmp.MainAllocate = "active"
+		UserAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		UserAllocateTmp.UpdatedAt = time.Now()
+		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, UserAllocateTmp); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -243,7 +243,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
 			log.Error(err)
-			if err := repository.AgentAllocationRepo.Update(ctx, repository.DBConn, (*agentAllocate)[0]); err != nil {
+			if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*UserAllocate)[0]); err != nil {
 				log.Error(err)
 			}
 			return err
@@ -251,17 +251,17 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// Event to manager
-	manageQueueAgent, err := GetManageQueueAgent(ctx, agentAllocateTmp.QueueId)
+	manageQueueUser, err := GetManageQueueUser(ctx, UserAllocateTmp.QueueId)
 	if err != nil {
 		log.Error(err)
 		return err
-	} else if len(manageQueueAgent.Id) < 1 {
-		log.Error("queue " + agentAllocateTmp.QueueId + " not found")
-		return errors.New("queue " + agentAllocateTmp.QueueId + " not found")
+	} else if len(manageQueueUser.Id) < 1 {
+		log.Error("queue " + UserAllocateTmp.QueueId + " not found")
+		return errors.New("queue " + UserAllocateTmp.QueueId + " not found")
 	}
 
 	for s := range WsSubscribers.Subscribers {
-		if s.Id == manageQueueAgent.ManageId {
+		if s.Id == manageQueueUser.ManageId {
 			// TODO: publish message to manager
 			event := model.Event{
 				EventName: variables.EVENT_CHAT[5],
@@ -269,7 +269,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 					Conversation: conversationExist,
 				},
 			}
-			if err := PublishMessageToOne(manageQueueAgent.ManageId, event); err != nil {
+			if err := PublishMessageToOne(manageQueueUser.ManageId, event); err != nil {
 				log.Error(err)
 				return err
 			}
@@ -281,7 +281,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	if ENABLE_PUBLISH_ADMIN {
 		userUuids := []string{}
 		for s := range WsSubscribers.Subscribers {
-			if s.TenantId == manageQueueAgent.TenantId && s.Level == "admin" {
+			if s.TenantId == manageQueueUser.TenantId && s.Level == "admin" {
 				userUuids = append(userUuids, s.Id)
 			}
 		}

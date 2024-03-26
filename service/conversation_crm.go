@@ -16,7 +16,7 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 		userUuids := []string{}
 		if authUser.Level == "manager" {
 			filter.TenantId = authUser.TenantId
-			filterManageQueue := model.ChatManageQueueAgentFilter{
+			filterManageQueue := model.ChatManageQueueUserFilter{
 				ManageId: authUser.UserId,
 			}
 			totalManageQueue, manageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterManageQueue, -1, 0)
@@ -44,18 +44,18 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 
 func getConversationByFilter(ctx context.Context, userUuids []string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
 	conversationIds := []string{}
-	conversationFilter := model.AgentAllocateFilter{
-		AgentId:      userUuids,
+	conversationFilter := model.UserAllocateFilter{
+		UserId:       userUuids,
 		MainAllocate: "active",
 	}
 
-	total, agentAllocations, err := repository.AgentAllocationRepo.GetAgentAllocations(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, UserAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return total, nil, err
 	}
 	if total > 0 {
-		for _, item := range *agentAllocations {
+		for _, item := range *UserAllocations {
 			conversationIds = append(conversationIds, item.ConversationId)
 		}
 	}

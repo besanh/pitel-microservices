@@ -49,7 +49,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	}
 
 	if len(data.QueueId) > 0 {
-		_, err = repository.ChatQueueAgentRepo.GetById(ctx, dbCon, data.QueueId)
+		_, err = repository.ChatQueueUserRepo.GetById(ctx, dbCon, data.QueueId)
 		if err != nil {
 			log.Error(err)
 			return connectionApp.Id, err

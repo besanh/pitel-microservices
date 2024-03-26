@@ -37,11 +37,11 @@ type QueueFilter struct {
 	ChatRoutingId string
 }
 
-type ChatQueueAgentFilter struct {
-	TenantId string `json:"tenant_id"`
-	QueueId  []string
-	AgentId  []string
-	Source   string
+type ChatQueueUserFilter struct {
+	TenantId string   `json:"tenant_id"`
+	QueueId  []string `json:"queue_id"`
+	UserId   []string `json:"user_id"`
+	Source   string   `json:"source"`
 }
 
 type ChatRoutingFilter struct {
@@ -62,11 +62,11 @@ type ConversationFilter struct {
 	IsDone         sql.NullBool `json:"is_done"`
 }
 
-type AgentAllocateFilter struct {
+type UserAllocateFilter struct {
 	TenantId       string   `json:"tenant_id"`
 	AppId          string   `json:"app_id"`
 	ConversationId string   `json:"conversation_id"`
-	AgentId        []string `json:"agent_id"`
+	UserId         []string `json:"user_id"`
 	QueueId        string   `json:"queue_id"`
 	AllocatedTime  int64    `json:"allocated_time"`
 	MainAllocate   string   `json:"main_allocate"`
@@ -115,7 +115,7 @@ type FacebookPageFilter struct {
 	OaName string `json:"oa_name"`
 }
 
-type ChatManageQueueAgentFilter struct {
+type ChatManageQueueUserFilter struct {
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
 	ManageId     string `json:"manage_id"`

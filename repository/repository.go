@@ -25,9 +25,9 @@ func InitRepositories() {
 	ChatAppRepo = NewChatApp()
 	ChatConnectionAppRepo = NewConnectionApp()
 	ChatQueueRepo = NewChatQueue()
-	ChatQueueAgentRepo = NewChatQueueAgent()
+	ChatQueueUserRepo = NewChatQueueUser()
 	ChatRoutingRepo = NewChatRouting()
-	AgentAllocationRepo = NewAgentAllocation()
+	UserAllocateRepo = NewUserAllocate()
 	ConnectionQueueRepo = NewConnectionQueue()
 	ShareInfoRepo = NewShareInfo()
 	ManageQueueRepo = NewManageQueue()
@@ -58,10 +58,10 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatRouting)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.ChatQueueAgent)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.ChatQueueUser)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.AgentAllocate)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.UserAllocate)(nil)); err != nil {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ConnectionQueue)(nil)); err != nil {
@@ -73,7 +73,7 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.FacebookPage)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.ChatManageQueueAgent)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.ChatManageQueueUser)(nil)); err != nil {
 		log.Error(err)
 	}
 	log.Println("TABLES WERE CREATED")

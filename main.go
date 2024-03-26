@@ -170,6 +170,7 @@ func main() {
 	service.API_SHARE_INFO_HOST = env.GetStringENV("API_SHARE_INFO_HOST", "https://api.dev.fins.vn")
 	service.API_CRM = env.GetStringENV("API_CRM", "")
 	service.ENABLE_PUBLISH_ADMIN = env.GetBoolENV("ENABLE_PUBLISH_ADMIN", false)
+	service.AAA_HOST = env.GetStringENV("AAA_HOST", "https://aaa.dev.fins.vn")
 	service.InitServices()
 
 	// Init storage
