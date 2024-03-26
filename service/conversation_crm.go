@@ -49,13 +49,13 @@ func getConversationByFilter(ctx context.Context, userUuids []string, filter mod
 		MainAllocate: "active",
 	}
 
-	total, UserAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return total, nil, err
 	}
 	if total > 0 {
-		for _, item := range *UserAllocations {
+		for _, item := range *userAllocations {
 			conversationIds = append(conversationIds, item.ConversationId)
 		}
 	}
