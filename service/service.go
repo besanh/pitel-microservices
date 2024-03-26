@@ -42,6 +42,8 @@ var (
 	USER_ALLOCATE_EXPIRE     = 1 * time.Hour
 	MANAGE_QUEUE_USER        = "manage_queue_user"
 	MANAGE_QUEUE_USER_EXPIRE = 1 * time.Hour
+	CHAT_CONNECTION          = "chat_connection"
+	CHAT_CONNECTION_EXPIRE   = 1 * time.Hour
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 

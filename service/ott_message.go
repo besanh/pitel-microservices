@@ -106,11 +106,16 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if total > 0 {
+		if total < 1 {
+			log.Error("connection not found")
+			return response.ServiceUnavailableMsg("connection not found")
+		} else {
 			data.TenantId = (*connection)[0].TenantId
 			message.TenantId = (*connection)[0].TenantId
 		}
-		filterChatManageQueueUser := model.ChatManageQueueUserFilter{}
+		filterChatManageQueueUser := model.ChatManageQueueUserFilter{
+			ConnectionId: (*connection)[0].Id,
+		}
 		totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 		if err != nil {
 			log.Error(err)
@@ -202,7 +207,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 		if totalUserAllocate < 1 {
-			UserAllocation := model.UserAllocate{
+			userAllocation := model.UserAllocate{
 				Base:               model.InitBase(),
 				TenantId:           conversation.TenantId,
 				ConversationId:     conversation.ConversationId,
@@ -213,12 +218,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				MainAllocate:       "active",
 				ConnectionId:       manageQueueUser.ConnectionId,
 			}
-			if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, UserAllocation); err != nil {
+			if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 
-			if err := cache.RCache.Set(USER_ALLOCATE+"_"+conversation.ConversationId, UserAllocation, USER_ALLOCATE_EXPIRE); err != nil {
+			if err := cache.RCache.Set(USER_ALLOCATE+"_"+conversation.ConversationId, userAllocation, USER_ALLOCATE_EXPIRE); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
