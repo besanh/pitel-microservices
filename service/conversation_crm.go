@@ -45,8 +45,12 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 func getConversationByFilter(ctx context.Context, userUuids []string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
 	conversationIds := []string{}
 	conversationFilter := model.UserAllocateFilter{
-		UserId:       userUuids,
-		MainAllocate: "active",
+		UserId: userUuids,
+	}
+	if filter.IsDone.Bool {
+		conversationFilter.MainAllocate = "deactive"
+	} else {
+		conversationFilter.MainAllocate = "active"
 	}
 
 	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
