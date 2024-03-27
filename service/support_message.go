@@ -1,11 +1,14 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 )
 
@@ -53,4 +56,54 @@ func (s *Message) sendMessageToOTT(ott model.SendMessageToOtt, attachment []*mod
 	} else {
 		return result, errors.New(result.Message)
 	}
+}
+
+func SendEventToManage(ctx context.Context, authUser *model.AuthUser, message model.Message, queueId string) (err error) {
+	manageQueueUser, err := GetManageQueueUser(ctx, queueId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(manageQueueUser.Id) < 1 {
+		log.Error("queue " + queueId + " not found")
+		err = errors.New("queue " + queueId + " not found")
+		return err
+	}
+
+	// TODO: publish message to manager
+	for s := range WsSubscribers.Subscribers {
+		if s.Id == manageQueueUser.ManageId && s.Id != authUser.UserId {
+			event := model.Event{
+				EventName: variables.EVENT_CHAT[3],
+				EventData: &model.EventData{
+					Message: message,
+				},
+			}
+			if err := PublishMessageToOne(manageQueueUser.ManageId, event); err != nil {
+				log.Error(err)
+				return err
+			}
+			break
+		}
+	}
+
+	// TODO: publish to admin
+	if ENABLE_PUBLISH_ADMIN {
+		userUuids := []string{}
+		for s := range WsSubscribers.Subscribers {
+			if s.TenantId == message.TenantId && s.Level == "admin" && s.Id != authUser.UserId {
+				userUuids = append(userUuids, s.Id)
+			}
+		}
+		event := model.Event{
+			EventName: variables.EVENT_CHAT[3],
+			EventData: &model.EventData{
+				Message: message,
+			},
+		}
+		if err := PublishMessageToMany(userUuids, event); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	return
 }

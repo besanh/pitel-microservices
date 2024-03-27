@@ -15,6 +15,7 @@ type AuthUser struct {
 	Source           string   `json:"source"`
 	Token            string   `json:"token"`
 	UnitUuid         string   `json:"unit_uuid"` //only for user crm
+	Fullname         string   `json:"fullname"`
 }
 
 type AAAResponse struct {

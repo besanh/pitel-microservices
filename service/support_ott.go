@@ -24,16 +24,16 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 	var isOk bool
 
 	newConversationId := GenerateConversationId(message.AppId, message.ExternalUserId)
-	UserAllocationCache := cache.RCache.Get(USER_ALLOCATE + "_" + newConversationId)
-	if UserAllocationCache != nil {
-		UserTmp := model.UserAllocate{}
-		if err := json.Unmarshal([]byte(UserAllocationCache.(string)), &UserTmp); err != nil {
+	userAllocationCache := cache.RCache.Get(USER_ALLOCATE + "_" + newConversationId)
+	if userAllocationCache != nil {
+		userTmp := model.UserAllocate{}
+		if err := json.Unmarshal([]byte(userAllocationCache.(string)), &userTmp); err != nil {
 			log.Error(err)
 			user.AuthUser = &authInfo
 			user.IsOk = isOk
 			return user, err
 		}
-		User = UserTmp
+		User = userTmp
 		authInfo.TenantId = User.TenantId
 		authInfo.UserId = User.UserId
 		authInfo.Username = User.Username
@@ -48,20 +48,20 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 			ConversationId: newConversationId,
 			MainAllocate:   "active",
 		}
-		total, UserAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+		total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return user, err
 		}
 		if total > 0 {
-			authInfo.TenantId = (*UserAllocations)[0].TenantId
-			authInfo.UserId = (*UserAllocations)[0].UserId
+			authInfo.TenantId = (*userAllocations)[0].TenantId
+			authInfo.UserId = (*userAllocations)[0].UserId
 			user.AuthUser = &authInfo
 			user.IsOk = true
-			user.ConnectionId = (*UserAllocations)[0].ConnectionId
-			user.QueueId = (*UserAllocations)[0].QueueId
+			user.ConnectionId = (*userAllocations)[0].ConnectionId
+			user.QueueId = (*userAllocations)[0].QueueId
 
-			if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, (*UserAllocations)[0], USER_ALLOCATE_EXPIRE); err != nil {
+			if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, (*userAllocations)[0], USER_ALLOCATE_EXPIRE); err != nil {
 				log.Error(err)
 				return user, err
 			}
@@ -96,19 +96,19 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 					return user, err
 				}
 				if totalConnectionQueue > 0 {
-					filterUserAllocation := model.UserAllocateFilter{
+					filteruserAllocation := model.UserAllocateFilter{
 						ConversationId: newConversationId,
 						QueueId:        (*connectionQueues)[0].QueueId,
 						MainAllocate:   "active",
 					}
-					totalUserAllocation, UserAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filterUserAllocation, -1, 0)
+					totalUserAllocation, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filteruserAllocation, -1, 0)
 					if err != nil {
 						log.Error(err)
 						return user, err
 					}
 					if totalUserAllocation > 0 {
-						authInfo.TenantId = (*UserAllocations)[0].TenantId
-						authInfo.UserId = (*UserAllocations)[0].UserId
+						authInfo.TenantId = (*userAllocations)[0].TenantId
+						authInfo.UserId = (*userAllocations)[0].UserId
 
 						for s := range WsSubscribers.Subscribers {
 							if s.UserId == authInfo.UserId && (s.Level == "user" || s.Level == "User") {
@@ -121,8 +121,8 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 						}
 						user.IsOk = true
 						user.AuthUser = &authInfo
-						user.ConnectionId = (*UserAllocations)[0].ConnectionId
-						user.QueueId = (*UserAllocations)[0].QueueId
+						user.ConnectionId = (*userAllocations)[0].ConnectionId
+						user.QueueId = (*userAllocations)[0].QueueId
 
 						return user, nil
 					} else {
@@ -156,12 +156,12 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 						}
 						if totalQueueUsers > 0 {
 							if strings.ToLower(chatRouting.RoutingAlias) == "random" {
-								UserUuids := []string{}
+								userUuids := []string{}
 								for _, item := range *queueUsers {
-									UserUuids = append(UserUuids, item.UserId)
+									userUuids = append(userUuids, item.UserId)
 								}
 								for s := range WsSubscribers.Subscribers {
-									if slices.Contains[[]string](UserUuids, s.UserId) && s.Level == "user" || s.Level == "User" {
+									if slices.Contains[[]string](userUuids, s.UserId) && s.Level == "user" || s.Level == "User" {
 										userLives = append(userLives, *s)
 									}
 								}
@@ -194,7 +194,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 
 							if len(userLives) > 0 {
 								newConversationId = GenerateConversationId(message.AppId, message.ExternalUserId)
-								UserAllocation := model.UserAllocate{
+								userAllocation := model.UserAllocate{
 									Base:               model.InitBase(),
 									TenantId:           (*connectionApps)[0].TenantId,
 									ConversationId:     newConversationId,
@@ -205,13 +205,13 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 									MainAllocate:       "active",
 									ConnectionId:       (*connectionQueues)[0].ConnectionId,
 								}
-								log.Infof("conversation %s allocated to User %s", newConversationId, User.Username)
-								if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, UserAllocation); err != nil {
+								log.Infof("conversation %s allocated to user %s", newConversationId, User.Username)
+								if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
 									log.Error(err)
 									return user, err
 								}
 
-								if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, UserAllocation, USER_ALLOCATE_EXPIRE); err != nil {
+								if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, userAllocation, USER_ALLOCATE_EXPIRE); err != nil {
 									log.Error(err)
 									return user, err
 								}
@@ -225,7 +225,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 							} else {
 								log.Error("User not available")
 								user.IsOk = true
-								return user, errors.New("User not available")
+								return user, errors.New("user not available")
 							}
 						} else {
 							log.Error("queue User not found")

@@ -72,19 +72,6 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	if len(data.EventName) > 0 {
 		eventName = data.EventName
 	}
-	// if len(data.Attachments) > 0 {
-	// 	for _, item := range data.Attachments {
-	// 		eventNameTmp, ok := variables.ATTACHMENT_TYPE_MAP[item.AttachmentType]
-	// 		if !ok {
-	// 			break
-	// 		}
-	// 		eventName = eventNameTmp
-	// 	}
-	// }
-	// if len(eventName) < 1 {
-	// 	log.Errorf("event name %s not found", eventName)
-	// 	return response.BadRequestMsg("event name " + eventName + " not found")
-	// }
 
 	docId := uuid.NewString()
 
@@ -148,7 +135,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		OaId:                conversation.OaId,
 		Avatar:              conversation.Avatar,
 		SupporterId:         authUser.UserId,
-		SupporterName:       authUser.Username,
+		SupporterName:       authUser.Fullname,
 		SendTime:            time.Now(),
 		SendTimestamp:       timestampTmp,
 		Content:             data.Content,
@@ -160,6 +147,46 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, message.AppId, docId, message); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
+	}
+
+	// TODO: send message to admin/manager/user
+	// Exclude: if user send message, remove user, if admin send message, remove admin, ...
+	var queueId string
+	filter := model.ChatConnectionAppFilter{
+		AppId: message.AppId,
+		OaId:  message.OaId,
+	}
+	total, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if total < 1 {
+		log.Errorf("connection %s not found", (*connection)[0].Id)
+		return response.ServiceUnavailableMsg("connection " + (*connection)[0].Id + " not found")
+	} else {
+		message.TenantId = (*connection)[0].TenantId
+	}
+
+	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
+		QueueId: (*connection)[0].QueueId,
+	}
+	totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if totalManageQueueUser > 0 {
+		queueId = (*manageQueueUser)[0].QueueId
+	}
+
+	if len(queueId) > 0 {
+		if err := SendEventToManage(ctx, authUser, message, queueId); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+	} else {
+		log.Errorf("queue %s not found in send event to manage", queueId)
 	}
 
 	return response.Created(message)

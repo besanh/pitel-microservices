@@ -169,6 +169,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 				Source:   bssAuthRequest.Source,
 				Token:    bssAuthRequest.Token,
 				UnitUuid: userInfo.UnitUuid,
+				Fullname: userInfo.FirstName + " " + userInfo.MiddleName + " " + userInfo.LastName,
 			},
 		}
 	} else {
