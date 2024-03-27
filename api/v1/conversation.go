@@ -126,13 +126,18 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
-
+	isDone := sql.NullBool{}
+	if len(c.Query("is_done")) > 0 {
+		isDone.Valid = true
+		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
+	}
 	filter := model.ConversationFilter{
 		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
 		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
 		Username:       c.Query("username"),
 		PhoneNumber:    c.Query("phone_number"),
 		Email:          c.Query("email"),
+		IsDone:         isDone,
 	}
 
 	code, result := handler.conversationService.GetConversationsByManage(c, res.Data, filter, limit, offset)
