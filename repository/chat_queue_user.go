@@ -28,12 +28,13 @@ func NewChatQueueUser() IChatQueueUser {
 
 func (repo *ChatQueueUser) GetChatQueueUsers(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatQueueUserFilter, limit, offset int) (int, *[]model.ChatQueueUser, error) {
 	result := new([]model.ChatQueueUser)
-	query := db.GetDB().NewSelect().Model(result)
+	query := db.GetDB().NewSelect().Model(result).
+		Relation("ChatQueue")
 	if len(filter.TenantId) > 0 {
-		query.Where("tenant_id = ?", filter.TenantId)
+		query.Where("cqa.tenant_id = ?", filter.TenantId)
 	}
 	if len(filter.QueueId) > 0 {
-		query.Where("queue_id IN (?)", bun.In(filter.QueueId))
+		query.Where("cqa.queue_id IN (?)", bun.In(filter.QueueId))
 	}
 	if len(filter.UserId) > 0 {
 		query.Where("user_id IN (?)", bun.In(filter.UserId))

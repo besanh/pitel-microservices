@@ -17,6 +17,14 @@ type ChatQueueUser struct {
 	Fullname      string     `json:"fullname" bun:"-"`
 }
 
+type ChatQueueUserView struct {
+	*Base
+	bun.BaseModel `bun:"table:chat_queue_user_view,alias:cqa"`
+	TenantId      string `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	QueueId       string `json:"queue_id" bun:"queue_id,type:uuid,notnull"`
+	UserId        string `json:"user_id" bun:"user_id,type:text,notnull"`
+}
+
 type ChatQueueUserRequest struct {
 	QueueId string   `json:"queue_id"`
 	UserId  []string `json:"user_id"`

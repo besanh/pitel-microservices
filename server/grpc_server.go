@@ -123,6 +123,7 @@ func NewGRPCServer(port string) {
 	v1.NewShareInfo(httpServer, service.NewShareInfo())
 	v1.NewFacebook(httpServer, service.NewFacebook())
 	v1.NewManageQueue(httpServer, service.NewManageQueue())
+	v1.NewAssignConversation(httpServer, service.NewAssignConversation())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)
