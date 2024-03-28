@@ -188,7 +188,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		ConversationId: conversationId,
 		MainAllocate:   statusAllocate,
 	}
-	total, UserAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	total, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -198,13 +198,13 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return errors.New("conversation " + conversationId + " not found with active User")
 	}
 
-	UserAllocateTmp := (*UserAllocate)[0]
+	userAllocateTmp := (*userAllocate)[0]
 
 	if status == "done" {
-		UserAllocateTmp.MainAllocate = "deactive"
-		UserAllocateTmp.AllocatedTimestamp = time.Now().Unix()
-		UserAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, UserAllocateTmp); err != nil {
+		userAllocateTmp.MainAllocate = "deactive"
+		userAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		userAllocateTmp.UpdatedAt = time.Now()
+		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -212,10 +212,10 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		conversationExist.IsDoneBy = updatedBy
 		conversationExist.IsDoneAt = time.Now()
 	} else if status == "reopen" {
-		UserAllocateTmp.MainAllocate = "active"
-		UserAllocateTmp.AllocatedTimestamp = time.Now().Unix()
-		UserAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, UserAllocateTmp); err != nil {
+		userAllocateTmp.MainAllocate = "active"
+		userAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		userAllocateTmp.UpdatedAt = time.Now()
+		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -243,7 +243,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
 			log.Error(err)
-			if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*UserAllocate)[0]); err != nil {
+			if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*userAllocate)[0]); err != nil {
 				log.Error(err)
 			}
 			return err
@@ -251,13 +251,13 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// Event to manager
-	manageQueueUser, err := GetManageQueueUser(ctx, UserAllocateTmp.QueueId)
+	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
 	if err != nil {
 		log.Error(err)
 		return err
 	} else if len(manageQueueUser.Id) < 1 {
-		log.Error("queue " + UserAllocateTmp.QueueId + " not found")
-		return errors.New("queue " + UserAllocateTmp.QueueId + " not found")
+		log.Error("queue " + userAllocateTmp.QueueId + " not found")
+		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
 	}
 
 	for s := range WsSubscribers.Subscribers {

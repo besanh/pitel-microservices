@@ -33,6 +33,7 @@ type OttPayloadMedia struct {
 	Thubnail    string `json:"thumbnail"`
 	Description string `json:"description"`
 	Url         string `json:"url"`
+	UrlOttBk    string `json:"url_ott_bk"`
 	Id          string `json:"id"`
 	Title       string `json:"title"`
 }
