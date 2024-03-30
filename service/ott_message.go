@@ -191,7 +191,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
-		} else if len(manageQueueUser.Id) < 1 {
+		} else if manageQueueUser != nil {
 			log.Error("queue " + user.QueueId + " not found")
 			return response.NotFoundMsg("queue " + user.QueueId + " not found")
 		}
