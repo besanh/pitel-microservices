@@ -142,10 +142,10 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 		return conversation, err
 	}
 	if connectionExist != nil {
-		if conversation.ConversationType == "zalo" {
+		if connectionExist.ConnectionType == "zalo" {
 			conversation.OaName = connectionExist.OaInfo.Zalo[0].OaName
 			conversation.OaAvatar = connectionExist.OaInfo.Zalo[0].Avatar
-		} else if conversation.ConversationType == "facebook" {
+		} else if connectionExist.ConnectionType == "facebook" {
 			conversation.OaName = connectionExist.OaInfo.Facebook[0].OaName
 			conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
 		}
