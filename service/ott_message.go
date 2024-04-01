@@ -123,6 +123,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 		if totalManageQueueUser > 0 {
 			user.QueueId = (*manageQueueUser)[0].QueueId
+			user.ConnectionId = (*manageQueueUser)[0].ConnectionId
+			user.IsOk = true
 		}
 	}
 	if user.IsOk {
@@ -183,6 +185,11 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				break
 			}
 		}
+	}
+
+	if len(conversation.ConversationId) < 1 {
+		log.Error("conversation not found")
+		return response.NotFoundMsg("conversation not found")
 	}
 
 	// TODO: publish message to manager
