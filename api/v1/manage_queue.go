@@ -76,11 +76,6 @@ func (handler *ManageQueue) UpdateManageQueueById(c *gin.Context) {
 		return
 	}
 
-	if len(data.ConnectionId) < 1 {
-		c.JSON(response.BadRequestMsg("connection_id is required"))
-		return
-	}
-
 	if err := data.Validate(); err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
