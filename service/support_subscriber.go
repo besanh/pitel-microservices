@@ -57,7 +57,7 @@ func PublishMessageToOne(id string, message any) error {
 		}
 	}
 	if !isExisted {
-		return errors.New("subscriber is not existed")
+		return errors.New("publish to one -> subscriber " + id + " is not existed")
 	}
 	return nil
 }
@@ -82,7 +82,7 @@ func PublishMessageToMany(ids []string, message any) error {
 		}
 	}
 	if !isExisted {
-		return errors.New("subscriber is not existed")
+		return errors.New("publish to many -> subscriber is not existed")
 	}
 	return nil
 }
