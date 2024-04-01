@@ -177,7 +177,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		for s := range WsSubscribers.Subscribers {
-			if s.Id == user.AuthUser.UserId {
+			if s.Id == user.AuthUser.UserId && (s.Level == "agent" || s.Level == "user") {
 				if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
