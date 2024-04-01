@@ -223,13 +223,12 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 
 								return user, nil
 							} else {
-								log.Error("User not available")
-								user.IsOk = true
+								log.Error("user not available")
 								return user, errors.New("user not available")
 							}
 						} else {
-							log.Error("queue User not found")
-							return user, errors.New("queue User not found")
+							log.Error("queue user not found")
+							return user, errors.New("queue user not found")
 						}
 					}
 				} else {

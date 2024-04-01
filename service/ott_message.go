@@ -143,7 +143,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				return response.ServiceUnavailableMsg(errMsg.Error())
 			}
 		}
-	} else if err != nil {
+	} else if len(user.QueueId) < 1 && err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -191,7 +191,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
-		} else if manageQueueUser != nil {
+		} else if manageQueueUser == nil {
 			log.Error("queue " + user.QueueId + " not found")
 			return response.NotFoundMsg("queue " + user.QueueId + " not found")
 		}
