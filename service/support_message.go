@@ -94,15 +94,17 @@ func SendEventToManage(ctx context.Context, authUser *model.AuthUser, message mo
 				userUuids = append(userUuids, s.Id)
 			}
 		}
-		event := model.Event{
-			EventName: variables.EVENT_CHAT[3],
-			EventData: &model.EventData{
-				Message: message,
-			},
-		}
-		if err := PublishMessageToMany(userUuids, event); err != nil {
-			log.Error(err)
-			return err
+		if len(userUuids) > 0 {
+			event := model.Event{
+				EventName: variables.EVENT_CHAT[3],
+				EventData: &model.EventData{
+					Message: message,
+				},
+			}
+			if err := PublishMessageToMany(userUuids, event); err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	}
 	return

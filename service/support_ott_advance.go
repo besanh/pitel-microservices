@@ -11,7 +11,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser model.ChatManageQueueUser, err error) {
+func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *model.ChatManageQueueUser, err error) {
 	manageQueueUserCache := cache.RCache.Get(MANAGE_QUEUE_USER + "_" + queueId)
 	if manageQueueUserCache != nil {
 		if err = json.Unmarshal([]byte(manageQueueUserCache.(string)), &manageQueueUser); err != nil {
@@ -27,7 +27,7 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser mo
 		return
 	}
 	if total > 0 {
-		manageQueueUser = (*manageQueueUsers)[0]
+		manageQueueUser = &(*manageQueueUsers)[0]
 		if err = cache.RCache.Set(MANAGE_QUEUE_USER+"_"+queueId, manageQueueUser, MANAGE_QUEUE_USER_EXPIRE); err != nil {
 			log.Error(err)
 			return
@@ -142,10 +142,10 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 		return conversation, err
 	}
 	if connectionExist != nil {
-		if conversation.ConversationType == "zalo" {
+		if connectionExist.ConnectionType == "zalo" {
 			conversation.OaName = connectionExist.OaInfo.Zalo[0].OaName
 			conversation.OaAvatar = connectionExist.OaInfo.Zalo[0].Avatar
-		} else if conversation.ConversationType == "facebook" {
+		} else if connectionExist.ConnectionType == "facebook" {
 			conversation.OaName = connectionExist.OaInfo.Facebook[0].OaName
 			conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
 		}

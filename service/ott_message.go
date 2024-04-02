@@ -36,6 +36,35 @@ func NewOttMessage() IOttMessage {
 * Khi chuyen qua fins thi lam sao biet setting nay cua db nao
  */
 func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (int, any) {
+	var connectionCache model.ChatConnectionApp
+	connectionAppCache := cache.RCache.Get(CHAT_CONNECTION + "_" + data.AppId + "_" + data.OaId)
+	if connectionAppCache != nil {
+		if err := json.Unmarshal([]byte(connectionAppCache.(string)), &connectionCache); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+	} else {
+		filter := model.ChatConnectionAppFilter{
+			AppId:          data.AppId,
+			OaId:           data.OaId,
+			ConnectionType: data.MessageType,
+		}
+		total, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if total < 1 {
+			log.Error("connect for app_id: " + data.AppId + ", oa_id: " + data.OaId + " not found")
+			return response.ServiceUnavailableMsg("connect for app_id: " + data.AppId + ", oa_id: " + data.OaId + " not found")
+		}
+		connectionCache = (*connections)[0]
+		if err := cache.RCache.Set(CHAT_CONNECTION+"_"+data.AppId+"_"+data.OaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+	}
+
 	docId := uuid.NewString()
 	timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
 	message := model.Message{
@@ -97,24 +126,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		data.TenantId = user.AuthUser.TenantId
 		message.TenantId = user.AuthUser.TenantId
 	} else {
-		filter := model.ChatConnectionAppFilter{
-			AppId: data.AppId,
-			OaId:  data.OaId,
-		}
-		total, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-		if total < 1 {
-			log.Error("connection not found")
-			return response.ServiceUnavailableMsg("connection not found")
-		} else {
-			data.TenantId = (*connection)[0].TenantId
-			message.TenantId = (*connection)[0].TenantId
-		}
+		data.TenantId = connectionCache.TenantId
+		message.TenantId = connectionCache.TenantId
 		filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-			QueueId: (*connection)[0].QueueId,
+			QueueId: connectionCache.QueueId,
 		}
 		totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 		if err != nil {
@@ -123,6 +138,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 		if totalManageQueueUser > 0 {
 			user.QueueId = (*manageQueueUser)[0].QueueId
+			user.ConnectionId = (*manageQueueUser)[0].ConnectionId
+			user.IsOk = true
 		}
 	}
 	if user.IsOk {
@@ -143,7 +160,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				return response.ServiceUnavailableMsg(errMsg.Error())
 			}
 		}
-	} else if err != nil {
+	} else if len(user.QueueId) < 1 && err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -162,9 +179,14 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					Conversation: conversation,
 				},
 			}
-			if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
-				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+			for s := range WsSubscribers.Subscribers {
+				if s.Id == user.AuthUser.UserId && (s.Level == "agent" || s.Level == "user") {
+					if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
+					break
+				}
 			}
 		}
 		event := model.Event{
@@ -175,7 +197,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		for s := range WsSubscribers.Subscribers {
-			if s.Id == user.AuthUser.UserId {
+			if s.Id == user.AuthUser.UserId && (s.Level == "agent" || s.Level == "user") {
 				if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
@@ -183,6 +205,14 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				break
 			}
 		}
+	}
+
+	if len(conversation.ConversationId) < 1 {
+		log.Error("conversation not found")
+		return response.NotFoundMsg("conversation not found")
+	}
+	if len(conversation.TenantId) < 1 {
+		conversation.TenantId = connectionCache.TenantId
 	}
 
 	// TODO: publish message to manager
@@ -194,6 +224,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		} else if len(manageQueueUser.Id) < 1 {
 			log.Error("queue " + user.QueueId + " not found")
 			return response.NotFoundMsg("queue " + user.QueueId + " not found")
+		}
+		if len(manageQueueUser.ConnectionId) < 1 {
+			manageQueueUser.ConnectionId = connectionCache.Id
 		}
 
 		filter := model.UserAllocateFilter{

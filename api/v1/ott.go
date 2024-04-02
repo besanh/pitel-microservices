@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -133,6 +134,9 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		c.JSON(code, result)
 		return
 	} else {
+		if messageType == "face" {
+			messageType = "facebook"
+		}
 		message = model.OttMessage{
 			MessageType:    messageType,
 			EventName:      eventName,
@@ -148,6 +152,11 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			MsgId:          msgId,
 			Content:        content,
 			Attachments:    &attachments,
+		}
+
+		if !slices.Contains([]string{"facebook", "zalo"}, messageType) {
+			c.JSON(response.ServiceUnavailableMsg(errors.New("message type " + messageType + " is not support")))
+			return
 		}
 		code, result := h.ottMessageService.GetOttMessage(c, message)
 		c.JSON(code, result)
