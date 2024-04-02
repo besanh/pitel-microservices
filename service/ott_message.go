@@ -58,6 +58,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			log.Error("connect for app_id: " + data.AppId + ", oa_id: " + data.OaId + " not found")
 			return response.ServiceUnavailableMsg("connect for app_id: " + data.AppId + ", oa_id: " + data.OaId + " not found")
 		}
+		connectionCache = (*connections)[0]
 		if err := cache.RCache.Set(CHAT_CONNECTION+"_"+data.AppId+"_"+data.OaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -209,6 +210,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	if len(conversation.ConversationId) < 1 {
 		log.Error("conversation not found")
 		return response.NotFoundMsg("conversation not found")
+	}
+	if len(conversation.TenantId) < 1 {
+		conversation.TenantId = connectionCache.TenantId
 	}
 
 	// TODO: publish message to manager
