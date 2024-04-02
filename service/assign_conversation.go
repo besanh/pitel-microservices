@@ -36,7 +36,6 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	log.Debug(total, connection)
 	if total < 1 {
 		log.Errorf("connection not found")
 		return response.ServiceUnavailableMsg("connection not found")
@@ -123,7 +122,6 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 		TenantId:       authUser.TenantId,
 	}
 	totalConversation, conversation, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
-
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -157,23 +155,21 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		TenantId:       authUser.TenantId,
 	}
 	totalConversation, conversation, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
-
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-
 	if totalConversation < 1 {
 		log.Errorf("conversation %s not found", (*conversation)[0].ConversationId)
 		return response.ServiceUnavailableMsg("conversation " + (*conversation)[0].ConversationId + " not found")
 	}
 
-	conversationFilter := model.UserAllocateFilter{
+	allocateFilter := model.UserAllocateFilter{
 		ConversationId: (*conversation)[0].ConversationId,
 		MainAllocate:   data.Status,
 	}
 
-	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, allocateFilter, -1, 0)
 
 	if err != nil {
 		log.Error(err)
@@ -225,37 +221,35 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	// Event user_assigned
-	if ENABLE_PUBLISH_ADMIN {
-		userUuids := []string{}
-		manageQueueUser, err := GetManageQueueUser(ctx, (*userAllocations)[0].QueueId)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err)
-		} else if len(manageQueueUser.Id) < 1 {
-			log.Error("queue " + (*userAllocations)[0].QueueId + " not found")
+	userUuids := []string{}
+	manageQueueUser, err := GetManageQueueUser(ctx, (*userAllocations)[0].QueueId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err)
+	} else if len(manageQueueUser.Id) < 1 {
+		log.Error("queue " + (*userAllocations)[0].QueueId + " not found")
+	}
+	for s := range WsSubscribers.Subscribers {
+		if s.TenantId == manageQueueUser.TenantId && s.Level == "admin" {
+			userUuids = append(userUuids, s.Id)
 		}
-		for s := range WsSubscribers.Subscribers {
-			if s.TenantId == manageQueueUser.TenantId && s.Level == "admin" {
-				userUuids = append(userUuids, s.Id)
-			}
-			if s.TenantId == manageQueueUser.TenantId && manageQueueUser.ManageId == s.Id && s.Level == "manager" && s.Id != authUser.UserId {
-				userUuids = append(userUuids, s.Id)
-			}
-			if s.TenantId == manageQueueUser.TenantId && s.Id == data.UserId {
-				userUuids = append(userUuids, s.Id)
-			}
+		if s.TenantId == manageQueueUser.TenantId && manageQueueUser.ManageId == s.Id && s.Level == "manager" && s.Id != authUser.UserId {
+			userUuids = append(userUuids, s.Id)
 		}
+		if s.TenantId == manageQueueUser.TenantId && s.Id == data.UserId {
+			userUuids = append(userUuids, s.Id)
+		}
+	}
 
-		if len(userUuids) > 0 {
-			event := model.Event{
-				EventName: variables.EVENT_CHAT[6],
-				EventData: &model.EventData{
-					Conversation: (*conversation)[0],
-				},
-			}
-			if err := PublishMessageToMany(userUuids, event); err != nil {
-				log.Error(err)
-			}
+	if len(userUuids) > 0 {
+		event := model.Event{
+			EventName: variables.EVENT_CHAT[6],
+			EventData: &model.EventData{
+				Conversation: (*conversation)[0],
+			},
+		}
+		if err := PublishMessageToMany(userUuids, event); err != nil {
+			log.Error(err)
 		}
 	}
 
