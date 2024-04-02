@@ -122,7 +122,9 @@ type ChatManageQueueUserFilter struct {
 }
 
 type UserInQueueFilter struct {
-	AppId          string `json:"app_id"`
-	OaId           string `json:"oa_id"`
-	ConversationId string `json:"conversation_id"`
+	AppId            string `json:"app_id"`
+	OaId             string `json:"oa_id"`
+	ConversationId   string `json:"conversation_id"`
+	ConversationType string `json:"conversation_type"`
+	Status           string `json:"status"`
 }

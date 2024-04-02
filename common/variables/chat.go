@@ -77,6 +77,8 @@ var (
 		"message_created",
 		"conversation_created",
 		"conversation_done",
+		"conversation_assigned",
+		"conversation_unassigned",
 	}
 
 	STATUS_CONVERSATION []string = []string{
