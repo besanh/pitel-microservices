@@ -72,7 +72,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 			connectionType := ""
 			if message.MessageType == "zalo" {
 				connectionType = "zalo"
-			} else if message.MessageType == "face" {
+			} else if message.MessageType == "facebook" {
 				connectionType = "facebook"
 			}
 			connectionFilter := model.ChatConnectionAppFilter{
