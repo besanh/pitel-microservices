@@ -66,5 +66,5 @@ func (s *Profile) GetUpdateProfileByUserId(ctx context.Context, authUser *model.
 			}
 		}
 	}
-	return response.OKResponse()
+	return response.OK(conversationExist)
 }
