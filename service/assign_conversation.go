@@ -95,20 +95,19 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 				log.Errorf("conversation not found")
 				return response.ServiceUnavailableMsg("conversation not found")
 			}
-			found := false
-			for _, existing := range result {
-				if (*userAllocations)[0].UserId == existing.UserId {
-					found = true
-					break
-				}
+			manageQueueUser, err := GetManageQueueUser(ctx, (*userAllocations)[0].QueueId)
+			if err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err)
+			} else if len(manageQueueUser.Id) < 1 {
+				log.Error("queue " + (*userAllocations)[0].QueueId + " not found")
 			}
-			if !found {
-				result = append(result, model.ChatQueueUserView{
-					TenantId: (*userAllocations)[0].TenantId,
-					QueueId:  (*userAllocations)[0].QueueId,
-					UserId:   (*userAllocations)[0].UserId,
-				})
-			}
+
+			result = append(result, model.ChatQueueUserView{
+				TenantId: manageQueueUser.TenantId,
+				QueueId:  manageQueueUser.QueueId,
+				UserId:   manageQueueUser.ManageId,
+			})
 
 		}
 	}
