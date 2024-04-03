@@ -325,7 +325,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 }
 
 func (s *OttMessage) GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any) {
-	url := OTT_URL + "/ott/v1/zalo/code-challenge/" + appId
+	url := OTT_URL + "/ott/" + OTT_VERSION + "/zalo/code-challenge/" + appId
 	client := resty.New()
 
 	resp, err := client.R().

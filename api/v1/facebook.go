@@ -14,11 +14,11 @@ type Facebook struct {
 	facebook service.IFacebook
 }
 
-func NewFacebook(r *gin.Engine, facebook service.IFacebook) {
+func NewFacebook(engine *gin.Engine, facebook service.IFacebook) {
 	handler := &Facebook{
 		facebook: facebook,
 	}
-	Group := r.Group("bss-message/v1/facebook-page")
+	Group := engine.Group("bss-message/v1/facebook-page")
 	{
 		Group.POST("", handler.InsertFacebookPage)
 		Group.POST("bulk", handler.BulkInsertFacebookPage)

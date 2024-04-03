@@ -48,6 +48,7 @@ var (
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
 	OTT_URL              string = ""
+	OTT_VERSION          string = ""
 	API_SHARE_INFO_HOST  string = ""
 	API_DOC              string = ""
 	API_CRM              string = ""

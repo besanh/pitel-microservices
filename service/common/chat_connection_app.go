@@ -8,7 +8,7 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func PostOttAccount(ottDomain string, chatApp model.ChatApp, connectionApp model.ChatConnectionApp) error {
+func PostOttAccount(ottDomain, ottVersion string, chatApp model.ChatApp, connectionApp model.ChatConnectionApp) error {
 	accountInfo := model.OttAccount{}
 	if chatApp.InfoApp.Facebook.Status == "active" {
 		accountInfo.Type = "face"
@@ -42,7 +42,7 @@ func PostOttAccount(ottDomain string, chatApp model.ChatApp, connectionApp model
 
 	log.Info("post ott account: ", body)
 
-	url := ottDomain + "/ott/v1/account"
+	url := ottDomain + "/ott/" + ottVersion + "/account"
 	client := resty.New()
 
 	res, err := client.R().

@@ -22,6 +22,7 @@ type (
 		GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
+		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
 	}
 	Conversation struct {
 	}
@@ -301,4 +302,17 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	return nil
+}
+
+func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any) {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found", conversationId)
+		return response.ServiceUnavailableMsg("conversation " + conversationId + " not found")
+	}
+
+	return response.OK(conversationExist)
 }

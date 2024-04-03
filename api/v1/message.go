@@ -16,12 +16,12 @@ type Message struct {
 	messageService service.IMessage
 }
 
-func NewMessage(r *gin.Engine, messageService service.IMessage) {
+func NewMessage(engine *gin.Engine, messageService service.IMessage) {
 	handler := &Message{
 		messageService: messageService,
 	}
 
-	Group := r.Group("bss-message/v1/message")
+	Group := engine.Group("bss-message/v1/message")
 	{
 		Group.POST("send", handler.SendMessage)
 		Group.GET("", handler.GetMessages)

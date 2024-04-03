@@ -13,11 +13,11 @@ type AssignConversation struct {
 	assignConversation service.IAssignConversation
 }
 
-func NewAssignConversation(r *gin.Engine, assignConversationService service.IAssignConversation) {
+func NewAssignConversation(engine *gin.Engine, assignConversationService service.IAssignConversation) {
 	handler := &AssignConversation{
 		assignConversation: assignConversationService,
 	}
-	Group := r.Group("bss-message/v1/assign-conversation")
+	Group := engine.Group("bss-message/v1/assign-conversation")
 	{
 		Group.GET("user-assigned/:id", handler.GetUserAssigned)
 		Group.GET("user-in-queue", handler.GetUserInQueue)

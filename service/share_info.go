@@ -119,7 +119,7 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 		return err
 	}
 
-	url := OTT_URL + "/ott/v1/crm"
+	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm"
 	client := resty.New()
 
 	res, err := client.R().

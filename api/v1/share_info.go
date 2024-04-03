@@ -18,12 +18,12 @@ type ShareInfo struct {
 	shareInfo service.IShareInfo
 }
 
-func NewShareInfo(r *gin.Engine, shareInfo service.IShareInfo) {
+func NewShareInfo(engine *gin.Engine, shareInfo service.IShareInfo) {
 	handler := &ShareInfo{
 		shareInfo: shareInfo,
 	}
-	r.MaxMultipartMemory = 10 << 20
-	Group := r.Group("bss-message/v1/share-info")
+	engine.MaxMultipartMemory = 10 << 20
+	Group := engine.Group("bss-message/v1/share-info")
 	{
 		Group.POST("config", handler.PostConfigForm)
 		Group.POST("", handler.PostRequestShareInfo)

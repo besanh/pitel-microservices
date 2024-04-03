@@ -14,6 +14,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/fins-microservices/service"
 	"nhooyr.io/websocket"
 )
 
@@ -88,7 +89,7 @@ func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *
 		SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
 		SetBody(body).
 		SetResult(result).
-		Post(bssAuthRequest.AuthUrl)
+		Post(service.OTT_URL + "/aaa")
 	if err != nil {
 		return nil, err
 	}

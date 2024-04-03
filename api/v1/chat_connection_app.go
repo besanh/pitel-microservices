@@ -14,12 +14,12 @@ type ChatConnectionApp struct {
 	chatConnectionAppService service.IChatConnectionApp
 }
 
-func NewChatConnectionApp(engin *gin.Engine, chatConnectionAppService service.IChatConnectionApp) {
+func NewChatConnectionApp(engine *gin.Engine, chatConnectionAppService service.IChatConnectionApp) {
 	handler := &ChatConnectionApp{
 		chatConnectionAppService: chatConnectionAppService,
 	}
 
-	Group := engin.Group("bss-message/v1/chat-connection-app")
+	Group := engine.Group("bss-message/v1/chat-connection-app")
 	{
 		Group.GET("", handler.GetChatConnectionApp)
 		Group.POST("", handler.InsertChatConnectionApp)
