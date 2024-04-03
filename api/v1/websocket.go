@@ -23,7 +23,7 @@ var (
 	WebSocketHandler *WebSocket
 )
 
-func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber) {
+func NewWebSocket(engine *gin.Engine, subscriberService service.ISubscriber) {
 	handler := &WebSocket{
 		subscriber: subscriberService,
 	}
@@ -32,7 +32,7 @@ func NewWebSocket(r *gin.Engine, subscriberService service.ISubscriber) {
 		Subscribers:             make(map[*service.Subscriber]struct{}),
 		PublishLimiter:          rate.NewLimiter(rate.Every(time.Millisecond*100), 100),
 	}
-	Group := r.Group("bss-message/v1/wss")
+	Group := engine.Group("bss-message/v1/wss")
 	{
 		Group.GET("subscriber", handler.Subscribe)
 	}

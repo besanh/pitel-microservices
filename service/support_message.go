@@ -36,7 +36,7 @@ func (s *Message) sendMessageToOTT(ott model.SendMessageToOtt, attachment []*mod
 		return result, err
 	}
 
-	url := OTT_URL + "/ott/v1/crm"
+	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm"
 	client := resty.New()
 
 	res, err := client.R().

@@ -21,14 +21,14 @@ type OttMessage struct {
 	conversationService  service.IConversation
 }
 
-func NewOttMessage(r *gin.Engine, messageService service.IOttMessage, connectionApp service.IChatConnectionApp, conversation service.IConversation) {
+func NewOttMessage(engine *gin.Engine, messageService service.IOttMessage, connectionApp service.IChatConnectionApp, conversation service.IConversation) {
 	handler := &OttMessage{
 		ottMessageService:    messageService,
 		connectionAppService: connectionApp,
 		conversationService:  conversation,
 	}
 
-	Group := r.Group("bss-message/v1/ott")
+	Group := engine.Group("bss-message/v1/ott")
 	{
 		Group.POST("", handler.GetOttMessage)
 		Group.GET("code-challenge/:app_id", handler.GetCodeChallenge)

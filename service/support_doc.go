@@ -21,7 +21,7 @@ func (s *Message) UploadDoc(ctx context.Context, file *multipart.FileHeader) (fi
 	byteContent := make([]byte, file.Size)
 	fileContent.Read(byteContent)
 
-	url := OTT_URL + "/ott/v1/crm/upload"
+	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/upload"
 	client := resty.New()
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
@@ -151,4 +152,33 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 		}
 	}
 	return conversation, nil
+}
+
+func GetProfile(ctx context.Context, appId, oaId, userId string) (result *model.ProfileResponse, err error) {
+	params := map[string]string{
+		"app_id": appId,
+		"oa_id":  oaId,
+		"uid":    userId,
+	}
+	url := OTT_URL + "/ott/v1/zalo/profile"
+	client := resty.New()
+	var res *resty.Response
+	res, err = client.R().
+		SetHeader("Content-Type", "application/json").
+		SetQueryParams(params).
+		Get(url)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	var resp model.ProfileResponse
+	if err = json.Unmarshal([]byte(res.Body()), &resp); err != nil {
+		log.Error(err)
+		return
+	}
+
+	result = &resp
+
+	return
 }
