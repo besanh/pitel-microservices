@@ -31,14 +31,14 @@ func (s *Profile) GetUpdateProfileByUserId(ctx context.Context, authUser *model.
 		return response.ServiceUnavailableMsg("conversation " + request.ConversationId + " not found")
 	}
 
-	if len(conversationExist.ShareInfo.Fullname) < 1 {
+	if len(conversationExist.ShareInfo.Fullname) < 1 || len(conversationExist.ShareInfo.PhoneNumber) < 1 {
 		if request.ProfileType == "zalo" {
 			res, err := GetProfile(ctx, request.AppId, request.OaId, request.UserId)
 			if err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
-			if len(res.Data.ShareInfo.Name) > 0 {
+			if len(res.Data.ShareInfo.Name) > 0 || len(res.Data.ShareInfo.Phone) > 0 {
 				conversationExist.ShareInfo.Address = res.Data.ShareInfo.Address
 				conversationExist.ShareInfo.Fullname = res.Data.ShareInfo.Name
 				conversationExist.ShareInfo.PhoneNumber = res.Data.ShareInfo.Phone
