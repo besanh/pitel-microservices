@@ -68,6 +68,7 @@ var (
 		"oa_connection",
 		"submit_info",
 		"ask_info",
+		"seen",
 	}
 
 	EVENT_CHAT []string = []string{

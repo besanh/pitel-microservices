@@ -134,6 +134,11 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		c.JSON(code, result)
 		return
 	} else {
+		if slices.Contains(variables.EVENT_NAME_EXCLUDE, eventName) {
+			log.Error("event name " + eventName + " is not support")
+			c.JSON(response.ServiceUnavailableMsg(errors.New("event name " + eventName + " is not support")))
+			return
+		}
 		if messageType == "face" {
 			messageType = "facebook"
 		}
