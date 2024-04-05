@@ -153,8 +153,9 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	// Exclude: if user send message, remove user, if admin send message, remove admin, ...
 	var queueId string
 	filter := model.ChatConnectionAppFilter{
-		AppId: message.AppId,
-		OaId:  message.OaId,
+		AppId:          message.AppId,
+		OaId:           message.OaId,
+		ConnectionType: conversation.ConversationType,
 	}
 	total, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
