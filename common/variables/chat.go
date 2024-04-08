@@ -69,6 +69,7 @@ var (
 		"submit_info",
 		"ask_info",
 		"seen",
+		"received",
 	}
 
 	EVENT_CHAT []string = []string{

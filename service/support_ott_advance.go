@@ -182,3 +182,62 @@ func GetProfile(ctx context.Context, appId, oaId, userId string) (result *model.
 
 	return
 }
+
+func CheckConfigApp(ctx context.Context, appId string) (isExist bool, err error) {
+	chatAppCache := cache.RCache.Get(CHAT_APP + "_" + appId)
+	if chatAppCache != nil {
+		isExist = true
+	} else {
+		filter := model.AppFilter{
+			AppId: appId,
+		}
+		total, chatApp, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return isExist, err
+		} else if total > 0 {
+			isExist = true
+			if err = cache.RCache.Set(CHAT_APP+"_"+appId, chatApp, CHAT_APP_EXPIRE); err != nil {
+				log.Error(err)
+				return isExist, err
+			}
+		}
+	}
+	return
+}
+
+func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionType string) (connectionApp model.ChatConnectionApp, err error) {
+	connectionAppCache := cache.RCache.Get(CHAT_CONNECTION + "_" + appId + "_" + oaId)
+	if connectionAppCache != nil {
+		var tmp model.ChatConnectionApp
+		if err = json.Unmarshal([]byte(connectionAppCache.(string)), &tmp); err != nil {
+			log.Error(err)
+			return
+		}
+		connectionApp = tmp
+	} else {
+		filter := model.ChatConnectionAppFilter{
+			AppId:          appId,
+			OaId:           oaId,
+			ConnectionType: connectionType,
+		}
+		total, connections, errConnection := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			err = errConnection
+			return
+		}
+		if total < 1 {
+			log.Error("connect for app_id: " + appId + ", oa_id: " + oaId + " not found")
+			err = errors.New("connect for app_id: " + appId + ", oa_id: " + oaId + " not found")
+			return
+		}
+
+		if err = cache.RCache.Set(CHAT_CONNECTION+"_"+appId+"_"+oaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
+			log.Error(err)
+			return
+		}
+		connectionApp = (*connections)[0]
+	}
+	return
+}
