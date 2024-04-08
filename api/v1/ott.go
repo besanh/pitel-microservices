@@ -69,7 +69,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			attachmentsAny = append(attachmentsAny, attachment)
 		}
 	}
-	attachments := make([]model.OttAttachments, 0)
+	attachments := []model.OttAttachments{}
 	if err := util.ParseAnyToAny(attachmentsAny, &attachments); err != nil {
 		c.JSON(response.BadRequestMsg(err))
 		return

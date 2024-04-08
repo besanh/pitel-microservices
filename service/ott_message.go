@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -36,33 +37,16 @@ func NewOttMessage() IOttMessage {
 * Khi chuyen qua fins thi lam sao biet setting nay cua db nao
  */
 func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (int, any) {
+	isExistChatApp, err := CheckConfigApp(ctx, data.AppId)
+	if !isExistChatApp {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
 	var connectionCache model.ChatConnectionApp
-	connectionAppCache := cache.RCache.Get(CHAT_CONNECTION + "_" + data.AppId + "_" + data.OaId)
-	if connectionAppCache != nil {
-		if err := json.Unmarshal([]byte(connectionAppCache.(string)), &connectionCache); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-	} else {
-		filter := model.ChatConnectionAppFilter{
-			AppId:          data.AppId,
-			OaId:           data.OaId,
-			ConnectionType: data.MessageType,
-		}
-		total, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-		if total < 1 {
-			log.Error("connect for app_id: " + data.AppId + ", oa_id: " + data.OaId + " not found")
-			return response.ServiceUnavailableMsg("connect for app_id: " + data.AppId + ", oa_id: " + data.OaId + " not found")
-		}
-		connectionCache = (*connections)[0]
-		if err := cache.RCache.Set(CHAT_CONNECTION+"_"+data.AppId+"_"+data.OaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
+	connectionCache, err = GetConfigConnectionAppCache(ctx, data.AppId, data.OaId, data.MessageType)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	docId := uuid.NewString()
@@ -171,7 +155,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		// 	log.Error(err)
 		// 	return response.ServiceUnavailableMsg(err.Error())
 		// }
-
+		var wg sync.WaitGroup
 		if isNew {
 			event := model.Event{
 				EventName: variables.EVENT_CHAT[4],
@@ -180,11 +164,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				},
 			}
 			for s := range WsSubscribers.Subscribers {
-				if s.Id == user.AuthUser.UserId && (s.Level == "agent" || s.Level == "user") {
-					if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
-						log.Error(err)
-						return response.ServiceUnavailableMsg(err.Error())
-					}
+				if s.Id == user.AuthUser.UserId {
+					wg.Add(1)
+					go func(userUuid string, event model.Event) {
+						defer wg.Done()
+						if err := PublishMessageToOne(userUuid, event); err != nil {
+							log.Error(err)
+							return
+						}
+					}(user.AuthUser.UserId, event)
 					break
 				}
 			}
@@ -197,14 +185,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		for s := range WsSubscribers.Subscribers {
-			if s.Id == user.AuthUser.UserId && (s.Level == "agent" || s.Level == "user") {
-				if err := PublishMessageToOne(user.AuthUser.UserId, event); err != nil {
-					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
-				}
+			if s.Id == user.AuthUser.UserId {
+				wg.Add(1)
+				go func(userUuid string, event model.Event) {
+					defer wg.Done()
+					if err := PublishMessageToOne(userUuid, event); err != nil {
+						log.Error(err)
+						return
+					}
+				}(user.AuthUser.UserId, event)
 				break
 			}
 		}
+		wg.Wait()
 	}
 
 	if len(conversation.ConversationId) < 1 {
@@ -263,17 +256,22 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		// TODO: publish message to manager
+		var wg sync.WaitGroup
 		if isNew {
 			event := model.Event{
-				EventName: variables.EVENT_CHAT[0],
+				EventName: variables.EVENT_CHAT[4],
 				EventData: &model.EventData{
 					Conversation: conversation,
 				},
 			}
-			if err := PublishMessageToOne(manageQueueUser.ManageId, event); err != nil {
-				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
-			}
+			wg.Add(1)
+			go func(userUuid string, event model.Event) {
+				defer wg.Done()
+				if err := PublishMessageToOne(userUuid, event); err != nil {
+					log.Error(err)
+					return
+				}
+			}(manageQueueUser.ManageId, event)
 		}
 		event := model.Event{
 			EventName: variables.EVENT_CHAT[3],
@@ -283,12 +281,17 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 		for s := range WsSubscribers.Subscribers {
 			if s.Id == manageQueueUser.ManageId {
-				if err := PublishMessageToOne(manageQueueUser.ManageId, event); err != nil {
-					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
-				}
+				wg.Add(1)
+				go func(userUuid string, event model.Event) {
+					defer wg.Done()
+					if err := PublishMessageToOne(userUuid, event); err != nil {
+						log.Error(err)
+						return
+					}
+				}(manageQueueUser.ManageId, event)
 			}
 		}
+		wg.Wait()
 
 		// TODO: publish to admin
 		if ENABLE_PUBLISH_ADMIN {
@@ -307,17 +310,26 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 							Conversation: conversation,
 						},
 					}
-					if err := PublishMessageToMany(userUuids, eventConversation); err != nil {
-						log.Error(err)
-						return response.ServiceUnavailableMsg(err.Error())
-					}
+					wg.Add(1)
+					go func(userUuids []string, event model.Event) {
+						defer wg.Done()
+						if err := PublishMessageToMany(userUuids, event); err != nil {
+							log.Error(err)
+							return
+						}
+					}(userUuids, eventConversation)
 				}
 
-				if err := PublishMessageToMany(userUuids, event); err != nil {
-					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
-				}
+				wg.Add(1)
+				go func(userUuids []string, event model.Event) {
+					defer wg.Done()
+					if err := PublishMessageToMany(userUuids, event); err != nil {
+						log.Error(err)
+						return
+					}
+				}(userUuids, event)
 			}
+			wg.Wait()
 		}
 	}
 
