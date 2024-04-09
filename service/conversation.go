@@ -65,7 +65,8 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	conversationIds := []string{}
 	conversationFilter := model.UserAllocateFilter{
-		UserId: []string{authUser.UserId},
+		TenantId: authUser.TenantId,
+		UserId:   []string{authUser.UserId},
 	}
 	if filter.IsDone.Valid {
 		conversationFilter.MainAllocate = "deactive"
@@ -111,6 +112,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 			conv.TotalUnRead = int64(total)
 
 			filterMessage := model.MessageFilter{
+				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 			}
 			totalTmp, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)

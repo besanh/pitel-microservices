@@ -12,10 +12,10 @@ import (
 )
 
 func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
+	filter.TenantId = authUser.TenantId
 	if authUser.Source == "authen" {
 		userUuids := []string{}
 		if authUser.Level == "manager" {
-			filter.TenantId = authUser.TenantId
 			filterManageQueue := model.ChatManageQueueUserFilter{
 				ManageId: authUser.UserId,
 			}
@@ -45,7 +45,8 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 func getConversationByFilter(ctx context.Context, userUuids []string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
 	conversationIds := []string{}
 	conversationFilter := model.UserAllocateFilter{
-		UserId: userUuids,
+		TenantId: filter.TenantId,
+		UserId:   userUuids,
 	}
 	if filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"
@@ -76,6 +77,7 @@ func getConversationByFilter(ctx context.Context, userUuids []string, filter mod
 	if total > 0 {
 		for k, conv := range *conversations {
 			filter := model.MessageFilter{
+				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 				EventNameExlucde: []string{
 					"received",
