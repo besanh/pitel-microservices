@@ -85,6 +85,13 @@ type ShareInfo struct {
 	District    string `json:"district"`
 }
 
+type ReadMessageResponse struct {
+	TotalSuccess int               `json:"total_success"`
+	TotalFail    int               `json:"total_fail"`
+	ListFail     map[string]string `json:"list_fail"`
+	ListSuccess  map[string]string `json:"list_success"`
+}
+
 func (m *MessageRequest) Validate() error {
 	if len(m.ConversationId) < 1 {
 		return errors.New("conversation id is required")
