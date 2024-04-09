@@ -161,7 +161,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
