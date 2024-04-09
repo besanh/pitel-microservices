@@ -14,7 +14,7 @@ import (
 func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	filter.TenantId = authUser.TenantId
 	if authUser.Source == "authen" {
-		userUuids := []string{}
+		var queueUuids string
 		if authUser.Level == "manager" {
 			filterManageQueue := model.ChatManageQueueUserFilter{
 				ManageId: authUser.UserId,
@@ -25,12 +25,10 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 			if totalManageQueue > 0 {
-				for _, item := range *manageQueues {
-					userUuids = append(userUuids, item.ManageId)
-				}
+				queueUuids = (*manageQueues)[0].QueueId
 			}
 		}
-		total, conversations, err := getConversationByFilter(ctx, userUuids, filter, limit, offset)
+		total, conversations, err := getConversationByFilter(ctx, queueUuids, filter, limit, offset)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -42,11 +40,11 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 	}
 }
 
-func getConversationByFilter(ctx context.Context, userUuids []string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
+func getConversationByFilter(ctx context.Context, queueUuids string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
 	conversationIds := []string{}
 	conversationFilter := model.UserAllocateFilter{
 		TenantId: filter.TenantId,
-		UserId:   userUuids,
+		QueueId:  queueUuids,
 	}
 	if filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"

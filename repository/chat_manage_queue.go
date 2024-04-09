@@ -27,9 +27,7 @@ func NewManageQueue() IChatManageQueue {
 func (repo *ChatManageQueue) GetManageQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatManageQueueUserFilter, limit, offset int) (int, *[]model.ChatManageQueueUser, error) {
 	entries := new([]model.ChatManageQueueUser)
 	query := db.GetDB().NewSelect().
-		Model(entries).
-		Limit(limit).
-		Offset(offset)
+		Model(entries)
 	if len(filter.ConnectionId) > 0 {
 		query.Where("connection_id = ?", filter.ConnectionId)
 	}
@@ -38,6 +36,10 @@ func (repo *ChatManageQueue) GetManageQueues(ctx context.Context, db sqlclient.I
 	}
 	if len(filter.ManageId) > 0 {
 		query.Where("manage_id = ?", filter.ManageId)
+	}
+	if limit > 0 {
+		query.Limit(limit).
+			Offset(offset)
 	}
 	total, err := query.ScanAndCount(ctx)
 	if err != nil && err != sql.ErrNoRows {
