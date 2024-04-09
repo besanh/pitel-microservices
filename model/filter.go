@@ -73,7 +73,7 @@ type UserAllocateFilter struct {
 }
 
 type MessageFilter struct {
-	TenantId            []string        `json:"tenant_id"`
+	TenantId            string          `json:"tenant_id"`
 	MessageId           []string        `json:"message_id"`
 	ParentMessageId     string          `json:"parent_message_id"`
 	ConversationId      string          `json:"conversation_id"`
