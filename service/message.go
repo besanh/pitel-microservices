@@ -75,7 +75,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	docId := uuid.NewString()
 
-	attachments := make([]*model.OttAttachments, 0)
+	attachments := []*model.OttAttachments{}
 
 	// Upload to Docs
 	if len(data.EventName) > 0 && data.EventName != "text" {
@@ -145,6 +145,23 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	// Should to queue
 	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, message.AppId, docId, message); err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+
+	// TODO: update conversation => after refresh page, this conversation will appearance on top the list
+	conversation.UpdatedAt = time.Now().Format(time.RFC3339)
+	tmpBytes, err := json.Marshal(conversation)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	esDoc := map[string]any{}
+	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -229,11 +246,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		}
 	}
 
-	totalSuccess := 0
-	totalFail := 0
-	listMessageIdSuccess := map[string]string{}
-	listMessageIdFail := map[string]string{}
-
+	var result model.ReadMessageResponse
 	if data.ReadAll {
 		filter := model.MessageFilter{
 			IsRead:         "deactive",
@@ -242,11 +255,11 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		total, messages, err := repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX, filter, -1, 0)
 		if err != nil {
 			log.Error(err)
-			totalSuccess -= 1
-			totalFail += 1
+			result.TotalSuccess -= 1
+			result.TotalFail += 1
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		totalSuccess = total
+		result.TotalSuccess = total
 		if total > 0 {
 			for _, item := range *messages {
 				item.IsRead = "active"
@@ -258,47 +271,40 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 				tmpBytes, err := json.Marshal(item)
 				if err != nil {
 					log.Error(err)
-					totalSuccess -= 1
-					totalFail += 1
+					result.TotalSuccess -= 1
+					result.TotalFail += 1
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 				esDoc := map[string]any{}
 				if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 					log.Error(err)
-					totalSuccess -= 1
-					totalFail += 1
+					result.TotalSuccess -= 1
+					result.TotalFail += 1
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.AppId, item.Id, esDoc); err != nil {
 					log.Error(err)
-					totalSuccess -= 1
-					totalFail += 1
+					result.TotalSuccess -= 1
+					result.TotalFail += 1
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 			}
 		}
-
-		return response.OK(map[string]any{
-			"total_success": totalSuccess,
-			"total_fail":    totalFail,
-			"list_fail":     listMessageIdFail,
-			"list_success":  listMessageIdSuccess,
-		})
 	} else {
 		for _, item := range data.MessageIds {
 			// Need tracking message stil not read ?
 			message, err := repository.MessageESRepo.GetMessageById(ctx, "", ES_INDEX, item)
 			if err != nil {
 				log.Error(err)
-				totalSuccess -= 1
-				totalFail += 1
-				listMessageIdFail[item] = err.Error()
+				result.TotalSuccess -= 1
+				result.TotalFail += 1
+				result.ListFail[item] = err.Error()
 				continue
 			} else if len(message.Id) < 1 {
-				totalSuccess -= 1
-				totalFail += 1
+				result.TotalSuccess -= 1
+				result.TotalFail += 1
 				log.Errorf("message %s not found", item)
-				listMessageIdFail[item] = "message " + item + " not found"
+				result.ListFail[item] = "message " + item + " not found"
 				continue
 			}
 
@@ -311,36 +317,30 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 			tmpBytes, err := json.Marshal(message)
 			if err != nil {
 				log.Error(err)
-				totalSuccess -= 1
-				totalFail += 1
-				listMessageIdFail[item] = err.Error()
+				result.TotalSuccess -= 1
+				result.TotalFail += 1
+				result.ListFail[item] = err.Error()
 				continue
 			}
 
 			esDoc := map[string]any{}
 			if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 				log.Error(err)
-				totalSuccess -= 1
-				totalFail += 1
-				listMessageIdFail[item] = err.Error()
+				result.TotalSuccess -= 1
+				result.TotalFail += 1
+				result.ListFail[item] = err.Error()
 			}
 			newConversationId := GenerateConversationId(data.AppId, item)
 			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, data.AppId, newConversationId, esDoc); err != nil {
 				log.Error(err)
-				totalSuccess -= 1
-				totalFail += 1
-				listMessageIdFail[item] = err.Error()
+				result.TotalSuccess -= 1
+				result.TotalFail += 1
+				result.ListFail[item] = err.Error()
 			}
-			listMessageIdSuccess[item] = "success"
+			result.ListSuccess[item] = "success"
 		}
-
-		return response.OK(map[string]any{
-			"total_success": totalSuccess,
-			"total_fail":    totalFail,
-			"list_fail":     listMessageIdFail,
-			"list_success":  listMessageIdSuccess,
-		})
 	}
+	return response.OK(result)
 }
 
 func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any) {
