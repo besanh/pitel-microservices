@@ -77,6 +77,7 @@ func getConversationByFilter(ctx context.Context, queueUuids string, filter mode
 			filter := model.MessageFilter{
 				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
+				IsRead:         "deactive",
 				EventNameExlucde: []string{
 					"received",
 					"seen",

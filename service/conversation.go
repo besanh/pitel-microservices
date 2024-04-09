@@ -97,6 +97,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	if total > 0 {
 		for k, conv := range *conversations {
 			filter := model.MessageFilter{
+				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 				IsRead:         "deactive",
 				EventNameExlucde: []string{
