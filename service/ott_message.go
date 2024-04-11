@@ -177,13 +177,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				}
 			}
 		}
+
 		event := model.Event{
 			EventName: variables.EVENT_CHAT[3],
 			EventData: &model.EventData{
 				Message: message,
 			},
 		}
-
 		for s := range WsSubscribers.Subscribers {
 			if s.Id == user.AuthUser.UserId {
 				wg.Add(1)
@@ -197,7 +197,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				break
 			}
 		}
-		wg.Wait()
+		// wg.Wait()
 	}
 
 	if len(conversation.ConversationId) < 1 {
@@ -264,15 +264,21 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					Conversation: conversation,
 				},
 			}
-			wg.Add(1)
-			go func(userUuid string, event model.Event) {
-				defer wg.Done()
-				if err := PublishMessageToOne(userUuid, event); err != nil {
-					log.Error(err)
-					return
+
+			for s := range WsSubscribers.Subscribers {
+				if s.Id == manageQueueUser.ManageId {
+					wg.Add(1)
+					go func(userUuid string, event model.Event) {
+						defer wg.Done()
+						if err := PublishMessageToOne(userUuid, event); err != nil {
+							log.Error(err)
+							return
+						}
+					}(manageQueueUser.ManageId, event)
 				}
-			}(manageQueueUser.ManageId, event)
+			}
 		}
+
 		event := model.Event{
 			EventName: variables.EVENT_CHAT[3],
 			EventData: &model.EventData{
@@ -291,10 +297,11 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				}(manageQueueUser.ManageId, event)
 			}
 		}
-		wg.Wait()
+		// wg.Wait()
 
 		// TODO: publish to admin
 		if ENABLE_PUBLISH_ADMIN {
+			var wg sync.WaitGroup
 			userUuids := []string{}
 			for s := range WsSubscribers.Subscribers {
 				if s.TenantId == conversation.TenantId && s.Level == "admin" {
@@ -329,7 +336,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					}
 				}(userUuids, event)
 			}
-			wg.Wait()
+			// wg.Wait()
 		}
 	}
 

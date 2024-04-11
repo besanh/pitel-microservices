@@ -179,17 +179,20 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 									authInfo.UserId = userAllocate.UserId
 								}
 							} else if strings.ToLower(chatRouting.RoutingAlias) == "round_robin_online" {
-								UserTmp, err := RoundRobinUserOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId), queueUsers)
+								userTmp, err := RoundRobinUserOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId), queueUsers)
 								if err != nil {
 									log.Error(err)
 									return user, err
 								}
-								userLives = append(userLives, *UserTmp)
-								userAllocate.TenantId = UserTmp.TenantId
-								userAllocate.UserId = UserTmp.UserId
-								userAllocate.Username = UserTmp.Username
+								userLives = append(userLives, *userTmp)
+								userAllocate.TenantId = userTmp.TenantId
+								userAllocate.UserId = userTmp.UserId
+								userAllocate.Username = userTmp.Username
 
-								authInfo.TenantId = userAllocate.TenantId
+								authInfo.TenantId = userTmp.TenantId
+								authInfo.UserId = userTmp.UserId
+								authInfo.Username = userTmp.Username
+								authInfo.Level = userTmp.Level
 							}
 
 							if len(userLives) > 0 {

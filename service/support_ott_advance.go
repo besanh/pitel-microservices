@@ -56,7 +56,7 @@ func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers
 			log.Error(err)
 			return &userLive, err
 		}
-		if (s.Level == "user" || s.Level == "User") && CheckInLive(*queueUsers, s.Id) {
+		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) {
 			userLives = append(userLives, s)
 		}
 	}
@@ -65,10 +65,11 @@ func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers
 		userLive = *userAllocate
 		userLive.IsAssignRoundRobin = true
 		userPrevious := Subscriber{}
-		if index < len(userLives) {
-			userPrevious = userLives[(index+1)%len(userLives)]
+		log.Info(index+1, len(userLives))
+		if index == 0 {
+			userPrevious = userLives[len(userLives)-1]
 		} else {
-			userPrevious = userLives[0]
+			userPrevious = userLives[index-1]
 		}
 		userPrevious.IsAssignRoundRobin = false
 
@@ -107,10 +108,10 @@ func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
 	userLive := Subscriber{}
 	for i, item := range userLives {
 		if item.IsAssignRoundRobin {
-			if (i+1)%len(userLives) <= len(userLives) {
-				userLive = userLives[(i+1)%len(userLives)]
+			if (i + 1) < len(userLives) {
+				userLive = userLives[(i + 1)]
 				isOk = true
-				index = (i + 1) % len(userLives)
+				index = (i + 1)
 				break
 			} else {
 				isOk = true
@@ -222,7 +223,7 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			ConnectionType: connectionType,
 		}
 		total, connections, errConnection := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
-		if err != nil {
+		if errConnection != nil {
 			log.Error(err)
 			err = errConnection
 			return
