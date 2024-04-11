@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -264,19 +265,24 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
 	}
 
+	var wg sync.WaitGroup
 	for s := range WsSubscribers.Subscribers {
 		if s.Id == manageQueueUser.ManageId {
 			// TODO: publish message to manager
+			wg.Add(1)
+			defer wg.Done()
 			event := model.Event{
 				EventName: variables.EVENT_CHAT[5],
 				EventData: &model.EventData{
 					Conversation: conversationExist,
 				},
 			}
-			if err := PublishMessageToOne(manageQueueUser.ManageId, event); err != nil {
-				log.Error(err)
-				return err
-			}
+			go func(userUuid string, event model.Event) {
+				if err := PublishMessageToOne(userUuid, event); err != nil {
+					log.Error(err)
+					return
+				}
+			}(manageQueueUser.ManageId, event)
 			break
 		}
 	}
@@ -291,18 +297,23 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 
 		if len(userUuids) > 0 {
+			wg.Add(1)
+			defer wg.Done()
 			event := model.Event{
 				EventName: variables.EVENT_CHAT[5],
 				EventData: &model.EventData{
 					Conversation: conversationExist,
 				},
 			}
-			if err := PublishMessageToMany(userUuids, event); err != nil {
-				log.Error(err)
-				return err
-			}
+			go func(userUuids []string, event model.Event) {
+				if err := PublishMessageToMany(userUuids, event); err != nil {
+					log.Error(err)
+					return
+				}
+			}(userUuids, event)
 		}
 	}
+	wg.Wait()
 
 	return nil
 }
