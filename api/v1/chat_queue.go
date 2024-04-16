@@ -87,7 +87,7 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 		QueueName: c.Query("queue_name"),
 	}
 
-	total, chatQueues, err := handler.chatQueueService.GetChatQueues(c, res.Data, bssAuthRequest, filter, limit, offset, res.Data.Token)
+	total, chatQueues, err := handler.chatQueueService.GetChatQueues(c, res.Data, bssAuthRequest, filter, limit, offset)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
