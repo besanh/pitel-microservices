@@ -85,6 +85,12 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 					log.Error(err)
 					return user, err
 				}
+				if user.AuthUser.UserId == (*userAllocations)[0].UserId {
+					user.IsReassignSame = true
+				} else {
+					user.IsReassignNew = true
+					user.UserIdRemove = (*userAllocations)[0].UserId
+				}
 			}
 
 			return user, nil

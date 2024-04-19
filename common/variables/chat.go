@@ -81,6 +81,8 @@ var (
 		"conversation_done":       "conversation_done",
 		"conversation_assigned":   "conversation_assigned",
 		"conversation_unassigned": "conversation_unassigned",
+		"conversation_removed":    "conversation_removed",
+		"conversation_reopen":     "conversation_reopen",
 	}
 
 	STATUS_CONVERSATION []string = []string{
