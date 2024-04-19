@@ -105,3 +105,23 @@ func BinarySearchSubscriber(userId string, subscribers []*Subscriber) (isExist b
 	}
 	return
 }
+
+func BinarySearchSlice(userId string, subscribers []string) (isExist bool) {
+	low := 0
+	high := len(subscribers) - 1
+	mid := -1
+	for low <= high {
+		mid = (low + high) / 2
+		if subscribers[mid] == userId {
+			return true
+		} else if subscribers[mid] < userId {
+			low = mid + 1
+		} else {
+			high = mid - 1
+		}
+	}
+	if mid != -1 {
+		isExist = true
+	}
+	return
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -291,10 +290,8 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// Event to manager
-	idx := sort.Search(len(subscriberManagers), func(i int) bool {
-		return manageQueueUser.ManageId == subscriberManagers[i]
-	})
-	if idx < len(subscriberManagers) && manageQueueUser.ManageId == subscriberManagers[idx] {
+	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+	if isExist {
 		go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationExist)
 	}
 

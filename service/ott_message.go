@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"sort"
 	"strings"
 	"time"
 
@@ -238,10 +237,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		// TODO: publish message to manager
-		idx := sort.Search(len(subscriberManagers), func(i int) bool {
-			return manageQueueUser.ManageId == subscriberManagers[i]
-		})
-		if idx < len(subscriberManagers) && manageQueueUser.ManageId == subscriberManagers[idx] {
+		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+		if isExist {
 			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
 			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
 		}
