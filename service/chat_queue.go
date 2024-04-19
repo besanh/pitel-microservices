@@ -50,7 +50,6 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      chatQueue.Base.GetId(),
-				Status:       data.Status,
 			}
 			connectionUsers = append(connectionUsers, connectionUser)
 		}
@@ -158,7 +157,6 @@ func (s *ChatQueue) UpdateChatQueueById(ctx context.Context, authUser *model.Aut
 				TenantId:     authUser.TenantId,
 				ConnectionId: item,
 				QueueId:      queueExist.Id,
-				Status:       data.Status,
 			}
 			connectionUsers = append(connectionUsers, connectionUser)
 		}

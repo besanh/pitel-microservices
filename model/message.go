@@ -85,6 +85,14 @@ type ShareInfo struct {
 	District    string `json:"district"`
 }
 
+type ShareInfoSendToOtt struct {
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
+	Address  string `json:"address"`
+	City     string `json:"city"`
+	District string `json:"district"`
+}
+
 type ReadMessageResponse struct {
 	TotalSuccess int               `json:"total_success"`
 	TotalFail    int               `json:"total_fail"`

@@ -13,27 +13,22 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"golang.org/x/exp/slices"
 )
 
 func CheckChatSetting(ctx context.Context, message model.Message) (model.User, error) {
 	var user model.User
 	var authInfo model.AuthUser
-	var userLives []Subscriber
 	var userAllocate model.UserAllocate
 	var isOk bool
 
-	newConversationId := GenerateConversationId(message.AppId, message.ExternalUserId)
-	userAllocationCache := cache.RCache.Get(USER_ALLOCATE + "_" + newConversationId)
+	userAllocationCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(message.AppId, message.ExternalUserId))
 	if userAllocationCache != nil {
-		userTmp := model.UserAllocate{}
-		if err := json.Unmarshal([]byte(userAllocationCache.(string)), &userTmp); err != nil {
+		if err := json.Unmarshal([]byte(userAllocationCache.(string)), &userAllocate); err != nil {
 			log.Error(err)
 			user.AuthUser = &authInfo
 			user.IsOk = isOk
 			return user, err
 		}
-		userAllocate = userTmp
 		authInfo.TenantId = userAllocate.TenantId
 		authInfo.UserId = userAllocate.UserId
 		authInfo.Username = userAllocate.Username
@@ -45,7 +40,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 		return user, nil
 	} else {
 		filter := model.UserAllocateFilter{
-			ConversationId: newConversationId,
+			ConversationId: GenerateConversationId(message.AppId, message.ExternalUserId),
 			MainAllocate:   "active",
 		}
 		total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
@@ -61,428 +56,290 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 			user.ConnectionId = (*userAllocations)[0].ConnectionId
 			user.QueueId = (*userAllocations)[0].QueueId
 
-			if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, (*userAllocations)[0], USER_ALLOCATE_EXPIRE); err != nil {
+			if err := cache.RCache.Set(USER_ALLOCATE+"_"+GenerateConversationId(message.AppId, message.ExternalUserId), (*userAllocations)[0], USER_ALLOCATE_EXPIRE); err != nil {
 				log.Error(err)
 				return user, err
 			}
 
 			return user, nil
 		} else {
-			// Get connection
-			connectionType := ""
-			if message.MessageType == "zalo" {
-				connectionType = "zalo"
-			} else if message.MessageType == "facebook" {
-				connectionType = "facebook"
+			// Allocate for new user after make done conversation
+			filter := model.UserAllocateFilter{
+				ConversationId: GenerateConversationId(message.AppId, message.ExternalUserId),
+				MainAllocate:   "deactive",
 			}
-			connectionFilter := model.ChatConnectionAppFilter{
-				ConnectionType: connectionType,
-				OaId:           message.OaId,
-				AppId:          message.AppId,
-				Status:         "active",
-			}
-			totalConnection, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionFilter, 1, 0)
+			_, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 			if err != nil {
 				log.Error(err)
 				return user, err
 			}
-			if totalConnection > 0 {
-				filter := model.ConnectionQueueFilter{
-					ConnectionId: (*connectionApps)[0].Id,
+			user, err := CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.ExternalUserId), message)
+			if err != nil {
+				log.Error(err)
+				return user, err
+			}
+			if len(*userAllocations) > 0 {
+				(*userAllocations)[0].MainAllocate = "deactive"
+				(*userAllocations)[0].UpdatedAt = time.Now()
+				if err := UpdateConversationById(ctx, (*userAllocations)[0].TenantId, (*userAllocations)[0], message); err != nil {
+					log.Error(err)
+					return user, err
 				}
-				totalConnectionQueue, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, filter, 1, 0)
+			}
+
+			return user, nil
+		}
+	}
+}
+
+/**
+* Check all setting to allocate conversation to user
+ */
+func CheckAllSetting(ctx context.Context, newConversationId string, message model.Message) (user model.User, err error) {
+	var authInfo model.AuthUser
+	var userAllocate model.UserAllocate
+
+	connectionFilter := model.ChatConnectionAppFilter{
+		ConnectionType: message.MessageType,
+		OaId:           message.OaId,
+		AppId:          message.AppId,
+		Status:         "active",
+	}
+	totalConnection, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionFilter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return user, err
+	}
+	if totalConnection > 0 {
+		filter := model.ConnectionQueueFilter{
+			ConnectionId: (*connectionApps)[0].Id,
+		}
+		totalConnectionQueue, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return user, err
+		}
+		if totalConnectionQueue > 0 {
+			filteruserAllocation := model.UserAllocateFilter{
+				ConversationId: newConversationId,
+				QueueId:        (*connectionQueues)[0].QueueId,
+				MainAllocate:   "active",
+			}
+			totalUserAllocation, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filteruserAllocation, -1, 0)
+			if err != nil {
+				log.Error(err)
+				return user, err
+			}
+			if totalUserAllocation > 0 {
+				authInfo.TenantId = (*userAllocations)[0].TenantId
+				authInfo.UserId = (*userAllocations)[0].UserId
+
+				for s := range WsSubscribers.Subscribers {
+					if s.UserId == authInfo.UserId && (s.Level == "user" || s.Level == "agent") {
+						userAllocate.UserId = s.UserId
+					}
+				}
+				if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, userAllocate, USER_ALLOCATE_EXPIRE); err != nil {
+					log.Error(err)
+					return user, err
+				}
+				user.IsOk = true
+				user.AuthUser = &authInfo
+				user.ConnectionId = (*userAllocations)[0].ConnectionId
+				user.QueueId = (*userAllocations)[0].QueueId
+
+				return user, nil
+			} else {
+				// Connection prevent duplicate
+				// Meaning: 1 connection with page A in 1 app => only recieve one queue
+				var queue model.ChatQueue
+				queueCache := cache.RCache.Get(CHAT_QUEUE + "_" + (*connectionQueues)[0].QueueId)
+				if queueCache != nil {
+					var tmp model.ChatQueue
+					if err := json.Unmarshal([]byte(queueCache.(string)), &tmp); err != nil {
+						log.Error(err)
+						return user, err
+					}
+					queue = tmp
+				} else {
+					queueTmp, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, (*connectionQueues)[0].QueueId)
+					if err != nil {
+						log.Error(err)
+						return user, err
+					} else if queueTmp == nil {
+						log.Error("queue " + (*connectionQueues)[0].QueueId + " not found")
+						return user, errors.New("queue " + (*connectionQueues)[0].QueueId + " not found")
+					}
+					queue = *queueTmp
+				}
+
+				chatRouting, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, queue.ChatRoutingId)
+				if err != nil {
+					log.Error(err)
+					return user, err
+				} else if chatRouting == nil {
+					log.Error("chat routing " + queue.ChatRoutingId + " not found")
+					return user, errors.New("chat routing " + queue.ChatRoutingId + " not found")
+				}
+
+				filterQueueUser := model.ChatQueueUserFilter{
+					QueueId: []string{queue.Id},
+				}
+				_, chatQueueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterQueueUser, 1, 0)
 				if err != nil {
 					log.Error(err)
 					return user, err
 				}
-				if totalConnectionQueue > 0 {
-					filteruserAllocation := model.UserAllocateFilter{
-						ConversationId: newConversationId,
-						QueueId:        (*connectionQueues)[0].QueueId,
-						MainAllocate:   "active",
+				if len(*chatQueueUsers) > 0 {
+					chatSetting := model.ChatSetting{
+						ConnectionApp:   &(*connectionApps)[0],
+						ConnectionQueue: &(*connectionQueues)[0],
+						QueueUser:       chatQueueUsers,
+						RoutingAlias:    chatRouting.RoutingAlias,
+						Message:         &message,
 					}
-					totalUserAllocation, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filteruserAllocation, -1, 0)
+
+					userTmp, err := PickAllocateUser(ctx, chatSetting)
 					if err != nil {
+						user.QueueId = (*chatQueueUsers)[0].QueueId
+						user.ConnectionId = (*connectionQueues)[0].ConnectionId
+						return user, err
+					}
+					if err := util.ParseAnyToAny(userTmp, &user); err != nil {
 						log.Error(err)
 						return user, err
 					}
-					if totalUserAllocation > 0 {
-						authInfo.TenantId = (*userAllocations)[0].TenantId
-						authInfo.UserId = (*userAllocations)[0].UserId
-
-						for s := range WsSubscribers.Subscribers {
-							if s.UserId == authInfo.UserId && (s.Level == "user" || s.Level == "User") {
-								userAllocate.UserId = s.UserId
-							}
-						}
-						if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, userAllocate, USER_ALLOCATE_EXPIRE); err != nil {
-							log.Error(err)
-							return user, err
-						}
-						user.IsOk = true
-						user.AuthUser = &authInfo
-						user.ConnectionId = (*userAllocations)[0].ConnectionId
-						user.QueueId = (*userAllocations)[0].QueueId
-
-						return user, nil
-					} else {
-						// Connection prevent duplicate
-						// Meaning: 1 connection with page A in 1 app => only recieve one queue
-						queue, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, (*connectionQueues)[0].QueueId)
-						if err != nil {
-							log.Error(err)
-							return user, err
-						} else if queue == nil {
-							log.Error("queue " + (*connectionQueues)[0].QueueId + " not found")
-							return user, errors.New("queue " + (*connectionQueues)[0].QueueId + " not found")
-						}
-
-						chatRouting, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, queue.ChatRoutingId)
-						if err != nil {
-							log.Error(err)
-							return user, err
-						} else if chatRouting == nil {
-							log.Error("chat routing " + queue.ChatRoutingId + " not found")
-							return user, errors.New("chat routing " + queue.ChatRoutingId + " not found")
-						}
-
-						filterQueueUser := model.ChatQueueUserFilter{
-							QueueId: []string{queue.Id},
-						}
-						totalQueueUsers, queueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterQueueUser, -1, 0)
-						if err != nil {
-							log.Error(err)
-							return user, err
-						}
-						if totalQueueUsers > 0 {
-							if strings.ToLower(chatRouting.RoutingAlias) == "random" {
-								userUuids := []string{}
-								for _, item := range *queueUsers {
-									userUuids = append(userUuids, item.UserId)
-								}
-								for s := range WsSubscribers.Subscribers {
-									if slices.Contains[[]string](userUuids, s.UserId) && s.Level == "user" || s.Level == "User" {
-										userLives = append(userLives, *s)
-									}
-								}
-
-								// Pick random
-								if len(userLives) > 0 {
-									rand.NewSource(time.Now().UnixNano())
-									randomIndex := rand.Intn(len(userLives))
-									tmp := userLives[randomIndex]
-									userAllocate.TenantId = tmp.TenantId
-									userAllocate.UserId = tmp.UserId
-									userAllocate.Username = tmp.Username
-
-									authInfo.TenantId = userAllocate.TenantId
-									authInfo.UserId = userAllocate.UserId
-								}
-							} else if strings.ToLower(chatRouting.RoutingAlias) == "round_robin_online" {
-								userTmp, err := RoundRobinUserOnline(ctx, GenerateConversationId(message.AppId, message.ExternalUserId), queueUsers)
-								if err != nil {
-									log.Error(err)
-									return user, err
-								}
-								userLives = append(userLives, *userTmp)
-								userAllocate.TenantId = userTmp.TenantId
-								userAllocate.UserId = userTmp.UserId
-								userAllocate.Username = userTmp.Username
-
-								authInfo.TenantId = userTmp.TenantId
-								authInfo.UserId = userTmp.UserId
-								authInfo.Username = userTmp.Username
-								authInfo.Level = userTmp.Level
-							}
-
-							if len(userLives) > 0 {
-								newConversationId = GenerateConversationId(message.AppId, message.ExternalUserId)
-								userAllocation := model.UserAllocate{
-									Base:               model.InitBase(),
-									TenantId:           (*connectionApps)[0].TenantId,
-									ConversationId:     newConversationId,
-									AppId:              message.AppId,
-									UserId:             userAllocate.UserId,
-									QueueId:            queue.Id,
-									AllocatedTimestamp: time.Now().Unix(),
-									MainAllocate:       "active",
-									ConnectionId:       (*connectionQueues)[0].ConnectionId,
-								}
-								log.Infof("conversation %s allocated to user %s", newConversationId, userAllocate.Username)
-								if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
-									log.Error(err)
-									return user, err
-								}
-
-								if err := cache.RCache.Set(USER_ALLOCATE+"_"+newConversationId, userAllocation, USER_ALLOCATE_EXPIRE); err != nil {
-									log.Error(err)
-									return user, err
-								}
-
-								user.IsOk = true
-								user.AuthUser = &authInfo
-								user.ConnectionId = (*connectionQueues)[0].ConnectionId
-								user.QueueId = (*connectionQueues)[0].QueueId
-
-								return user, nil
-							} else {
-								log.Error("user not available")
-								return user, errors.New("user not available")
-							}
-						} else {
-							log.Error("queue user not found")
-							return user, errors.New("queue user not found")
-						}
-					}
+					user.QueueId = (*chatQueueUsers)[0].QueueId
+					user.ConnectionId = (*connectionQueues)[0].ConnectionId
+					return user, nil
 				} else {
-					log.Error("queue not found")
-					return user, errors.New("queue not found")
+					log.Error("queue user not found")
+					return user, errors.New("queue user not found")
 				}
-			} else {
-				log.Error("connect for conversation " + newConversationId + " not found")
-				return user, errors.New("connect for conversation " + newConversationId + " not found")
 			}
+		} else {
+			log.Error("queue not found")
+			return user, errors.New("queue not found")
 		}
+	} else {
+		log.Error("connect for conversation " + newConversationId + " not found")
+		return user, errors.New("connect for conversation " + newConversationId + " not found")
 	}
-}
-
-func UpSertConversation(ctx context.Context, connectionId string, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
-	newConversationId := GenerateConversationId(data.AppId, data.ExternalUserId)
-	conversation = model.Conversation{
-		TenantId:         data.TenantId,
-		ConversationId:   newConversationId,
-		AppId:            data.AppId,
-		ConversationType: data.MessageType,
-		Username:         data.Username,
-		Avatar:           data.Avatar,
-		OaId:             data.OaId,
-		ShareInfo:        data.ShareInfo,
-		ExternalUserId:   data.ExternalUserId,
-		CreatedAt:        time.Now().Format(time.RFC3339),
-	}
-	shareInfo := data.ShareInfo
-
-	isExisted := false
-	// conversationCache := cache.RCache.Get(CONVERSATION + "_" + newConversationId)
-	// if conversationCache != nil {
-	// 	isExisted = true
-	// 	if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
-	// 		log.Error(err)
-	// 		return conversation, isNew, err
-	// 	}
-	// 	if err := UpdateESAndCache(ctx, data.TenantId, data.AppId, data.ExternalUserId, connectionId, *conversation.ShareInfo); err != nil {
-	// 		log.Error(err)
-	// 		return conversation, isNew, err
-	// 	}
-	// 	return conversation, isNew, nil
-	// } else {
-	filter := model.ConversationFilter{
-		ConversationId: []string{newConversationId},
-		AppId:          []string{data.AppId},
-	}
-	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
-	if err != nil {
-		log.Error(err)
-		return conversation, isNew, err
-	}
-	if total > 0 {
-		conversation.TenantId = (*conversations)[0].TenantId
-		conversation.ConversationId = (*conversations)[0].ConversationId
-		conversation.ConversationType = (*conversations)[0].ConversationType
-		conversation.AppId = (*conversations)[0].AppId
-		conversation.OaId = (*conversations)[0].OaId
-		conversation.OaName = (*conversations)[0].OaName
-		conversation.OaAvatar = (*conversations)[0].OaAvatar
-		conversation.ExternalUserId = (*conversations)[0].ExternalUserId
-		conversation.Username = (*conversations)[0].Username
-		conversation.Username = (*conversations)[0].Username
-		conversation.Avatar = (*conversations)[0].Avatar
-		conversation.IsDone = (*conversations)[0].IsDone
-		conversation.IsDoneBy = (*conversations)[0].IsDoneBy
-
-		conversation.ShareInfo = shareInfo
-		if len(connectionId) > 0 {
-			conversation, err = CacheConnection(ctx, connectionId, conversation)
-			if err != nil {
-				log.Error(err)
-				return conversation, isNew, err
-			}
-		}
-
-		tmpBytes, err := json.Marshal(conversation)
-		if err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		esDoc := map[string]any{}
-		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		newConversationId := GenerateConversationId(conversation.AppId, conversation.ExternalUserId)
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		isExisted = true
-		return conversation, isNew, nil
-	}
-	// }
-
-	if !isExisted {
-		id, err := InsertConversation(ctx, conversation, connectionId)
-		if err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		conversation.ConversationId = id
-		if len(connectionId) > 0 {
-			conversation, err = CacheConnection(ctx, connectionId, conversation)
-			if err != nil {
-				log.Error(err)
-				return conversation, isNew, err
-			}
-		}
-		if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		isNew = true
-	}
-
-	return conversation, isNew, nil
-}
-
-func InsertConversation(ctx context.Context, conversation model.Conversation, connectionId string) (id string, err error) {
-	id = GenerateConversationId(conversation.AppId, conversation.ExternalUserId)
-	if len(connectionId) > 0 {
-		conversation, err = CacheConnection(ctx, connectionId, conversation)
-		if err != nil {
-			log.Error(err)
-			return id, err
-		}
-	}
-	tmpBytes, err := json.Marshal(conversation)
-	if err != nil {
-		log.Error(err)
-		return id, err
-	}
-
-	esDoc := map[string]any{}
-	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		log.Error(err)
-		return id, err
-	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX_CONVERSATION, conversation.TenantId); err != nil {
-		log.Error(err)
-		return id, err
-	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX_CONVERSATION, conversation.TenantId); err != nil {
-			log.Error(err)
-			return id, err
-		}
-	}
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, "", ES_INDEX_CONVERSATION, conversation.AppId, id)
-	if err != nil {
-		log.Error(err)
-		return id, err
-	} else if len(conversationExist.ExternalUserId) > 0 {
-		log.Errorf("conversation %s not found", id)
-		return id, errors.New("conversation " + id + " not found")
-	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, id, esDoc); err != nil {
-		log.Error(err)
-		return id, err
-	}
-
-	return id, nil
-}
-
-func CheckConversationInUser(userId string, allocationUser []*model.UserAllocate) bool {
-	for _, item := range allocationUser {
-		if item.ConversationId == userId {
-			return true
-		}
-	}
-	return false
 }
 
 /**
-* Update ES and Cache
-* API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
+* Pick user
  */
-func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
-	var isUpdate bool
-	newConversationId := GenerateConversationId(appId, conversationId)
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
+func PickAllocateUser(ctx context.Context, chatSetting model.ChatSetting) (user model.User, err error) {
+	var userAllocate model.UserAllocate
+	var authInfo model.AuthUser
+	var userLives []Subscriber
+	if strings.ToLower(chatSetting.RoutingAlias) == "random" {
+		for s := range WsSubscribers.Subscribers {
+			if s.Level == "user" || s.Level == "agent" {
+				userLives = append(userLives, *s)
+			}
+		}
+
+		// Pick random
+		if len(userLives) > 0 {
+			rand.NewSource(time.Now().UnixNano())
+			randomIndex := rand.Intn(len(userLives))
+			tmp := userLives[randomIndex]
+			userAllocate.TenantId = tmp.TenantId
+			userAllocate.UserId = tmp.UserId
+			userAllocate.Username = tmp.Username
+
+			authInfo.TenantId = userAllocate.TenantId
+			authInfo.UserId = userAllocate.UserId
+		}
+	} else if strings.ToLower(chatSetting.RoutingAlias) == "round_robin_online" {
+		userTmp, err := RoundRobinUserOnline(ctx, GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.ExternalUserId), chatSetting.QueueUser)
+		if err != nil {
+			log.Error(err)
+			return user, err
+		}
+		userLives = append(userLives, *userTmp)
+		userAllocate.TenantId = userTmp.TenantId
+		userAllocate.UserId = userTmp.UserId
+		userAllocate.Username = userTmp.Username
+
+		authInfo.TenantId = userTmp.TenantId
+		authInfo.UserId = userTmp.UserId
+		authInfo.Username = userTmp.Username
+		authInfo.Level = userTmp.Level
+	}
+
+	conversationId := GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.ExternalUserId)
+
+	if len(userLives) > 0 {
+		userAllocation := model.UserAllocate{
+			Base:               model.InitBase(),
+			TenantId:           chatSetting.ConnectionApp.TenantId,
+			ConversationId:     conversationId,
+			AppId:              chatSetting.Message.AppId,
+			UserId:             userAllocate.UserId,
+			QueueId:            chatSetting.ConnectionQueue.QueueId,
+			AllocatedTimestamp: time.Now().Unix(),
+			MainAllocate:       "active",
+			ConnectionId:       chatSetting.ConnectionQueue.ConnectionId,
+		}
+		log.Infof("conversation %s allocated to user %s, id: %s", GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.ExternalUserId), userAllocate.Username, userAllocation.Id)
+		if err = repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
+			log.Error(err)
+			return
+		}
+
+		if err = cache.RCache.Set(USER_ALLOCATE+"_"+GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.ExternalUserId), userAllocation, USER_ALLOCATE_EXPIRE); err != nil {
+			log.Error(err)
+			return
+		}
+
+		user.IsOk = true
+		user.AuthUser = &authInfo
+		user.ConnectionId = chatSetting.ConnectionQueue.ConnectionId
+		user.QueueId = chatSetting.ConnectionQueue.QueueId
+
+		return user, nil
+	} else {
+		log.Error("user not available")
+		return user, errors.New("user not available")
+	}
+}
+
+func UpdateConversationById(ctx context.Context, tenantId string, userAllocate model.UserAllocate, message model.Message) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, message.AppId, GenerateConversationId(message.AppId, message.ExternalUserId))
 	if err != nil {
 		log.Error(err)
 		return err
-	} else if len(conversationExist.ExternalUserId) < 1 {
-		isUpdate = true
-		// Use when routing is pitel_bss_conversation_
-		conversationExistSecond, err := repository.ConversationESRepo.GetConversationById(ctx, "", ES_INDEX_CONVERSATION, appId, newConversationId)
-		if err != nil {
-			log.Error(err)
-			return err
-		} else if len(conversationExistSecond.ExternalUserId) < 1 {
-			log.Errorf("conversation %s not found", newConversationId)
-			return errors.New("conversation " + newConversationId + " not found")
-		}
-		if err := util.ParseAnyToAny(conversationExistSecond, &conversationExist); err != nil {
-			log.Error(err)
-			return err
-		}
-		conversationExist = conversationExistSecond
 	}
 
-	conversationExist.ShareInfo = &shareInfo
-	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
-	conversationExist.TenantId = tenantId
-	if len(connectionId) > 0 {
-		*conversationExist, err = CacheConnection(ctx, connectionId, *conversationExist)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
+	conversationExist.IsDone = false
+	conversationExist.IsDoneBy = ""
+	isDoneAt, err := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
+	if err != nil {
+		log.Error(err)
+		return err
 	}
+	conversationExist.IsDoneAt = isDoneAt
 	tmpBytes, err := json.Marshal(conversationExist)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
+
 	esDoc := map[string]any{}
 	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
-
-	// PROBLEM: Use for conv have not authUser and then having authUser
-	// TODO: insert new conv
-	if isUpdate {
-		if err := repository.ESRepo.DeleteById(ctx, ES_INDEX_CONVERSATION, newConversationId); err != nil {
-			log.Error(err)
-			return err
-		}
-		if err := repository.ESRepo.InsertLog(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
-			log.Error(err)
-			return err
-		}
-	} else {
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
-			log.Error(err)
-			return err
-		}
-	}
-
-	if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversationExist, CONVERSATION_EXPIRE); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, message.AppId, GenerateConversationId(message.AppId, message.ExternalUserId), esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
-
+	if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocate); err != nil {
+		log.Error(err)
+		return err
+	}
 	return nil
 }

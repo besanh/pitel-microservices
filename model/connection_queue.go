@@ -10,5 +10,4 @@ type ConnectionQueue struct {
 	ChatConnectionApp *ChatConnectionApp `json:"chat_connection_app" bun:"rel:has-one,join:connection_id=id"`
 	QueueId           string             `json:"queue_id" bun:"queue_id,type:uuid,notnull"`
 	ChatQueue         *ChatQueue         `json:"chat_queue" bun:"rel:has-one,join:queue_id=id"`
-	Status            string             `json:"status" bun:"status,notnull"`
 }

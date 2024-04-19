@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -193,6 +195,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			return response.ServiceUnavailableMsg("Can not insert to user allocation")
 		}
 	}
+
 	if userAllocations != nil {
 		userIdAssigned := (*userAllocations)[0].UserId
 		(*userAllocations)[0].UserId = data.UserId
@@ -202,22 +205,22 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		}
 
 		if authUser.UserId != userIdAssigned {
+			var subscribers []*Subscriber
 			for s := range WsSubscribers.Subscribers {
-				if authUser.TenantId == s.TenantId && s.Id == userIdAssigned {
-					event := model.Event{
-						EventName: variables.EVENT_CHAT[7],
-						EventData: &model.EventData{
-							Conversation: (*conversation)[0],
-						},
-					}
-					if err := PublishMessageToOne(userIdAssigned, event); err != nil {
-						log.Error(err)
-					}
+				if s.TenantId == authUser.TenantId && s.Id == userIdAssigned {
+					subscribers = append(subscribers, s)
 				}
 			}
-
+			var conversationEvent model.Conversation
+			if err := util.ParseAnyToAny((*conversation)[0], &conversationEvent); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+			var mu sync.Mutex
+			mu.Lock()
+			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, &conversationEvent)
+			mu.Unlock()
 		}
-
 	}
 
 	// Event user_assigned
@@ -228,6 +231,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		return response.ServiceUnavailableMsg(err)
 	} else if len(manageQueueUser.Id) < 1 {
 		log.Error("queue " + (*userAllocations)[0].QueueId + " not found")
+		return response.ServiceUnavailableMsg("queue " + (*userAllocations)[0].QueueId + " not found")
 	}
 	for s := range WsSubscribers.Subscribers {
 		if s.TenantId == manageQueueUser.TenantId && s.Level == "admin" {
@@ -242,15 +246,15 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	if len(userUuids) > 0 {
-		event := model.Event{
-			EventName: variables.EVENT_CHAT[6],
-			EventData: &model.EventData{
-				Conversation: (*conversation)[0],
-			},
-		}
-		if err := PublishMessageToMany(userUuids, event); err != nil {
+		conversationEvent := model.Conversation{}
+		if err := util.ParseAnyToAny((*conversation)[0], &conversationEvent); err != nil {
 			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
 		}
+		var mu sync.Mutex
+		mu.Lock()
+		go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, &conversationEvent)
+		mu.Unlock()
 	}
 
 	return response.OKResponse()

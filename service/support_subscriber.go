@@ -24,7 +24,6 @@ func (s *Subscribers) AddSubscriber(ctx context.Context, sub *Subscriber) {
 	if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, sub.UserId, string(jsonByte)); err != nil {
 		log.Error(err)
 	}
-
 }
 
 func (s *Subscribers) DeleteSubscriber(sub *Subscriber) {
@@ -85,4 +84,24 @@ func PublishMessageToMany(ids []string, message any) error {
 		return errors.New("publish to many -> subscriber is not existed")
 	}
 	return nil
+}
+
+func BinarySearchSubscriber(userId string, subscribers []*Subscriber) (isExist bool) {
+	low := 0
+	high := len(subscribers) - 1
+	mid := -1
+	for low <= high {
+		mid = (low + high) / 2
+		if subscribers[mid].Id == userId {
+			return true
+		} else if subscribers[mid].Id < userId {
+			low = mid + 1
+		} else {
+			high = mid - 1
+		}
+	}
+	if mid != -1 {
+		isExist = true
+	}
+	return
 }

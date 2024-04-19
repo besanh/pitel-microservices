@@ -344,21 +344,20 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 }
 
 func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any) {
-	body := map[string]string{
-		"name":     data.Fullname,
-		"phone":    data.PhoneNumber,
-		"address":  data.Address,
-		"city":     data.City,
-		"district": data.District,
+	body := model.ShareInfoSendToOtt{
+		Name:     data.Fullname,
+		Phone:    data.PhoneNumber,
+		Address:  data.Address,
+		City:     data.City,
+		District: data.District,
 	}
 
-	url := OTT_URL
 	client := resty.New()
 
 	resp, err := client.R().
 		SetHeader("Accept", "application/json").
 		SetBody(body).
-		Post(url)
+		Post(OTT_URL)
 	if err != nil {
 		return response.ServiceUnavailableMsg(err.Error())
 	}

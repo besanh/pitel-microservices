@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"sync"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/variables"
@@ -199,8 +200,8 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return err
 	}
 	if total < 1 {
-		log.Errorf("conversation %s not found with active User", conversationId)
-		return errors.New("conversation " + conversationId + " not found with active User")
+		log.Errorf("conversation %s not found with active user", conversationId)
+		return errors.New("conversation " + conversationId + " not found with active user")
 	}
 
 	userAllocateTmp := (*userAllocate)[0]
@@ -255,6 +256,15 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
+	// TODO: clear cache
+	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + conversationId)
+	if userAllocateCache != nil {
+		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + conversationId}); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+
 	// Event to manager
 	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
 	if err != nil {
@@ -265,55 +275,33 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
 	}
 
-	var wg sync.WaitGroup
+	var subscribers []*Subscriber
+	var subscriberAdmins []string
+	var subscriberManagers []string
 	for s := range WsSubscribers.Subscribers {
-		if s.Id == manageQueueUser.ManageId {
-			// TODO: publish message to manager
-			wg.Add(1)
-			defer wg.Done()
-			event := model.Event{
-				EventName: variables.EVENT_CHAT[5],
-				EventData: &model.EventData{
-					Conversation: conversationExist,
-				},
+		if s.TenantId == authUser.TenantId {
+			subscribers = append(subscribers, s)
+			if s.Level == "admin" {
+				subscriberAdmins = append(subscriberAdmins, s.Id)
 			}
-			go func(userUuid string, event model.Event) {
-				if err := PublishMessageToOne(userUuid, event); err != nil {
-					log.Error(err)
-					return
-				}
-			}(manageQueueUser.ManageId, event)
-			break
+			if s.Level == "manager" {
+				subscriberManagers = append(subscriberManagers, s.Id)
+			}
 		}
+	}
+
+	// Event to manager
+	idx := sort.Search(len(subscriberManagers), func(i int) bool {
+		return manageQueueUser.ManageId == subscriberManagers[i]
+	})
+	if idx < len(subscriberManagers) && manageQueueUser.ManageId == subscriberManagers[idx] {
+		go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationExist)
 	}
 
 	// Event to admin
-	if ENABLE_PUBLISH_ADMIN {
-		userUuids := []string{}
-		for s := range WsSubscribers.Subscribers {
-			if s.TenantId == manageQueueUser.TenantId && s.Level == "admin" {
-				userUuids = append(userUuids, s.Id)
-			}
-		}
-
-		if len(userUuids) > 0 {
-			wg.Add(1)
-			defer wg.Done()
-			event := model.Event{
-				EventName: variables.EVENT_CHAT[5],
-				EventData: &model.EventData{
-					Conversation: conversationExist,
-				},
-			}
-			go func(userUuids []string, event model.Event) {
-				if err := PublishMessageToMany(userUuids, event); err != nil {
-					log.Error(err)
-					return
-				}
-			}(userUuids, event)
-		}
+	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
+		go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_done"], subscriberAdmins, true, conversationExist)
 	}
-	wg.Wait()
 
 	return nil
 }
