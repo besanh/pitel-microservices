@@ -12,6 +12,11 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
+func GenerateConversationId(appId, conversationId string) (newConversationId string) {
+	newConversationId = appId + "_" + conversationId
+	return
+}
+
 func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *model.ChatManageQueueUser, err error) {
 	manageQueueUserCache := cache.RCache.Get(MANAGE_QUEUE_USER + "_" + queueId)
 	if manageQueueUserCache != nil {
@@ -37,11 +42,6 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	return manageQueueUser, nil
 }
 
-func GenerateConversationId(appId, conversationId string) (newConversationId string) {
-	newConversationId = appId + "_" + conversationId
-	return
-}
-
 func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers *[]model.ChatQueueUser) (*Subscriber, error) {
 	userLive := Subscriber{}
 	userLives := []Subscriber{}
@@ -65,7 +65,6 @@ func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers
 		userLive = *userAllocate
 		userLive.IsAssignRoundRobin = true
 		userPrevious := Subscriber{}
-		log.Info(index+1, len(userLives))
 		if index == 0 {
 			userPrevious = userLives[len(userLives)-1]
 		} else {
@@ -127,13 +126,24 @@ func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
 	return index, &userLive
 }
 
-func CheckInLive(queueUsers []model.ChatQueueUser, id string) bool {
-	for _, item := range queueUsers {
-		if item.UserId == id {
+func CheckInLive(queueUsers []model.ChatQueueUser, id string) (isExist bool) {
+	low := 0
+	high := len(queueUsers) - 1
+	mid := -1
+	for low <= high {
+		mid = (low + high) / 2
+		if queueUsers[mid].Id == id {
 			return true
+		} else if queueUsers[mid].Id < id {
+			low = mid + 1
+		} else {
+			high = mid - 1
 		}
 	}
-	return false
+	if mid != -1 {
+		isExist = true
+	}
+	return
 }
 
 // TODO: caching
@@ -184,7 +194,7 @@ func GetProfile(ctx context.Context, appId, oaId, userId string) (result *model.
 	return
 }
 
-func CheckConfigApp(ctx context.Context, appId string) (isExist bool, err error) {
+func CheckConfigAppCache(ctx context.Context, appId string) (isExist bool, err error) {
 	chatAppCache := cache.RCache.Get(CHAT_APP + "_" + appId)
 	if chatAppCache != nil {
 		isExist = true

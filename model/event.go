@@ -8,4 +8,5 @@ type Event struct {
 type EventData struct {
 	Message      any `json:"message"`
 	Conversation any `json:"conversation"`
+	ShareInfo    any `json:"share_info"`
 }

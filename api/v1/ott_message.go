@@ -37,7 +37,7 @@ func NewOttMessage(engine *gin.Engine, messageService service.IOttMessage, conne
 }
 
 func (h *OttMessage) GetOttMessage(c *gin.Context) {
-	jsonBody := make(map[string]any, 0)
+	jsonBody := make(map[string]any)
 	if err := c.ShouldBindJSON(&jsonBody); err != nil {
 		c.JSON(response.BadRequestMsg(err))
 		return

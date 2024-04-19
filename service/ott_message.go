@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -37,7 +36,7 @@ func NewOttMessage() IOttMessage {
 * Khi chuyen qua fins thi lam sao biet setting nay cua db nao
  */
 func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (int, any) {
-	isExistChatApp, err := CheckConfigApp(ctx, data.AppId)
+	isExistChatApp, err := CheckConfigAppCache(ctx, data.AppId)
 	if !isExistChatApp {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -71,7 +70,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		ShareInfo:           data.ShareInfo,
 	}
 	if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
-		timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
 		message.ReadTime = timestamp
 		message.ReadTimestamp = data.Timestamp
 	}
@@ -135,7 +133,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		conversation = conversationTmp
 		isNew = isNewTmp
 
-		// TODO: add rabbitmq message
 		if len(conversation.ConversationId) > 0 {
 			message.ConversationId = conversation.ConversationId
 			message.IsRead = "deactive"
@@ -144,9 +141,34 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				return response.ServiceUnavailableMsg(errMsg.Error())
 			}
 		}
+	} else if user.PreviousAssign != nil {
+		// TODO: insert or update allocate user
+		user.PreviousAssign.UserId = user.AuthUser.UserId
+		user.PreviousAssign.MainAllocate = "active"
+		user.PreviousAssign.UpdatedAt = time.Now()
+		user.PreviousAssign.AllocatedTimestamp = time.Now().Unix()
+		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, *user.PreviousAssign); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
 	} else if len(user.QueueId) < 1 && err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
+	}
+
+	var subscribers []*Subscriber
+	var subscriberAdmins []string
+	var subscriberManagers []string
+	for s := range WsSubscribers.Subscribers {
+		if user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId {
+			subscribers = append(subscribers, s)
+			if s.Level == "admin" {
+				subscriberAdmins = append(subscriberAdmins, s.Id)
+			}
+			if s.Level == "manager" {
+				subscriberManagers = append(subscriberManagers, s.Id)
+			}
+		}
 	}
 
 	if user.AuthUser != nil {
@@ -155,49 +177,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		// 	log.Error(err)
 		// 	return response.ServiceUnavailableMsg(err.Error())
 		// }
-		var wg sync.WaitGroup
-		if isNew {
-			event := model.Event{
-				EventName: variables.EVENT_CHAT[4],
-				EventData: &model.EventData{
-					Conversation: conversation,
-				},
-			}
-			for s := range WsSubscribers.Subscribers {
-				if s.Id == user.AuthUser.UserId {
-					wg.Add(1)
-					go func(userUuid string, event model.Event) {
-						defer wg.Done()
-						if err := PublishMessageToOne(userUuid, event); err != nil {
-							log.Error(err)
-							return
-						}
-					}(user.AuthUser.UserId, event)
-					break
-				}
-			}
-		}
-
-		event := model.Event{
-			EventName: variables.EVENT_CHAT[3],
-			EventData: &model.EventData{
-				Message: message,
-			},
-		}
-		for s := range WsSubscribers.Subscribers {
-			if s.Id == user.AuthUser.UserId {
-				wg.Add(1)
-				go func(userUuid string, event model.Event) {
-					defer wg.Done()
-					if err := PublishMessageToOne(userUuid, event); err != nil {
-						log.Error(err)
-						return
-					}
-				}(user.AuthUser.UserId, event)
-				break
-			}
-		}
-		// wg.Wait()
+		go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
+		go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
 	}
 
 	if len(conversation.ConversationId) < 1 {
@@ -214,7 +195,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
-		} else if len(manageQueueUser.Id) < 1 {
+		} else if manageQueueUser == nil {
 			log.Error("queue " + user.QueueId + " not found")
 			return response.NotFoundMsg("queue " + user.QueueId + " not found")
 		}
@@ -227,12 +208,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			ConversationId: conversation.ConversationId,
 			MainAllocate:   "active",
 		}
-		totalUserAllocate, _, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+		_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if totalUserAllocate < 1 {
+		if len(*userAllocates) < 1 {
 			userAllocation := model.UserAllocate{
 				Base:               model.InitBase(),
 				TenantId:           conversation.TenantId,
@@ -256,87 +237,16 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		// TODO: publish message to manager
-		var wg sync.WaitGroup
-		if isNew {
-			event := model.Event{
-				EventName: variables.EVENT_CHAT[4],
-				EventData: &model.EventData{
-					Conversation: conversation,
-				},
-			}
-
-			for s := range WsSubscribers.Subscribers {
-				if s.Id == manageQueueUser.ManageId {
-					wg.Add(1)
-					go func(userUuid string, event model.Event) {
-						defer wg.Done()
-						if err := PublishMessageToOne(userUuid, event); err != nil {
-							log.Error(err)
-							return
-						}
-					}(manageQueueUser.ManageId, event)
-				}
-			}
+		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+		if isExist {
+			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
+			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
 		}
-
-		event := model.Event{
-			EventName: variables.EVENT_CHAT[3],
-			EventData: &model.EventData{
-				Message: message,
-			},
-		}
-		for s := range WsSubscribers.Subscribers {
-			if s.Id == manageQueueUser.ManageId {
-				wg.Add(1)
-				go func(userUuid string, event model.Event) {
-					defer wg.Done()
-					if err := PublishMessageToOne(userUuid, event); err != nil {
-						log.Error(err)
-						return
-					}
-				}(manageQueueUser.ManageId, event)
-			}
-		}
-		// wg.Wait()
 
 		// TODO: publish to admin
 		if ENABLE_PUBLISH_ADMIN {
-			var wg sync.WaitGroup
-			userUuids := []string{}
-			for s := range WsSubscribers.Subscribers {
-				if s.TenantId == conversation.TenantId && s.Level == "admin" {
-					userUuids = append(userUuids, s.Id)
-				}
-			}
-
-			if len(userUuids) > 0 {
-				if isNew {
-					eventConversation := model.Event{
-						EventName: variables.EVENT_CHAT[4],
-						EventData: &model.EventData{
-							Conversation: conversation,
-						},
-					}
-					wg.Add(1)
-					go func(userUuids []string, event model.Event) {
-						defer wg.Done()
-						if err := PublishMessageToMany(userUuids, event); err != nil {
-							log.Error(err)
-							return
-						}
-					}(userUuids, eventConversation)
-				}
-
-				wg.Add(1)
-				go func(userUuids []string, event model.Event) {
-					defer wg.Done()
-					if err := PublishMessageToMany(userUuids, event); err != nil {
-						log.Error(err)
-						return
-					}
-				}(userUuids, event)
-			}
-			// wg.Wait()
+			go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_created"], subscriberAdmins, isNew, &conversation)
+			go PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 		}
 	}
 
@@ -366,10 +276,10 @@ func (s *OttMessage) GetCodeChallenge(ctx context.Context, authUser *model.AuthU
 
 func (s *OttMessage) PostShareInfoEvent(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any) {
 	// Because submit info is used sometimes, not to use struct
-	event := map[string]any{
-		"event_name": "share_info",
-		"event_data": map[string]any{
-			"share_info": data,
+	event := model.Event{
+		EventName: "share_info",
+		EventData: &model.EventData{
+			ShareInfo: &data,
 		},
 	}
 	if err := PublishMessageToOne(authUser.UserId, event); err != nil {

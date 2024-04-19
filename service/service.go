@@ -86,8 +86,10 @@ type (
 		SubscriberMessageBuffer int
 		PublishLimiter          *rate.Limiter
 		SubscribersMu           sync.Mutex
-		Subscribers             map[*Subscriber]struct{}
+		Subscribers             SubscriberItem
 	}
+
+	SubscriberItem map[*Subscriber]struct{}
 )
 
 func NewDBConn(tenantId string, config DBConfig) (dbConn sqlclient.ISqlClientConn, err error) {

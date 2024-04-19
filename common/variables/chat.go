@@ -72,15 +72,15 @@ var (
 		"received",
 	}
 
-	EVENT_CHAT []string = []string{
-		"oa_connection",
-		"submit_info",
-		"ask_info",
-		"message_created",
-		"conversation_created",
-		"conversation_done",
-		"conversation_assigned",
-		"conversation_unassigned",
+	EVENT_CHAT map[string]string = map[string]string{
+		"oa_connection":           "oa_connection",
+		"submit_info":             "submit_info",
+		"ask_info":                "ask_info",
+		"message_created":         "message_created",
+		"conversation_created":    "conversation_created",
+		"conversation_done":       "conversation_done",
+		"conversation_assigned":   "conversation_assigned",
+		"conversation_unassigned": "conversation_unassigned",
 	}
 
 	STATUS_CONVERSATION []string = []string{
