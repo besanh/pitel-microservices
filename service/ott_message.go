@@ -177,8 +177,17 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		// 	log.Error(err)
 		// 	return response.ServiceUnavailableMsg(err.Error())
 		// }
-		go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
-		go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
+		if user.IsReassignSame {
+			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], user.AuthUser.UserId, subscribers, isNew, &conversation)
+			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
+		} else if user.IsReassignNew {
+			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], user.UserIdRemove, subscribers, isNew, &conversation)
+			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
+			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
+		} else {
+			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
+			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
+		}
 	}
 
 	if len(conversation.ConversationId) < 1 {

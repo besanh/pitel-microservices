@@ -125,3 +125,19 @@ func BinarySearchSlice(userId string, subscribers []string) (isExist bool) {
 	}
 	return
 }
+
+// Search with compare
+// func bSearch(people []Person, target Person, low int, high int) int {
+// 	if low > high {
+// 		return -1
+// 	}
+
+// 	mid := (low + high) / 2
+// 	if people[mid] == target {
+// 		return mid
+// 	} else if people[mid].Age < target.Age {
+// 		return bSearch(people, target, mid+1, high)
+// 	} else {
+// 		return bSearch(people, target, low, mid-1)
+// 	}
+// }
