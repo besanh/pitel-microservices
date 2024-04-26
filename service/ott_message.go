@@ -177,15 +177,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		// 	return response.ServiceUnavailableMsg(err.Error())
 		// }
 		if user.IsReassignSame {
-			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], user.AuthUser.UserId, subscribers, true, &conversation)
-			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], user.AuthUser.UserId, subscribers, true, &conversation)
+			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
 		} else if user.IsReassignNew {
-			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], user.UserIdRemove, subscribers, true, &conversation)
-			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
-			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], user.UserIdRemove, subscribers, true, &conversation)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
+			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
 		} else {
-			go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
-			go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], user.AuthUser.UserId, subscribers, isNew, &conversation)
+			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)
 		}
 	}
 
@@ -211,67 +211,34 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			manageQueueUser.ConnectionId = connectionCache.Id
 		}
 
-		// filter := model.UserAllocateFilter{
-		// 	AppId:          conversation.AppId,
-		// 	ConversationId: conversation.ConversationId,
-		// 	// MainAllocate:   "active",
-		// }
-		// _, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
-		// if err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
-		// if len(*userAllocates) < 1 {
-		// 	userAllocation := model.UserAllocate{
-		// 		Base:               model.InitBase(),
-		// 		TenantId:           conversation.TenantId,
-		// 		ConversationId:     conversation.ConversationId,
-		// 		AppId:              message.AppId,
-		// 		UserId:             manageQueueUser.ManageId,
-		// 		QueueId:            manageQueueUser.QueueId,
-		// 		AllocatedTimestamp: time.Now().Unix(),
-		// 		MainAllocate:       "active",
-		// 		ConnectionId:       manageQueueUser.ConnectionId,
-		// 	}
-		// 	if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
-		// 		log.Error(err)
-		// 		return response.ServiceUnavailableMsg(err.Error())
-		// 	}
-
-		// 	if err := cache.RCache.Set(USER_ALLOCATE+"_"+conversation.ConversationId, userAllocation, USER_ALLOCATE_EXPIRE); err != nil {
-		// 		log.Error(err)
-		// 		return response.ServiceUnavailableMsg(err.Error())
-		// 	}
-		// }
-
 		// TODO: publish message to manager
 		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
 		if isExist {
 			if user.IsReassignSame {
-				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, &conversation)
-				go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, &conversation)
+				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
 			} else if user.IsReassignNew {
-				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], manageQueueUser.ManageId, subscribers, true, &conversation)
-				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
-				go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], manageQueueUser.ManageId, subscribers, true, &conversation)
+				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
+				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
 			} else {
-				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
-				go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
+				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
 			}
 		}
 
 		// TODO: publish to admin
 		if ENABLE_PUBLISH_ADMIN {
 			if user.IsReassignSame {
-				go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, &conversation)
-				go PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, &conversation)
+				PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 			} else if user.IsReassignNew {
-				go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_removed"], subscriberAdmins, true, &conversation)
-				go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_created"], subscriberAdmins, isNew, &conversation)
-				go PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_removed"], subscriberAdmins, true, &conversation)
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_created"], subscriberAdmins, isNew, &conversation)
+				PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 			} else {
-				go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_created"], subscriberAdmins, isNew, &conversation)
-				go PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_created"], subscriberAdmins, isNew, &conversation)
+				PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 			}
 		}
 	}
