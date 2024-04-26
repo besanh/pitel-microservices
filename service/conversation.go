@@ -256,9 +256,9 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// TODO: clear cache
-	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + conversationId)
+	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.ExternalUserId))
 	if userAllocateCache != nil {
-		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + conversationId}); err != nil {
+		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.ExternalUserId)}); err != nil {
 			log.Error(err)
 			return err
 		}
