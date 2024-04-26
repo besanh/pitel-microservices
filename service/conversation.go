@@ -106,12 +106,12 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 					"seen",
 				},
 			}
-			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+			_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
 			if err != nil {
 				log.Error(err)
 				break
 			}
-			conv.TotalUnRead = int64(total)
+			conv.TotalUnRead = int64(len(*messages))
 
 			filterMessage := model.MessageFilter{
 				TenantId:       conv.TenantId,
@@ -264,6 +264,17 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
+	// TODO: get message to display, otherwise use api get conversation to get latest message
+	filterMessage := model.MessageFilter{
+		TenantId:       conversationExist.TenantId,
+		ConversationId: conversationExist.ConversationId,
+	}
+	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
 	// Event to manager
 	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
 	if err != nil {
@@ -292,12 +303,14 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	// Event to manager
 	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
 	if isExist {
-		go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationExist)
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationExist)
+		PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &(*messages)[0])
 	}
 
 	// Event to admin
 	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
-		go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_done"], subscriberAdmins, true, conversationExist)
+		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_done"], subscriberAdmins, true, conversationExist)
+		PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &(*messages)[0])
 	}
 
 	return nil
