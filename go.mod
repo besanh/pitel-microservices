@@ -25,7 +25,6 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240415180920-8c6c420018be
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
-	gotest.tools v2.2.0+incompatible
 	nhooyr.io/websocket v1.8.11
 )
 
