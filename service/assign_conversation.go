@@ -113,13 +113,6 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 					UserId:   (*userAllocates)[0].UserId,
 				})
 			}
-
-			result = append(result, model.ChatQueueUserView{
-				TenantId: manageQueueUser.TenantId,
-				QueueId:  manageQueueUser.QueueId,
-				UserId:   manageQueueUser.ManageId,
-			})
-
 		}
 	}
 
