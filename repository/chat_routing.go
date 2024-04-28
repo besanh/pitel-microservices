@@ -39,6 +39,7 @@ func (repo *ChatRouting) GetChatRoutings(ctx context.Context, db sqlclient.ISqlC
 	if filter.Status.Valid {
 		query.Where("status = ?", filter.Status.Bool)
 	}
+	query.Order("created_at desc")
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}

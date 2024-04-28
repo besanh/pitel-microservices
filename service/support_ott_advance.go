@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -97,7 +97,7 @@ func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers
 		}
 		return &userLive, nil
 	} else {
-		return &userLive, errors.New("no user online")
+		return &userLive, fmt.Errorf("no user online")
 	}
 }
 
@@ -204,14 +204,14 @@ func CheckConfigAppCache(ctx context.Context, appId string) (isExist bool, err e
 		}
 		total, chatApp, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
-			log.Error(err)
 			return isExist, err
 		} else if total > 0 {
 			isExist = true
 			if err = cache.RCache.Set(CHAT_APP+"_"+appId, chatApp, CHAT_APP_EXPIRE); err != nil {
-				log.Error(err)
 				return isExist, err
 			}
+		} else {
+			return isExist, fmt.Errorf("app %s not found", appId)
 		}
 	}
 	return
@@ -239,8 +239,8 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			return
 		}
 		if total < 1 {
-			log.Error("connect for app_id: " + appId + ", oa_id: " + oaId + " not found")
-			err = errors.New("connect for app_id: " + appId + ", oa_id: " + oaId + " not found")
+			log.Error("connect for app_id: %s, oa_id: %s not found", appId, oaId)
+			err = fmt.Errorf("connect for app_id: %s, oa_id: %s not found", appId, oaId)
 			return
 		}
 

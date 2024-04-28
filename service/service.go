@@ -37,7 +37,7 @@ var (
 	CHAT_QUEUE_USER          = "chat_queue_user"
 	CHAT_QUEUE_USER_EXPIRE   = 10 * time.Minute
 	CHAT_APP                 = "chat_app"
-	CHAT_APP_EXPIRE          = 5 * time.Hour
+	CHAT_APP_EXPIRE          = 6 * time.Hour
 	USER_ALLOCATE            = "user_allocate"
 	USER_ALLOCATE_EXPIRE     = 1 * time.Hour
 	MANAGE_QUEUE_USER        = "manage_queue_user"

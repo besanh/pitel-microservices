@@ -37,6 +37,7 @@ func (repo *ChatManageQueue) GetManageQueues(ctx context.Context, db sqlclient.I
 	if len(filter.ManageId) > 0 {
 		query.Where("manage_id = ?", filter.ManageId)
 	}
+	query.Order("created_at desc")
 	if limit > 0 {
 		query.Limit(limit).
 			Offset(offset)

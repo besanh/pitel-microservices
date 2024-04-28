@@ -42,7 +42,7 @@ func (s *ChatApp) GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, f
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
-
+	query.Order("created_at desc")
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil

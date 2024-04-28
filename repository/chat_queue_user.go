@@ -42,6 +42,7 @@ func (repo *ChatQueueUser) GetChatQueueUsers(ctx context.Context, db sqlclient.I
 	if len(filter.Source) > 0 {
 		query.Where("source = ?", filter.Source)
 	}
+	query.Order("created_at desc")
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
