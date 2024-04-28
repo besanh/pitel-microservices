@@ -46,6 +46,7 @@ func (repo *UserAllocate) GetUserAllocates(ctx context.Context, db sqlclient.ISq
 	if len(filter.MainAllocate) > 0 {
 		query.Where("main_allocate = ?", filter.MainAllocate)
 	}
+	query.Order("created_at desc")
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}

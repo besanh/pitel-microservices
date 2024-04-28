@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -155,9 +156,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	var subscribers []*Subscriber
-	var subscriberAdmins []string
-	var subscriberManagers []string
+	subscribers := []*Subscriber{}
+	subscriberAdmins := []string{}
+	subscriberManagers := []string{}
 	for s := range WsSubscribers.Subscribers {
 		if user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId {
 			subscribers = append(subscribers, s)
@@ -189,14 +190,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 
-	if len(conversation.ConversationId) < 1 {
-		log.Error("conversation not found")
-		return response.NotFoundMsg("conversation not found")
-	}
-	if len(conversation.TenantId) < 1 {
-		conversation.TenantId = connectionCache.TenantId
-	}
-
 	// TODO: publish message to manager
 	if len(user.QueueId) > 0 {
 		manageQueueUser, err := GetManageQueueUser(ctx, user.QueueId)
@@ -209,6 +202,39 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 		if len(manageQueueUser.ConnectionId) < 1 {
 			manageQueueUser.ConnectionId = connectionCache.Id
+		}
+
+		// TODO: if user not found then assign conversation for manager
+		filter := model.UserAllocateFilter{
+			AppId:          conversation.AppId,
+			ConversationId: conversation.ConversationId,
+			MainAllocate:   "active",
+		}
+		_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if len(*userAllocates) < 1 {
+			userAllocation := model.UserAllocate{
+				Base:               model.InitBase(),
+				TenantId:           conversation.TenantId,
+				ConversationId:     conversation.ConversationId,
+				AppId:              message.AppId,
+				UserId:             manageQueueUser.ManageId,
+				QueueId:            manageQueueUser.QueueId,
+				AllocatedTimestamp: time.Now().Unix(),
+				MainAllocate:       "active",
+				ConnectionId:       manageQueueUser.ConnectionId,
+			}
+			if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+			if err := cache.RCache.Set(USER_ALLOCATE+"_"+conversation.ConversationId, userAllocation, USER_ALLOCATE_EXPIRE); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
 		}
 
 		// TODO: publish message to manager

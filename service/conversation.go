@@ -322,7 +322,7 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found", conversationId)
+		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
 		return response.ServiceUnavailableMsg("conversation " + conversationId + " with app_id " + appId + " not found")
 	}
 
