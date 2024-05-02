@@ -160,7 +160,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	subscriberAdmins := []string{}
 	subscriberManagers := []string{}
 	for s := range WsSubscribers.Subscribers {
-		if user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId {
+		if (user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId) || (conversation.TenantId == s.TenantId) {
 			subscribers = append(subscribers, s)
 			if s.Level == "admin" {
 				subscriberAdmins = append(subscriberAdmins, s.Id)
