@@ -109,12 +109,15 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 		SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
 		Get(urlInfo)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 	var resInfo map[string]any
 	if err := json.Unmarshal(res.Body(), &resInfo); err != nil {
+		log.Error(err)
 		return result, err
 	}
+	log.Info("resInfo: ", &resInfo)
 	userUuid, _ := resInfo["user_uuid"].(string)
 	if len(userUuid) < 1 {
 		return nil, errors.New("invalid user uuid")
@@ -135,10 +138,12 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
 			Get(url)
 		if err != nil {
+			log.Error(err)
 			return nil, err
 		}
 		var resp map[string]any
 		if err := json.Unmarshal(res.Body(), &resp); err != nil {
+			log.Error(err)
 			return result, err
 		}
 
