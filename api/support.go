@@ -12,7 +12,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 	"nhooyr.io/websocket"
@@ -129,7 +128,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 	userInfo := model.AuthUserInfo{}
 	userInfoCache := cache.RCache.Get(USER_INFO + "_" + bssAuthRequest.Token)
 	if userInfoCache != nil {
-		if err := util.ParseAnyToAny(userInfoCache, &userInfo); err != nil {
+		if err := json.Unmarshal([]byte(userInfoCache.(string)), &userInfo); err != nil {
 			log.Error(err)
 			return nil, err
 		}
