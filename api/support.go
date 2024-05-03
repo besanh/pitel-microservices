@@ -29,6 +29,7 @@ func AuthMiddleware(c *gin.Context) *model.AAAResponse {
 		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
+	log.Info("request: ", c.Request)
 
 	if len(c.GetHeader("validator_header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
@@ -147,8 +148,6 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			log.Error(err)
 			return result, err
 		}
-
-		log.Info("resp: ", &resp)
 
 		userInfo.UserUuid, _ = resp["user_uuid"].(string)
 		userInfo.DomainUuid, _ = resp["domain_uuid"].(string)
