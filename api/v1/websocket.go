@@ -87,7 +87,7 @@ func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error
 
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth-url"),
+		AuthUrl: c.Query("auth_url"),
 		Source:  c.Query("source"),
 	}
 
