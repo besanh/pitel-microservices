@@ -38,6 +38,8 @@ func AuthMiddleware(c *gin.Context) *model.AAAResponse {
 		}
 	}
 
+	log.Info("bssAuthRequest: ", &bssAuthRequest)
+
 	res := AAAMiddleware(c, bssAuthRequest)
 
 	return res
@@ -120,7 +122,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 
 	// Get Info user
 	userInfo := model.AuthUserInfo{}
-	userInfoCache := cache.MCache.Get(USER_INFO + "_" + bssAuthRequest.Token)
+	userInfoCache := cache.RCache.Get(USER_INFO + "_" + bssAuthRequest.Token)
 	if userInfoCache != nil {
 		if err := util.ParseAnyToAny(userInfoCache, &userInfo); err != nil {
 			log.Error(err)
@@ -157,7 +159,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 		userInfo.Extension, _ = resp["extension"].(string)
 		userInfo.ExtensionUuid, _ = resp["extension_uuid"].(string)
 
-		cache.MCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 1*time.Minute)
+		cache.RCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 1*time.Minute)
 	}
 
 	if len(userInfo.UserUuid) > 1 {
@@ -174,7 +176,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			},
 		}
 	} else {
-		cache.MCache.Del(USER_INFO + "_" + bssAuthRequest.Token)
+		cache.RCache.Del([]string{USER_INFO + "_" + bssAuthRequest.Token})
 		return nil, fmt.Errorf("failed to get user info")
 	}
 
