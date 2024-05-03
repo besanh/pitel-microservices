@@ -37,7 +37,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Tenant-Id, X-Tenant-Uuid, X-Tenant-Name, X-User-Id, X-User-Level, X-User-Name, token, auth_url, source, validator_header, Token, Auth_url, Source, Validator_header")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Tenant-Id, X-Tenant-Uuid, X-Tenant-Name, X-User-Id, X-User-Level, X-User-Name, Token, Auth_url, Source, Validator_header")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, PATCH, DELETE, OPTIONS")
 		c.Next()
 	}
