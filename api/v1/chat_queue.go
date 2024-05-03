@@ -68,14 +68,14 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 	}
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
+		AuthUrl: c.Query("auth-url"),
 		Source:  c.Query("source"),
 	}
 
-	if len(c.GetHeader("validator_header")) > 0 {
+	if len(c.GetHeader("validator-header")) > 0 {
 		bssAuthRequest = model.BssAuthRequest{
 			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth_url"),
+			AuthUrl: c.GetHeader("auth-url"),
 			Source:  c.GetHeader("source"),
 		}
 	}
