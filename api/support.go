@@ -120,6 +120,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 	log.Info("resInfo: ", &resInfo)
 	userUuid, _ := resInfo["user_uuid"].(string)
 	if len(userUuid) < 1 {
+		log.Errorf("userUuid %s is invalid", userUuid)
 		return nil, errors.New("invalid user uuid")
 	}
 
@@ -146,6 +147,8 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			log.Error(err)
 			return result, err
 		}
+
+		log.Info("resp: ", &resp)
 
 		userInfo.UserUuid, _ = resp["user_uuid"].(string)
 		userInfo.DomainUuid, _ = resp["domain_uuid"].(string)
