@@ -12,6 +12,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 	"nhooyr.io/websocket"
@@ -126,9 +127,9 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 
 	// Get Info user
 	userInfo := model.AuthUserInfo{}
-	userInfoCache := cache.RCache.Get(USER_INFO + "_" + bssAuthRequest.Token)
+	userInfoCache := cache.MCache.Get(USER_INFO + "_" + bssAuthRequest.Token)
 	if userInfoCache != nil {
-		if err := json.Unmarshal([]byte(userInfoCache.(string)), &userInfo); err != nil {
+		if err := util.ParseAnyToAny(userInfoCache, &userInfo); err != nil {
 			log.Error(err)
 			return nil, err
 		}
@@ -165,7 +166,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 		userInfo.Extension, _ = resp["extension"].(string)
 		userInfo.ExtensionUuid, _ = resp["extension_uuid"].(string)
 
-		cache.RCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 1*time.Minute)
+		cache.MCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 1*time.Minute)
 	}
 
 	if len(userInfo.UserUuid) > 1 {
@@ -182,7 +183,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			},
 		}
 	} else {
-		cache.RCache.Del([]string{USER_INFO + "_" + bssAuthRequest.Token})
+		cache.MCache.Del(USER_INFO + "_" + bssAuthRequest.Token)
 		return nil, fmt.Errorf("failed to get user info")
 	}
 
