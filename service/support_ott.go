@@ -300,7 +300,11 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 		currentUserAllocate.MainAllocate = "active"
 		currentUserAllocate.AllocatedTimestamp = time.Now().Unix()
 		currentUserAllocate.UpdatedAt = time.Now()
-		if err = UpdateConversationById(ctx, userAllocate.TenantId, *currentUserAllocate, chatSetting.Message); err != nil {
+		tenantId := userAllocate.TenantId
+		if len(tenantId) < 1 {
+			tenantId = (*currentUserAllocate).TenantId
+		}
+		if err = UpdateConversationById(ctx, tenantId, *currentUserAllocate, chatSetting.Message); err != nil {
 			log.Error(err)
 			return user, err
 		}
@@ -312,6 +316,9 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 		user.AuthUser = &authInfo
 		user.ConnectionId = chatSetting.ConnectionQueue.ConnectionId
 		user.QueueId = chatSetting.ConnectionQueue.QueueId
+		if len(userAllocate.UserId) < 1 {
+			user.IsOk = false
+		}
 
 		return user, nil
 	} else {
