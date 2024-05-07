@@ -71,6 +71,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	}
 	attachments := []model.OttAttachments{}
 	if err := util.ParseAnyToAny(attachmentsAny, &attachments); err != nil {
+		log.Error(err)
 		c.JSON(response.BadRequestMsg(err))
 		return
 	}
