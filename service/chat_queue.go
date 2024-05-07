@@ -131,23 +131,23 @@ func (s *ChatQueue) UpdateChatQueueById(ctx context.Context, authUser *model.Aut
 		return err
 	}
 
-	filter := model.ConnectionQueueFilter{
-		QueueId: queueExist.Id,
-	}
-	total, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, dbCon, filter, -1, 0)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
+	// filter := model.ConnectionQueueFilter{
+	// 	QueueId: queueExist.Id,
+	// }
+	// _, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, dbCon, filter, -1, 0)
+	// if err != nil {
+	// 	log.Error(err)
+	// 	return err
+	// }
 
-	if total > 0 {
-		for _, item := range *connectionQueues {
-			if err := repository.ConnectionQueueRepo.Delete(ctx, dbCon, item.Id); err != nil {
-				log.Error(err)
-				return err
-			}
-		}
-	}
+	// if len(*connectionQueues) > 0 {
+	// 	for _, item := range *connectionQueues {
+	// 		if err := repository.ConnectionQueueRepo.Delete(ctx, dbCon, item.Id); err != nil {
+	// 			log.Error(err)
+	// 			return err
+	// 		}
+	// 	}
+	// }
 
 	if len(data.ConnectionId) > 0 {
 		connectionUsers := []model.ConnectionQueue{}
