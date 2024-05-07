@@ -330,7 +330,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 				result.TotalFail += 1
 				result.ListFail[item] = err.Error()
 			}
-			newConversationId := GenerateConversationId(data.AppId, item)
+			newConversationId := GenerateConversationId(data.AppId, data.OaId, item)
 			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, data.AppId, newConversationId, esDoc); err != nil {
 				log.Error(err)
 				result.TotalSuccess -= 1

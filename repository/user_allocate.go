@@ -13,6 +13,7 @@ type (
 	IUserAllocate interface {
 		IRepo[model.UserAllocate]
 		GetUserAllocates(ctx context.Context, db sqlclient.ISqlClientConn, filter model.UserAllocateFilter, limit, offset int) (int, *[]model.UserAllocate, error)
+		DeleteUserAllocates(ctx context.Context, db sqlclient.ISqlClientConn, userAllocates []model.UserAllocate) error
 	}
 	UserAllocate struct {
 		Repo[model.UserAllocate]
@@ -33,6 +34,9 @@ func (repo *UserAllocate) GetUserAllocates(ctx context.Context, db sqlclient.ISq
 	}
 	if len(filter.AppId) > 0 {
 		query.Where("app_id = ?", filter.AppId)
+	}
+	if len(filter.OaId) > 0 {
+		query.Where("oa_id = ?", filter.OaId)
 	}
 	if len(filter.UserId) > 0 {
 		query.Where("user_id IN (?)", bun.In(filter.UserId))
@@ -57,4 +61,13 @@ func (repo *UserAllocate) GetUserAllocates(ctx context.Context, db sqlclient.ISq
 		return 0, result, err
 	}
 	return total, result, nil
+}
+
+func (repo *UserAllocate) DeleteUserAllocates(ctx context.Context, db sqlclient.ISqlClientConn, userAllocates []model.UserAllocate) error {
+	_, err := db.GetDB().NewDelete().
+		Model(&userAllocates).
+		WherePK().
+		Exec(ctx)
+
+	return err
 }

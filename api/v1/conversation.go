@@ -26,10 +26,10 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 	{
 		Group.GET("", handler.GetConversations)
 		Group.GET("manager", handler.GetConversationsByManager)
-		Group.PUT(":id", handler.UpdateConversation)
+		Group.PUT(":app_id/:oa_id/:id", handler.UpdateConversation)
 		Group.POST("status", handler.UpdateStatusConversation)
 		Group.PATCH(":id/reassign", handler.ReassignConversation)
-		Group.GET(":app_id/:id", handler.GetConversationById)
+		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
 	}
 }
 
@@ -69,6 +69,16 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 		return
 	}
 
+	appId := c.Param("app_id")
+	if len(appId) < 1 {
+		c.JSON(response.BadRequestMsg("app_id is required"))
+	}
+
+	oaId := c.Param("oa_id")
+	if len(oaId) < 1 {
+		c.JSON(response.BadRequestMsg("oa_id is required"))
+	}
+
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -83,7 +93,7 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 
 	log.Info("update conversation payload -> ", shareInfo)
 
-	code, result := handler.conversationService.UpdateConversationById(c, res.Data, "", id, shareInfo)
+	code, result := handler.conversationService.UpdateConversationById(c, res.Data, appId, oaId, id, shareInfo)
 	c.JSON(code, result)
 }
 
@@ -170,6 +180,12 @@ func (handler *Conversation) GetConversationById(c *gin.Context) {
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
 		c.JSON(response.BadRequestMsg("app_id is required"))
+		return
+	}
+
+	oaId := c.Param("oa_id")
+	if len(oaId) < 1 {
+		c.JSON(response.BadRequestMsg("oa_id is required"))
 		return
 	}
 

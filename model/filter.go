@@ -65,6 +65,7 @@ type ConversationFilter struct {
 type UserAllocateFilter struct {
 	TenantId       string   `json:"tenant_id"`
 	AppId          string   `json:"app_id"`
+	OaId           string   `json:"oa_id"`
 	ConversationId string   `json:"conversation_id"`
 	UserId         []string `json:"user_id"`
 	QueueId        string   `json:"queue_id"`

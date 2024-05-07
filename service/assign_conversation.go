@@ -203,9 +203,9 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	// TODO: clear cache
-	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId((*userAllocates)[0].AppId, (*userAllocates)[0].ConversationId))
+	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId((*userAllocates)[0].AppId, (*userAllocates)[0].OaId, (*userAllocates)[0].ConversationId))
 	if userAllocateCache != nil {
-		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId((*userAllocates)[0].AppId, (*userAllocates)[0].ConversationId)}); err != nil {
+		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId((*userAllocates)[0].AppId, (*userAllocates)[0].OaId, (*userAllocates)[0].ConversationId)}); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
