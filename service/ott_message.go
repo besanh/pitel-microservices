@@ -235,6 +235,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				TenantId:           conversation.TenantId,
 				ConversationId:     conversation.ConversationId,
 				AppId:              message.AppId,
+				OaId:               message.OaId,
 				UserId:             manageQueueUser.ManageId,
 				QueueId:            manageQueueUser.QueueId,
 				AllocatedTimestamp: time.Now().Unix(),

@@ -182,6 +182,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			Base:               model.InitBase(),
 			TenantId:           (*conversations)[0].TenantId,
 			AppId:              (*conversations)[0].AppId,
+			OaId:               (*conversations)[0].OaId,
 			UserId:             data.UserId,
 			QueueId:            data.QueueId,
 			AllocatedTimestamp: time.Now().Unix(),

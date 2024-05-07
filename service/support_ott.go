@@ -342,6 +342,7 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 				TenantId:           chatSetting.ConnectionApp.TenantId,
 				ConversationId:     conversationId,
 				AppId:              chatSetting.Message.AppId,
+				OaId:               chatSetting.Message.OaId,
 				UserId:             userAllocate.UserId,
 				QueueId:            chatSetting.ConnectionQueue.QueueId,
 				AllocatedTimestamp: time.Now().Unix(),
