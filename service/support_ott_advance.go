@@ -232,13 +232,13 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			OaId:           oaId,
 			ConnectionType: connectionType,
 		}
-		total, connections, errConnection := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+		_, connections, errConnection := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
 		if errConnection != nil {
 			log.Error(err)
 			err = errConnection
 			return
 		}
-		if total < 1 {
+		if len(*connections) < 1 {
 			log.Errorf("connect for app_id: %s, oa_id: %s not found", appId, oaId)
 			err = fmt.Errorf("connect for app_id: %s, oa_id: %s not found", appId, oaId)
 			return

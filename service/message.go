@@ -198,13 +198,15 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		queueId = (*manageQueueUser)[0].QueueId
 	}
 
-	if len(queueId) > 0 {
-		if err := SendEventToManage(ctx, authUser, message, queueId); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+	if authUser.Level != "manager" {
+		if len(queueId) > 0 {
+			if err := SendEventToManage(ctx, authUser, message, queueId); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+		} else {
+			log.Errorf("queue %s not found in send event to manage", queueId)
 		}
-	} else {
-		log.Errorf("queue %s not found in send event to manage", queueId)
 	}
 
 	return response.Created(message)
