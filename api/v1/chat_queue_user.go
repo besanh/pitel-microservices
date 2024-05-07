@@ -71,7 +71,7 @@ func (h *ChatQueueUser) UpdateChatQueueUserById(c *gin.Context) {
 		return
 	}
 
-	log.Info("update chat queue User payload -> ", data)
+	log.Info("update chat queue user payload -> ", data)
 
 	result, err := h.chatQueueUser.UpdateChatQueueUserById(c, res.Data, data)
 	if err != nil {
