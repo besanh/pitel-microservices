@@ -228,8 +228,8 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 		connectionApp = tmp
 	} else {
 		filter := model.ChatConnectionAppFilter{
-			AppId: appId,
-			// OaId:           oaId,
+			AppId:          appId,
+			OaId:           oaId,
 			ConnectionType: connectionType,
 		}
 		total, connections, errConnection := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
