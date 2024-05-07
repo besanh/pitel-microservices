@@ -60,6 +60,7 @@ type MessageFormRequest struct {
 
 type MessageMarkRead struct {
 	AppId          string   `json:"app_id"`
+	OaId           string   `json:"oa_id"`
 	ConversationId string   `json:"conversation_id"`
 	MessageIds     []string `json:"message_ids"`
 	ReadBy         string   `json:"read_by"`

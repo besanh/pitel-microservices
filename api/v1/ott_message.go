@@ -130,7 +130,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 		c.JSON(response.OKResponse())
 	} else if eventName == "submit_info" {
-		code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, externalUserId, shareInfo)
+		code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
 		c.JSON(code, result)
 		return
 	} else {
@@ -195,6 +195,7 @@ func (h *OttMessage) AskInfo(c *gin.Context) {
 	log.Info("ott get ask info body: ", jsonBody)
 
 	appId, _ := jsonBody["app_id"].(string)
+	oaId, _ := jsonBody["oa_id"].(string)
 	externalUserId, _ := jsonBody["uid"].(string)
 	shareInfoTmp, _ := jsonBody["share_info"].(map[string]any)
 	shareInfoName, _ := shareInfoTmp["name"].(string)
@@ -210,6 +211,6 @@ func (h *OttMessage) AskInfo(c *gin.Context) {
 		District:    shareInfoDistrict,
 	}
 
-	code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, externalUserId, shareInfo)
+	code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
 	c.JSON(code, result)
 }

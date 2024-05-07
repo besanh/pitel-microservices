@@ -12,8 +12,8 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func GenerateConversationId(appId, conversationId string) (newConversationId string) {
-	newConversationId = appId + "_" + conversationId
+func GenerateConversationId(appId, oaId, conversationId string) (newConversationId string) {
+	newConversationId = appId + "_" + oaId + "_" + conversationId
 	return
 }
 

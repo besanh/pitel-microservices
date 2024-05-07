@@ -14,7 +14,7 @@ import (
 )
 
 func UpSertConversation(ctx context.Context, connectionId string, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
-	newConversationId := GenerateConversationId(data.AppId, data.ExternalUserId)
+	newConversationId := GenerateConversationId(data.AppId, data.OaId, data.ExternalUserId)
 	conversation = model.Conversation{
 		TenantId:         data.TenantId,
 		ConversationId:   newConversationId,
@@ -86,7 +86,7 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		newConversationId := GenerateConversationId(conversation.AppId, conversation.ExternalUserId)
+		newConversationId := GenerateConversationId(conversation.AppId, conversation.OaId, conversation.ExternalUserId)
 		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
@@ -125,7 +125,7 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 }
 
 func InsertConversation(ctx context.Context, conversation model.Conversation, connectionId string) (id string, err error) {
-	id = GenerateConversationId(conversation.AppId, conversation.ExternalUserId)
+	id = GenerateConversationId(conversation.AppId, conversation.OaId, conversation.ExternalUserId)
 	if len(connectionId) > 0 {
 		conversation, err = CacheConnection(ctx, connectionId, conversation)
 		if err != nil {
@@ -173,9 +173,9 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, tenantId, appId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
+func UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
 	var isUpdate bool
-	newConversationId := GenerateConversationId(appId, conversationId)
+	newConversationId := GenerateConversationId(appId, oaId, conversationId)
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
 	if err != nil {
 		log.Error(err)

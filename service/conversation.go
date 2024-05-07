@@ -21,7 +21,7 @@ type (
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
-		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any)
+		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
 	}
@@ -137,8 +137,8 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	return response.Pagination(conversations, total, limit, offset)
 }
 
-func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, id string, data model.ShareInfo) (int, any) {
-	newConversationId := GenerateConversationId(appId, id)
+func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any) {
+	newConversationId := GenerateConversationId(appId, oaId, id)
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
 	if err != nil {
 		log.Error(err)
@@ -256,9 +256,9 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// TODO: clear cache
-	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.ExternalUserId))
+	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId))
 	if userAllocateCache != nil {
-		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.ExternalUserId)}); err != nil {
+		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId)}); err != nil {
 			log.Error(err)
 			return err
 		}
