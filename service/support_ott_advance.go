@@ -22,6 +22,7 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	if manageQueueUserCache != nil {
 		if err = json.Unmarshal([]byte(manageQueueUserCache.(string)), &manageQueueUser); err != nil {
 			log.Error(err)
+			return
 		}
 	}
 	filter := model.ChatManageQueueUserFilter{
@@ -122,7 +123,9 @@ func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
 	if isOk {
 		return index, &userLive
 	}
-	userLive = userLives[0]
+	if len(userLives) > 0 {
+		userLive = userLives[0]
+	}
 	return index, &userLive
 }
 
