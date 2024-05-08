@@ -84,7 +84,7 @@ func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
 		log.Info(err)
 		panic(err)
 	}
-	if _, err := db.GetDB().NewAddColumn().Model((*model.UserAllocate)(nil)).IfNotExists().ColumnExpr("oa_id uuid not null").Exec(ctx); err != nil {
+	if _, err := db.GetDB().NewAddColumn().Model((*model.UserAllocate)(nil)).IfNotExists().ColumnExpr("oa_id text not null").Exec(ctx); err != nil {
 		log.Info(err)
 		panic(err)
 	}
