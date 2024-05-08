@@ -171,7 +171,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 
-	if user.AuthUser != nil && slices.Contains([]string{"user", "agent"}, user.AuthUser.Level) {
+	if user.AuthUser != nil {
 		// TODO: publish to rmq
 		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
 		// 	log.Error(err)
@@ -254,7 +254,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 		// TODO: publish message to manager
 		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-		if isExist {
+		if isExist && user.AuthUser.UserId != manageQueueUser.ManageId {
 			if user.IsReassignSame {
 				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, &conversation)
 				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
