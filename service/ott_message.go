@@ -172,11 +172,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 
 	if user.AuthUser != nil {
-		// TODO: publish to rmq
-		// if err := HandlePushRMQ(ctx, ES_INDEX, docId, message, tmpBytes); err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
 		if user.IsReassignSame {
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], user.AuthUser.UserId, subscribers, true, &conversation)
 			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], user.AuthUser.UserId, subscribers, &message)

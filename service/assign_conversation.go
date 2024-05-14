@@ -163,8 +163,8 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if len(*conversations) < 1 {
-		log.Errorf("conversation %s not found", (*conversations)[0].ConversationId)
-		return response.ServiceUnavailableMsg("conversation " + (*conversations)[0].ConversationId + " not found")
+		log.Errorf("conversation not found")
+		return response.ServiceUnavailableMsg("conversation not found")
 	}
 
 	allocateFilter := model.UserAllocateFilter{
