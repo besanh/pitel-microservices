@@ -79,7 +79,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	// Upload to Docs
 	if len(data.EventName) > 0 && data.EventName != "text" {
-		fileUrl, err := s.UploadDoc(ctx, file)
+		fileUrl, err := s.UploadDoc(ctx, data.AppId, data.OaId, file)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
