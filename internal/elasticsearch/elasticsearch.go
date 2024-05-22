@@ -34,12 +34,12 @@ type (
 		Header     http.Header
 		Body       map[string]any
 	}
-)
 
-type elasticsearchClient struct {
-	config Config
-	client *elasticsearch.Client
-}
+	elasticsearchClient struct {
+		config Config
+		client *elasticsearch.Client
+	}
+)
 
 func NewElasticsearchClient(config Config) IElasticsearchClient {
 	es := &elasticsearchClient{

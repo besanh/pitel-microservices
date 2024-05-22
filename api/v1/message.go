@@ -63,11 +63,13 @@ func (h *Message) SendMessage(c *gin.Context) {
 		log.Info("send message body: ", jsonBody)
 
 		appId, _ := jsonBody["app_id"].(string)
+		oaId, _ := jsonBody["oa_id"].(string)
 		conversationId, _ := jsonBody["conversation_id"].(string)
 		content, _ := jsonBody["content"].(string)
 		message = model.MessageRequest{
 			EventName:      "text",
 			AppId:          appId,
+			OaId:           oaId,
 			ConversationId: conversationId,
 			Content:        content,
 		}

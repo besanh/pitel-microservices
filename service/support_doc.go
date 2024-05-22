@@ -12,7 +12,7 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *Message) UploadDoc(ctx context.Context, file *multipart.FileHeader) (fileUrl string, err error) {
+func (s *Message) UploadDoc(ctx context.Context, appId, oaId string, file *multipart.FileHeader) (fileUrl string, err error) {
 	fileContent, err := file.Open()
 	if err != nil {
 		log.Error(err)
@@ -25,6 +25,10 @@ func (s *Message) UploadDoc(ctx context.Context, file *multipart.FileHeader) (fi
 	client := resty.New()
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
+		SetFormData(map[string]string{
+			"app_id": appId,
+			"oa_id":  oaId,
+		}).
 		SetFileReader("data", file.Filename, bytes.NewReader(byteContent)).
 		Post(url)
 	if err != nil {

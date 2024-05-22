@@ -46,6 +46,7 @@ type AttachmentsDetails struct {
 type MessageRequest struct {
 	EventName      string                `json:"event_name"`
 	AppId          string                `json:"app_id"`
+	OaId           string                `json:"oa_id"`
 	ConversationId string                `json:"conversation_id"`
 	Content        string                `json:"content"`
 	Attachments    []*AttachmentsDetails `json:"attachments"`
