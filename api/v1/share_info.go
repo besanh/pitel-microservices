@@ -9,6 +9,7 @@ import (
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
@@ -18,6 +19,9 @@ type ShareInfo struct {
 	shareInfo service.IShareInfo
 }
 
+/**
+* Share form only work for zalo, facebook is not support
+ */
 func NewShareInfo(engine *gin.Engine, shareInfo service.IShareInfo) {
 	handler := &ShareInfo{
 		shareInfo: shareInfo,
@@ -28,6 +32,8 @@ func NewShareInfo(engine *gin.Engine, shareInfo service.IShareInfo) {
 		Group.POST("config", handler.PostConfigForm)
 		Group.POST("", handler.PostRequestShareInfo)
 		Group.GET("image/:filename", handler.GetImageShareInfo)
+		Group.GET("", handler.GetShareInfos)
+		Group.GET(":id", handler.GetShareInfoById)
 	}
 }
 
@@ -148,4 +154,45 @@ func (h *ShareInfo) GetImageShareInfo(c *gin.Context) {
 		log.Error(err)
 		c.JSON(response.NotFoundMsg(err))
 	}
+}
+
+func (h *ShareInfo) GetShareInfos(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	limit, offset := util.ParseLimit(c.Query("limit")), util.ParseOffset(c.Query("offset"))
+	filter := model.ShareInfoFormFilter{
+		OaId:      c.Query("oa_id"),
+		ShareType: c.Query("share_type"),
+		AppId:     c.Query("app_id"),
+	}
+
+	total, shareInfos, err := h.shareInfo.GetShareInfos(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(shareInfos, total, limit, offset))
+}
+
+func (h *ShareInfo) GetShareInfoById(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+	id := c.Param("id")
+	if len(id) < 1 {
+		c.JSON(response.BadRequestMsg("id is required"))
+		return
+	}
+	shareInfo, err := h.shareInfo.GetShareInfoById(c, res.Data, id)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OK(shareInfo))
 }

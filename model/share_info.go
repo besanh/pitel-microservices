@@ -16,6 +16,7 @@ type ShareInfoForm struct {
 }
 
 type ShareInfoFormRequest struct {
+	Id             string                `form:"id"`
 	ShareType      string                `form:"share_type" binding:"required"`
 	EventName      string                `form:"event_name"`
 	AppId          string                `form:"app_id" binding:"required"`

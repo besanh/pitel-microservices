@@ -36,14 +36,17 @@ func (s *ShareInfo) GetShareInfos(ctx context.Context, db sqlclient.ISqlClientCo
 	if len(filter.AppId) > 0 {
 		query.Where("share_form->?->>'app_id' = ?", filter.ShareType, filter.AppId)
 	}
-	if len(filter.UserId) > 0 {
-		query.Where("user_id = ?", filter.UserId)
+	if len(filter.Title) > 0 {
+		query.Where("share_form->?->>'title' = ?", filter.ShareType, filter.Title)
 	}
-
+	if len(filter.Subtitle) > 0 {
+		query.Where("share_form->?->>'subtitle' = ?", filter.ShareType, filter.Subtitle)
+	}
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
 	query.Order("created_at DESC")
+
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil

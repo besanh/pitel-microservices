@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"mime/multipart"
 
 	"github.com/go-resty/resty/v2"
@@ -15,10 +16,16 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
+/**
+* Khong co delete form vi zalo khong ho tro
+ */
 type (
 	IShareInfo interface {
 		PostConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) error
 		PostRequestShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormSubmitRequest) error
+		UpdateConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) error
+		GetShareInfos(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormFilter, limit, offset int) (int, *[]model.ShareInfoForm, error)
+		GetShareInfoById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ShareInfoForm, error)
 	}
 	ShareInfo struct{}
 )
@@ -78,6 +85,9 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 	return nil
 }
 
+/**
+* Send to ott service
+ */
 func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormSubmitRequest) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
@@ -152,4 +162,81 @@ func GetAvatarPageShareInfo(ctx context.Context, fileName string) (string, error
 		return err.Error(), err
 	}
 	return "", nil
+}
+
+func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) error {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		err = errors.New(response.ERR_EMPTY_CONN)
+		return err
+	}
+	if len(data.Id) < 1 {
+		log.Errorf("share config id %s not exist", data.Id)
+		err = fmt.Errorf("share config id %s not exist", data.Id)
+		return err
+	}
+
+	shareInfoExist, err := repository.ShareInfoRepo.GetById(ctx, dbCon, data.Id)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if shareInfoExist == nil {
+		log.Errorf("share config id %s not exist", data.Id)
+		err = fmt.Errorf("share config id %s not exist", data.Id)
+		return err
+	}
+
+	filePath := file.Filename
+
+	shareForm := model.ShareForm{}
+	if data.ShareType == "facebook" {
+	} else if data.ShareType == "zalo" {
+		shareForm.Zalo.AppId = data.AppId
+		shareForm.Zalo.ImageUrl = filePath
+		shareForm.Zalo.Title = data.Title
+		shareForm.Zalo.Subtitle = data.Subtitle
+		shareForm.Zalo.OaId = data.OaId
+	}
+
+	if err := util.ParseAnyToAny(shareForm, &shareInfoExist.ShareForm); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if err := repository.ShareInfoRepo.Update(ctx, dbCon, *shareInfoExist); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *ShareInfo) GetShareInfos(ctx context.Context, authUser *model.AuthUser, filter model.ShareInfoFormFilter, limit, offset int) (int, *[]model.ShareInfoForm, error) {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		err = errors.New(response.ERR_EMPTY_CONN)
+		return 0, nil, err
+	}
+
+	total, shareInfos, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, limit, offset)
+	if err != nil {
+		log.Error(err)
+		return 0, nil, err
+	}
+	return total, shareInfos, nil
+}
+
+func (s *ShareInfo) GetShareInfoById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ShareInfoForm, error) {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		err = errors.New(response.ERR_EMPTY_CONN)
+		return nil, err
+	}
+
+	shareInfo, err := repository.ShareInfoRepo.GetById(ctx, dbCon, id)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	return shareInfo, nil
 }
