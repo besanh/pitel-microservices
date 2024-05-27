@@ -11,6 +11,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -26,6 +27,7 @@ type (
 		UpdateConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) error
 		GetShareInfos(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormFilter, limit, offset int) (int, *[]model.ShareInfoForm, error)
 		GetShareInfoById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ShareInfoForm, error)
+		DeleteShareInfoById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 	ShareInfo struct{}
 )
@@ -40,8 +42,6 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return err
 	}
-
-	filePath := file.Filename
 
 	filter := model.ShareInfoFormFilter{
 		TenantId:  authUser.TenantId,
@@ -64,7 +64,8 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 	if data.ShareType == "facebook" {
 	} else if data.ShareType == "zalo" {
 		shareForm.Zalo.AppId = data.AppId
-		shareForm.Zalo.ImageUrl = filePath
+		shareForm.Zalo.ImageName = file.Filename
+		shareForm.Zalo.ImageUrl = API_SHARE_INFO_HOST + "/" + file.Filename
 		shareForm.Zalo.Title = data.Title
 		shareForm.Zalo.Subtitle = data.Subtitle
 		shareForm.Zalo.OaId = data.OaId
@@ -192,6 +193,7 @@ func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUs
 	if data.ShareType == "facebook" {
 	} else if data.ShareType == "zalo" {
 		shareForm.Zalo.AppId = data.AppId
+		shareForm.Zalo.ImageName = file.Filename
 		shareForm.Zalo.ImageUrl = filePath
 		shareForm.Zalo.Title = data.Title
 		shareForm.Zalo.Subtitle = data.Subtitle
@@ -204,6 +206,18 @@ func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUs
 	}
 
 	if err := repository.ShareInfoRepo.Update(ctx, dbCon, *shareInfoExist); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// Update to ott
+	shareInfoSubmitRequest := model.ShareInfoFormSubmitRequest{
+		ShareType:      "zalo",
+		EventName:      variables.EVENT_CHAT["ask_info"],
+		AppId:          data.AppId,
+		ExternalUserId: data.ExternalUserId,
+	}
+	if err := s.PostRequestShareInfo(ctx, authUser, shareInfoSubmitRequest); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -239,4 +253,29 @@ func (s *ShareInfo) GetShareInfoById(ctx context.Context, authUser *model.AuthUs
 		return nil, err
 	}
 	return shareInfo, nil
+}
+
+func (s *ShareInfo) DeleteShareInfoById(ctx context.Context, authUser *model.AuthUser, id string) error {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		err = errors.New(response.ERR_EMPTY_CONN)
+		return err
+	}
+
+	shareInfo, err := repository.ShareInfoRepo.GetById(ctx, dbCon, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if shareInfo == nil {
+		log.Errorf("share config id %s not exist", id)
+		err = fmt.Errorf("share config id %s not exist", id)
+		return err
+	}
+
+	err = repository.ShareInfoRepo.Delete(ctx, dbCon, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
 }

@@ -38,11 +38,12 @@ type ShareInfoFormSubmitRequest struct {
 type ShareForm struct {
 	Facebook struct{} `json:"facebook"`
 	Zalo     struct {
-		AppId    string `json:"app_id"`
-		OaId     string `json:"oa_id"`
-		ImageUrl string `json:"image_url"`
-		Title    string `json:"title"`
-		Subtitle string `json:"subtitle"`
+		AppId     string `json:"app_id"`
+		OaId      string `json:"oa_id"`
+		ImageName string `json:"image_name"`
+		ImageUrl  string `json:"image_url"`
+		Title     string `json:"title"`
+		Subtitle  string `json:"subtitle"`
 	} `json:"zalo"`
 }
 
@@ -66,6 +67,22 @@ func (s *ShareInfoFormRequest) Validate() (err error) {
 	}
 	if len(s.OaId) < 1 {
 		return errors.New("oa id is required")
+	}
+	return
+}
+
+func (s *ShareInfoFormRequest) ValidateUpdate() (err error) {
+	if len(s.ShareType) < 1 {
+		return errors.New("share type is required")
+	}
+	if len(s.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(s.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+	if len(s.ExternalUserId) < 1 {
+		return errors.New("external_user_id is required")
 	}
 	return
 }
