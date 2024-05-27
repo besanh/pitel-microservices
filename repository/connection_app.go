@@ -35,7 +35,7 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	result := new([]model.ChatConnectionApp)
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cca.*").
-		ColumnExpr("share_form.*")
+		ColumnExpr("tmp.*")
 	if len(filter.TenantId) > 0 {
 		query.Where("cca.tenant_id = ?", filter.TenantId)
 	}
@@ -58,15 +58,15 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 		query.Limit(limit).Offset(offset)
 	}
 
-	resultShareForm := new(model.ShareInfoForm)
-	query2 := db.GetDB().NewSelect().Model(resultShareForm).
+	query2 := db.GetDB().NewSelect().TableExpr("chat_share_info as csi").
+		ColumnExpr("csi.id as share_form_uuid").
+		ColumnExpr("csi.share_form as share_info_form").
 		Where("cca.oa_info->'zalo'::text->0->>'oa_id' = share_form->'zalo'::text->>'oa_id'")
 	if len(filter.TenantId) > 0 {
 		query2.Where("tenant_id = ?", filter.TenantId)
 	}
 
-	query.Join("LEFT JOIN LATERAL (?) AS share_form ON true", query2)
-
+	query.Join("LEFT JOIN LATERAL (?) AS tmp ON true", query2)
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil
