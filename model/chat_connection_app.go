@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -11,17 +12,18 @@ import (
 
 type ChatConnectionApp struct {
 	bun.BaseModel  `bun:"table:chat_connection_app,alias:cca"`
-	Id             string     `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	TenantId       string     `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	CreatedAt      time.Time  `json:"created_at" bun:"created_at,notnull"`
-	UpdatedAt      time.Time  `json:"updated_at" bun:"updated_at,notnull"`
-	ConnectionName string     `json:"connection_name" bun:"connection_name,type:text,notnull"`
-	ConnectionType string     `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId          string     `json:"app_id" bun:"app_id,type:text,notnull"`
-	QueueId        string     `json:"queue_id" bun:"queue_id,type:text,notnull"`
-	OaInfo         OaInfo     `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
-	Status         string     `json:"status" bun:"status,notnull"`
-	ShareForm      *ShareForm `json:"share_form" bun:"share_form"`
+	Id             string          `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	TenantId       string          `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	CreatedAt      time.Time       `json:"created_at" bun:"created_at,notnull"`
+	UpdatedAt      time.Time       `json:"updated_at" bun:"updated_at,notnull"`
+	ConnectionName string          `json:"connection_name" bun:"connection_name,type:text,notnull"`
+	ConnectionType string          `json:"connection_type" bun:"connection_type,type:text,notnull"`
+	AppId          string          `json:"app_id" bun:"app_id,type:text,notnull"`
+	QueueId        string          `json:"queue_id" bun:"queue_id,type:text,notnull"`
+	OaInfo         OaInfo          `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
+	Status         string          `json:"status" bun:"status,notnull"`
+	ShareFormUuid  string          `json:"share_form_uuid" bun:"share_form_uuid"`
+	ShareInfoForm  json.RawMessage `json:"share_info_form" bun:"share_info_form"`
 }
 
 type OaInfo struct {
