@@ -12,7 +12,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 	"nhooyr.io/websocket"
@@ -37,8 +36,6 @@ func AuthMiddleware(c *gin.Context) *model.AAAResponse {
 			Source:  c.GetHeader("source"),
 		}
 	}
-
-	log.Info("bssAuthRequest: ", &bssAuthRequest)
 
 	res := AAAMiddleware(c, bssAuthRequest)
 
@@ -117,7 +114,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 		log.Error(err)
 		return result, err
 	}
-	log.Info("resInfo: ", &resInfo)
+
 	userUuid, _ := resInfo["user_uuid"].(string)
 	if len(userUuid) < 1 {
 		log.Errorf("userUuid %s is invalid", userUuid)
@@ -126,11 +123,11 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 
 	// Get Info user
 	userInfo := model.AuthUserInfo{}
-	userInfoCache := cache.MCache.Get(USER_INFO + "_" + bssAuthRequest.Token)
+	userInfoCache := cache.RCache.Get(USER_INFO + "_" + bssAuthRequest.Token)
 	if userInfoCache != nil {
-		if err := util.ParseAnyToAny(userInfoCache, &userInfo); err != nil {
+		if err := json.Unmarshal([]byte(userInfoCache.(string)), &userInfo); err != nil {
 			log.Error(err)
-			return nil, err
+			return result, err
 		}
 	} else {
 		url := bssAuthRequest.AuthUrl + "/v1/crm/user-crm/" + userUuid
@@ -165,7 +162,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 		userInfo.Extension, _ = resp["extension"].(string)
 		userInfo.ExtensionUuid, _ = resp["extension_uuid"].(string)
 
-		cache.MCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 3*time.Minute)
+		cache.RCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 3*time.Minute)
 	}
 
 	if len(userInfo.UserUuid) > 1 {
@@ -182,8 +179,8 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			},
 		}
 	} else {
-		cache.MCache.Del(USER_INFO + "_" + bssAuthRequest.Token)
-		return nil, fmt.Errorf("failed to get user info")
+		cache.RCache.Del([]string{USER_INFO + "_" + bssAuthRequest.Token})
+		return nil, errors.New("failed to get user info")
 	}
 
 	return result, nil

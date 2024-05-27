@@ -21,13 +21,13 @@ type AppFilter struct {
 }
 
 type ChatConnectionAppFilter struct {
-	AppId          string
+	AppId          string `json:"app_id"`
 	TenantId       string `json:"tenant_id"`
-	ConnectionName string
-	ConnectionType string
-	QueueId        string
-	Status         string
-	OaId           string
+	ConnectionName string `json:"connection_name"`
+	ConnectionType string `json:"connection_type"`
+	QueueId        string `json:"queue_id"`
+	Status         string `json:"status"`
+	OaId           string `json:"oa_id"`
 }
 
 type QueueFilter struct {

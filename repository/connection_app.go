@@ -33,9 +33,11 @@ func NewConnectionApp() IChatConnectionApp {
 // TODO: one connection having many elements zalo/fb in 1 record
 func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error) {
 	result := new([]model.ChatConnectionApp)
-	query := db.GetDB().NewSelect().Model(result)
+	query := db.GetDB().NewSelect().Model(result).
+		Column("cca.*").
+		ColumnExpr("share_form.*")
 	if len(filter.TenantId) > 0 {
-		query.Where("tenant_id = ?", filter.TenantId)
+		query.Where("cca.tenant_id = ?", filter.TenantId)
 	}
 	if len(filter.ConnectionName) > 0 {
 		query.Where("connection_name = ?", filter.ConnectionName)
@@ -55,6 +57,16 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
+
+	resultShareForm := new(model.ShareInfoForm)
+	query2 := db.GetDB().NewSelect().Model(resultShareForm).
+		Where("cca.oa_info->'zalo'::text->0->>'oa_id' = share_form->'zalo'::text->>'oa_id'")
+	if len(filter.TenantId) > 0 {
+		query2.Where("tenant_id = ?", filter.TenantId)
+	}
+
+	query.Join("LEFT JOIN LATERAL (?) AS share_form ON true", query2)
+
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil

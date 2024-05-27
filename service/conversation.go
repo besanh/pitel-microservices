@@ -207,7 +207,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 
 	if status == "done" {
 		userAllocateTmp.MainAllocate = "deactive"
-		userAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		userAllocateTmp.AllocatedTimestamp = time.Now().UnixMilli()
 		userAllocateTmp.UpdatedAt = time.Now()
 		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
 			log.Error(err)
@@ -218,7 +218,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		conversationExist.IsDoneAt = time.Now()
 	} else if status == "reopen" {
 		userAllocateTmp.MainAllocate = "active"
-		userAllocateTmp.AllocatedTimestamp = time.Now().Unix()
+		userAllocateTmp.AllocatedTimestamp = time.Now().UnixMilli()
 		userAllocateTmp.UpdatedAt = time.Now()
 		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
 			log.Error(err)
