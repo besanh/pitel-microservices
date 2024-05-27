@@ -177,6 +177,12 @@ func main() {
 	// Init storage
 	storage.InitStorage()
 
+	// Store to service
+	service.S3_ENDPOINT = env.GetStringENV("STORAGE_ENDPOINT", "")
+	service.S3_BUCKET_NAME = env.GetStringENV("STORAGE_BUCKET_NAME", "")
+	service.S3_ACCESS_KEY = env.GetStringENV("STORAGE_ACCESS_KEY", "")
+	service.S3_SECRET_KEY = env.GetStringENV("STORAGE_SECRET_KEY", "")
+
 	// Run cron jobs
 	// handleCronBatchSchedule(service.BatchService.ScanBatchJobEvery1Minute)
 

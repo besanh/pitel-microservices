@@ -34,6 +34,8 @@ func NewShareInfo(engine *gin.Engine, shareInfo service.IShareInfo) {
 		Group.GET("image/:filename", handler.GetImageShareInfo)
 		Group.GET("", handler.GetShareInfos)
 		Group.GET(":id", handler.GetShareInfoById)
+		Group.PUT(":id", handler.PutShareInfoById)
+		Group.DELETE(":id", handler.DeleteShareInfoById)
 	}
 }
 
@@ -195,4 +197,55 @@ func (h *ShareInfo) GetShareInfoById(c *gin.Context) {
 		return
 	}
 	c.JSON(response.OK(shareInfo))
+}
+
+func (h *ShareInfo) PutShareInfoById(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+	id := c.Param("id")
+	if len(id) < 1 {
+		c.JSON(response.BadRequestMsg("id is required"))
+		return
+	}
+
+	var data model.ShareInfoFormRequest
+	if err := c.ShouldBind(&data); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	if err := data.ValidateUpdate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	data.Id = id
+	err := h.shareInfo.UpdateConfigForm(c, res.Data, data, data.Files)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
+}
+
+func (h *ShareInfo) DeleteShareInfoById(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+	id := c.Param("id")
+	if len(id) < 1 {
+		c.JSON(response.BadRequestMsg("id is required"))
+		return
+	}
+	err := h.shareInfo.DeleteShareInfoById(c, res.Data, id)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }

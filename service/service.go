@@ -54,6 +54,12 @@ var (
 	API_CRM              string = ""
 	ENABLE_PUBLISH_ADMIN bool   = false
 	AAA_HOST             string = ""
+
+	// Storage
+	S3_ENDPOINT    string = ""
+	S3_BUCKET_NAME string = ""
+	S3_ACCESS_KEY  string = ""
+	S3_SECRET_KEY  string = ""
 )
 
 type (
