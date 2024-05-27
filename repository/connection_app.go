@@ -11,7 +11,7 @@ import (
 
 type (
 	IChatConnectionApp interface {
-		GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error)
+		GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error)
 		GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (entity *model.ChatConnectionApp, err error)
 		Insert(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatConnectionApp) (err error)
 		Update(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatConnectionApp) (err error)
@@ -31,8 +31,8 @@ func NewConnectionApp() IChatConnectionApp {
 
 // Current: one connection having 1 element zalo/fb in 1 record
 // TODO: one connection having many elements zalo/fb in 1 record
-func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error) {
-	result := new([]model.ChatConnectionApp)
+func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error) {
+	result := new([]model.ChatConnectionAppView)
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cca.*").
 		ColumnExpr("tmp.*")

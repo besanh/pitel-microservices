@@ -211,8 +211,13 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 					return user, err
 				}
 				if len(*chatQueueUsers) > 0 {
+					connection := model.ChatConnectionApp{}
+					if err = util.ParseAnyToAny((*connectionApps)[0], &connection); err != nil {
+						log.Error(err)
+						return user, err
+					}
 					chatSetting := model.ChatSetting{
-						ConnectionApp:   (*connectionApps)[0],
+						ConnectionApp:   connection,
 						ConnectionQueue: (*connectionQueues)[0],
 						QueueUser:       *chatQueueUsers,
 						RoutingAlias:    chatRouting.RoutingAlias,
