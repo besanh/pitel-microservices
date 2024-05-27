@@ -185,7 +185,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			OaId:               (*conversations)[0].OaId,
 			UserId:             data.UserId,
 			QueueId:            data.QueueId,
-			AllocatedTimestamp: time.Now().Unix(),
+			AllocatedTimestamp: time.Now().UnixMilli(),
 			MainAllocate:       "active",
 			ConnectionId:       (*conversations)[0].ConversationId,
 		}

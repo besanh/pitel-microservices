@@ -146,7 +146,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		user.PreviousAssign.UserId = user.AuthUser.UserId
 		user.PreviousAssign.MainAllocate = "active"
 		user.PreviousAssign.UpdatedAt = time.Now()
-		user.PreviousAssign.AllocatedTimestamp = time.Now().Unix()
+		user.PreviousAssign.AllocatedTimestamp = time.Now().UnixMilli()
 		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, *user.PreviousAssign); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -233,7 +233,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				OaId:               message.OaId,
 				UserId:             manageQueueUser.ManageId,
 				QueueId:            manageQueueUser.QueueId,
-				AllocatedTimestamp: time.Now().Unix(),
+				AllocatedTimestamp: time.Now().UnixMilli(),
 				MainAllocate:       "active",
 				ConnectionId:       manageQueueUser.ConnectionId,
 			}

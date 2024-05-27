@@ -75,7 +75,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 					user.UserIdRemove = (*userAllocations)[0].UserId
 				}
 
-				log.Infof("conversation %s allocated to username %s, id: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId)
+				log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
 				return user, nil
 			} else {
 				authInfo.TenantId = (*userAllocations)[0].TenantId
@@ -85,7 +85,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 				user.ConnectionId = (*userAllocations)[0].ConnectionId
 				user.QueueId = (*userAllocations)[0].QueueId
 
-				log.Infof("conversation %s allocated to username %s, id: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId)
+				log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
 				return user, nil
 			}
 		} else {
@@ -298,7 +298,7 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 	if isConversationExist {
 		currentUserAllocate.UserId = userAllocate.UserId
 		currentUserAllocate.MainAllocate = "active"
-		currentUserAllocate.AllocatedTimestamp = time.Now().Unix()
+		currentUserAllocate.AllocatedTimestamp = time.Now().UnixMilli()
 		currentUserAllocate.UpdatedAt = time.Now()
 		tenantId := userAllocate.TenantId
 		if len(tenantId) < 1 {
@@ -345,7 +345,7 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 				OaId:               chatSetting.Message.OaId,
 				UserId:             userAllocate.UserId,
 				QueueId:            chatSetting.ConnectionQueue.QueueId,
-				AllocatedTimestamp: time.Now().Unix(),
+				AllocatedTimestamp: time.Now().UnixMilli(),
 				MainAllocate:       "active",
 				ConnectionId:       chatSetting.ConnectionQueue.ConnectionId,
 				Username:           userAllocate.Username,

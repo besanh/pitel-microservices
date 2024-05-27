@@ -266,7 +266,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 			for _, item := range *messages {
 				item.IsRead = "active"
 				item.ReadBy = append(item.ReadBy, authUser.UserId)
-				item.ReadTimestamp = time.Now().Unix()
+				item.ReadTimestamp = time.Now().UnixMilli()
 				item.UpdatedAt = time.Now()
 				item.ReadTime = time.Now()
 
@@ -312,7 +312,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 
 			message.IsRead = "active"
 			message.ReadBy = append(message.ReadBy, authUser.UserId)
-			message.ReadTimestamp = time.Now().Unix()
+			message.ReadTimestamp = time.Now().UnixMilli()
 			message.UpdatedAt = time.Now()
 			message.ReadTime = time.Now()
 
