@@ -32,6 +32,7 @@ type ShareInfoFormSubmitRequest struct {
 	ShareType      string `json:"share_type"`
 	EventName      string `json:"event_name"`
 	AppId          string `json:"app_id"`
+	OaId           string `json:"oa_id"`
 	ExternalUserId string `json:"external_user_id"`
 }
 
@@ -90,6 +91,9 @@ func (s *ShareInfoFormSubmitRequest) Validate() (err error) {
 	}
 	if len(s.AppId) < 1 {
 		return errors.New("app id is required")
+	}
+	if len(s.OaId) < 1 {
+		return errors.New("oa id is required")
 	}
 	if len(s.ExternalUserId) < 1 {
 		return errors.New("external_user_id is required")
