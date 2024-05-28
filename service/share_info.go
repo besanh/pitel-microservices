@@ -102,12 +102,12 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 		AppId:     data.AppId,
 		OaId:      data.OaId,
 	}
-	total, shareInfos, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, 1, 0)
+	_, shareInfos, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	if total < 1 {
+	if len(*shareInfos) < 1 {
 		log.Error("share config app_id " + data.AppId + " not exist")
 		err = errors.New("share config app_id " + data.AppId + " not exist")
 		return err
