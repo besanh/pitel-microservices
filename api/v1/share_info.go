@@ -29,7 +29,9 @@ func NewShareInfo(engine *gin.Engine, shareInfo service.IShareInfo) {
 	engine.MaxMultipartMemory = 10 << 20
 	Group := engine.Group("bss-message/v1/share-info")
 	{
+		// Insert db
 		Group.POST("config", handler.PostConfigForm)
+		// Send to ott share info
 		Group.POST("", handler.PostRequestShareInfo)
 		Group.GET("image/:filename", handler.GetImageShareInfo)
 		Group.GET("", handler.GetShareInfos)
