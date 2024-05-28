@@ -11,6 +11,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"golang.org/x/exp/slices"
 )
 
 type (
@@ -165,6 +166,44 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	if len(*conversations) < 1 {
 		log.Errorf("conversation not found")
 		return response.ServiceUnavailableMsg("conversation not found")
+	}
+
+	for k, conv := range *conversations {
+		filter := model.MessageFilter{
+			TenantId:       conv.TenantId,
+			ConversationId: conv.ConversationId,
+			IsRead:         "deactive",
+			EventNameExlucde: []string{
+				"received",
+				"seen",
+			},
+		}
+		_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+		if err != nil {
+			log.Error(err)
+			break
+		}
+		conv.TotalUnRead = int64(len(*messages))
+
+		filterMessage := model.MessageFilter{
+			TenantId:       conv.TenantId,
+			ConversationId: conv.ConversationId,
+		}
+		totalTmp, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+		if err != nil {
+			log.Error(err)
+			break
+		}
+		if totalTmp > 0 {
+			if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
+				conv.LatestMessageContent = (*message)[0].EventName
+			} else {
+				conv.LatestMessageContent = (*message)[0].Content
+			}
+		}
+		conv.LatestMessageDirection = (*message)[0].Direction
+
+		(*conversations)[k] = conv
 	}
 
 	allocateFilter := model.UserAllocateFilter{
