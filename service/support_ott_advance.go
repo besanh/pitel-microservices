@@ -8,7 +8,6 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -253,12 +252,7 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			return
 		}
 
-		connection := model.ChatConnectionApp{}
-		if err = util.ParseAnyToAny((*connections)[0], &connection); err != nil {
-			log.Error(err)
-			return
-		}
-		connectionApp = connection
+		connectionApp = (*connections)[0]
 	}
 	return
 }

@@ -120,7 +120,7 @@ func (s *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, authUser *
 	}
 	filter.TenantId = authUser.TenantId
 
-	total, apps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, limit, offset)
+	total, apps, err := repository.ChatConnectionAppRepo.GetChatConnectionAppCustom(ctx, dbCon, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return
@@ -153,8 +153,9 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	}
 
 	filter := model.ChatConnectionAppFilter{
-		OaId:  data.OaId,
-		AppId: data.AppId,
+		TenantId: authUser.TenantId,
+		OaId:     data.OaId,
+		AppId:    data.AppId,
 	}
 	_, connectionAppExist, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
