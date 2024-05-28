@@ -100,6 +100,7 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 		TenantId:  authUser.TenantId,
 		ShareType: data.ShareType,
 		AppId:     data.AppId,
+		OaId:      data.OaId,
 	}
 	total, shareInfos, err := repository.ShareInfoRepo.GetShareInfos(ctx, dbCon, filter, 1, 0)
 	if err != nil {
