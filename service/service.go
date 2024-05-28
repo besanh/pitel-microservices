@@ -60,6 +60,9 @@ var (
 	S3_BUCKET_NAME string = ""
 	S3_ACCESS_KEY  string = ""
 	S3_SECRET_KEY  string = ""
+
+	// ZALO
+	ZALO_SHARE_INFO_SUBTITLE = ""
 )
 
 type (
