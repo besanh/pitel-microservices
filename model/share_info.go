@@ -25,7 +25,7 @@ type ShareInfoFormRequest struct {
 	ImageUrl       string                `form:"image_url"`
 	Title          string                `form:"title" binding:"required"`
 	Subtitle       string                `form:"subtitle" binding:"required"`
-	Files          *multipart.FileHeader `form:"file" binding:"required"`
+	Files          *multipart.FileHeader `form:"file"`
 }
 
 type ShareInfoFormSubmitRequest struct {
@@ -80,9 +80,6 @@ func (s *ShareInfoFormRequest) ValidateUpdate() (err error) {
 	}
 	if len(s.OaId) < 1 {
 		return errors.New("oa id is required")
-	}
-	if len(s.ExternalUserId) < 1 {
-		return errors.New("external_user_id is required")
 	}
 	return
 }
