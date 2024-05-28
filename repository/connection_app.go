@@ -11,7 +11,8 @@ import (
 
 type (
 	IChatConnectionApp interface {
-		GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error)
+		GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error)
+		GetChatConnectionAppCustom(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error)
 		GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (entity *model.ChatConnectionApp, err error)
 		Insert(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatConnectionApp) (err error)
 		Update(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatConnectionApp) (err error)
@@ -31,7 +32,42 @@ func NewConnectionApp() IChatConnectionApp {
 
 // Current: one connection having 1 element zalo/fb in 1 record
 // TODO: one connection having many elements zalo/fb in 1 record
-func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error) {
+func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionApp, error) {
+	result := new([]model.ChatConnectionApp)
+	query := db.GetDB().NewSelect().Model(result).
+		Column("cca.*")
+	if len(filter.TenantId) > 0 {
+		query.Where("cca.tenant_id = ?", filter.TenantId)
+	}
+	if len(filter.ConnectionName) > 0 {
+		query.Where("connection_name = ?", filter.ConnectionName)
+	}
+	if len(filter.ConnectionType) > 0 {
+		query.Where("connection_type = ?", filter.ConnectionType)
+		if len(filter.OaId) > 0 {
+			query.Where("oa_info->?::text->0->>'oa_id' = ?", filter.ConnectionType, filter.OaId)
+		}
+	}
+	if len(filter.QueueId) > 0 {
+		query.Where("queue_id = ?", filter.QueueId)
+	}
+	if len(filter.Status) > 0 {
+		query.Where("status = ?", filter.Status)
+	}
+	if limit > 0 {
+		query.Limit(limit).Offset(offset)
+	}
+
+	total, err := query.ScanAndCount(ctx)
+	if err == sql.ErrNoRows {
+		return 0, result, nil
+	} else if err != nil {
+		return 0, result, err
+	}
+	return total, result, nil
+}
+
+func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error) {
 	result := new([]model.ChatConnectionAppView)
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cca.*").
