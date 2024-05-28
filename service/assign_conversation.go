@@ -11,6 +11,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"golang.org/x/exp/slices"
 )
 
 type (
@@ -167,6 +168,44 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		return response.ServiceUnavailableMsg("conversation not found")
 	}
 
+	for k, conv := range *conversations {
+		filter := model.MessageFilter{
+			TenantId:       conv.TenantId,
+			ConversationId: conv.ConversationId,
+			IsRead:         "deactive",
+			EventNameExlucde: []string{
+				"received",
+				"seen",
+			},
+		}
+		_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+		if err != nil {
+			log.Error(err)
+			break
+		}
+		conv.TotalUnRead = int64(len(*messages))
+
+		filterMessage := model.MessageFilter{
+			TenantId:       conv.TenantId,
+			ConversationId: conv.ConversationId,
+		}
+		totalTmp, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+		if err != nil {
+			log.Error(err)
+			break
+		}
+		if totalTmp > 0 {
+			if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
+				conv.LatestMessageContent = (*message)[0].EventName
+			} else {
+				conv.LatestMessageContent = (*message)[0].Content
+			}
+		}
+		conv.LatestMessageDirection = (*message)[0].Direction
+
+		(*conversations)[k] = conv
+	}
+
 	allocateFilter := model.UserAllocateFilter{
 		ConversationId: (*conversations)[0].ConversationId,
 		MainAllocate:   data.Status,
@@ -225,7 +264,21 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, &conversationEvent)
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, &conversationEvent)
+
+		// TODO: publish message
+		filterMessage := model.MessageFilter{
+			TenantId:       (*conversations)[0].TenantId,
+			ConversationId: (*conversations)[0].ConversationId,
+		}
+		_, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if len(*messages) > 0 {
+			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], userIdAssigned, subscribers, &(*messages)[0])
+		}
 	}
 
 	// Event user_assigned
@@ -257,7 +310,21 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 
-		go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, &conversationEvent)
+		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, &conversationEvent)
+
+		// TODO: publish message
+		filterMessage := model.MessageFilter{
+			TenantId:       (*conversations)[0].TenantId,
+			ConversationId: (*conversations)[0].ConversationId,
+		}
+		_, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if len(*messages) > 0 {
+			PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], userUuids, &(*messages)[0])
+		}
 	}
 
 	return response.OKResponse()
