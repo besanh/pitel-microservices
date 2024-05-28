@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/go-co-op/gocron"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/queue"
@@ -183,8 +182,8 @@ func main() {
 	service.S3_ACCESS_KEY = env.GetStringENV("STORAGE_ACCESS_KEY", "")
 	service.S3_SECRET_KEY = env.GetStringENV("STORAGE_SECRET_KEY", "")
 
-	// Run cron jobs
-	// handleCronBatchSchedule(service.BatchService.ScanBatchJobEvery1Minute)
+	// Zalo
+	service.ZALO_SHARE_INFO_SUBTITLE = env.GetStringENV("ZALO_SHARE_INFO_SUBTITLE", "")
 
 	// Run gRPC server
 	server.NewGRPCServer(config.gRPCPort)
@@ -210,14 +209,4 @@ func setAppLogger(cfg Config, file *os.File) {
 		log.SetLevel(log.InfoLevel)
 	}
 	log.SetOutput(io.MultiWriter(os.Stdout, file))
-}
-
-func handleCronBatchSchedule(f func()) {
-	s1 := gocron.NewScheduler(time.UTC)
-	s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
-	_, err := s1.Every(1).Minute().Do(f)
-	if err != nil {
-		return
-	}
-	s1.StartAsync()
 }

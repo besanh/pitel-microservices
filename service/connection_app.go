@@ -109,6 +109,36 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		return connectionApp.Id, err
 	}
 
+	// Insert share info
+	if connectionApp.ConnectionType == "zalo" {
+		shareInfo := model.ShareInfoForm{
+			Base:      model.InitBase(),
+			TenantId:  authUser.TenantId,
+			ShareType: "zalo",
+			ShareForm: model.ShareForm{
+				Zalo: struct {
+					AppId     string "json:\"app_id\""
+					OaId      string "json:\"oa_id\""
+					ImageName string "json:\"image_name\""
+					ImageUrl  string "json:\"image_url\""
+					Title     string "json:\"title\""
+					Subtitle  string "json:\"subtitle\""
+				}{
+					AppId:     (*app)[0].InfoApp.Zalo.AppId,
+					OaId:      (*app)[0].InfoApp.Zalo.OaId,
+					ImageName: "oa_zalo.png",
+					ImageUrl:  API_DOC + "/images/oa_zalo.png",
+					Title:     (*app)[0].InfoApp.Zalo.OaName,
+					Subtitle:  ZALO_SHARE_INFO_SUBTITLE,
+				},
+			},
+		}
+		if err = repository.ShareInfoRepo.Insert(ctx, dbCon, shareInfo); err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		}
+	}
+
 	return connectionApp.Id, nil
 }
 
