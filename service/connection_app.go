@@ -152,21 +152,6 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		return err
 	}
 
-	filter := model.ChatConnectionAppFilter{
-		TenantId: authUser.TenantId,
-		OaId:     data.OaId,
-		AppId:    data.AppId,
-	}
-	_, connectionAppExist, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filter, 1, 0)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	if len(*connectionAppExist) > 0 {
-		log.Errorf("connection app with oa_id: %s, app_id: %s already exist", data.OaId, data.AppId)
-		return errors.New("connection app with oa_id: " + data.OaId + ", app_id: " + data.AppId + " already exist")
-	}
-
 	chatConnectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
