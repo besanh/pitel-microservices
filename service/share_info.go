@@ -120,7 +120,7 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 		AppId:     data.AppId,
 		OaId:      (*shareInfos)[0].ShareForm.Zalo.OaId,
 		Uid:       data.ExternalUserId,
-		ImageUrl:  API_SHARE_INFO_HOST + "/" + (*shareInfos)[0].ShareForm.Zalo.ImageUrl,
+		ImageUrl:  API_SHARE_INFO_HOST + "/" + (*shareInfos)[0].ShareForm.Zalo.ImageName,
 		Title:     (*shareInfos)[0].ShareForm.Zalo.Title,
 		Subtitle:  (*shareInfos)[0].ShareForm.Zalo.Subtitle,
 	}
