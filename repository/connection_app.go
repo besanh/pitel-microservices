@@ -44,9 +44,10 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	}
 	if len(filter.ConnectionType) > 0 {
 		query.Where("connection_type = ?", filter.ConnectionType)
-		if len(filter.OaId) > 0 {
-			query.Where("oa_info->?::text->0->>'oa_id' = ?", filter.ConnectionType, filter.OaId)
-		}
+	}
+	if len(filter.OaId) > 0 {
+		query.Where("oa_info->'zalo'::text->0->>'oa_id' = ?", filter.OaId)
+		query.WhereOr("oa_info->'facebook'::text->0->>'oa_id' = ?", filter.OaId)
 	}
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
@@ -57,7 +58,6 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
-
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil

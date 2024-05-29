@@ -76,6 +76,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatManageQueueUser)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatEmail)(nil)); err != nil {
+		log.Error(err)
+	}
 	log.Println("TABLES WERE CREATED")
 }
 

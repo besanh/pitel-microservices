@@ -125,6 +125,7 @@ func NewGRPCServer(port string) {
 	v1.NewManageQueue(httpServer, service.NewManageQueue())
 	v1.NewAssignConversation(httpServer, service.NewAssignConversation())
 	v1.NewProfile(httpServer, service.NewProfile())
+	v1.NewChatEmail(httpServer, service.NewChatEmail())
 	v1.NewTest(httpServer)
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
