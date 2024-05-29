@@ -130,3 +130,9 @@ type UserInQueueFilter struct {
 	ConversationType string `json:"conversation_type"`
 	Status           string `json:"status"`
 }
+
+type ChatEmailFilter struct {
+	TenantId string       `json:"tenant_id"`
+	OaId     string       `json:"oa_id"`
+	Status   sql.NullBool `json:"status"`
+}
