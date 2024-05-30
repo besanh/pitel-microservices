@@ -17,7 +17,7 @@ type (
 		InsertChatConnectionApp(ctx context.Context, authUser *model.AuthUser, data model.ChatConnectionAppRequest) (string, error)
 		GetChatConnectionApp(ctx context.Context, authUser *model.AuthUser, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error)
 		GetChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string) (model.ChatConnectionApp, error)
-		UpdateChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatConnectionAppRequest) (err error)
+		UpdateChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatConnectionAppRequest, isUpdateFromOtt bool) (err error)
 		DeleteChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
 	ChatConnectionApp struct{}
@@ -60,12 +60,12 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		AppType:    data.ConnectionType,
 		DefaultApp: "active",
 	}
-	total, app, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
+	_, app, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return connectionApp.Id, err
 	}
-	if total > 0 {
+	if len(*app) > 0 {
 		if data.ConnectionType == "facebook" {
 			connectionApp.AppId = (*app)[0].InfoApp.Facebook.AppId
 		} else if data.ConnectionType == "zalo" {
@@ -79,8 +79,10 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	connectionApp.OaInfo = *data.OaInfo
 	if data.ConnectionType == "facebook" {
 		connectionApp.OaInfo.Facebook[0].AppId = (*app)[0].InfoApp.Facebook.AppId
+		connectionApp.OaInfo.Facebook[0].CreatedTimestamp = time.Now().Unix()
 	} else if data.ConnectionType == "zalo" {
 		connectionApp.OaInfo.Zalo[0].AppId = (*app)[0].InfoApp.Zalo.AppId
+		connectionApp.OaInfo.Zalo[0].CreatedTimestamp = time.Now().Unix()
 	}
 	connectionApp.Status = data.Status
 
@@ -175,7 +177,7 @@ func (s *ChatConnectionApp) GetChatConnectionAppById(ctx context.Context, authUs
 	return *chatConnectionApp, nil
 }
 
-func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatConnectionAppRequest) (err error) {
+func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatConnectionAppRequest, isUpdateFromOtt bool) (err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -216,6 +218,11 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		chatConnectionAppExist.OaInfo.Zalo[0].Cover = data.Cover
 		chatConnectionAppExist.OaInfo.Zalo[0].CateName = data.CateName
 		chatConnectionAppExist.OaInfo.Zalo[0].Status = data.Status
+		if isUpdateFromOtt {
+			chatConnectionAppExist.OaInfo.Zalo[0].AccessToken = data.OaInfo.Zalo[0].AccessToken
+			chatConnectionAppExist.OaInfo.Zalo[0].Expire = data.OaInfo.Zalo[0].Expire
+			chatConnectionAppExist.OaInfo.Zalo[0].UpdatedTimestamp = time.Now().Unix()
+		}
 	} else if chatConnectionAppExist.ConnectionType == "facebook" && len(data.OaId) > 0 {
 		chatConnectionAppExist.OaInfo.Facebook[0].OaId = data.OaId
 	}

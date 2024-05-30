@@ -17,6 +17,7 @@ type (
 		GetChatEmailById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatEmail, error)
 		UpdateChatEmailById(ctx context.Context, authUser *model.AuthUser, id string, request model.ChatEmailRequest) error
 		DeleteChatEmailById(ctx context.Context, authUser *model.AuthUser, id string) error
+		HandleJobExpireToken()
 	}
 	ChatEmail struct{}
 )

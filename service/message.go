@@ -47,12 +47,12 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		filter := model.ConversationFilter{
 			ConversationId: []string{data.ConversationId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
+		_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if total > 0 {
+		if len(*conversations) > 0 {
 			if err := util.ParseAnyToAny((*conversations)[0], &conversation); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
@@ -189,12 +189,12 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
 		QueueId: (*connection)[0].QueueId,
 	}
-	totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
+	_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if totalManageQueueUser > 0 {
+	if len(*manageQueueUser) > 0 {
 		queueId = (*manageQueueUser)[0].QueueId
 	}
 

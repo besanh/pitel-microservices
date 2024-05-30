@@ -61,8 +61,25 @@ var (
 	S3_ACCESS_KEY  string = ""
 	S3_SECRET_KEY  string = ""
 
-	// ZALO
-	ZALO_SHARE_INFO_SUBTITLE = ""
+	// Zalo
+	ZALO_SHARE_INFO_SUBTITLE string = ""
+
+	// Facebook
+	FACEBOOK_GRAPH_API_VERSION string = ""
+
+	// DB PG
+	DB_HOST     string = ""
+	DB_DATABASE string = ""
+	DB_USERNAME string = ""
+	DB_PASSWORD string = ""
+	DB_PORT     int    = 0
+
+	// Email default
+	SMTP_SERVER   string = ""
+	SMTP_USERNAME string = ""
+	SMTP_PASSWORD string = ""
+	SMTP_MAILPORT int    = 0
+	SMTP_INFORM   bool   = false
 )
 
 type (

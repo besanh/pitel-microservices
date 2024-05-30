@@ -125,7 +125,8 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		authUser := model.AuthUser{
 			Source: "authen",
 		}
-		if err := h.connectionAppService.UpdateChatConnectionAppById(c, &authUser, oaInfoMessage.ConnectionId, connectionAppRequest); err != nil {
+		isUpdateFromOtt := true
+		if err := h.connectionAppService.UpdateChatConnectionAppById(c, &authUser, oaInfoMessage.ConnectionId, connectionAppRequest, isUpdateFromOtt); err != nil {
 			c.JSON(response.BadRequestMsg(err))
 			return
 		}

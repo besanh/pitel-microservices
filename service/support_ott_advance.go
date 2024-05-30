@@ -28,12 +28,12 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	filter := model.ChatManageQueueUserFilter{
 		QueueId: queueId,
 	}
-	total, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
+	_, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if total > 0 {
+	if len(*manageQueueUsers) > 0 {
 		manageQueueUser = &(*manageQueueUsers)[0]
 		if err = cache.RCache.Set(MANAGE_QUEUE_USER+"_"+queueId, manageQueueUser, MANAGE_QUEUE_USER_EXPIRE); err != nil {
 			log.Error(err)

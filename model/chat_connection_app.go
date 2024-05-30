@@ -42,24 +42,33 @@ type ChatConnectionAppView struct {
 
 type OaInfo struct {
 	Zalo []struct {
-		AppId    string `json:"app_id"`
-		OaId     string `json:"oa_id"`
-		OaName   string `json:"oa_name"`
-		UrlOa    string `json:"url_oa"`
-		Avatar   string `json:"avatar"`
-		Cover    string `json:"cover"`
-		CateName string `json:"cate_name"`
-		Status   string `json:"status"`
+		AppId            string `json:"app_id"`
+		OaId             string `json:"oa_id"`
+		OaName           string `json:"oa_name"`
+		UrlOa            string `json:"url_oa"`
+		Avatar           string `json:"avatar"`
+		Cover            string `json:"cover"`
+		CateName         string `json:"cate_name"`
+		Status           string `json:"status"`
+		AccessToken      string `json:"access_token"`
+		Expire           int64  `json:"expire"`
+		CreatedTimestamp int64  `json:"created_timestamp"`
+		UpdatedTimestamp int64  `json:"updated_timestamp"`
+		IsNotify         bool   `json:"is_notify"`
 	} `json:"zalo"`
 	Facebook []struct {
-		AppId       string `json:"app_id"`
-		OaId        string `json:"oa_id"`
-		OaName      string `json:"oa_name"`
-		UrlOa       string `json:"url_oa"`
-		Avatar      string `json:"avatar"`
-		Cover       string `json:"cover"`
-		AccessToken string `json:"access_token"`
-		Status      string `json:"status"`
+		AppId            string `json:"app_id"`
+		OaId             string `json:"oa_id"`
+		OaName           string `json:"oa_name"`
+		UrlOa            string `json:"url_oa"`
+		Avatar           string `json:"avatar"`
+		Cover            string `json:"cover"`
+		AccessToken      string `json:"access_token"`
+		Expire           int64  `json:"expire"`
+		Status           string `json:"status"`
+		CreatedTimestamp int64  `json:"created_timestamp"`
+		UpdatedTimestamp int64  `json:"updated_timestamp"`
+		IsNotify         bool   `json:"is_notify"`
 	} `json:"facebook"`
 }
 

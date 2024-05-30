@@ -90,12 +90,12 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	}
 	filter.ConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
-	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
+	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if total > 0 {
+	if len(*conversations) > 0 {
 		for k, conv := range *conversations {
 			filter := model.MessageFilter{
 				TenantId:       conv.TenantId,
@@ -117,12 +117,12 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 			}
-			totalTmp, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
 			if err != nil {
 				log.Error(err)
 				break
 			}
-			if totalTmp > 0 {
+			if len(*message) > 0 {
 				if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
 					conv.LatestMessageContent = (*message)[0].EventName
 				} else {
@@ -193,12 +193,12 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		ConversationId: conversationId,
 		MainAllocate:   statusAllocate,
 	}
-	total, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	if total < 1 {
+	if len(*userAllocate) < 1 {
 		log.Errorf("conversation %s not found with active user", conversationId)
 		return errors.New("conversation " + conversationId + " not found with active user")
 	}

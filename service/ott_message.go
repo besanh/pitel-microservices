@@ -113,12 +113,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		filterChatManageQueueUser := model.ChatManageQueueUserFilter{
 			QueueId: connectionCache.QueueId,
 		}
-		totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
+		_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if totalManageQueueUser > 0 {
+		if len(*manageQueueUser) > 0 {
 			user.QueueId = (*manageQueueUser)[0].QueueId
 			user.ConnectionId = (*manageQueueUser)[0].ConnectionId
 			user.IsOk = true
