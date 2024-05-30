@@ -56,6 +56,7 @@ type ChatEmailRequest struct {
 	EmailPort        string   `json:"email_port" bun:"email_port"`
 	EmailEncryptType string   `json:"email_encrypt_type" bun:"email_encrypt_type"`
 	EmailStatus      bool     `json:"email_status" bun:"email_status"`
+	EmailRequestType string   `json:"email_request_type" bun:"email_request_type"`
 }
 
 func (m *ChatEmailRequest) Validate() error {
@@ -109,6 +110,10 @@ func (m *ChatEmailRequest) Validate() error {
 
 	if !slices.Contains([]string{"ssl", "tls"}, m.EmailEncryptType) {
 		return errors.New("email encrypt type " + m.EmailEncryptType + " is not supported")
+	}
+
+	if !slices.Contains([]string{"manual", "auto"}, m.EmailRequestType) {
+		return errors.New("email status is required")
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -87,11 +88,21 @@ func (s *ChatEmail) InsertChatEmail(ctx context.Context, authUser *model.AuthUse
 	chatEmail.EmailSubject = request.EmailSubject
 	chatEmail.EmailRecipient = request.EmailRecipient
 	chatEmail.EmailContent = request.EmailContent
-	chatEmail.EmailServer = request.EmailServer
-	chatEmail.EmailUsername = request.EmailUsername
-	chatEmail.EmailPassword = request.EmailPassword
-	chatEmail.EmailPort = request.EmailPort
-	chatEmail.EmailEncryptType = request.EmailEncryptType
+
+	if request.EmailRequestType == "manual" {
+		chatEmail.EmailServer = request.EmailServer
+		chatEmail.EmailUsername = request.EmailUsername
+		chatEmail.EmailPassword = request.EmailPassword
+		chatEmail.EmailPort = request.EmailPort
+		chatEmail.EmailEncryptType = request.EmailEncryptType
+	} else {
+		chatEmail.EmailServer = SMTP_SERVER
+		chatEmail.EmailUsername = SMTP_USERNAME
+		chatEmail.EmailPassword = SMTP_PASSWORD
+		chatEmail.EmailPort = fmt.Sprintf("%d", SMTP_MAILPORT)
+		chatEmail.EmailEncryptType = "tls"
+	}
+
 	chatEmail.EmailStatus = request.EmailStatus
 	chatEmail.CreatedAt = time.Now()
 
@@ -147,9 +158,19 @@ func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.Aut
 		return errors.New("chat email " + id + " not found")
 	}
 
-	chatEmailExist.EmailEncryptType = request.EmailEncryptType
-	chatEmailExist.EmailPassword = request.EmailPassword
-	chatEmailExist.EmailPort = request.EmailPort
+	if request.EmailRequestType == "manual" {
+		chatEmailExist.EmailServer = request.EmailServer
+		chatEmailExist.EmailUsername = request.EmailUsername
+		chatEmailExist.EmailPassword = request.EmailPassword
+		chatEmailExist.EmailPort = request.EmailPort
+		chatEmailExist.EmailEncryptType = request.EmailEncryptType
+	} else {
+		chatEmailExist.EmailServer = SMTP_SERVER
+		chatEmailExist.EmailUsername = SMTP_USERNAME
+		chatEmailExist.EmailPassword = SMTP_PASSWORD
+		chatEmailExist.EmailPort = fmt.Sprintf("%d", SMTP_MAILPORT)
+		chatEmailExist.EmailEncryptType = "tls"
+	}
 	chatEmailExist.EmailRecipient = request.EmailRecipient
 	chatEmailExist.EmailServer = request.EmailServer
 	chatEmailExist.EmailSubject = request.EmailSubject
