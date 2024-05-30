@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/gookit/slog"
+	"github.com/gookit/slog/rotatefile"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -94,4 +96,28 @@ func Fatalf(format string, value ...interface{}) {
 	log.WithFields(log.Fields{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Fatalf(format, value...)
+}
+
+func InitLogger(level string, logFile string) {
+	logLevel := slog.DebugLevel
+	switch level {
+	case "debug":
+		logLevel = slog.DebugLevel
+	case "info":
+		logLevel = slog.InfoLevel
+	case "error":
+		logLevel = slog.ErrorLevel
+	case "warn":
+		logLevel = slog.WarnLevel
+	}
+	slog.SetLogLevel(logLevel)
+	logTemplate := "[{{level}}] [{{datetime}}] [{{meta}}] Message: {{message}} {{data}} \n"
+
+	slog.SetFormatter(slog.NewTextFormatter(logTemplate).WithEnableColor(true))
+	writer, err := rotatefile.NewConfig(logFile).Create()
+	if err != nil {
+		panic(err)
+	}
+
+	log.SetOutput(writer)
 }
