@@ -83,12 +83,14 @@ type ChatConnectionAppRequest struct {
 	AppId          string  `json:"app_id"` // use for receive from message when user grant permission to ott
 
 	// Recieve from ott for update connection zalo
-	OaName   string `json:"oa_name"`
-	Avatar   string `json:"avatar"`
-	Cover    string `json:"cover"`
-	CateName string `json:"cate_name"`
-	Code     int64  `json:"code"`
-	Message  string `json:"message"`
+	OaName      string `json:"oa_name"`
+	Avatar      string `json:"avatar"`
+	Cover       string `json:"cover"`
+	CateName    string `json:"cate_name"`
+	Code        int64  `json:"code"`
+	Message     string `json:"message"`
+	AccessToken string `json:"access_token"`
+	Expire      string `json:"expire"`
 }
 
 type AccessInfo struct {
