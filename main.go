@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/queue"
@@ -184,6 +185,29 @@ func main() {
 
 	// Zalo
 	service.ZALO_SHARE_INFO_SUBTITLE = env.GetStringENV("ZALO_SHARE_INFO_SUBTITLE", "")
+
+	// Facebook
+	service.FACEBOOK_GRAPH_API_VERSION = env.GetStringENV("FACEBOOK_GRAPH_API_VERSION", "")
+
+	// DB for cronjob
+	service.DB_HOST = env.GetStringENV("DB_HOST", "")
+	service.DB_DATABASE = env.GetStringENV("DB_DATABASE", "")
+	service.DB_USERNAME = env.GetStringENV("DB_USERNAME", "")
+	service.DB_PASSWORD = env.GetStringENV("DB_PASSWORD", "")
+	service.DB_PORT = env.GetIntENV("DB_PORT", 0)
+
+	// Smtp
+	service.SMTP_SERVER = env.GetStringENV("SMTP_HOST", "")
+	service.SMTP_MAILPORT = env.GetIntENV("SMTP_PORT", 465)
+	service.SMTP_USERNAME = env.GetStringENV("SMTP_USERNAME", "")
+	service.SMTP_PASSWORD = env.GetStringENV("SMTP_PASSWORD", "")
+	service.SMTP_INFORM = env.GetBoolENV("SMTP_INFORM", false)
+
+	s1 := gocron.NewScheduler(time.Local)
+	s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
+	s1.Every(1).Hour().Do(service.NewChatEmail().HandleJobExpireToken)
+	s1.StartAsync()
+	defer s1.Clear()
 
 	// Run gRPC server
 	server.NewGRPCServer(config.gRPCPort)

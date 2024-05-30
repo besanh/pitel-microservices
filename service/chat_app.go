@@ -39,11 +39,11 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 		AppName: data.AppName,
 		Status:  data.Status,
 	}
-	total, _, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
+	_, chatApps, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return app.Base.GetId(), err
-	} else if total > 0 {
+	} else if len(*chatApps) > 0 {
 		return app.Base.GetId(), errors.New("app already exists")
 	}
 

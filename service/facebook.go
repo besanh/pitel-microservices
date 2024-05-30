@@ -37,12 +37,12 @@ func (s *Facebook) InsertFacebookPage(ctx context.Context, authUser *model.AuthU
 		DefaultApp: "active",
 	}
 
-	total, appInfos, err := repository.ChatAppRepo.GetChatApp(ctx, dbConn, filter, 1, 0)
+	_, appInfos, err := repository.ChatAppRepo.GetChatApp(ctx, dbConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return facebook.GetId(), err
 	}
-	if total < 1 {
+	if len(*appInfos) < 1 {
 		return facebook.GetId(), errors.New("facebook app not found")
 	}
 

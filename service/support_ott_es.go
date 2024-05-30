@@ -47,12 +47,12 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		ConversationId: []string{newConversationId},
 		AppId:          []string{data.AppId},
 	}
-	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
+	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return conversation, isNew, err
 	}
-	if total > 0 {
+	if len(*conversations) > 0 {
 		conversation.TenantId = (*conversations)[0].TenantId
 		conversation.ConversationId = (*conversations)[0].ConversationId
 		conversation.ConversationType = (*conversations)[0].ConversationType
