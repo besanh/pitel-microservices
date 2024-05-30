@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -219,8 +220,9 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		chatConnectionAppExist.OaInfo.Zalo[0].CateName = data.CateName
 		chatConnectionAppExist.OaInfo.Zalo[0].Status = data.Status
 		if isUpdateFromOtt {
-			chatConnectionAppExist.OaInfo.Zalo[0].AccessToken = data.OaInfo.Zalo[0].AccessToken
-			chatConnectionAppExist.OaInfo.Zalo[0].Expire = data.OaInfo.Zalo[0].Expire
+			chatConnectionAppExist.OaInfo.Zalo[0].AccessToken = data.AccessToken
+			expire, _ := strconv.ParseInt(data.Expire, 10, 64)
+			chatConnectionAppExist.OaInfo.Zalo[0].Expire = expire
 			chatConnectionAppExist.OaInfo.Zalo[0].UpdatedTimestamp = time.Now().Unix()
 		}
 	} else if chatConnectionAppExist.ConnectionType == "facebook" && len(data.OaId) > 0 {
