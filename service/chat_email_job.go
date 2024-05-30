@@ -187,7 +187,7 @@ func handleFlowExpireZalo(ctx context.Context, dbCon sqlclient.ISqlClientConn, c
 					EmailRecipient: []string{
 						SMTP_USERNAME,
 					},
-					EmailSubject: "Error sending email - Oa type: " + connection.ConnectionType + " - Oa id: " + connection.OaInfo.Facebook[0].OaId + " - Oa name: " + connection.OaInfo.Facebook[0].OaName,
+					EmailSubject: "Error sending email - Oa type: " + connection.ConnectionType + " - Oa id: " + connection.OaInfo.Zalo[0].OaId + " - Oa name: " + connection.OaInfo.Zalo[0].OaName,
 					EmailContent: err.Error(),
 				}); errInform != nil {
 					log.Error(errInform)
@@ -199,7 +199,7 @@ func handleFlowExpireZalo(ctx context.Context, dbCon sqlclient.ISqlClientConn, c
 		}
 
 		// Update connection mark notified
-		connection.OaInfo.Facebook[0].IsNotify = true
+		connection.OaInfo.Zalo[0].IsNotify = true
 		if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, connection); err != nil {
 			log.Error(err)
 			return err
