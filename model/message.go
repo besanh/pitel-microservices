@@ -77,6 +77,8 @@ type OaInfoMessage struct {
 	CateName     string `json:"cate_name"`
 	Code         int64  `json:"code"`
 	Message      string `json:"message"`
+	AccessToken  string `json:"access_token"`
+	Expire       int64  `json:"expire"`
 }
 
 type ShareInfo struct {
