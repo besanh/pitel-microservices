@@ -39,7 +39,7 @@ func NewOttMessage(engine *gin.Engine, messageService service.IOttMessage, conne
 func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	jsonBody := make(map[string]any)
 	if err := c.ShouldBindJSON(&jsonBody); err != nil {
-		c.JSON(response.BadRequestMsg(err))
+		c.JSON(response.ServiceUnavailableMsg(err))
 		return
 	}
 	log.Info("ott get message body: ", jsonBody)
@@ -72,7 +72,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	attachments := []model.OttAttachments{}
 	if err := util.ParseAnyToAny(attachmentsAny, &attachments); err != nil {
 		log.Error(err)
-		c.JSON(response.BadRequestMsg(err))
+		c.JSON(response.ServiceUnavailableMsg(err))
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		oaInfoMessage := model.OaInfoMessage{}
 		if oaInfoMessageCode == 200 {
 			if err := util.ParseAnyToAny(oaInfoMessageTmp, &oaInfoMessage); err != nil {
-				c.JSON(response.BadRequestMsg(err))
+				c.JSON(response.ServiceUnavailableMsg(err))
 				return
 			}
 		} else if oaInfoMessageCode != 200 {
@@ -132,7 +132,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 		isUpdateFromOtt := true
 		if err := h.connectionAppService.UpdateChatConnectionAppById(c, &authUser, oaInfoMessage.ConnectionId, connectionAppRequest, isUpdateFromOtt); err != nil {
-			c.JSON(response.BadRequestMsg(err))
+			c.JSON(response.ServiceUnavailableMsg(err))
 			return
 		}
 		c.JSON(response.OKResponse())
