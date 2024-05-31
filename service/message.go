@@ -138,7 +138,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		SupporterName:       authUser.Fullname,
 		SendTime:            time.Now(),
 		SendTimestamp:       timestampTmp,
-		Content:             data.Content,
+		Content:             content,
 		Attachments:         attachments,
 	}
 	log.Info("message to es: ", message)
