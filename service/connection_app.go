@@ -130,7 +130,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 					AppId:     (*app)[0].InfoApp.Zalo.AppId,
 					OaId:      (*app)[0].InfoApp.Zalo.OaId,
 					ImageName: "oa_zalo.png",
-					ImageUrl:  API_DOC + "/images/oa_zalo.png",
+					ImageUrl:  API_SHARE_INFO_HOST + "/images/oa_zalo.png",
 					Title:     (*app)[0].InfoApp.Zalo.OaName,
 					Subtitle:  ZALO_SHARE_INFO_SUBTITLE,
 				},
@@ -240,6 +240,48 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist); err != nil {
 		log.Error(err)
 		return err
+	}
+
+	// Update share form
+	if isUpdateFromOtt {
+		if chatConnectionAppExist.ConnectionType == "zalo" {
+			filter := model.ShareInfoFormFilter{
+				AppId: data.AppId,
+			}
+			_, shareInfo, err := repository.ShareInfoRepo.GetShareInfos(ctx, repository.DBConn, filter, 1, 0)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			if len(*shareInfo) < 1 {
+				log.Error("share config app_id " + data.AppId + " not exist")
+				err = errors.New("share config app_id " + data.AppId + " not exist")
+				return err
+			}
+
+			(*shareInfo)[0].ShareForm = model.ShareForm{
+				Zalo: struct {
+					AppId     string "json:\"app_id\""
+					OaId      string "json:\"oa_id\""
+					ImageName string "json:\"image_name\""
+					ImageUrl  string "json:\"image_url\""
+					Title     string "json:\"title\""
+					Subtitle  string "json:\"subtitle\""
+				}{
+					AppId:     (*shareInfo)[0].ShareForm.Zalo.AppId,
+					OaId:      data.OaId,
+					ImageName: (*shareInfo)[0].ShareForm.Zalo.ImageName,
+					ImageUrl:  (*shareInfo)[0].ShareForm.Zalo.ImageUrl,
+					Title:     (*shareInfo)[0].ShareForm.Zalo.Title,
+					Subtitle:  (*shareInfo)[0].ShareForm.Zalo.Subtitle,
+				},
+			}
+
+			if err = repository.ShareInfoRepo.Update(ctx, repository.DBConn, (*shareInfo)[0]); err != nil {
+				log.Error(err)
+				return err
+			}
+		}
 	}
 
 	if len(data.OaId) < 1 {

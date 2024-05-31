@@ -132,8 +132,8 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 	}
 
 	if len(*conversations) < 1 {
-		log.Errorf("conversation %s not found", (*conversations)[0].ConversationId)
-		return response.ServiceUnavailableMsg("conversation " + (*conversations)[0].ConversationId + " not found")
+		log.Errorf("conversation %s not found", conversationId)
+		return response.ServiceUnavailableMsg("conversation " + conversationId + " not found")
 	}
 
 	conversationFilter := model.UserAllocateFilter{
