@@ -88,32 +88,30 @@ func (m *ChatEmailRequest) Validate() error {
 		return errors.New("email content is required")
 	}
 
-	if len(m.EmailServer) < 1 {
-		return errors.New("email server is required")
-	}
-
-	if len(m.EmailUsername) < 1 {
-		return errors.New("email username is required")
-	}
-
-	if len(m.EmailPassword) < 1 {
-		return errors.New("email password is required")
-	}
-
-	if len(m.EmailPort) < 1 {
-		return errors.New("email port is required")
-	}
-
-	if len(m.EmailEncryptType) < 1 {
-		return errors.New("email encrypt type is required")
-	}
-
-	if !slices.Contains([]string{"ssl", "tls"}, m.EmailEncryptType) {
-		return errors.New("email encrypt type " + m.EmailEncryptType + " is not supported")
-	}
-
 	if !slices.Contains([]string{"manual", "auto"}, m.EmailRequestType) {
 		return errors.New("email status is required")
+	}
+
+	if m.EmailRequestType == "manual" {
+		if len(m.EmailServer) < 1 {
+			return errors.New("email server is required")
+		}
+
+		if len(m.EmailUsername) < 1 {
+			return errors.New("email username is required")
+		}
+
+		if len(m.EmailPassword) < 1 {
+			return errors.New("email password is required")
+		}
+
+		if len(m.EmailPort) < 1 {
+			return errors.New("email port is required")
+		}
+
+		if !slices.Contains([]string{"ssl", "tls"}, m.EmailEncryptType) {
+			return errors.New("email encrypt type " + m.EmailEncryptType + " is not supported")
+		}
 	}
 
 	return nil
