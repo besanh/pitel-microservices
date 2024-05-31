@@ -246,7 +246,8 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if isUpdateFromOtt {
 		if chatConnectionAppExist.ConnectionType == "zalo" {
 			filter := model.ShareInfoFormFilter{
-				AppId: data.AppId,
+				AppId:     data.AppId,
+				ShareType: "zalo",
 			}
 			_, shareInfo, err := repository.ShareInfoRepo.GetShareInfos(ctx, repository.DBConn, filter, 1, 0)
 			if err != nil {
@@ -276,6 +277,8 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 					Subtitle:  (*shareInfo)[0].ShareForm.Zalo.Subtitle,
 				},
 			}
+
+			(*shareInfo)[0].UpdatedAt = time.Now()
 
 			if err = repository.ShareInfoRepo.Update(ctx, repository.DBConn, (*shareInfo)[0]); err != nil {
 				log.Error(err)
