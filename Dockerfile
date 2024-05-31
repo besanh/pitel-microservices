@@ -20,7 +20,7 @@ EXPOSE 8000
 
 # Add from source to /app
 COPY --from=builder /go/src/pitel-api/app.exe /app
-COPY /go/src/pitel-api/assets/images/* /assets/images/
+COPY /assets/images/* /assets/images/
 RUN echo > /app/.env
 
 # Run the binary program produced by `go install`
