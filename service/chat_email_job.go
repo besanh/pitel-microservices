@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -59,7 +60,15 @@ func (s *ChatEmail) HandleJobExpireToken() {
  */
 func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, connection model.ChatConnectionApp) (err error) {
 	// We can use updated_timestamp to compare
-	expireTime, err := ParseExpire(connection.OaInfo.Facebook[0].Expire)
+	expire := connection.OaInfo.Facebook[0].Expire
+	if expire == 0 {
+		createdTimestamp := connection.OaInfo.Facebook[0].CreatedTimestamp
+		expire = createdTimestamp + 7776000
+	}
+	if expire == 7776000 {
+		return errors.New("expire time " + fmt.Sprintf("%d", expire) + " is not valid")
+	}
+	expireTime, err := ParseExpire(expire)
 	if err != nil {
 		log.Error(err)
 		return
@@ -139,7 +148,10 @@ func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientCon
 * Zalo expire in in 30 days
  */
 func handleFlowExpireZalo(ctx context.Context, dbCon sqlclient.ISqlClientConn, connection model.ChatConnectionApp) (err error) {
-	expireTime, err := ParseExpire(connection.OaInfo.Zalo[0].UpdatedTimestamp + connection.OaInfo.Zalo[0].Expire)
+	if connection.OaInfo.Zalo[0].UpdatedTimestamp == 0 {
+		return errors.New("expire time " + fmt.Sprintf("%d", connection.OaInfo.Zalo[0].UpdatedTimestamp) + " is not valid")
+	}
+	expireTime, err := ParseExpire(connection.OaInfo.Zalo[0].UpdatedTimestamp + connection.OaInfo.Zalo[0].TokenTimeRemainning)
 	if err != nil {
 		log.Error(err)
 		return

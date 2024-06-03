@@ -84,7 +84,6 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		// var payload model.
 		att := model.OttAttachments{
 			Payload: &model.OttPayloadMedia{
 				Url: fileUrl,
@@ -95,7 +94,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 	content := data.Content
 	if eventName != "text" {
-		if file != nil && eventName != "link" {
+		if file != nil {
 			content = file.Filename
 		}
 	}
