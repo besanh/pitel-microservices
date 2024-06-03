@@ -6,6 +6,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type (
@@ -62,7 +63,10 @@ func (repo *ChatEmail) GetChatEmailsCustom(ctx context.Context, db sqlclient.ISq
 		ColumnExpr("connection_type").
 		ColumnExpr("oa_info").
 		Where("cca.tenant_id = ?", filter.TenantId).
-		Where("cca.oa_info->'zalo'::text->0->>'oa_id' = ce.oa_id")
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("cca.oa_info->'zalo'::text->0->>'oa_id' = ce.oa_id").
+				WhereOr("cca.oa_info->'facebook'::text->0->>'oa_id' = ce.oa_id")
+		})
 
 	query.Join("LEFT JOIN LATERAL (?) tmp ON true", query2)
 
