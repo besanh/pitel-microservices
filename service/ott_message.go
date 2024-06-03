@@ -249,7 +249,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 		// TODO: publish message to manager
 		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-		if isExist && user.AuthUser.UserId != manageQueueUser.ManageId {
+		if isExist && user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.ManageId {
 			if user.IsReassignSame {
 				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, &conversation)
 				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
