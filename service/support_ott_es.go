@@ -66,6 +66,7 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		conversation.Avatar = (*conversations)[0].Avatar
 		conversation.IsDone = (*conversations)[0].IsDone
 		conversation.IsDoneBy = (*conversations)[0].IsDoneBy
+		conversation.UpdatedAt = time.Now().Format(time.RFC3339)
 
 		conversation.ShareInfo = shareInfo
 		if len(connectionId) > 0 {
