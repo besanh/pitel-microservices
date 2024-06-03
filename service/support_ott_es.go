@@ -26,6 +26,7 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		ShareInfo:        data.ShareInfo,
 		ExternalUserId:   data.ExternalUserId,
 		CreatedAt:        time.Now().Format(time.RFC3339),
+		UpdatedAt:        time.Now().Format(time.RFC3339),
 	}
 	shareInfo := data.ShareInfo
 
