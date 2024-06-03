@@ -21,6 +21,7 @@ type ChatEmail struct {
 	EmailPassword    string   `json:"email_password" bun:"email_password,type:text,notnull"`
 	EmailPort        string   `json:"email_port" bun:"email_port,type:text,notnull"`
 	EmailEncryptType string   `json:"email_encrypt_type" bun:"email_encrypt_type,type:text,notnull"`
+	EmailRequestType string   `json:"email_request_type" bun:"email_request_type,type:text,notnull"`
 	EmailStatus      bool     `json:"email_status" bun:"email_status,notnull"`
 }
 
@@ -37,6 +38,7 @@ type ChatEmailCustom struct {
 	EmailPassword    string   `json:"email_password" bun:"email_password"`
 	EmailPort        string   `json:"email_port" bun:"email_port"`
 	EmailEncryptType string   `json:"email_encrypt_type" bun:"email_encrypt_type"`
+	EmailRequestType string   `json:"email_request_type" bun:"email_request_type"`
 	EmailStatus      bool     `json:"email_status" bun:"email_status"`
 
 	// From connection
