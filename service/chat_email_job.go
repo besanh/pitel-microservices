@@ -54,6 +54,9 @@ func (s *ChatEmail) HandleJobExpireToken() {
 	}
 }
 
+/**
+* Facebook expire in in 90 days
+ */
 func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, connection model.ChatConnectionApp) (err error) {
 	// We can use updated_timestamp to compare
 	expireTime, err := ParseExpire(connection.OaInfo.Facebook[0].Expire)
@@ -132,6 +135,9 @@ func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientCon
 	return
 }
 
+/**
+* Zalo expire in in 30 days
+ */
 func handleFlowExpireZalo(ctx context.Context, dbCon sqlclient.ISqlClientConn, connection model.ChatConnectionApp) (err error) {
 	expireTime, err := ParseExpire(connection.OaInfo.Zalo[0].UpdatedTimestamp + connection.OaInfo.Zalo[0].Expire)
 	if err != nil {
