@@ -50,7 +50,6 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	if len(filter.Username) > 0 {
 		// Search like
 		filters = append(filters, elasticsearch.WildcardQuery("username", "*"+filter.Username, insensitive))
-
 	}
 	if len(filter.PhoneNumber) > 0 {
 		filters = append(filters, elasticsearch.WildcardQuery("phone_number", "*"+filter.PhoneNumber, sql.NullBool{}))
