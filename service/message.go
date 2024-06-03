@@ -95,7 +95,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 	content := data.Content
 	if eventName != "text" {
-		if file != nil {
+		if file != nil && eventName != "link" {
 			content = file.Filename
 		}
 	}
