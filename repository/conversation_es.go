@@ -154,7 +154,7 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	if len(appId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray([]string{appId})...))
+		filters = append(filters, elasticsearch.MatchQuery("app_id", appId))
 	}
 	filters = append(filters, elasticsearch.MatchQuery("_id", id))
 
