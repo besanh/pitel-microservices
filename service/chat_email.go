@@ -103,6 +103,7 @@ func (s *ChatEmail) InsertChatEmail(ctx context.Context, authUser *model.AuthUse
 		chatEmail.EmailEncryptType = "tls"
 	}
 
+	chatEmail.EmailRequestType = request.EmailRequestType
 	chatEmail.EmailStatus = request.EmailStatus
 	chatEmail.CreatedAt = time.Now()
 
@@ -175,6 +176,7 @@ func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.Aut
 	chatEmailExist.EmailServer = request.EmailServer
 	chatEmailExist.EmailSubject = request.EmailSubject
 	chatEmailExist.EmailUsername = request.EmailUsername
+	chatEmailExist.EmailRequestType = request.EmailRequestType
 	chatEmailExist.UpdatedAt = time.Now()
 
 	if err = repository.NewChatEmail().Update(ctx, dbCon, *chatEmailExist); err != nil {
