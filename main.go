@@ -198,8 +198,8 @@ func main() {
 	service.DB_PORT = env.GetIntENV("DB_PORT", 0)
 
 	// Smtp
-	service.SMTP_SERVER = env.GetStringENV("SMTP_HOST", "")
-	service.SMTP_MAILPORT = env.GetIntENV("SMTP_PORT", 465)
+	service.SMTP_SERVER = env.GetStringENV("SMTP_SERVER", "")
+	service.SMTP_MAILPORT = env.GetIntENV("SMTP_MAILPORT", 465)
 	service.SMTP_USERNAME = env.GetStringENV("SMTP_USERNAME", "")
 	service.SMTP_PASSWORD = env.GetStringENV("SMTP_PASSWORD", "")
 	service.SMTP_INFORM = env.GetBoolENV("SMTP_INFORM", false)
