@@ -323,20 +323,23 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 		return user, nil
 	} else {
 		if len(userLives) > 0 {
-			total, conversationDeactiveExist, errConv := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, model.UserAllocateFilter{
-				AppId:          chatSetting.Message.AppId,
-				ConversationId: chatSetting.Message.ConversationId,
-			}, -1, 0)
-			if errConv != nil {
-				log.Error(errConv)
-				return user, errConv
-			}
-			if total > 0 {
-				if err := repository.UserAllocateRepo.DeleteUserAllocates(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
-					log.Error(err)
-					return user, err
+			if len(chatSetting.Message.ConversationId) > 0 {
+				total, conversationDeactiveExist, errConv := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, model.UserAllocateFilter{
+					AppId:          chatSetting.Message.AppId,
+					ConversationId: chatSetting.Message.ConversationId,
+				}, -1, 0)
+				if errConv != nil {
+					log.Error(errConv)
+					return user, errConv
+				}
+				if total > 0 {
+					if err := repository.UserAllocateRepo.DeleteUserAllocates(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
+						log.Error(err)
+						return user, err
+					}
 				}
 			}
+
 			userAllocate = model.UserAllocate{
 				Base:               model.InitBase(),
 				TenantId:           chatSetting.ConnectionApp.TenantId,
