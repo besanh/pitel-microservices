@@ -129,7 +129,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 					AppId:     (*app)[0].InfoApp.Zalo.AppId,
 					OaId:      (*app)[0].InfoApp.Zalo.OaId,
 					ImageName: "oa_zalo.png",
-					ImageUrl:  API_SHARE_INFO_HOST + "/oa_zalo.png",
+					ImageUrl:  API_DOC + "/bss-image/oa_zalo.png",
 					Title:     (*app)[0].InfoApp.Zalo.OaName,
 					Subtitle:  ZALO_SHARE_INFO_SUBTITLE,
 				},
