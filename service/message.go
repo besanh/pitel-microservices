@@ -93,11 +93,11 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		attachments = append(attachments, &att)
 	}
 	content := data.Content
-	if eventName != "text" {
-		if file != nil {
-			content = file.Filename
-		}
-	}
+	// if eventName != "text" {
+	// 	if file != nil {
+	// 		content = file.Filename
+	// 	}
+	// }
 
 	// Send to OTT
 	ottMessage := model.SendMessageToOtt{
