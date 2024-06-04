@@ -114,8 +114,8 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 
 		tokenCreatedAt, _ := jsonBody["token_created_at"].(string)
-		tokenExpiresIn, _ := jsonBody["token_expires_in"].(int64)
-		tokenTimeRemainning, _ := jsonBody["token_time_remaining"].(int64)
+		tokenExpiresIn, _ := jsonBody["token_expires_in"].(float64)
+		tokenTimeRemainning, _ := jsonBody["token_time_remaining"].(float64)
 		connectionAppRequest := model.ChatConnectionAppRequest{
 			OaId:                oaId,
 			AppId:               appId,
@@ -126,8 +126,8 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			CateName:            oaInfoMessage.CateName,
 			Status:              "active",
 			TokenCreatedAt:      tokenCreatedAt,
-			TokenExpiresIn:      tokenExpiresIn,
-			TokenTimeRemainning: tokenTimeRemainning,
+			TokenExpiresIn:      int64(tokenExpiresIn),
+			TokenTimeRemainning: int64(tokenTimeRemainning),
 		}
 		authUser := model.AuthUser{
 			Source: "authen",
