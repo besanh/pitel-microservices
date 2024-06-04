@@ -255,17 +255,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 		// TODO: publish message to manager
 		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-		if isExist && user.AuthUser.UserId != manageQueueUser.ManageId {
-			if user.IsReassignSame {
-				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, &conversation)
-				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
-			} else if user.IsReassignNew {
-				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], manageQueueUser.ManageId, subscribers, true, &conversation)
-				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
-				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
-			} else {
-				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
-				PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+		if isExist {
+			if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.ManageId) || (user.AuthUser == nil && len(manageQueueUser.ManageId) > 0) {
+				if user.IsReassignSame {
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, &conversation)
+					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+				} else if user.IsReassignNew {
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], manageQueueUser.ManageId, subscribers, true, &conversation)
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
+					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+				} else {
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
+					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+				}
 			}
 		}
 
