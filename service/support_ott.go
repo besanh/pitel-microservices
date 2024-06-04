@@ -104,7 +104,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 				log.Error(err)
 				return user, err
 			}
-			if len((*userAllocations)) > 0 {
+			if len(*userAllocations) > 0 {
 				if user.AuthUser.UserId == (*userAllocations)[0].UserId {
 					user.IsReassignSame = true
 				} else {
@@ -130,12 +130,12 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 		AppId:          message.AppId,
 		Status:         "active",
 	}
-	totalConnection, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionFilter, 1, 0)
+	_, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionFilter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return user, err
 	}
-	if totalConnection > 0 {
+	if len(*connectionApps) > 0 {
 		filter := model.ConnectionQueueFilter{
 			ConnectionId: (*connectionApps)[0].Id,
 		}
