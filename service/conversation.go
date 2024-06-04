@@ -128,8 +128,8 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				} else {
 					conv.LatestMessageContent = (*message)[0].Content
 				}
+				conv.LatestMessageDirection = (*message)[0].Direction
 			}
-			conv.LatestMessageDirection = (*message)[0].Direction
 
 			(*conversations)[k] = conv
 		}
