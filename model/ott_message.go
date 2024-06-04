@@ -36,6 +36,11 @@ type OttPayloadMedia struct {
 	UrlOttBk    string `json:"url_ott_bk"`
 	Id          string `json:"id"`
 	Title       string `json:"title"`
+
+	Checksum string `json:"checksum"`
+	Name     string `json:"name"`
+	Size     string `json:"size"`
+	Type     string `json:"type"`
 }
 
 type OttPayloadFile struct {

@@ -96,6 +96,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				attachmentDetail.Payload = &payload
 			}
 			message.Attachments = append(message.Attachments, &attachmentDetail)
+			message.Content = val.Payload.Name
 		}
 	}
 
