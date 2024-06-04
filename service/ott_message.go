@@ -215,18 +215,20 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 		if len(*userAllocates) < 1 {
-			_, conversationDeactiveExist, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, model.UserAllocateFilter{
-				AppId:          conversation.AppId,
-				ConversationId: conversation.ConversationId,
-			}, -1, 0)
-			if err != nil {
-				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
-			}
-			if len(*conversationDeactiveExist) > 0 {
-				if err := repository.UserAllocateRepo.DeleteUserAllocates(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
+			if len(conversation.ConversationId) > 0 {
+				_, conversationDeactiveExist, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, model.UserAllocateFilter{
+					AppId:          conversation.AppId,
+					ConversationId: conversation.ConversationId,
+				}, -1, 0)
+				if err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
+				}
+				if len(*conversationDeactiveExist) > 0 {
+					if err := repository.UserAllocateRepo.DeleteUserAllocates(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
 				}
 			}
 			userAllocation := model.UserAllocate{
