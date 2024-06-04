@@ -302,14 +302,24 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 
 	// Event to manager
 	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-	if isExist {
-		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationExist)
+	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
+		if status == "done" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationExist)
+		} else if status == "reopen" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, conversationExist)
+		}
+
 		PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &(*messages)[0])
 	}
 
 	// Event to admin
 	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
-		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_done"], subscriberAdmins, true, conversationExist)
+		if status == "done" {
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_done"], subscriberAdmins, true, conversationExist)
+		} else if status == "reopen" {
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, conversationExist)
+		}
+
 		PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &(*messages)[0])
 	}
 

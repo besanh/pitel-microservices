@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
 
 	"github.com/go-resty/resty/v2"
@@ -167,6 +168,9 @@ func GetAvatarPageShareInfo(ctx context.Context, fileName string) (string, error
 	return "", nil
 }
 
+/**
+* Share info use image from api
+ */
 func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUser, data model.ShareInfoFormRequest, file *multipart.FileHeader) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
@@ -189,16 +193,21 @@ func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUs
 		return err
 	}
 
-	filePath := file.Filename
-
 	if data.ShareType == "facebook" {
 	} else if data.ShareType == "zalo" {
+		// TODO: upload image
+		imageUrl, err := uploadImageToStorageShareInfo(ctx, file)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+
 		if len(data.AppId) > 0 {
 			shareInfoExist.ShareForm.Zalo.AppId = data.AppId
 		}
 		if len(file.Filename) > 0 {
 			shareInfoExist.ShareForm.Zalo.ImageName = file.Filename
-			shareInfoExist.ShareForm.Zalo.ImageUrl = filePath
+			shareInfoExist.ShareForm.Zalo.ImageUrl = imageUrl
 		}
 		if len(data.Title) > 0 {
 			shareInfoExist.ShareForm.Zalo.Title = data.Title
@@ -272,4 +281,34 @@ func (s *ShareInfo) DeleteShareInfoById(ctx context.Context, authUser *model.Aut
 		return err
 	}
 	return nil
+}
+
+func uploadImageToStorageShareInfo(c context.Context, file *multipart.FileHeader) (url string, err error) {
+	f, err := file.Open()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	fileBytes, err := io.ReadAll(f)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	metaData := storage.NewStoreInput(fileBytes, file.Filename)
+	isSuccess, err := storage.Instance.Store(c, *metaData)
+	if err != nil || !isSuccess {
+		log.Error(err)
+		return
+	}
+
+	input := storage.NewRetrieveInput(file.Filename)
+	_, err = storage.Instance.Retrieve(c, *input)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	url = API_DOC + "/bss-message/v1/share-info/image/" + input.Path
+
+	return
 }
