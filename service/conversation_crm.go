@@ -93,12 +93,12 @@ func getConversationByFilter(ctx context.Context, queueUuids string, filter mode
 			filterMessage := model.MessageFilter{
 				ConversationId: conv.ConversationId,
 			}
-			totalTmp, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
 			if err != nil {
 				log.Error(err)
 				break
 			}
-			if totalTmp > 0 {
+			if len(*message) > 0 {
 				if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
 					conv.LatestMessageContent = (*message)[0].EventName
 				} else {
