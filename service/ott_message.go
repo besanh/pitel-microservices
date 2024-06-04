@@ -141,6 +141,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				log.Error(errMsg)
 				return response.ServiceUnavailableMsg(errMsg.Error())
 			}
+		} else {
+			log.Error("conversation " + conversation.ConversationId + " not found")
+			return response.ServiceUnavailableMsg("conversation " + conversation.ConversationId + " not found")
 		}
 	} else if user.PreviousAssign != nil {
 		// TODO: insert or update allocate user
