@@ -59,7 +59,7 @@ func (s *ChatEmail) InsertChatEmail(ctx context.Context, authUser *model.AuthUse
 		TenantId: authUser.TenantId,
 		OaId:     request.OaId,
 	}
-	_, connections, err := repository.NewConnectionApp().GetChatConnectionApp(ctx, dbCon, filterConnection, 1, 0)
+	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filterConnection, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return chatEmail.Id, err
@@ -140,7 +140,7 @@ func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.Aut
 		TenantId: authUser.TenantId,
 		OaId:     request.OaId,
 	}
-	_, connections, err := repository.NewConnectionApp().GetChatConnectionApp(ctx, dbCon, filterConnection, 1, 0)
+	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filterConnection, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err

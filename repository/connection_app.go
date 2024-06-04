@@ -42,13 +42,18 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if len(filter.ConnectionName) > 0 {
 		query.Where("connection_name = ?", filter.ConnectionName)
 	}
-	if len(filter.ConnectionType) > 0 {
-		query.Where("connection_type = ?", filter.ConnectionType)
-	}
-	if len(filter.OaId) > 0 {
+	if len(filter.ConnectionType) > 0 && len(filter.OaId) > 0 {
+		if len(filter.OaId) > 0 {
+			query.Where("oa_info->?::text->0->>'oa_id' = ?", filter.ConnectionType, filter.OaId)
+		}
+	} else if len(filter.OaId) > 0 {
 		query.Where("oa_info->'zalo'::text->0->>'oa_id' = ?", filter.OaId).
 			WhereOr("oa_info->'facebook'::text->0->>'oa_id' = ?", filter.OaId)
 	}
+	if len(filter.ConnectionType) > 0 {
+		query.Where("connection_type = ?", filter.ConnectionType)
+	}
+
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
 	}
@@ -58,6 +63,7 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
+
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil
@@ -67,6 +73,9 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	return total, result, nil
 }
 
+/**
+* Use for connection with share form
+ */
 func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error) {
 	result := new([]model.ChatConnectionAppView)
 	query := db.GetDB().NewSelect().Model(result).
