@@ -104,8 +104,8 @@ func getConversationByFilter(ctx context.Context, queueUuids string, filter mode
 				} else {
 					conv.LatestMessageContent = (*message)[0].Content
 				}
+				conv.LatestMessageDirection = (*message)[0].Direction
 			}
-			conv.LatestMessageDirection = (*message)[0].Direction
 
 			(*conversations)[k] = conv
 		}
