@@ -87,10 +87,10 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 	if data.IsNew {
 		manageQueueNew := model.ChatManageQueueUser{
 			Base:         model.InitBase(),
-			TenantId:     manageQueueExist.TenantId,
-			ConnectionId: manageQueueExist.ConnectionId,
-			QueueId:      manageQueueExist.QueueId,
-			ManageId:     manageQueueExist.ManageId,
+			TenantId:     authUser.TenantId,
+			ConnectionId: data.ConnectionId,
+			QueueId:      data.QueueId,
+			ManageId:     data.ManageId,
 		}
 		if err = repository.ManageQueueRepo.Insert(ctx, dbCon, manageQueueNew); err != nil {
 			log.Error(err)
