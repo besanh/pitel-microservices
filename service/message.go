@@ -173,12 +173,12 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		OaId:           message.OaId,
 		ConnectionType: conversation.ConversationType,
 	}
-	total, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+	_, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if total < 1 {
+	if len(*connection) < 1 {
 		log.Errorf("connection %s not found", (*connection)[0].Id)
 		return response.ServiceUnavailableMsg("connection " + (*connection)[0].Id + " not found")
 	} else {
