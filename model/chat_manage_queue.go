@@ -19,6 +19,7 @@ type ChatManageQueueUserRequest struct {
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
 	ManageId     string `json:"manage_id"`
+	IsNew        bool   `json:"is_new"`
 }
 
 func (m *ChatManageQueueUserRequest) Validate() (err error) {
