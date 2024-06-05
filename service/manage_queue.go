@@ -98,17 +98,6 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 			log.Error(err)
 			return err
 		}
-
-		connectionQueue := model.ConnectionQueue{
-			Base:         model.InitBase(),
-			TenantId:     authUser.TenantId,
-			ConnectionId: data.ConnectionId,
-			QueueId:      data.QueueId,
-		}
-		if err = repository.ConnectionQueueRepo.Insert(ctx, dbCon, connectionQueue); err != nil {
-			log.Error(err)
-			return err
-		}
 	} else {
 		// TODO: move to transaction
 		manageQueueExist.ConnectionId = data.ConnectionId
