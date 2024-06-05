@@ -83,19 +83,40 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 		log.Error("queue not found")
 		return errors.New("queue " + data.QueueId + " not found")
 	}
-	queueExist.ManageQueueId = manageQueueExist.GetId()
 
-	manageQueueExist.ConnectionId = data.ConnectionId
-	manageQueueExist.QueueId = data.QueueId
-	manageQueueExist.ManageId = data.ManageId
-	manageQueueExist.UpdatedAt = time.Now()
-	if err = repository.ManageQueueRepo.Update(ctx, dbCon, *manageQueueExist); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err := repository.ChatQueueRepo.Update(ctx, dbCon, *queueExist); err != nil {
-		log.Error(err)
-		return err
+	if data.IsNew {
+		manageQueueNew := model.ChatManageQueueUser{
+			Base:         model.InitBase(),
+			TenantId:     manageQueueExist.TenantId,
+			ConnectionId: manageQueueExist.ConnectionId,
+			QueueId:      manageQueueExist.QueueId,
+			ManageId:     manageQueueExist.ManageId,
+		}
+		if err = repository.ManageQueueRepo.Insert(ctx, dbCon, manageQueueNew); err != nil {
+			log.Error(err)
+			return err
+		}
+
+		queueExist.ManageQueueId = manageQueueNew.GetId()
+		if err := repository.ChatQueueRepo.Insert(ctx, dbCon, *queueExist); err != nil {
+			log.Error(err)
+			return err
+		}
+	} else {
+		manageQueueExist.ConnectionId = data.ConnectionId
+		manageQueueExist.QueueId = data.QueueId
+		manageQueueExist.ManageId = data.ManageId
+		manageQueueExist.UpdatedAt = time.Now()
+		if err = repository.ManageQueueRepo.Update(ctx, dbCon, *manageQueueExist); err != nil {
+			log.Error(err)
+			return err
+		}
+
+		queueExist.ManageQueueId = manageQueueExist.GetId()
+		if err := repository.ChatQueueRepo.Update(ctx, dbCon, *queueExist); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	return
