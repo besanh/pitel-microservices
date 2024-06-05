@@ -188,7 +188,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if err != nil {
 		log.Error(err)
 		return err
-	} else if chatConnectionAppExist == nil {
+	} else if len(chatConnectionAppExist.Id) < 1 {
 		log.Error("connection app " + id + " not found")
 		return errors.New("connection app " + id + " not found")
 	}
@@ -230,7 +230,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	}
 	chatConnectionAppExist.UpdatedAt = time.Now()
 
-	if (len(data.OaId) < 1 && data.ConnectionType == "zalo") || ((len(data.OaInfo.Facebook) > 0 && len(data.OaInfo.Facebook[0].OaId) < 1) && data.ConnectionType == "facebook") {
+	if len(data.OaId) < 1 && chatConnectionAppExist.ConnectionType == "zalo" {
 		if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.QueueId); err != nil {
 			log.Error(err)
 			return err
