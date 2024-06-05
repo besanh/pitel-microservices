@@ -70,15 +70,18 @@ type MessageMarkRead struct {
 }
 
 type OaInfoMessage struct {
-	ConnectionId string `json:"connection_id"`
-	Name         string `json:"name"`
-	Avatar       string `json:"avatar"`
-	Cover        string `json:"cover"`
-	CateName     string `json:"cate_name"`
-	Code         int64  `json:"code"`
-	Message      string `json:"message"`
-	AccessToken  string `json:"access_token"`
-	Expire       int64  `json:"expire"`
+	ConnectionId        string  `json:"connection_id"`
+	Name                string  `json:"name"`
+	Avatar              string  `json:"avatar"`
+	Cover               string  `json:"cover"`
+	CateName            string  `json:"cate_name"`
+	Code                int64   `json:"code"`
+	Message             string  `json:"message"`
+	AccessToken         string  `json:"access_token"`
+	Expire              int64   `json:"expire"`
+	TokenCreatedAt      string  `json:"token_created_at"`
+	TokenExpiresIn      float64 `json:"token_expires_in"`
+	TokenTimeRemainning float64 `json:"token_time_remaining"`
 }
 
 type ShareInfo struct {
