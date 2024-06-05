@@ -85,6 +85,8 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 	}
 
 	if data.IsNew {
+		// TODO: check exist data
+		// TODO: move to transaction
 		manageQueueNew := model.ChatManageQueueUser{
 			Base:         model.InitBase(),
 			TenantId:     authUser.TenantId,
@@ -97,7 +99,18 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 			return err
 		}
 
+		connectionQueue := model.ConnectionQueue{
+			Base:         model.InitBase(),
+			TenantId:     authUser.TenantId,
+			ConnectionId: data.ConnectionId,
+			QueueId:      data.QueueId,
+		}
+		if err = repository.ConnectionQueueRepo.Insert(ctx, dbCon, connectionQueue); err != nil {
+			log.Error(err)
+			return err
+		}
 	} else {
+		// TODO: move to transaction
 		manageQueueExist.ConnectionId = data.ConnectionId
 		manageQueueExist.QueueId = data.QueueId
 		manageQueueExist.ManageId = data.ManageId
