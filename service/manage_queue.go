@@ -97,11 +97,6 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 			return err
 		}
 
-		queueExist.ManageQueueId = manageQueueNew.GetId()
-		if err := repository.ChatQueueRepo.Insert(ctx, dbCon, *queueExist); err != nil {
-			log.Error(err)
-			return err
-		}
 	} else {
 		manageQueueExist.ConnectionId = data.ConnectionId
 		manageQueueExist.QueueId = data.QueueId
