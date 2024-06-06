@@ -61,7 +61,6 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 				authInfo.TenantId = (*userAllocations)[0].TenantId
 				authInfo.UserId = (*userAllocations)[0].UserId
 				user.AuthUser = &authInfo
-				user.IsOk = true
 				user.ConnectionId = (*userAllocations)[0].ConnectionId
 				user.QueueId = (*userAllocations)[0].QueueId
 				user.ConnectionQueueId = (*userAllocations)[0].ConnectionQueueId
@@ -78,6 +77,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 					user.UserIdRemove = (*userAllocations)[0].UserId
 				}
 
+				user.IsOk = true
 				log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
 				return user, nil
 			} else {
