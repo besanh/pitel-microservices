@@ -100,7 +100,6 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 		}
 	} else {
 		// TODO: move to transaction
-		manageQueueExist.ConnectionId = data.ConnectionId
 		manageQueueExist.QueueId = data.QueueId
 		manageQueueExist.ManageId = data.ManageId
 		manageQueueExist.UpdatedAt = time.Now()
