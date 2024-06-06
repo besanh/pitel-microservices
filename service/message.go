@@ -186,7 +186,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 
 	// TODO: find connection_queue
-	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connection)[0].Id)
+	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connection)[0].ConnectionQueueId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
