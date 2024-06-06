@@ -68,6 +68,7 @@ func (repo *ConnectionQueue) DeleteConnectionQueue(ctx context.Context, db sqlcl
 func (repo *ConnectionQueue) BulkDeleteConnectionQueue(ctx context.Context, db sqlclient.ISqlClientConn, data []model.ConnectionQueue) (err error) {
 	_, err = db.GetDB().NewDelete().
 		Model(&data).
+		WherePK().
 		Exec(ctx)
 	return
 }
