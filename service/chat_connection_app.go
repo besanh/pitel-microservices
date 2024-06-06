@@ -229,7 +229,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 			log.Error(err)
 			return err
 		}
-		if len(*connectionQueues) < 1 {
+		if len(*connectionQueues) < 1 || len(chatConnectionAppExist.ConnectionQueueId) < 1 {
 			// TODO: delete connection queue with connectionId
 			filter := model.ConnectionQueueFilter{
 				TenantId:     authUser.TenantId,

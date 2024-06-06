@@ -68,8 +68,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 	chatQueue.ChatRoutingId = data.ChatRoutingId
 	chatQueue.Status = data.Status
 
-	err = repository.ChatQueueRepo.Insert(ctx, dbCon, chatQueue)
-	if err != nil {
+	if err = repository.ChatQueueRepo.Insert(ctx, dbCon, chatQueue); err != nil {
 		log.Error(err)
 		return chatQueue.Base.GetId(), err
 	}
