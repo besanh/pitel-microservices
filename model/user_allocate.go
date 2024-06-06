@@ -16,5 +16,6 @@ type UserAllocate struct {
 	AllocatedTimestamp int64  `json:"allocated_timestamp" bun:"allocated_timestamp,notnull"`
 	MainAllocate       string `json:"main_allocate" bun:"main_allocate,type:text,notnull"`
 	ConnectionId       string `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	ConnectionQueueId  string `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,notnull"`
 	Username           string `json:"username" bun:"-"`
 }

@@ -21,13 +21,14 @@ type AppFilter struct {
 }
 
 type ChatConnectionAppFilter struct {
-	AppId          string `json:"app_id"`
-	TenantId       string `json:"tenant_id"`
-	ConnectionName string `json:"connection_name"`
-	ConnectionType string `json:"connection_type"`
-	QueueId        string `json:"queue_id"`
-	Status         string `json:"status"`
-	OaId           string `json:"oa_id"`
+	AppId             string `json:"app_id"`
+	TenantId          string `json:"tenant_id"`
+	ConnectionName    string `json:"connection_name"`
+	ConnectionType    string `json:"connection_type"`
+	QueueId           string `json:"queue_id"`
+	ConnectionQueueId string `json:"connection_queue_id"`
+	Status            string `json:"status"`
+	OaId              string `json:"oa_id"`
 }
 
 type QueueFilter struct {
@@ -98,9 +99,10 @@ type MessageFilter struct {
 }
 
 type ConnectionQueueFilter struct {
-	TenantId     string `json:"tenant_id"`
-	ConnectionId string `json:"connection_id"`
-	QueueId      string `json:"queue_id"`
+	TenantId          string `json:"tenant_id"`
+	ConnectionId      string `json:"connection_id"`
+	QueueId           string `json:"queue_id"`
+	ConnectionQueueId string `json:"connection_queue_id"`
 }
 
 type ShareInfoFormFilter struct {

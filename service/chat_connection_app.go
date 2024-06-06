@@ -75,12 +75,35 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		log.Error("app with type " + data.ConnectionType + " not found")
 		return connectionApp.Id, errors.New("app not found")
 	}
-	connectionApp.QueueId = data.QueueId
-	connectionApp.OaInfo = *data.OaInfo
-	if data.ConnectionType == "facebook" {
+
+	connectionQueue := model.ConnectionQueue{
+		Base:         model.InitBase(),
+		TenantId:     authUser.TenantId,
+		ConnectionId: connectionApp.Id,
+		QueueId:      data.QueueId,
+	}
+	// TODO: init connection_queue and add to connection
+	if len(data.ConnectionQueueId) > 0 {
+		connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, dbCon, data.ConnectionQueueId)
+		if err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		} else if connectionQueueExist == nil {
+			log.Error("connection queue " + data.ConnectionQueueId + " not found")
+			return connectionApp.Id, errors.New("connection queue " + data.ConnectionQueueId + " not found")
+		}
+		connectionQueue = *connectionQueueExist
+		connectionApp.ConnectionQueueId = connectionQueue.GetId()
+	}
+
+	if data.OaInfo.Facebook != nil || data.OaInfo.Zalo != nil {
+		connectionApp.OaInfo = *data.OaInfo
+	}
+
+	if data.ConnectionType == "facebook" && len(connectionApp.OaInfo.Facebook) > 0 {
 		connectionApp.OaInfo.Facebook[0].AppId = (*app)[0].InfoApp.Facebook.AppId
 		connectionApp.OaInfo.Facebook[0].CreatedTimestamp = time.Now().Unix()
-	} else if data.ConnectionType == "zalo" {
+	} else if data.ConnectionType == "zalo" && len(connectionApp.OaInfo.Zalo) > 0 {
 		connectionApp.OaInfo.Zalo[0].AppId = (*app)[0].InfoApp.Zalo.AppId
 		connectionApp.OaInfo.Zalo[0].CreatedTimestamp = time.Now().Unix()
 	}
@@ -92,12 +115,6 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	}
 
 	if len(data.QueueId) > 0 {
-		connectionQueue := model.ConnectionQueue{
-			Base:         model.InitBase(),
-			TenantId:     authUser.TenantId,
-			ConnectionId: connectionApp.Id,
-			QueueId:      data.QueueId,
-		}
 		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
 			log.Error(err)
 			return connectionApp.Id, err
@@ -188,7 +205,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if err != nil {
 		log.Error(err)
 		return err
-	} else if len(chatConnectionAppExist.Id) < 1 {
+	} else if chatConnectionAppExist == nil {
 		log.Error("connection app " + id + " not found")
 		return errors.New("connection app " + id + " not found")
 	}
@@ -200,9 +217,67 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if len(data.ConnectionType) > 0 {
 		chatConnectionAppExist.ConnectionType = data.ConnectionType
 	}
+
 	if len(data.QueueId) > 0 {
-		chatConnectionAppExist.QueueId = data.QueueId
+		filterConnectionQueue := model.ConnectionQueueFilter{
+			TenantId:     authUser.TenantId,
+			ConnectionId: chatConnectionAppExist.Id,
+			QueueId:      data.QueueId,
+		}
+		_, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, dbCon, filterConnectionQueue, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if len(*connectionQueues) < 1 {
+			// TODO: delete connection queue with connectionId
+			filter := model.ConnectionQueueFilter{
+				TenantId:     authUser.TenantId,
+				ConnectionId: chatConnectionAppExist.Id,
+			}
+			_, connectionQueueExists, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, filter, -1, 0)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			if len(*connectionQueueExists) > 0 {
+				if err = repository.ConnectionQueueRepo.BulkDeleteConnectionQueue(ctx, repository.DBConn, *connectionQueueExists); err != nil {
+					log.Error(err)
+					return err
+				}
+			}
+			// TODO: insert connection queue
+			connectionQueue := model.ConnectionQueue{
+				Base:         model.InitBase(),
+				TenantId:     authUser.TenantId,
+				ConnectionId: chatConnectionAppExist.Id,
+				QueueId:      data.QueueId,
+			}
+			if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
+				log.Error(err)
+				return err
+			}
+
+			chatConnectionAppExist.ConnectionQueueId = connectionQueue.Id
+		} else {
+			// TODO: update queue in connection queue
+			connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, chatConnectionAppExist.ConnectionQueueId)
+			if err != nil {
+				log.Error(err)
+				return err
+			} else if connectionQueueExist == nil {
+				log.Error("connection queue " + chatConnectionAppExist.ConnectionQueueId + " not found")
+				return errors.New("connection queue " + chatConnectionAppExist.ConnectionQueueId + " not found")
+			}
+
+			connectionQueueExist.QueueId = data.QueueId
+			if err = repository.ConnectionQueueRepo.Update(ctx, repository.DBConn, *connectionQueueExist); err != nil {
+				log.Error(err)
+				return err
+			}
+		}
 	}
+
 	if data.OaInfo != nil {
 		chatConnectionAppExist.OaInfo.Zalo = data.OaInfo.Zalo
 	}
@@ -231,7 +306,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	chatConnectionAppExist.UpdatedAt = time.Now()
 
 	if len(data.OaId) < 1 && chatConnectionAppExist.ConnectionType == "zalo" {
-		if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.QueueId); err != nil {
+		if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.ConnectionQueueId); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -287,7 +362,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		}
 	}
 
-	if len(data.OaId) < 1 {
+	if len(data.OaId) < 1 && len(data.QueueId) < 1 {
 		connectionQueue := model.ConnectionQueue{
 			Base:         model.InitBase(),
 			TenantId:     chatConnectionAppExist.TenantId,
@@ -295,6 +370,14 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 			QueueId:      data.QueueId,
 		}
 		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
+			log.Error(err)
+			return err
+		}
+
+		// Update connection
+		chatConnectionAppExist.ConnectionQueueId = connectionQueue.Id
+		chatConnectionAppExist.UpdatedAt = time.Now()
+		if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist); err != nil {
 			log.Error(err)
 			return err
 		}

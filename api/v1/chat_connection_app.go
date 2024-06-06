@@ -130,6 +130,12 @@ func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
 		return
 	}
 
+	if err := data.Validate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
 	log.Info("update chat connection app payload -> ", data)
 
 	err := handler.chatConnectionAppService.UpdateChatConnectionAppById(c, res.Data, id, data, false)
