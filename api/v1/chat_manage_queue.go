@@ -48,7 +48,7 @@ func (handler *ManageQueue) PostManageQueue(c *gin.Context) {
 
 	id, err := handler.manageQueue.PostManageQueue(c, res.Data, data)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
 	c.JSON(response.OK(map[string]any{

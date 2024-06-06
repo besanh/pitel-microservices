@@ -52,6 +52,9 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
 	}
+	if len(filter.ConnectionQueueId) > 0 {
+		query.Where("connection_queue_id = ?", filter.ConnectionQueueId)
+	}
 	if len(filter.Status) > 0 {
 		query.Where("status = ?", filter.Status)
 	}
@@ -90,6 +93,9 @@ func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, d
 	}
 	if len(filter.QueueId) > 0 {
 		query.Where("queue_id = ?", filter.QueueId)
+	}
+	if len(filter.ConnectionQueueId) > 0 {
+		query.Where("connection_queue_id = ?", filter.ConnectionQueueId)
 	}
 	if len(filter.Status) > 0 {
 		query.Where("status = ?", filter.Status)

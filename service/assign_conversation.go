@@ -43,8 +43,18 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 		return response.ServiceUnavailableMsg("connection not found")
 	}
 
+	// TODO: find connection_queue
+	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connections)[0].Id)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	} else if connectionQueueExist == nil {
+		log.Errorf("connection queue not found")
+		return response.ServiceUnavailableMsg("connection queue not found")
+	}
+
 	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-		QueueId: (*connections)[0].QueueId,
+		QueueId: connectionQueueExist.QueueId,
 	}
 	_, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 	if err != nil {
