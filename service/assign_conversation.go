@@ -44,7 +44,7 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	}
 
 	// TODO: find connection_queue
-	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connections)[0].Id)
+	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connections)[0].ConnectionQueueId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
