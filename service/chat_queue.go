@@ -102,6 +102,9 @@ func (s *ChatQueue) GetChatQueueById(ctx context.Context, authUser *model.AuthUs
 	if err != nil {
 		log.Error(err)
 		return nil, err
+	} else if queue == nil {
+		log.Error("queue " + id + " not found")
+		return nil, errors.New("queue " + id + " not found")
 	}
 
 	return queue, nil
