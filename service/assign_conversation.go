@@ -277,18 +277,18 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, &conversationEvent)
 
 		// TODO: publish message
-		filterMessage := model.MessageFilter{
-			TenantId:       (*conversations)[0].TenantId,
-			ConversationId: (*conversations)[0].ConversationId,
-		}
-		_, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-		if len(*messages) > 0 {
-			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], userIdAssigned, subscribers, &(*messages)[0])
-		}
+		// filterMessage := model.MessageFilter{
+		// 	TenantId:       (*conversations)[0].TenantId,
+		// 	ConversationId: (*conversations)[0].ConversationId,
+		// }
+		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
+		// if err != nil {
+		// 	log.Error(err)
+		// 	return response.ServiceUnavailableMsg(err.Error())
+		// }
+		// if len(*messages) > 0 {
+		// 	PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], userIdAssigned, subscribers, &(*messages)[0])
+		// }
 	}
 
 	// Event user_assigned
@@ -323,18 +323,18 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, &conversationEvent)
 
 		// TODO: publish message
-		filterMessage := model.MessageFilter{
-			TenantId:       (*conversations)[0].TenantId,
-			ConversationId: (*conversations)[0].ConversationId,
-		}
-		_, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-		if len(*messages) > 0 {
-			PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], userUuids, &(*messages)[0])
-		}
+		// filterMessage := model.MessageFilter{
+		// 	TenantId:       (*conversations)[0].TenantId,
+		// 	ConversationId: (*conversations)[0].ConversationId,
+		// }
+		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
+		// if err != nil {
+		// 	log.Error(err)
+		// 	return response.ServiceUnavailableMsg(err.Error())
+		// }
+		// if len(*messages) > 0 {
+		// 	PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], userUuids, &(*messages)[0])
+		// }
 	}
 
 	return response.OKResponse()
