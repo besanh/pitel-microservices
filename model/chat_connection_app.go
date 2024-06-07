@@ -12,34 +12,34 @@ import (
 
 type ChatConnectionApp struct {
 	bun.BaseModel     `bun:"table:chat_connection_app,alias:cca"`
-	Id                string     `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	TenantId          string     `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	CreatedAt         time.Time  `json:"created_at" bun:"created_at,notnull"`
-	UpdatedAt         time.Time  `json:"updated_at" bun:"updated_at,notnull"`
-	ConnectionName    string     `json:"connection_name" bun:"connection_name,type:text,notnull"`
-	ConnectionType    string     `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId             string     `json:"app_id" bun:"app_id,type:text,notnull"`
-	ConnectionQueueId string     `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,null,default:null"`
-	ConnectionQueue   *ChatQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
-	OaInfo            OaInfo     `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
-	Status            string     `json:"status" bun:"status,notnull"`
+	Id                string           `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	TenantId          string           `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	CreatedAt         time.Time        `json:"created_at" bun:"created_at,notnull"`
+	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`
+	ConnectionName    string           `json:"connection_name" bun:"connection_name,type:text,notnull"`
+	ConnectionType    string           `json:"connection_type" bun:"connection_type,type:text,notnull"`
+	AppId             string           `json:"app_id" bun:"app_id,type:text,notnull"`
+	ConnectionQueueId string           `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,default:null"`
+	ConnectionQueue   *ConnectionQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
+	OaInfo            OaInfo           `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
+	Status            string           `json:"status" bun:"status,notnull"`
 }
 
 type ChatConnectionAppView struct {
 	bun.BaseModel     `bun:"table:chat_connection_app,alias:cca"`
-	Id                string          `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	TenantId          string          `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	CreatedAt         time.Time       `json:"created_at" bun:"created_at,notnull"`
-	UpdatedAt         time.Time       `json:"updated_at" bun:"updated_at,notnull"`
-	ConnectionName    string          `json:"connection_name" bun:"connection_name,type:text,notnull"`
-	ConnectionType    string          `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId             string          `json:"app_id" bun:"app_id,type:text,notnull"`
-	ConnectionQueueId string          `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,null,default:null"`
-	ConnectionQueue   *ChatQueue      `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
-	OaInfo            OaInfo          `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
-	Status            string          `json:"status" bun:"status,notnull"`
-	ShareFormUuid     string          `json:"share_form_uuid" bun:"share_form_uuid"`
-	ShareInfoForm     json.RawMessage `json:"share_info_form" bun:"share_info_form"`
+	Id                string           `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	TenantId          string           `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	CreatedAt         time.Time        `json:"created_at" bun:"created_at,notnull"`
+	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`
+	ConnectionName    string           `json:"connection_name" bun:"connection_name,type:text,notnull"`
+	ConnectionType    string           `json:"connection_type" bun:"connection_type,type:text,notnull"`
+	AppId             string           `json:"app_id" bun:"app_id,type:text,notnull"`
+	ConnectionQueueId string           `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,default:null"`
+	ConnectionQueue   *ConnectionQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
+	OaInfo            OaInfo           `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
+	Status            string           `json:"status" bun:"status,notnull"`
+	ShareFormUuid     string           `json:"share_form_uuid" bun:"share_form_uuid"`
+	ShareInfoForm     json.RawMessage  `json:"share_info_form" bun:"share_info_form"`
 }
 
 type OaInfo struct {

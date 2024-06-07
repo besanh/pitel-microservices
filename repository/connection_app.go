@@ -78,7 +78,8 @@ func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, d
 	result := new([]model.ChatConnectionAppView)
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cca.*").
-		ColumnExpr("tmp.*")
+		ColumnExpr("tmp.*").
+		Relation("ConnectionQueue")
 	if len(filter.TenantId) > 0 {
 		query.Where("cca.tenant_id = ?", filter.TenantId)
 	}
