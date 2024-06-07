@@ -125,11 +125,12 @@ func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, d
 
 func (r *ChatConnectionApp) GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (entity *model.ChatConnectionApp, err error) {
 	entity = new(model.ChatConnectionApp)
-	err = db.GetDB().NewSelect().
+	query := db.GetDB().NewSelect().
 		Model(entity).
-		Where("id = ?", id).
-		Limit(1).
-		Scan(ctx)
+		Relation("ConnectionQueue").
+		Where("cca.id = ?", id).
+		Limit(1)
+	err = query.Scan(ctx)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {

@@ -189,6 +189,9 @@ func (s *ChatConnectionApp) GetChatConnectionAppById(ctx context.Context, authUs
 	if err != nil {
 		log.Error(err)
 		return
+	} else if chatConnectionApp == nil {
+		log.Error("connection app not found")
+		return
 	}
 
 	return *chatConnectionApp, nil
