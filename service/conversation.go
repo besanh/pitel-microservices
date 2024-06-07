@@ -265,15 +265,15 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// TODO: get message to display, otherwise use api get conversation to get latest message
-	filterMessage := model.MessageFilter{
-		TenantId:       conversationExist.TenantId,
-		ConversationId: conversationExist.ConversationId,
-	}
-	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, 1, 0)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
+	// filterMessage := model.MessageFilter{
+	// 	TenantId:       conversationExist.TenantId,
+	// 	ConversationId: conversationExist.ConversationId,
+	// }
+	// _, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, 1, 0)
+	// if err != nil {
+	// 	log.Error(err)
+	// 	return err
+	// }
 
 	// Event to manager
 	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
@@ -309,7 +309,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, conversationExist)
 		}
 
-		PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &(*messages)[0])
+		// PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &(*messages)[0])
 	}
 
 	// Event to admin
@@ -320,7 +320,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, conversationExist)
 		}
 
-		PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &(*messages)[0])
+		// PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &(*messages)[0])
 	}
 
 	return nil
