@@ -28,7 +28,7 @@ func NewChatQueue() IChatQueue {
 func (repo *ChatQueue) GetById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatQueue, error) {
 	result := new(model.ChatQueue)
 	query := db.GetDB().NewSelect().Model(result).
-		Relation("ConnectionQueues.ChatConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
+		Relation("ConnectionQueue.ChatConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("created_at desc")
 		}).
 		Relation("ChatRouting").
@@ -49,7 +49,7 @@ func (repo *ChatQueue) GetById(ctx context.Context, db sqlclient.ISqlClientConn,
 func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
 	result := new([]model.ChatQueue)
 	query := db.GetDB().NewSelect().Model(result).
-		Relation("ConnectionQueues.ChatConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
+		Relation("ConnectionQueue.ChatConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("created_at desc")
 		}).
 		Relation("ChatRouting").
