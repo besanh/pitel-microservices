@@ -74,10 +74,11 @@ func (s *ShareInfo) PostConfigForm(ctx context.Context, authUser *model.AuthUser
 	}
 
 	shareInfoForm := model.ShareInfoForm{
-		Base:      model.InitBase(),
-		TenantId:  authUser.TenantId,
-		ShareType: data.ShareType,
-		ShareForm: shareForm,
+		Base:         model.InitBase(),
+		TenantId:     authUser.TenantId,
+		ConnectionId: data.ConnectionId,
+		ShareType:    data.ShareType,
+		ShareForm:    shareForm,
 	}
 
 	if err := repository.ShareInfoRepo.Insert(ctx, dbCon, shareInfoForm); err != nil {

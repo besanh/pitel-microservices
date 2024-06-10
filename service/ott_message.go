@@ -118,8 +118,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		} else if connectionQueueExist == nil {
-			log.Errorf("connection queue not found")
-			return response.ServiceUnavailableMsg("connection queue not found")
+			log.Errorf("connection queue " + connectionCache.Id + " not found")
+			return response.ServiceUnavailableMsg("connection queue " + connectionCache.Id + " not found")
 		}
 
 		filterChatManageQueueUser := model.ChatManageQueueUserFilter{

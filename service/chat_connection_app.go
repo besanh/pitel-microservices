@@ -137,9 +137,10 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	// Insert share info
 	if connectionApp.ConnectionType == "zalo" {
 		shareInfo := model.ShareInfoForm{
-			Base:      model.InitBase(),
-			TenantId:  authUser.TenantId,
-			ShareType: "zalo",
+			Base:         model.InitBase(),
+			TenantId:     authUser.TenantId,
+			ConnectionId: connectionApp.Id,
+			ShareType:    "zalo",
 			ShareForm: model.ShareForm{
 				Zalo: struct {
 					AppId     string "json:\"app_id\""
@@ -330,8 +331,9 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	if isUpdateFromOtt {
 		if chatConnectionAppExist.ConnectionType == "zalo" {
 			filter := model.ShareInfoFormFilter{
-				AppId:     data.AppId,
-				ShareType: "zalo",
+				AppId:        data.AppId,
+				ShareType:    "zalo",
+				ConnectionId: chatConnectionAppExist.Id,
 			}
 			_, shareInfo, err := repository.ShareInfoRepo.GetShareInfos(ctx, repository.DBConn, filter, 1, 0)
 			if err != nil {
@@ -362,6 +364,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 				},
 			}
 
+			(*shareInfo)[0].ConnectionId = chatConnectionAppExist.Id
 			(*shareInfo)[0].UpdatedAt = time.Now()
 
 			if err = repository.ShareInfoRepo.Update(ctx, repository.DBConn, (*shareInfo)[0]); err != nil {
