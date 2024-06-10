@@ -106,12 +106,13 @@ type ConnectionQueueFilter struct {
 }
 
 type ShareInfoFormFilter struct {
-	TenantId  string `json:"tenant_id"`
-	ShareType string `json:"share_type"`
-	AppId     string `json:"app_id"`
-	OaId      string `json:"oa_id"`
-	Title     string `json:"title"`
-	Subtitle  string `json:"subtitle"`
+	TenantId     string `json:"tenant_id"`
+	ShareType    string `json:"share_type"`
+	AppId        string `json:"app_id"`
+	OaId         string `json:"oa_id"`
+	Title        string `json:"title"`
+	Subtitle     string `json:"subtitle"`
+	ConnectionId string `json:"connection_id"`
 }
 
 type FacebookPageFilter struct {
