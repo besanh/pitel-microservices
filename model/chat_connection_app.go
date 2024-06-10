@@ -116,6 +116,11 @@ func (m *ChatConnectionAppRequest) Validate() error {
 	if len(m.ConnectionType) < 1 {
 		return errors.New("connection type is required")
 	}
+
+	if len(m.ConnectionQueueId) < 1 {
+		return errors.New("connection queue id is required")
+	}
+
 	if !slices.Contains[[]string](variables.CONNECTION_TYPE, m.ConnectionType) {
 		return errors.New("connection type " + m.ConnectionType + " is not supported")
 	}
