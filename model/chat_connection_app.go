@@ -117,8 +117,38 @@ func (m *ChatConnectionAppRequest) Validate() error {
 		return errors.New("connection type is required")
 	}
 
-	if len(m.ConnectionQueueId) < 1 {
-		return errors.New("connection queue id is required")
+	if !slices.Contains[[]string](variables.CONNECTION_TYPE, m.ConnectionType) {
+		return errors.New("connection type " + m.ConnectionType + " is not supported")
+	}
+
+	if m.ConnectionType == "zalo" {
+		if len(m.OaInfo.Zalo) < 1 {
+			return errors.New("oa info zalo is required for zalo connection type")
+		}
+	}
+
+	if m.ConnectionType == "facebook" {
+		if len(m.OaInfo.Facebook) < 1 {
+			return errors.New("oa info facebook is required for facebook connection type")
+		}
+	}
+
+	if len(m.Status) < 1 {
+		return errors.New("status is required")
+	}
+	return nil
+}
+
+func (m *ChatConnectionAppRequest) ValidateUpdate() error {
+	if len(m.ConnectionName) < 1 {
+		return errors.New("connection name is required")
+	}
+	if len(m.ConnectionType) < 1 {
+		return errors.New("connection type is required")
+	}
+
+	if len(m.QueueId) < 1 {
+		return errors.New("queue id is required")
 	}
 
 	if !slices.Contains[[]string](variables.CONNECTION_TYPE, m.ConnectionType) {
