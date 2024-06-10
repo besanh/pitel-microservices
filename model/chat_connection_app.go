@@ -3,8 +3,10 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"regexp"
 	"time"
 
+	"github.com/tel4vn/fins-microservices/common/regex"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
@@ -125,6 +127,11 @@ func (m *ChatConnectionAppRequest) Validate() error {
 		if len(m.OaInfo.Zalo) < 1 {
 			return errors.New("oa info zalo is required for zalo connection type")
 		}
+
+		re := regexp.MustCompile(regex.REGEX_URL)
+		if !re.MatchString(m.OaInfo.Zalo[0].UrlOa) {
+			return errors.New("url " + m.OaInfo.Zalo[0].UrlOa + " is not valid")
+		}
 	}
 
 	if m.ConnectionType == "facebook" {
@@ -158,6 +165,10 @@ func (m *ChatConnectionAppRequest) ValidateUpdate() error {
 	if m.ConnectionType == "zalo" {
 		if len(m.OaInfo.Zalo) < 1 {
 			return errors.New("oa info zalo is required for zalo connection type")
+		}
+		re := regexp.MustCompile(regex.REGEX_URL)
+		if !re.MatchString(m.OaInfo.Zalo[0].UrlOa) {
+			return errors.New("url " + m.OaInfo.Zalo[0].UrlOa + " is not valid")
 		}
 	}
 
