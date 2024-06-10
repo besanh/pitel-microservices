@@ -113,7 +113,7 @@ func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, d
 		query2.Where("tenant_id = ?", filter.TenantId)
 	}
 
-	query.Join("LEFT JOIN LATERAL (?) AS tmp ON true", query2)
+	query.Join("INNER JOIN LATERAL (?) AS tmp ON true", query2)
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil
