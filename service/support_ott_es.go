@@ -84,7 +84,6 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		newConversationId := GenerateConversationId(conversation.AppId, conversation.OaId, conversation.ExternalUserId)
 		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
