@@ -108,12 +108,12 @@ func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, d
 	query2 := db.GetDB().NewSelect().TableExpr("chat_share_info as csi").
 		ColumnExpr("csi.id as share_form_uuid").
 		ColumnExpr("csi.share_form as share_info_form").
-		Where("cca.oa_info->'zalo'::text->0->>'oa_id' = share_form->'zalo'::text->>'oa_id'")
+		Where("csi.connection_id=cca.id")
 	if len(filter.TenantId) > 0 {
 		query2.Where("tenant_id = ?", filter.TenantId)
 	}
 
-	query.Join("INNER JOIN LATERAL (?) AS tmp ON true", query2)
+	query.Join("LEFT JOIN LATERAL (?) AS tmp ON true", query2)
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil
