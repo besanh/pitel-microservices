@@ -115,6 +115,12 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	}
 
 	if len(data.QueueId) > 0 {
+		// TODO: remove on duplicate connection_queue
+		if err := repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, dbCon, connectionApp.Id, ""); err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		}
+
 		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
 			log.Error(err)
 			return connectionApp.Id, err
@@ -371,6 +377,10 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 			TenantId:     chatConnectionAppExist.TenantId,
 			ConnectionId: chatConnectionAppExist.Id,
 			QueueId:      data.QueueId,
+		}
+		if err := repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, dbCon, chatConnectionAppExist.Id, ""); err != nil {
+			log.Error(err)
+			return err
 		}
 		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
 			log.Error(err)

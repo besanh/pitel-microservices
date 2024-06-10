@@ -49,9 +49,7 @@ func (repo *ChatQueue) GetById(ctx context.Context, db sqlclient.ISqlClientConn,
 func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
 	result := new([]model.ChatQueue)
 	query := db.GetDB().NewSelect().Model(result).
-		Relation("ConnectionQueue.ChatConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("created_at desc")
-		}).
+		Relation("ConnectionQueue.ChatConnectionApp").
 		Relation("ChatRouting").
 		Relation("ChatQueueUser").
 		Relation("ChatManageQueueUser")
