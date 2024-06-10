@@ -113,17 +113,21 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		message.TenantId = connectionCache.TenantId
 
 		// TODO: find connection_queue
-		connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, connectionCache.Id)
+		connectionQueueFilter := model.ConnectionQueueFilter{
+			TenantId:     connectionCache.TenantId,
+			ConnectionId: connectionCache.Id,
+		}
+		_, connectionQueueExists, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, connectionQueueFilter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
-		} else if connectionQueueExist == nil {
+		} else if len(*connectionQueueExists) < 1 {
 			log.Errorf("connection queue " + connectionCache.Id + " not found")
 			return response.ServiceUnavailableMsg("connection queue " + connectionCache.Id + " not found")
 		}
 
 		filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-			QueueId: connectionQueueExist.QueueId,
+			QueueId: (*connectionQueueExists)[0].QueueId,
 		}
 		_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 		if err != nil {
