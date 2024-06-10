@@ -250,7 +250,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 				return err
 			}
 			if len(*connectionQueueExists) > 0 {
-				if err = repository.ConnectionQueueRepo.BulkDeleteConnectionQueue(ctx, repository.DBConn, *connectionQueueExists); err != nil {
+				if err = repository.ConnectionQueueRepo.BulkDeleteConnectionQueue(ctx, repository.DBConn, connectionQueueExists); err != nil {
 					log.Error(err)
 					return err
 				}
