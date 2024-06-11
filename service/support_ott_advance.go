@@ -165,6 +165,11 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 			conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
 		}
 	}
+
+	if err := cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
+		log.Error(err)
+		return conversation, err
+	}
 	return conversation, nil
 }
 
