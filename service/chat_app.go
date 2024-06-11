@@ -104,7 +104,6 @@ func (s *ChatApp) UpdateChatAppById(ctx context.Context, authUser *model.AuthUse
 		log.Error(err)
 		return err
 	}
-	// chatAppTmp := chatAppExist
 
 	chatAppExist.AppName = data.AppName
 	chatAppExist.InfoApp = data.InfoApp

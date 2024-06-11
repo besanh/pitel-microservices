@@ -121,6 +121,7 @@ type FacebookPageFilter struct {
 }
 
 type ChatManageQueueUserFilter struct {
+	TenantId     string `json:"tenant_id"`
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
 	ManageId     string `json:"manage_id"`

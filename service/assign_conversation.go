@@ -54,9 +54,10 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	}
 
 	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-		QueueId: connectionQueueExist.QueueId,
+		TenantId: authUser.TenantId,
+		QueueId:  connectionQueueExist.QueueId,
 	}
-	_, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
+	_, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -70,10 +71,6 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	filterUserInQueue := model.ChatQueueUserFilter{
 		TenantId: authUser.TenantId,
 		QueueId:  []string{queueId},
-	}
-
-	if len(queueId) > 0 {
-		filterChatManageQueueUser.QueueId = queueId
 	}
 
 	_, userInQueues, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterUserInQueue, -1, 0)
