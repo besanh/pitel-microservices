@@ -31,19 +31,7 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 	shareInfo := data.ShareInfo
 	isExisted := false
 
-	// conversationCache := cache.RCache.Get(CONVERSATION + "_" + newConversationId)
-	// if conversationCache != nil {
-	// 	isExisted = true
-	// 	if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
-	// 		log.Error(err)
-	// 		return conversation, isNew, err
-	// 	}
-	// 	if err := UpdateESAndCache(ctx, data.TenantId, data.AppId, data.ExternalUserId, connectionId, *conversation.ShareInfo); err != nil {
-	// 		log.Error(err)
-	// 		return conversation, isNew, err
-	// 	}
-	// 	return conversation, isNew, nil
-	// } else {
+	// TODO: improve by caching
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, data.TenantId, ES_INDEX_CONVERSATION, data.AppId, newConversationId)
 	if err != nil {
 		log.Error(err)
@@ -66,13 +54,13 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		conversation.UpdatedAt = time.Now().Format(time.RFC3339)
 
 		conversation.ShareInfo = shareInfo
-		if len(connectionId) > 0 {
-			conversation, err = CacheConnection(ctx, connectionId, conversation)
-			if err != nil {
-				log.Error(err)
-				return conversation, isNew, err
-			}
-		}
+		// if len(connectionId) > 0 {
+		// 	conversation, err = CacheConnection(ctx, connectionId, conversation)
+		// 	if err != nil {
+		// 		log.Error(err)
+		// 		return conversation, isNew, err
+		// 	}
+		// }
 
 		tmpBytes, err := json.Marshal(conversation)
 		if err != nil {
@@ -88,10 +76,10 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 			log.Error(err)
 			return conversation, isNew, err
 		}
-		if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
+		// if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
+		// 	log.Error(err)
+		// 	return conversation, isNew, err
+		// }
 		isExisted = true
 		return conversation, isNew, nil
 	}
