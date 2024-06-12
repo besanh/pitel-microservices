@@ -19,9 +19,10 @@ func NewChatMsgSample(engine *gin.Engine, chatMsgSampleService service.IChatMsgS
 		chatMsgSampleService: chatMsgSampleService,
 	}
 
-	group := engine.Group("bss-message/v1/chat-command")
+	group := engine.Group("bss-message/v1/chat-sample")
 	{
 		group.GET("", handler.GetChatMsgSamples)
+		group.GET("/personalization", handler.GetPersonalizationValues)
 		group.GET(":id", handler.GetChatMsgSampleById)
 		group.POST("", handler.InsertChatMsgSample)
 		group.PUT(":id", handler.UpdateChatMsgSample)
@@ -40,6 +41,25 @@ func (handler *ChatMsgSample) GetChatMsgSamples(c *gin.Context) {
 	offset := util.ParseOffset(c.Query("offset"))
 
 	total, result, err := handler.chatMsgSampleService.GetChatMsgSamples(c, res.Data, limit, offset)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(result, total, limit, offset))
+}
+
+func (handler *ChatMsgSample) GetPersonalizationValues(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("invalid token"))
+		return
+	}
+
+	limit := util.ParseLimit(c.Query("limit"))
+	offset := util.ParseOffset(c.Query("offset"))
+
+	total, result, err := handler.chatMsgSampleService.GetChatPersonalizationValues(c, res.Data, limit, offset)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
@@ -151,6 +171,7 @@ func (handler *ChatMsgSample) DeleteChatMsgSampleById(c *gin.Context) {
 
 	err := handler.chatMsgSampleService.DeleteChatMsgSampleById(c, res.Data, id)
 	if err != nil {
+		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}

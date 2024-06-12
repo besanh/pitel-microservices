@@ -45,6 +45,7 @@ func RunMainService() {
 	defer cancel()
 	repository.InitTables(ctx, repository.DBConn)
 	repository.InitColumn(ctx, repository.DBConn)
+	repository.InitRows(ctx, repository.DBConn)
 
 	// Init services
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)

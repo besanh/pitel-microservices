@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
@@ -32,6 +31,7 @@ func InitRepositories() {
 	ShareInfoRepo = NewShareInfo()
 	ManageQueueRepo = NewManageQueue()
 	ChatMsgSampleRepo = NewChatMsgSample()
+	ChatPersonalizationRepo = NewChatPersonalization()
 }
 
 func InitRepositoriesES() {
@@ -83,6 +83,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatMsgSample)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatPersonalization)(nil)); err != nil {
+		log.Error(err)
+	}
 	log.Println("TABLES WERE CREATED")
 }
 
@@ -94,5 +97,27 @@ func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
 	if _, err := db.GetDB().NewAddColumn().Model((*model.UserAllocate)(nil)).IfNotExists().ColumnExpr("oa_id text not null").Exec(ctx); err != nil {
 		log.Info(err)
 		panic(err)
+	}
+}
+
+func InitRows(ctx context.Context, db sqlclient.ISqlClientConn) {
+	total, err := db.GetDB().NewSelect().Model((*model.ChatPersonalization)(nil)).Count(ctx)
+	if err != nil {
+		log.Info(err)
+		panic(err)
+	}
+	if total == 0 {
+		if err := ChatPersonalizationRepo.InsertDefaultPersonalizationValue(ctx, db, "page_name"); err != nil {
+			log.Info(err)
+			panic(err)
+		}
+		if err := ChatPersonalizationRepo.InsertDefaultPersonalizationValue(ctx, db, "customer_name"); err != nil {
+			log.Info(err)
+			panic(err)
+		}
+		if err := ChatPersonalizationRepo.InsertDefaultPersonalizationValue(ctx, db, "gender"); err != nil {
+			log.Info(err)
+			panic(err)
+		}
 	}
 }

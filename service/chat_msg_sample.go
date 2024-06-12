@@ -19,6 +19,7 @@ type (
 		InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cmd model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cmd model.ChatMsgSampleRequest, file *multipart.FileHeader) error
 		DeleteChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) error
+		GetChatPersonalizationValues(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatPersonalizationView, error)
 	}
 
 	ChatMsgSample struct{}
@@ -193,6 +194,22 @@ func (s *ChatMsgSample) DeleteChatMsgSampleById(ctx context.Context, authUser *m
 	}
 
 	err = repository.ChatMsgSampleRepo.Delete(ctx, dbCon, id)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	return
+}
+
+func (s *ChatMsgSample) GetChatPersonalizationValues(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, commands *[]model.ChatPersonalizationView, err error) {
+	dbCon, err := HandleGetDBConSource(authUser)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	total, commands, err = repository.ChatPersonalizationRepo.GetPersonalizationValues(ctx, dbCon, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return

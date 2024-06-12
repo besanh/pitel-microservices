@@ -48,6 +48,11 @@ type ChatMsgSampleView struct {
 	ConnectionName string `json:"connection_name" bun:"connection_name,type=text"`
 }
 
+type ChatPersonalizationView struct {
+	bun.BaseModel        `bun:"table:chat_personalization,alias:cp"`
+	PersonalizationValue string `json:"personalization_value" bun:"personalization_value,type:text,notnull"`
+}
+
 func (r *ChatMsgSampleRequest) Validate() error {
 	if len(r.Keyword) < 1 {
 		return errors.New("keyword is required")
