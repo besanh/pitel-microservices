@@ -14,7 +14,7 @@ import (
 
 type (
 	IChatCommand interface {
-		GetChatCommands(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, []model.ChatCommandView, error)
+		GetChatCommands(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatCommandView, error)
 		GetChatCommandById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatCommand, error)
 		InsertChatCommand(ctx context.Context, authUser *model.AuthUser, cmd model.ChatCommandRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatCommandById(ctx context.Context, authUser *model.AuthUser, id string, cmd model.ChatCommandRequest, file *multipart.FileHeader) error
@@ -28,7 +28,7 @@ func NewChatCommand() IChatCommand {
 	return &ChatCommand{}
 }
 
-func (s *ChatCommand) GetChatCommands(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, commands []model.ChatCommandView, err error) {
+func (s *ChatCommand) GetChatCommands(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, commands *[]model.ChatCommandView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -89,7 +89,6 @@ func (s *ChatCommand) InsertChatCommand(ctx context.Context, authUser *model.Aut
 			log.Error(err)
 			return chatCommand.Id, err
 		}
-
 	}
 
 	chatCommand.CreatorId = authUser.UserId

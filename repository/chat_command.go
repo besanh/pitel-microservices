@@ -11,7 +11,7 @@ import (
 type (
 	IChatCommand interface {
 		IRepo[model.ChatCommand]
-		GetChatCommands(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, []model.ChatCommandView, error)
+		GetChatCommands(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatCommandView, error)
 	}
 
 	ChatCommand struct {
@@ -25,10 +25,11 @@ func NewChatCommand() IChatCommand {
 	return &ChatCommand{}
 }
 
-func (repo *ChatCommand) GetChatCommands(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, []model.ChatCommandView, error) {
-	result := make([]model.ChatCommandView, 0)
+func (repo *ChatCommand) GetChatCommands(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatCommandView, error) {
+	result := new([]model.ChatCommandView)
 	query := db.GetDB().NewSelect().Model(result).
-		Column("cc.*, cca.connection_name")
+		Column("cc.*").
+		ColumnExpr("cca.connection_name")
 	query.Join("LEFT JOIN chat_connection_app as cca").JoinOn("cc.id = cca.id")
 
 	if limit > 0 {
