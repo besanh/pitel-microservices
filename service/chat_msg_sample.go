@@ -28,14 +28,14 @@ func NewChatMsgSample() IChatMsgSample {
 	return &ChatMsgSample{}
 }
 
-func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, commands *[]model.ChatMsgSampleView, err error) {
+func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, msgSamples *[]model.ChatMsgSampleView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	total, commands, err = repository.ChatMsgSampleRepo.GetChatMsgSamples(ctx, dbCon, limit, offset)
+	total, msgSamples, err = repository.ChatMsgSampleRepo.GetChatMsgSamples(ctx, dbCon, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return
@@ -240,7 +240,7 @@ func uploadImageToStorageChatMsgSample(c context.Context, file *multipart.FileHe
 		return
 	}
 
-	url = API_DOC + "/bss-message/v1/chat-command/image/" + input.Path
+	url = API_DOC + "/bss-message/v1/chat-msg-sample/image/" + input.Path
 
 	return
 }
