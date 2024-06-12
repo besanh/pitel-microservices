@@ -132,7 +132,15 @@ func (s *ChatCommand) UpdateChatCommandById(ctx context.Context, authUser *model
 		return err
 	}
 
-	// TODO: delete old image
+	err = removeImageFromStorageChatCommand(ctx, chatCommand.ImageUrl)
+	if err != nil {
+		log.Error(err)
+		//remove image just uploaded
+		if err = removeImageFromStorageChatCommand(ctx, imageUrl); err != nil {
+			log.Error(err)
+		}
+		return err
+	}
 
 	chatCommand.Keyword = cmd.Keyword
 	chatCommand.Theme = cmd.Theme
@@ -164,6 +172,12 @@ func (s *ChatCommand) DeleteChatCommandById(ctx context.Context, authUser *model
 	// check if exists
 	if chatCommand == nil {
 		err = errors.New("not found id")
+		log.Error(err)
+		return err
+	}
+
+	err = removeImageFromStorageChatCommand(ctx, chatCommand.ImageUrl)
+	if err != nil {
 		log.Error(err)
 		return err
 	}
@@ -205,4 +219,9 @@ func uploadImageToStorageChatCommand(c context.Context, file *multipart.FileHead
 	url = API_DOC + "/bss-message/v1/chat-command/image/" + input.Path
 
 	return
+}
+
+func removeImageFromStorageChatCommand(c context.Context, fileName string) error {
+	input := storage.NewRetrieveInput(fileName)
+	return storage.Instance.RemoveFile(c, *input)
 }
