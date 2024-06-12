@@ -6,9 +6,9 @@ import (
 	"mime/multipart"
 )
 
-type ChatCommand struct {
+type ChatMsgSample struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_command,alias:cc"`
+	bun.BaseModel `bun:"table:chat_msg_sample,alias:cc"`
 	Keyword       string `json:"keyword" bun:"keyword,type:text,notnull"`
 	Theme         string `json:"theme" bun:"theme,type:text,notnull"`
 	PageId        string `json:"page_id" bun:"page_id,type:uuid,notnull"`
@@ -24,7 +24,7 @@ type ChatPersonalization struct {
 	Value         string `json:"value" json:"value,type:text,notnull"`
 }
 
-type ChatCommandRequest struct {
+type ChatMsgSampleRequest struct {
 	Keyword string                `form:"keyword" binding:"required"`
 	Theme   string                `form:"theme" binding:"required"`
 	PageId  string                `json:"page_id" form:"page_id" binding:"required"`
@@ -33,9 +33,9 @@ type ChatCommandRequest struct {
 	File    *multipart.FileHeader `form:"file"`
 }
 
-type ChatCommandView struct {
+type ChatMsgSampleView struct {
 	*Base
-	bun.BaseModel  `bun:"table:chat_command,alias:cc"`
+	bun.BaseModel  `bun:"table:chat_msg_sample,alias:cc"`
 	Keyword        string `json:"keyword" bun:"keyword,type:text,notnull"`
 	Theme          string `json:"theme" bun:"theme,type:text,notnull"`
 	PageId         string `json:"page_id" bun:"page_id,type:uuid,notnull"`
@@ -46,7 +46,7 @@ type ChatCommandView struct {
 	ConnectionName string `json:"connection_name" bun:"connection_name,type=text"`
 }
 
-func (r *ChatCommandRequest) Validate() error {
+func (r *ChatMsgSampleRequest) Validate() error {
 	if len(r.Keyword) < 1 {
 		return errors.New("keyword is required")
 	}

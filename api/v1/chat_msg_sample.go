@@ -10,26 +10,26 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type ChatCommand struct {
-	chatCommandService service.IChatCommand
+type ChatMsgSample struct {
+	chatMsgSampleService service.IChatMsgSample
 }
 
-func NewChatCommand(engine *gin.Engine, chatCommandService service.IChatCommand) {
-	handler := ChatCommand{
-		chatCommandService: chatCommandService,
+func NewChatMsgSample(engine *gin.Engine, chatMsgSampleService service.IChatMsgSample) {
+	handler := ChatMsgSample{
+		chatMsgSampleService: chatMsgSampleService,
 	}
 
 	group := engine.Group("bss-message/v1/chat-command")
 	{
-		group.GET("", handler.GetChatCommands)
-		group.GET(":id", handler.GetChatCommandById)
-		group.POST("", handler.InsertChatCommand)
-		group.PUT(":id", handler.UpdateChatCommand)
-		group.DELETE(":id", handler.DeleteChatCommandById)
+		group.GET("", handler.GetChatMsgSamples)
+		group.GET(":id", handler.GetChatMsgSampleById)
+		group.POST("", handler.InsertChatMsgSample)
+		group.PUT(":id", handler.UpdateChatMsgSample)
+		group.DELETE(":id", handler.DeleteChatMsgSampleById)
 	}
 }
 
-func (handler *ChatCommand) GetChatCommands(c *gin.Context) {
+func (handler *ChatMsgSample) GetChatMsgSamples(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("invalid token"))
@@ -39,7 +39,7 @@ func (handler *ChatCommand) GetChatCommands(c *gin.Context) {
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
-	total, result, err := handler.chatCommandService.GetChatCommands(c, res.Data, limit, offset)
+	total, result, err := handler.chatMsgSampleService.GetChatMsgSamples(c, res.Data, limit, offset)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
@@ -48,7 +48,7 @@ func (handler *ChatCommand) GetChatCommands(c *gin.Context) {
 	c.JSON(response.Pagination(result, total, limit, offset))
 }
 
-func (handler *ChatCommand) GetChatCommandById(c *gin.Context) {
+func (handler *ChatMsgSample) GetChatMsgSampleById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("invalid token"))
@@ -61,23 +61,23 @@ func (handler *ChatCommand) GetChatCommandById(c *gin.Context) {
 		return
 	}
 
-	chatCommand, err := handler.chatCommandService.GetChatCommandById(c, res.Data, id)
+	chatMsgSample, err := handler.chatMsgSampleService.GetChatMsgSampleById(c, res.Data, id)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
-	c.JSON(response.OK(chatCommand))
+	c.JSON(response.OK(chatMsgSample))
 }
 
-func (handler *ChatCommand) InsertChatCommand(c *gin.Context) {
+func (handler *ChatMsgSample) InsertChatMsgSample(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("invalid token"))
 		return
 	}
 
-	var chatCmd model.ChatCommandRequest
+	var chatCmd model.ChatMsgSampleRequest
 	err := c.ShouldBindJSON(&chatCmd)
 	if err != nil {
 		log.Error(err)
@@ -91,7 +91,7 @@ func (handler *ChatCommand) InsertChatCommand(c *gin.Context) {
 		return
 	}
 
-	id, err := handler.chatCommandService.InsertChatCommand(c, res.Data, chatCmd, chatCmd.File)
+	id, err := handler.chatMsgSampleService.InsertChatMsgSample(c, res.Data, chatCmd, chatCmd.File)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
@@ -103,7 +103,7 @@ func (handler *ChatCommand) InsertChatCommand(c *gin.Context) {
 	}))
 }
 
-func (handler *ChatCommand) UpdateChatCommand(c *gin.Context) {
+func (handler *ChatMsgSample) UpdateChatMsgSample(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("invalid token"))
@@ -116,7 +116,7 @@ func (handler *ChatCommand) UpdateChatCommand(c *gin.Context) {
 		return
 	}
 
-	var chatCmd model.ChatCommandRequest
+	var chatCmd model.ChatMsgSampleRequest
 	err := c.ShouldBindJSON(&chatCmd)
 	if err != nil {
 		log.Error(err)
@@ -130,7 +130,7 @@ func (handler *ChatCommand) UpdateChatCommand(c *gin.Context) {
 		return
 	}
 
-	err = handler.chatCommandService.UpdateChatCommandById(c, res.Data, id, chatCmd, chatCmd.File)
+	err = handler.chatMsgSampleService.UpdateChatMsgSampleById(c, res.Data, id, chatCmd, chatCmd.File)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -140,7 +140,7 @@ func (handler *ChatCommand) UpdateChatCommand(c *gin.Context) {
 	c.JSON(response.OKResponse())
 }
 
-func (handler *ChatCommand) DeleteChatCommandById(c *gin.Context) {
+func (handler *ChatMsgSample) DeleteChatMsgSampleById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("invalid token"))
@@ -153,7 +153,7 @@ func (handler *ChatCommand) DeleteChatCommandById(c *gin.Context) {
 		return
 	}
 
-	err := handler.chatCommandService.DeleteChatCommandById(c, res.Data, id)
+	err := handler.chatMsgSampleService.DeleteChatMsgSampleById(c, res.Data, id)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))

@@ -128,7 +128,7 @@ func NewGRPCServer(port string) {
 	v1.NewChatEmail(httpServer, service.NewChatEmail())
 	v1.NewChatConnectionQueue(httpServer, service.NewChatConnectionQueue())
 	v1.NewTest(httpServer)
-	v1.NewChatCommand(httpServer, service.NewChatCommand())
+	v1.NewChatMsgSample(httpServer, service.NewChatMsgSample())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
 	mixedHandler := newHTTPandGRPC(httpServer, grpcServer)

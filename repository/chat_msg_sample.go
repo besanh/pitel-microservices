@@ -9,24 +9,24 @@ import (
 )
 
 type (
-	IChatCommand interface {
-		IRepo[model.ChatCommand]
-		GetChatCommands(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatCommandView, error)
+	IChatMsgSample interface {
+		IRepo[model.ChatMsgSample]
+		GetChatMsgSamples(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatMsgSampleView, error)
 	}
 
-	ChatCommand struct {
-		Repo[model.ChatCommand]
+	ChatMsgSample struct {
+		Repo[model.ChatMsgSample]
 	}
 )
 
-var ChatCommandRepo IChatCommand
+var ChatMsgSampleRepo IChatMsgSample
 
-func NewChatCommand() IChatCommand {
-	return &ChatCommand{}
+func NewChatMsgSample() IChatMsgSample {
+	return &ChatMsgSample{}
 }
 
-func (repo *ChatCommand) GetChatCommands(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatCommandView, error) {
-	result := new([]model.ChatCommandView)
+func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatMsgSampleView, error) {
+	result := new([]model.ChatMsgSampleView)
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cc.*").
 		ColumnExpr("cca.connection_name")
