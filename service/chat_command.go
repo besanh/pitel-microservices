@@ -82,10 +82,14 @@ func (s *ChatCommand) InsertChatCommand(ctx context.Context, authUser *model.Aut
 		return chatCommand.Id, err
 	}
 
-	imageUrl, err := uploadImageToStorageChatCommand(ctx, file)
-	if err != nil {
-		log.Error(err)
-		return chatCommand.Id, err
+	var imageUrl string
+	if file != nil {
+		imageUrl, err = uploadImageToStorageChatCommand(ctx, file)
+		if err != nil {
+			log.Error(err)
+			return chatCommand.Id, err
+		}
+
 	}
 
 	chatCommand.CreatorId = authUser.UserId
@@ -126,20 +130,22 @@ func (s *ChatCommand) UpdateChatCommandById(ctx context.Context, authUser *model
 		return err
 	}
 
-	imageUrl, err := uploadImageToStorageChatCommand(ctx, file)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	err = removeImageFromStorageChatCommand(ctx, chatCommand.ImageUrl)
-	if err != nil {
-		log.Error(err)
-		//remove image just uploaded
-		if err = removeImageFromStorageChatCommand(ctx, imageUrl); err != nil {
+	var imageUrl string
+	if file != nil {
+		imageUrl, err = uploadImageToStorageChatCommand(ctx, file)
+		if err != nil {
 			log.Error(err)
+			return err
 		}
-		return err
+		err = removeImageFromStorageChatCommand(ctx, chatCommand.ImageUrl)
+		if err != nil {
+			log.Error(err)
+			//remove image just uploaded
+			if err = removeImageFromStorageChatCommand(ctx, imageUrl); err != nil {
+				log.Error(err)
+			}
+			return err
+		}
 	}
 
 	chatCommand.Keyword = cmd.Keyword
