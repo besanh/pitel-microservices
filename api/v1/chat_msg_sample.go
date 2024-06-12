@@ -76,7 +76,7 @@ func (handler *ChatMsgSample) InsertChatMsgSample(c *gin.Context) {
 	}
 
 	var chatMsgSampleRequest model.ChatMsgSampleRequest
-	err := c.ShouldBindJSON(&chatMsgSampleRequest)
+	err := c.ShouldBind(&chatMsgSampleRequest)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -113,7 +113,7 @@ func (handler *ChatMsgSample) UpdateChatMsgSample(c *gin.Context) {
 	}
 
 	var chatMsgSampleRequest model.ChatMsgSampleRequest
-	err := c.ShouldBindJSON(&chatMsgSampleRequest)
+	err := c.ShouldBind(&chatMsgSampleRequest)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
