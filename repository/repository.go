@@ -31,6 +31,7 @@ func InitRepositories() {
 	ShareInfoRepo = NewShareInfo()
 	ManageQueueRepo = NewManageQueue()
 	ChatMsgSampleRepo = NewChatMsgSample()
+	ChatScriptRepo = NewChatScript()
 }
 
 func InitRepositoriesES() {
