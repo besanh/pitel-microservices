@@ -151,10 +151,10 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 					Subtitle  string "json:\"subtitle\""
 				}{
 					AppId:     (*app)[0].InfoApp.Zalo.AppId,
-					OaId:      (*app)[0].InfoApp.Zalo.OaId,
+					OaId:      connectionApp.OaInfo.Zalo[0].OaId,
 					ImageName: "oa_zalo.png",
 					ImageUrl:  API_DOC + "/bss-image/oa_zalo.png",
-					Title:     (*app)[0].InfoApp.Zalo.OaName,
+					Title:     connectionApp.ConnectionName,
 					Subtitle:  ZALO_SHARE_INFO_SUBTITLE,
 				},
 			},

@@ -117,7 +117,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 
 	userUuid, _ := resInfo["user_uuid"].(string)
 	if len(userUuid) < 1 {
-		log.Errorf("userUuid %s is invalid", userUuid)
+		log.Errorf("user_uuid %s is invalid", userUuid)
 		return nil, errors.New("invalid user uuid")
 	}
 

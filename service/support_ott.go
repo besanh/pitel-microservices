@@ -217,11 +217,12 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 			}
 			if len(*chatQueueUsers) > 0 {
 				chatSetting := model.ChatSetting{
-					ConnectionApp:   (*connectionApps)[0],
-					ConnectionQueue: *connectionQueue,
-					QueueUser:       *chatQueueUsers,
-					RoutingAlias:    chatRouting.RoutingAlias,
-					Message:         message,
+					ConnectionApp:       (*connectionApps)[0],
+					ConnectionQueue:     *connectionQueue,
+					QueueUser:           *chatQueueUsers,
+					RoutingAlias:        chatRouting.RoutingAlias,
+					Message:             message,
+					ConnectionQueueUser: *chatQueueUsers,
 				}
 
 				userTmp, err := GetAllocateUser(ctx, chatSetting, isConversationExist, currentUserAllocate)
@@ -260,6 +261,7 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 	userAllocate := model.UserAllocate{}
 	var authInfo model.AuthUser
 	var userLives []Subscriber
+	var isUserAccept bool
 
 	if strings.ToLower(chatSetting.RoutingAlias) == "random" {
 		for s := range WsSubscribers.Subscribers {
@@ -273,12 +275,22 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 			rand.NewSource(time.Now().UnixNano())
 			randomIndex := rand.Intn(len(userLives))
 			tmp := userLives[randomIndex]
-			userAllocate.TenantId = tmp.TenantId
-			userAllocate.UserId = tmp.UserId
-			userAllocate.Username = tmp.Username
 
-			authInfo.TenantId = userAllocate.TenantId
-			authInfo.UserId = userAllocate.UserId
+			// TODO: check user exist in queue
+			if len(chatSetting.ConnectionQueueUser) > 0 {
+				for _, item := range chatSetting.ConnectionQueueUser {
+					if item.UserId == tmp.UserId {
+						userAllocate.TenantId = tmp.TenantId
+						userAllocate.UserId = tmp.UserId
+						userAllocate.Username = tmp.Username
+
+						authInfo.TenantId = userAllocate.TenantId
+						authInfo.UserId = userAllocate.UserId
+						isUserAccept = true
+						break
+					}
+				}
+			}
 		}
 	} else if strings.ToLower(chatSetting.RoutingAlias) == "round_robin_online" {
 		userTmp, err := RoundRobinUserOnline(ctx, GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId), &chatSetting.QueueUser)
@@ -287,14 +299,29 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 			return user, err
 		}
 		userLives = append(userLives, *userTmp)
-		userAllocate.TenantId = userTmp.TenantId
-		userAllocate.UserId = userTmp.UserId
-		userAllocate.Username = userTmp.Username
 
-		authInfo.TenantId = userTmp.TenantId
-		authInfo.UserId = userTmp.UserId
-		authInfo.Username = userTmp.Username
-		authInfo.Level = userTmp.Level
+		// TODO: check user exist in queue
+		if len(chatSetting.ConnectionQueueUser) > 0 {
+			for _, item := range chatSetting.ConnectionQueueUser {
+				if item.UserId == userTmp.UserId {
+					userAllocate.TenantId = userTmp.TenantId
+					userAllocate.UserId = userTmp.UserId
+					userAllocate.Username = userTmp.Username
+
+					authInfo.TenantId = userTmp.TenantId
+					authInfo.UserId = userTmp.UserId
+					authInfo.Username = userTmp.Username
+					authInfo.Level = userTmp.Level
+					isUserAccept = true
+					break
+				}
+			}
+		}
+	}
+
+	if !isUserAccept {
+		log.Error("user not available")
+		return user, errors.New("user not available")
 	}
 
 	conversationId := GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId)
@@ -378,7 +405,7 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 			return user, nil
 		} else {
 			log.Error("user not available")
-			return user, fmt.Errorf("user not available")
+			return user, errors.New("user not available")
 		}
 	}
 }
