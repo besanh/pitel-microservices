@@ -19,12 +19,6 @@ type ChatMsgSample struct {
 	ImageUrl      string `json:"image_url,omitempty" bun:"image_url,type:text"`
 }
 
-type ChatPersonalization struct {
-	*Base
-	bun.BaseModel        `bun:"table:chat_personalization,alias:cp"`
-	PersonalizationValue string `json:"personalization_value" bun:"personalization_value,type:text,notnull"`
-}
-
 type ChatMsgSampleRequest struct {
 	Keyword string                `form:"keyword" binding:"required"`
 	Theme   string                `form:"theme" binding:"required"`
@@ -46,11 +40,6 @@ type ChatMsgSampleView struct {
 	UpdatedBy      string `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
 	ImageUrl       string `json:"image_url,omitempty" bun:"image_url,type:text"`
 	ConnectionName string `json:"connection_name" bun:"connection_name,type=text"`
-}
-
-type ChatPersonalizationView struct {
-	bun.BaseModel        `bun:"table:chat_personalization,alias:cp"`
-	PersonalizationValue string `json:"personalization_value" bun:"personalization_value,type:text,notnull"`
 }
 
 func (r *ChatMsgSampleRequest) Validate() error {
