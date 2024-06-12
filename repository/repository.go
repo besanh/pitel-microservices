@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
@@ -31,6 +30,7 @@ func InitRepositories() {
 	ConnectionQueueRepo = NewConnectionQueue()
 	ShareInfoRepo = NewShareInfo()
 	ManageQueueRepo = NewManageQueue()
+	ChatMsgSampleRepo = NewChatMsgSample()
 }
 
 func InitRepositoriesES() {
@@ -77,6 +77,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatEmail)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatMsgSample)(nil)); err != nil {
 		log.Error(err)
 	}
 	log.Println("TABLES WERE CREATED")
