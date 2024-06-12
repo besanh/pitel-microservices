@@ -63,7 +63,6 @@ func (handler *ChatMsgSample) GetChatMsgSampleById(c *gin.Context) {
 
 	chatMsgSample, err := handler.chatMsgSampleService.GetChatMsgSampleById(c, res.Data, id)
 	if err != nil {
-		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
@@ -86,7 +85,6 @@ func (handler *ChatMsgSample) InsertChatMsgSample(c *gin.Context) {
 	}
 
 	if err := chatCmd.Validate(); err != nil {
-		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
@@ -125,14 +123,12 @@ func (handler *ChatMsgSample) UpdateChatMsgSample(c *gin.Context) {
 	}
 
 	if err := chatCmd.Validate(); err != nil {
-		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
 	err = handler.chatMsgSampleService.UpdateChatMsgSampleById(c, res.Data, id, chatCmd, chatCmd.File)
 	if err != nil {
-		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
@@ -155,7 +151,6 @@ func (handler *ChatMsgSample) DeleteChatMsgSampleById(c *gin.Context) {
 
 	err := handler.chatMsgSampleService.DeleteChatMsgSampleById(c, res.Data, id)
 	if err != nil {
-		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}

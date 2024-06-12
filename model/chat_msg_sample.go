@@ -14,14 +14,15 @@ type ChatMsgSample struct {
 	PageId        string `json:"page_id" bun:"page_id,type:uuid,notnull"`
 	Channel       string `json:"channel" bun:"channel,type:text,notnull"`
 	Content       string `json:"content" bun:"content,type:text,notnull"`
-	CreatorId     string `json:"creator_id" bun:"creator_id,type:uuid,notnull"`
+	CreatedBy     string `json:"created_by" bun:"created_by,type:uuid,notnull"`
+	UpdatedBy     string `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
 	ImageUrl      string `json:"image_url,omitempty" bun:"image_url,type:text"`
 }
 
 type ChatPersonalization struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_personalization,alias:cp"`
-	Value         string `json:"value" json:"value,type:text,notnull"`
+	bun.BaseModel        `bun:"table:chat_personalization,alias:cp"`
+	PersonalizationValue string `json:"personalization_value" bun:"personalization_value,type:text,notnull"`
 }
 
 type ChatMsgSampleRequest struct {
@@ -41,7 +42,8 @@ type ChatMsgSampleView struct {
 	PageId         string `json:"page_id" bun:"page_id,type:uuid,notnull"`
 	Channel        string `json:"channel" bun:"channel,type:text,notnull"`
 	Content        string `json:"content" bun:"content,type:text,notnull"`
-	CreatorId      string `json:"creator_id" bun:"creator_id,type:uuid,notnull"`
+	CreatedBy      string `json:"created_by" bun:"created_by,type:uuid,notnull"`
+	UpdatedBy      string `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
 	ImageUrl       string `json:"image_url,omitempty" bun:"image_url,type:text"`
 	ConnectionName string `json:"connection_name" bun:"connection_name,type=text"`
 }

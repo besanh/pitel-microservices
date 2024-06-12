@@ -56,6 +56,9 @@ func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *mode
 		log.Error(err)
 		return
 	}
+	if rs == nil {
+		log.Error(errors.New("not found chat msg sample"))
+	}
 
 	return
 }
@@ -91,7 +94,8 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 		}
 	}
 
-	chatMsgSample.CreatorId = authUser.UserId
+	chatMsgSample.CreatedBy = authUser.UserId
+	chatMsgSample.UpdatedBy = authUser.UserId
 	chatMsgSample.Channel = cmd.Channel
 	chatMsgSample.PageId = cmd.PageId
 	chatMsgSample.Content = cmd.Content
@@ -150,8 +154,9 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 	chatMsgSample.Keyword = cmd.Keyword
 	chatMsgSample.Theme = cmd.Theme
 	chatMsgSample.Content = cmd.Content
-	chatMsgSample.UpdatedAt = time.Now()
 	chatMsgSample.ImageUrl = imageUrl
+	chatMsgSample.UpdatedBy = authUser.UserId
+	chatMsgSample.UpdatedAt = time.Now()
 	err = repository.ChatMsgSampleRepo.Update(ctx, dbCon, *chatMsgSample)
 	if err != nil {
 		log.Error(err)
