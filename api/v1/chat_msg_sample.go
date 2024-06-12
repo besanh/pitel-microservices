@@ -75,20 +75,20 @@ func (handler *ChatMsgSample) InsertChatMsgSample(c *gin.Context) {
 		return
 	}
 
-	var chatCmd model.ChatMsgSampleRequest
-	err := c.ShouldBindJSON(&chatCmd)
+	var chatMsgSampleRequest model.ChatMsgSampleRequest
+	err := c.ShouldBindJSON(&chatMsgSampleRequest)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	if err := chatCmd.Validate(); err != nil {
+	if err := chatMsgSampleRequest.Validate(); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	id, err := handler.chatMsgSampleService.InsertChatMsgSample(c, res.Data, chatCmd, chatCmd.File)
+	id, err := handler.chatMsgSampleService.InsertChatMsgSample(c, res.Data, chatMsgSampleRequest, chatMsgSampleRequest.File)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
@@ -112,20 +112,20 @@ func (handler *ChatMsgSample) UpdateChatMsgSample(c *gin.Context) {
 		return
 	}
 
-	var chatCmd model.ChatMsgSampleRequest
-	err := c.ShouldBindJSON(&chatCmd)
+	var chatMsgSampleRequest model.ChatMsgSampleRequest
+	err := c.ShouldBindJSON(&chatMsgSampleRequest)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	if err := chatCmd.Validate(); err != nil {
+	if err := chatMsgSampleRequest.Validate(); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
 
-	err = handler.chatMsgSampleService.UpdateChatMsgSampleById(c, res.Data, id, chatCmd, chatCmd.File)
+	err = handler.chatMsgSampleService.UpdateChatMsgSampleById(c, res.Data, id, chatMsgSampleRequest, chatMsgSampleRequest.File)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return

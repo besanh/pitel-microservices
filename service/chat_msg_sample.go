@@ -16,8 +16,8 @@ type (
 	IChatMsgSample interface {
 		GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatMsgSampleView, error)
 		GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatMsgSample, error)
-		InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cmd model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error)
-		UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cmd model.ChatMsgSampleRequest, file *multipart.FileHeader) error
+		InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error)
+		UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) error
 		DeleteChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 
@@ -64,7 +64,7 @@ func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *mode
 	return
 }
 
-func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cmd model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error) {
+func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error) {
 	chatMsgSample := model.ChatMsgSample{
 		Base: model.InitBase(),
 	}
@@ -75,7 +75,7 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 	}
 
 	// check if connectionApp id exists
-	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, cmd.ConnectionId)
+	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, cms.ConnectionId)
 	if err != nil {
 		log.Error(err)
 		return chatMsgSample.Id, err
@@ -97,11 +97,11 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 
 	chatMsgSample.CreatedBy = authUser.UserId
 	chatMsgSample.UpdatedBy = authUser.UserId
-	chatMsgSample.Channel = cmd.Channel
-	chatMsgSample.ConnectionId = cmd.ConnectionId
-	chatMsgSample.Content = cmd.Content
-	chatMsgSample.Keyword = cmd.Keyword
-	chatMsgSample.Theme = cmd.Theme
+	chatMsgSample.Channel = cms.Channel
+	chatMsgSample.ConnectionId = cms.ConnectionId
+	chatMsgSample.Content = cms.Content
+	chatMsgSample.Keyword = cms.Keyword
+	chatMsgSample.Theme = cms.Theme
 	chatMsgSample.ImageUrl = imageUrl
 	chatMsgSample.CreatedAt = time.Now()
 
@@ -114,7 +114,7 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 	return chatMsgSample.Id, nil
 }
 
-func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cmd model.ChatMsgSampleRequest, file *multipart.FileHeader) error {
+func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -155,14 +155,14 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 		}
 	}
 
-	if len(cmd.Keyword) > 0 {
-		chatMsgSample.Keyword = cmd.Keyword
+	if len(cms.Keyword) > 0 {
+		chatMsgSample.Keyword = cms.Keyword
 	}
-	if len(cmd.Theme) > 0 {
-		chatMsgSample.Theme = cmd.Theme
+	if len(cms.Theme) > 0 {
+		chatMsgSample.Theme = cms.Theme
 	}
-	if len(cmd.Content) > 0 {
-		chatMsgSample.Content = cmd.Content
+	if len(cms.Content) > 0 {
+		chatMsgSample.Content = cms.Content
 	}
 	if len(imageUrl) > 0 {
 		chatMsgSample.ImageUrl = imageUrl
