@@ -52,7 +52,7 @@ func (r *ChatMsgSampleRequest) Validate() error {
 		return errors.New("theme is required")
 	}
 	if len(r.ConnectionId) < 1 {
-		return errors.New("page id is required")
+		return errors.New("connection id is required")
 	}
 	if len(r.Channel) < 1 {
 		return errors.New("channel is required")
