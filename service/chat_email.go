@@ -88,6 +88,9 @@ func (s *ChatEmail) InsertChatEmail(ctx context.Context, authUser *model.AuthUse
 	chatEmail.EmailSubject = request.EmailSubject
 	chatEmail.EmailRecipient = request.EmailRecipient
 	chatEmail.EmailContent = request.EmailContent
+	chatEmail.EmailRequestType = request.EmailRequestType
+	chatEmail.EmailStatus = request.EmailStatus
+	chatEmail.CreatedAt = time.Now()
 
 	if request.EmailRequestType == "manual" {
 		chatEmail.EmailServer = request.EmailServer
@@ -102,10 +105,6 @@ func (s *ChatEmail) InsertChatEmail(ctx context.Context, authUser *model.AuthUse
 		chatEmail.EmailPort = fmt.Sprintf("%d", SMTP_MAILPORT)
 		chatEmail.EmailEncryptType = "tls"
 	}
-
-	chatEmail.EmailRequestType = request.EmailRequestType
-	chatEmail.EmailStatus = request.EmailStatus
-	chatEmail.CreatedAt = time.Now()
 
 	if err := repository.NewChatEmail().Insert(ctx, dbCon, chatEmail); err != nil {
 		log.Error(err)
@@ -159,6 +158,12 @@ func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.Aut
 		return errors.New("chat email " + id + " not found")
 	}
 
+	chatEmailExist.EmailRecipient = request.EmailRecipient
+	chatEmailExist.EmailSubject = request.EmailSubject
+	chatEmailExist.EmailContent = request.EmailContent
+	chatEmailExist.EmailRequestType = request.EmailRequestType
+	chatEmailExist.UpdatedAt = time.Now()
+
 	if request.EmailRequestType == "manual" {
 		chatEmailExist.EmailServer = request.EmailServer
 		chatEmailExist.EmailUsername = request.EmailUsername
@@ -172,10 +177,6 @@ func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.Aut
 		chatEmailExist.EmailPort = fmt.Sprintf("%d", SMTP_MAILPORT)
 		chatEmailExist.EmailEncryptType = "tls"
 	}
-	chatEmailExist.EmailRecipient = request.EmailRecipient
-	chatEmailExist.EmailSubject = request.EmailSubject
-	chatEmailExist.EmailRequestType = request.EmailRequestType
-	chatEmailExist.UpdatedAt = time.Now()
 
 	if err = repository.NewChatEmail().Update(ctx, dbCon, *chatEmailExist); err != nil {
 		log.Error(err)

@@ -203,12 +203,15 @@ func main() {
 	service.SMTP_USERNAME = env.GetStringENV("SMTP_USERNAME", "")
 	service.SMTP_PASSWORD = env.GetStringENV("SMTP_PASSWORD", "")
 	service.SMTP_INFORM = env.GetBoolENV("SMTP_INFORM", false)
+	service.ENABLE_NOTIFY_EMAIL = env.GetBoolENV("ENABLE_NOTIFY_EMAIL", false)
 
-	s1 := gocron.NewScheduler(time.Local)
-	s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
-	s1.Every(1).Hour().Do(service.NewChatEmail().HandleJobExpireToken)
-	s1.StartAsync()
-	defer s1.Clear()
+	if service.ENABLE_NOTIFY_EMAIL {
+		s1 := gocron.NewScheduler(time.Local)
+		s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
+		s1.Every(1).Hour().Do(service.NewChatEmail().HandleJobExpireToken)
+		s1.StartAsync()
+		defer s1.Clear()
+	}
 
 	// Run gRPC server
 	server.NewGRPCServer(config.gRPCPort)
