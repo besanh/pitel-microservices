@@ -74,14 +74,14 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 		return chatMsgSample.Id, err
 	}
 
-	// check if page id exists
-	page, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, cmd.PageId)
+	// check if connectionApp id exists
+	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, cmd.ConnectionId)
 	if err != nil {
 		log.Error(err)
 		return chatMsgSample.Id, err
 	}
-	if page == nil {
-		err = errors.New("not found page id")
+	if connectionApp == nil {
+		err = errors.New("not found connection id")
 		log.Error(err)
 		return chatMsgSample.Id, err
 	}
@@ -98,7 +98,7 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 	chatMsgSample.CreatedBy = authUser.UserId
 	chatMsgSample.UpdatedBy = authUser.UserId
 	chatMsgSample.Channel = cmd.Channel
-	chatMsgSample.PageId = cmd.PageId
+	chatMsgSample.ConnectionId = cmd.ConnectionId
 	chatMsgSample.Content = cmd.Content
 	chatMsgSample.Keyword = cmd.Keyword
 	chatMsgSample.Theme = cmd.Theme

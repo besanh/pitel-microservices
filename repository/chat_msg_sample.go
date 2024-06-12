@@ -28,9 +28,9 @@ func NewChatMsgSample() IChatMsgSample {
 func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatMsgSampleView, error) {
 	result := new([]model.ChatMsgSampleView)
 	query := db.GetDB().NewSelect().Model(result).
-		Column("cc.*").
-		ColumnExpr("cca.connection_name")
-	query.Join("LEFT JOIN chat_connection_app as cca").JoinOn("cc.id = cca.id")
+		Column("cms.*").
+		ColumnExpr("connection_app.connection_name").
+		Relation("ConnectionApp")
 
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
