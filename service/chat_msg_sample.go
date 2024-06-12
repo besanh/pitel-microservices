@@ -141,21 +141,32 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 			log.Error(err)
 			return err
 		}
-		err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
-		if err != nil {
-			log.Error(err)
-			//remove image just uploaded
-			if err = removeImageFromStorageChatMsgSample(ctx, imageUrl); err != nil {
+
+		if len(chatMsgSample.ImageUrl) > 0 {
+			err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
+			if err != nil {
 				log.Error(err)
+				//remove image just uploaded
+				if err = removeImageFromStorageChatMsgSample(ctx, imageUrl); err != nil {
+					log.Error(err)
+				}
+				return err
 			}
-			return err
 		}
 	}
 
-	chatMsgSample.Keyword = cmd.Keyword
-	chatMsgSample.Theme = cmd.Theme
-	chatMsgSample.Content = cmd.Content
-	chatMsgSample.ImageUrl = imageUrl
+	if len(cmd.Keyword) > 0 {
+		chatMsgSample.Keyword = cmd.Keyword
+	}
+	if len(cmd.Theme) > 0 {
+		chatMsgSample.Theme = cmd.Theme
+	}
+	if len(cmd.Content) > 0 {
+		chatMsgSample.Content = cmd.Content
+	}
+	if len(imageUrl) > 0 {
+		chatMsgSample.ImageUrl = imageUrl
+	}
 	chatMsgSample.UpdatedBy = authUser.UserId
 	chatMsgSample.UpdatedAt = time.Now()
 	err = repository.ChatMsgSampleRepo.Update(ctx, dbCon, *chatMsgSample)
@@ -187,10 +198,12 @@ func (s *ChatMsgSample) DeleteChatMsgSampleById(ctx context.Context, authUser *m
 		return err
 	}
 
-	err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
-	if err != nil {
-		log.Error(err)
-		return err
+	if len(chatMsgSample.ImageUrl) > 0 {
+		err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	err = repository.ChatMsgSampleRepo.Delete(ctx, dbCon, id)
