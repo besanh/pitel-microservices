@@ -173,9 +173,7 @@ func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.Aut
 		chatEmailExist.EmailEncryptType = "tls"
 	}
 	chatEmailExist.EmailRecipient = request.EmailRecipient
-	chatEmailExist.EmailServer = request.EmailServer
 	chatEmailExist.EmailSubject = request.EmailSubject
-	chatEmailExist.EmailUsername = request.EmailUsername
 	chatEmailExist.EmailRequestType = request.EmailRequestType
 	chatEmailExist.UpdatedAt = time.Now()
 
