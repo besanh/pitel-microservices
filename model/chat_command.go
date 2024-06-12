@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"github.com/uptrace/bun"
+	"mime/multipart"
 )
 
 type ChatCommand struct {
@@ -24,11 +25,12 @@ type ChatPersonalization struct {
 }
 
 type ChatCommandRequest struct {
-	Keyword string `json:"keyword"`
-	Theme   string `json:"theme"`
-	PageId  string `json:"page_id"`
-	Channel string `json:"channel"`
-	Content string `json:"content"`
+	Keyword string                `form:"keyword" binding:"required"`
+	Theme   string                `form:"theme" binding:"required"`
+	PageId  string                `form:"page_id" binding:"required"`
+	Channel string                `form:"channel" binding:"required"`
+	Content string                `form:"content" binding:"required"`
+	File    *multipart.FileHeader `form:"file"`
 }
 
 type ChatCommandView struct {
@@ -47,6 +49,9 @@ func (r *ChatCommandRequest) Validate() error {
 		return errors.New("page id is required")
 	}
 	if len(r.Channel) < 1 {
+		return errors.New("channel is required")
+	}
+	if len(r.Content) < 1 {
 		return errors.New("channel is required")
 	}
 

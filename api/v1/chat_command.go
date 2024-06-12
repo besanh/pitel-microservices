@@ -91,7 +91,7 @@ func (handler *ChatCommand) InsertChatCommand(c *gin.Context) {
 		return
 	}
 
-	id, err := handler.chatCommandService.InsertChatCommand(c, res.Data, chatCmd)
+	id, err := handler.chatCommandService.InsertChatCommand(c, res.Data, chatCmd, chatCmd.File)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
@@ -130,7 +130,7 @@ func (handler *ChatCommand) UpdateChatCommand(c *gin.Context) {
 		return
 	}
 
-	err = handler.chatCommandService.UpdateChatCommandById(c, res.Data, id, chatCmd)
+	err = handler.chatCommandService.UpdateChatCommandById(c, res.Data, id, chatCmd, chatCmd.File)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
