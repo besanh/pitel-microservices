@@ -75,11 +75,12 @@ var (
 	DB_PORT     int    = 0
 
 	// Email default
-	SMTP_SERVER   string = ""
-	SMTP_USERNAME string = ""
-	SMTP_PASSWORD string = ""
-	SMTP_MAILPORT int    = 0
-	SMTP_INFORM   bool   = false
+	SMTP_SERVER         string = ""
+	SMTP_USERNAME       string = ""
+	SMTP_PASSWORD       string = ""
+	SMTP_MAILPORT       int    = 0
+	SMTP_INFORM         bool   = false
+	ENABLE_NOTIFY_EMAIL bool   = false
 )
 
 type (

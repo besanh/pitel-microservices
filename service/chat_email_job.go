@@ -56,16 +56,16 @@ func (s *ChatEmail) HandleJobExpireToken() {
 }
 
 /**
-* Facebook expire in in 60 days ~ 5184000s
+* Facebook expire in in 90 days ~ 7776000s
  */
 func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, connection model.ChatConnectionApp) (err error) {
 	// We can use updated_timestamp to compare
 	expire := connection.OaInfo.Facebook[0].Expire
 	if expire == 0 {
 		createdTimestamp := connection.OaInfo.Facebook[0].CreatedTimestamp
-		expire = createdTimestamp + 5184000
+		expire = createdTimestamp + 7776000
 	}
-	if expire == 5184000 {
+	if expire == 7776000 {
 		return errors.New("expire time " + fmt.Sprintf("%d", expire) + " is not valid")
 	}
 	expireTime, err := ParseExpire(expire)
@@ -81,7 +81,7 @@ func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientCon
 	dayBeforeStartExpire := expireTime.AddDate(0, 0, -1)
 	dayBeforeEndExpire := expireTime.Add(-90000)
 
-	if time.Now().After(dayBeforeStartExpire) && time.Now().Before(dayBeforeEndExpire) && connection.OaInfo.Facebook[0].IsNotify {
+	if time.Now().After(dayBeforeStartExpire) && time.Now().Before(dayBeforeEndExpire) && !connection.OaInfo.Facebook[0].IsNotify {
 		// Caching connection
 		chatEmail := model.ChatEmail{}
 		connectionCache := cache.RCache.Get(CHAT_CONNECTION + "_" + connection.OaInfo.Facebook[0].OaId)
@@ -105,10 +105,10 @@ func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientCon
 			chatEmail = (*emails)[0]
 
 			// TODO: set cache
-			if err = cache.RCache.Set(CHAT_CONNECTION+"_"+connection.OaInfo.Facebook[0].OaId, chatEmail, 5*time.Minute); err != nil {
-				log.Error(err)
-				return err
-			}
+			// if err = cache.RCache.Set(CHAT_CONNECTION+"_"+connection.OaInfo.Facebook[0].OaId, chatEmail, 5*time.Minute); err != nil {
+			// 	log.Error(err)
+			// 	return err
+			// }
 		}
 
 		// TODO: send email
@@ -164,7 +164,7 @@ func handleFlowExpireZalo(ctx context.Context, dbCon sqlclient.ISqlClientConn, c
 	dayBeforeStartExpire := expireTime.AddDate(0, 0, -1)
 	dayBeforeEndExpire := expireTime.Add(-90000)
 
-	if time.Now().After(dayBeforeStartExpire) && time.Now().Before(dayBeforeEndExpire) && connection.OaInfo.Zalo[0].IsNotify {
+	if time.Now().After(dayBeforeStartExpire) && time.Now().Before(dayBeforeEndExpire) && !connection.OaInfo.Zalo[0].IsNotify {
 		// Caching connection
 		chatEmail := model.ChatEmail{}
 		connectionCache := cache.RCache.Get(CHAT_CONNECTION + "_" + connection.OaInfo.Zalo[0].OaId)
@@ -188,10 +188,10 @@ func handleFlowExpireZalo(ctx context.Context, dbCon sqlclient.ISqlClientConn, c
 			chatEmail = (*emails)[0]
 
 			// TODO: set cache
-			if err = cache.RCache.Set(CHAT_CONNECTION+"_"+connection.OaInfo.Zalo[0].OaId, chatEmail, 5*time.Minute); err != nil {
-				log.Error(err)
-				return err
-			}
+			// if err = cache.RCache.Set(CHAT_CONNECTION+"_"+connection.OaInfo.Zalo[0].OaId, chatEmail, 5*time.Minute); err != nil {
+			// 	log.Error(err)
+			// 	return err
+			// }
 		}
 
 		// TODO: send email
