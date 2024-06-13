@@ -32,13 +32,16 @@ func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.I
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cms.*").
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name")
+			return q.Column("connection_name", "oa_info")
 		})
 	if len(filter.ConnectionId) > 0 {
 		query.Where("cms.connection_id = ?", filter.ConnectionId)
 	}
 	if len(filter.Channel) > 0 {
 		query.Where("cms.channel = ?", filter.Channel)
+	}
+	if len(filter.OaId) > 0 {
+		query.Where("cca.oa_info->cms.channel::text->0->>'oa_id' = ?", filter.OaId)
 	}
 
 	if limit > 0 {

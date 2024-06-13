@@ -43,6 +43,7 @@ func (handler *ChatScript) GetChatScripts(c *gin.Context) {
 	filter := model.ChatScriptFilter{
 		ScriptName: c.Query("script_name"),
 		Channel:    c.Query("channel"),
+		OaId:       c.Query("oa_id"),
 	}
 
 	total, result, err := handler.chatScriptService.GetChatScripts(c, res.Data, filter, limit, offset)
