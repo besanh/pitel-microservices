@@ -16,7 +16,7 @@ type ChatMsgSample struct {
 	Channel       string             `json:"channel" bun:"channel,type:text,notnull"`
 	Content       string             `json:"content" bun:"content,type:text,notnull"`
 	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid"`
 	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url,type:text"`
 }
 
@@ -39,7 +39,7 @@ type ChatMsgSampleView struct {
 	Channel       string             `json:"channel" bun:"channel,type:text,notnull"`
 	Content       string             `json:"content" bun:"content,type:text,notnull"`
 	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid"`
 	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url,type:text"`
 }
 

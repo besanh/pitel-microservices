@@ -14,7 +14,7 @@ type ChatScript struct {
 	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
 	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
 	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid"`
 	Status        bool               `json:"status" bun:"status,type:boolean"`
 	ScriptType    string             `json:"script_type" bun:"script_type,type:text,notnull"`
 	Content       string             `json:"content,omitempty" bun:"content,type:text"`                 // text script
@@ -45,9 +45,9 @@ type ChatScriptView struct {
 	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
 	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
 	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
-	Status        bool               `json:"status" bun:"status,type=boolean"`
-	ScriptType    string             `json:"script_type" bun:"script_type,type=text,notnull"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid"`
+	Status        bool               `json:"status" bun:"status,type:boolean"`
+	ScriptType    string             `json:"script_type" bun:"script_type,type:text,notnull"`
 	Content       string             `json:"content,omitempty" bun:"content,type:text"`                 // text script
 	FileUrl       string             `json:"file_url,omitempty" bun:"file_url,type:text"`               // file script
 	OtherScriptId string             `json:"other_script_id,omitempty" bun:"other_script_id,type:uuid"` // file script
