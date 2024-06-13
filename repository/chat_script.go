@@ -32,13 +32,16 @@ func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlCli
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cst.*").
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name")
+			return q.Column("connection_name", "oa_info")
 		})
 	if len(filter.ScriptName) > 0 {
 		query.Where("cst.script_name = ?", filter.ScriptName)
 	}
 	if len(filter.Channel) > 0 {
 		query.Where("cst.channel = ?", filter.Channel)
+	}
+	if len(filter.OaId) > 0 {
+		query.Where("cca.oa_info->cst.channel::text->0->>'oa_id' = ?", filter.OaId)
 	}
 
 	if limit > 0 {
