@@ -196,3 +196,20 @@ func WriteTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn,
 	}
 	return nil
 }
+
+func GetBssAuthRequest(c *gin.Context) model.BssAuthRequest {
+	bssAuthRequest := model.BssAuthRequest{
+		Token:   c.Query("token"),
+		AuthUrl: c.Query("auth-url"),
+		Source:  c.Query("source"),
+	}
+
+	if len(c.GetHeader("validator-header")) > 0 {
+		bssAuthRequest = model.BssAuthRequest{
+			Token:   c.GetHeader("token"),
+			AuthUrl: c.GetHeader("auth-url"),
+			Source:  c.GetHeader("source"),
+		}
+	}
+	return bssAuthRequest
+}

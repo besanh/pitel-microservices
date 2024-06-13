@@ -40,7 +40,8 @@ func (handler *ChatScript) GetChatScripts(c *gin.Context) {
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
-	total, result, err := handler.chatScriptService.GetChatScripts(c, res.Data, limit, offset)
+	bssAuthReq := api.GetBssAuthRequest(c)
+	total, result, err := handler.chatScriptService.GetChatScripts(c, res.Data, limit, offset, bssAuthReq)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
