@@ -7,7 +7,6 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 	"io"
 	"mime/multipart"
 	"time"
@@ -15,8 +14,8 @@ import (
 
 type (
 	IChatMsgSample interface {
-		GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int, request model.BssAuthRequest) (int, *[]model.ChatMsgSampleView, error)
-		GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, request model.BssAuthRequest) (*model.ChatMsgSampleView, error)
+		GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatMsgSampleView, error)
+		GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatMsgSampleView, error)
 		InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) error
 		DeleteChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) error
@@ -29,7 +28,7 @@ func NewChatMsgSample() IChatMsgSample {
 	return &ChatMsgSample{}
 }
 
-func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int, request model.BssAuthRequest) (total int, msgSamples *[]model.ChatMsgSampleView, err error) {
+func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, msgSamples *[]model.ChatMsgSampleView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -45,24 +44,11 @@ func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.A
 	if msgSamples == nil {
 		return
 	}
-	//fill creator name for each chat msg sample
-	for i, m := range *msgSamples {
-		creator, err := common.GetUserAuthenticated(request.AuthUrl, request.Token, m.CreatedBy)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		if creator == nil {
-			log.Error("not found creator's info")
-			continue
-		}
-		(*msgSamples)[i].CreatorFullName = creator.FirstName + " " + creator.MiddleName + " " + creator.LastName
-	}
 
 	return
 }
 
-func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, request model.BssAuthRequest) (rs *model.ChatMsgSampleView, err error) {
+func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (rs *model.ChatMsgSampleView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -78,17 +64,6 @@ func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *mode
 		log.Error(errors.New("not found chat msg sample"))
 		return
 	}
-	creator, err := common.GetUserAuthenticated(request.AuthUrl, request.Token, rs.CreatedBy)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	if creator == nil {
-		log.Error("not found creator's info")
-		return
-	}
-	rs.CreatorFullName = creator.FirstName + " " + creator.MiddleName + " " + creator.LastName
-
 	return
 }
 

@@ -39,8 +39,7 @@ func (handler *ChatMsgSample) GetChatMsgSamples(c *gin.Context) {
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
-	bssAuthReq := api.GetBssAuthRequest(c)
-	total, result, err := handler.chatMsgSampleService.GetChatMsgSamples(c, res.Data, limit, offset, bssAuthReq)
+	total, result, err := handler.chatMsgSampleService.GetChatMsgSamples(c, res.Data, limit, offset)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
@@ -61,8 +60,7 @@ func (handler *ChatMsgSample) GetChatMsgSampleById(c *gin.Context) {
 		return
 	}
 
-	bssAuthReq := api.GetBssAuthRequest(c)
-	chatMsgSample, err := handler.chatMsgSampleService.GetChatMsgSampleById(c, res.Data, id, bssAuthReq)
+	chatMsgSample, err := handler.chatMsgSampleService.GetChatMsgSampleById(c, res.Data, id)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return

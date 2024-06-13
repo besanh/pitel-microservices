@@ -7,7 +7,6 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 	"io"
 	"mime/multipart"
 	"time"
@@ -15,8 +14,8 @@ import (
 
 type (
 	IChatScript interface {
-		GetChatScripts(ctx context.Context, authUser *model.AuthUser, limit int, offset int, request model.BssAuthRequest) (int, *[]model.ChatScriptView, error)
-		GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, request model.BssAuthRequest) (*model.ChatScriptView, error)
+		GetChatScripts(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatScriptView, error)
+		GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatScriptView, error)
 		InsertChatScript(ctx context.Context, authUser *model.AuthUser, csr model.ChatScriptRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, csr model.ChatScriptRequest, file *multipart.FileHeader) error
 		UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus string) error
@@ -30,7 +29,7 @@ func NewChatScript() IChatScript {
 	return &ChatScript{}
 }
 
-func (s *ChatScript) GetChatScripts(ctx context.Context, authUser *model.AuthUser, limit int, offset int, request model.BssAuthRequest) (total int, chatScripts *[]model.ChatScriptView, err error) {
+func (s *ChatScript) GetChatScripts(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, chatScripts *[]model.ChatScriptView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -45,24 +44,11 @@ func (s *ChatScript) GetChatScripts(ctx context.Context, authUser *model.AuthUse
 	if chatScripts == nil {
 		return
 	}
-	//fill creator name for each chat msg sample
-	for i, m := range *chatScripts {
-		creator, err := common.GetUserAuthenticated(request.AuthUrl, request.Token, m.CreatedBy)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		if creator == nil {
-			log.Error("not found creator's info")
-			continue
-		}
-		(*chatScripts)[i].CreatorFullName = creator.FirstName + " " + creator.MiddleName + " " + creator.LastName
-	}
 
 	return
 }
 
-func (s *ChatScript) GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, request model.BssAuthRequest) (rs *model.ChatScriptView, err error) {
+func (s *ChatScript) GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) (rs *model.ChatScriptView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -78,16 +64,6 @@ func (s *ChatScript) GetChatScriptById(ctx context.Context, authUser *model.Auth
 		log.Error(errors.New("not found chat script config"))
 		return
 	}
-	creator, err := common.GetUserAuthenticated(request.AuthUrl, request.Token, rs.CreatedBy)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	if creator == nil {
-		log.Error("not found creator's info")
-		return
-	}
-	rs.CreatorFullName = creator.FirstName + " " + creator.MiddleName + " " + creator.LastName
 
 	return
 }
