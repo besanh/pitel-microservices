@@ -41,10 +41,6 @@ func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.A
 		return
 	}
 
-	if msgSamples == nil {
-		return
-	}
-
 	return
 }
 

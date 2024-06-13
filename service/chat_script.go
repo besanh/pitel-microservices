@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
@@ -41,26 +42,23 @@ func (s *ChatScript) GetChatScripts(ctx context.Context, authUser *model.AuthUse
 		log.Error(err)
 		return
 	}
-	if chatScripts == nil {
-		return
-	}
 
 	return
 }
 
-func (s *ChatScript) GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) (rs *model.ChatScriptView, err error) {
+func (s *ChatScript) GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.ChatScriptView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	rs, err = repository.ChatScriptRepo.GetChatScriptById(ctx, dbCon, id)
+	result, err = repository.ChatScriptRepo.GetChatScriptById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if rs == nil {
+	if result == nil {
 		log.Error(errors.New("not found chat script config"))
 		return
 	}
@@ -91,9 +89,9 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	}
 
 	switch csr.ScriptType {
-	case "TEXT":
+	case "text":
 		chatScript.Content = csr.Content
-	case "IMAGE", "FILE":
+	case "image", "file":
 		var fileUrl string
 		if file != nil && len(file.Filename) > 0 {
 			fileUrl, err = uploadFileToStorageChatScript(ctx, file)
@@ -103,7 +101,7 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 			}
 		}
 		chatScript.FileUrl = fileUrl
-	case "OTHER":
+	case "other":
 		chatScript.OtherScriptId = csr.OtherScriptId
 	default:
 		err = errors.New("invalid script type")
@@ -118,7 +116,7 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	chatScript.ScriptType = csr.ScriptType
 	chatScript.ScriptName = csr.ScriptName
 	chatScript.CreatedBy = authUser.UserId
-	chatScript.UpdatedBy = authUser.UserId
+	chatScript.UpdatedBy = uuid.Nil.String()
 	chatScript.Channel = csr.Channel
 	chatScript.ConnectionId = csr.ConnectionId
 	chatScript.CreatedAt = time.Now()
