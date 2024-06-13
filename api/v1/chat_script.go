@@ -62,7 +62,8 @@ func (handler *ChatScript) GetChatScriptById(c *gin.Context) {
 		return
 	}
 
-	chatScript, err := handler.chatScriptService.GetChatScriptById(c, res.Data, id)
+	bssAuthReq := api.GetBssAuthRequest(c)
+	chatScript, err := handler.chatScriptService.GetChatScriptById(c, res.Data, id, bssAuthReq)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
