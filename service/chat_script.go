@@ -19,7 +19,7 @@ type (
 		GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, request model.BssAuthRequest) (*model.ChatScriptView, error)
 		InsertChatScript(ctx context.Context, authUser *model.AuthUser, csr model.ChatScriptRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, csr model.ChatScriptRequest, file *multipart.FileHeader) error
-		UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus bool) error
+		UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus string) error
 		DeleteChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 
@@ -135,6 +135,12 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 		return chatScript.Id, err
 	}
 
+	if csr.Status == "true" {
+		chatScript.Status = true
+	}
+
+	chatScript.ScriptType = csr.ScriptType
+	chatScript.ScriptName = csr.ScriptName
 	chatScript.CreatedBy = authUser.UserId
 	chatScript.UpdatedBy = authUser.UserId
 	chatScript.Channel = csr.Channel
@@ -223,7 +229,7 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 	return nil
 }
 
-func (s *ChatScript) UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus bool) error {
+func (s *ChatScript) UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus string) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -242,7 +248,12 @@ func (s *ChatScript) UpdateChatScriptStatusById(ctx context.Context, authUser *m
 		log.Error(err)
 		return err
 	}
-	chatScript.Status = !oldStatus
+
+	var status bool
+	if oldStatus == "true" {
+		status = true
+	}
+	chatScript.Status = !status
 	chatScript.UpdatedBy = authUser.UserId
 	chatScript.UpdatedAt = time.Now()
 	err = repository.ChatScriptRepo.Update(ctx, dbCon, *chatScript)

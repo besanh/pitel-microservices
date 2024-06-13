@@ -30,7 +30,7 @@ func NewChatScript() IChatScript {
 func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatScriptView, error) {
 	result := new([]model.ChatScriptView)
 	query := db.GetDB().NewSelect().Model(result).
-		Column("cms.*").
+		Column("cst.*").
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Column("connection_name")
 		})
@@ -55,7 +55,7 @@ func (repo *ChatScript) GetChatScriptById(ctx context.Context, db sqlclient.ISql
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Column("connection_name")
 		}).
-		Where("cms.id = ?", id).
+		Where("cst.id = ?", id).
 		Limit(1).
 		Scan(ctx)
 	if errors.Is(err, sql.ErrNoRows) {
