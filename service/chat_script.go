@@ -157,9 +157,9 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 	}
 
 	switch csr.ScriptType {
-	case "TEXT":
+	case "text":
 		chatScript.Content = csr.Content
-	case "IMAGE", "FILE":
+	case "image", "file":
 		var fileUrl string
 		if file != nil && len(file.Filename) > 0 {
 			fileUrl, err = uploadFileToStorageChatScript(ctx, file)
@@ -181,7 +181,7 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 			}
 		}
 		chatScript.FileUrl = fileUrl
-	case "OTHER":
+	case "other":
 		chatScript.OtherScriptId = csr.OtherScriptId
 	default:
 		err = errors.New("invalid script type")
