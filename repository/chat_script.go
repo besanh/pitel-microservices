@@ -12,7 +12,7 @@ import (
 type (
 	IChatScript interface {
 		IRepo[model.ChatScript]
-		GetChatScripts(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatScriptView, error)
+		GetChatScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatScriptFilter, limit, offset int) (int, *[]model.ChatScriptView, error)
 		GetChatScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatScriptView, error)
 	}
 
@@ -27,13 +27,19 @@ func NewChatScript() IChatScript {
 	return &ChatScript{}
 }
 
-func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlClientConn, limit, offset int) (int, *[]model.ChatScriptView, error) {
+func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatScriptFilter, limit, offset int) (int, *[]model.ChatScriptView, error) {
 	result := new([]model.ChatScriptView)
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cst.*").
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Column("connection_name")
 		})
+	if len(filter.ScriptName) > 0 {
+		query.Where("cst.script_name = ?", filter.ScriptName)
+	}
+	if len(filter.Channel) > 0 {
+		query.Where("cst.channel = ?", filter.Channel)
+	}
 
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

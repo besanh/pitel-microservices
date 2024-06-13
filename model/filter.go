@@ -140,3 +140,13 @@ type ChatEmailFilter struct {
 	OaId     string       `json:"oa_id"`
 	Status   sql.NullBool `json:"status"`
 }
+
+type ChatMsgSampleFilter struct {
+	ConnectionId string `json:"connection_id"`
+	Channel      string `json:"channel"`
+}
+
+type ChatScriptFilter struct {
+	Channel    string `json:"channel"`
+	ScriptName string `json:"script_name"`
+}

@@ -40,7 +40,12 @@ func (handler *ChatScript) GetChatScripts(c *gin.Context) {
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
-	total, result, err := handler.chatScriptService.GetChatScripts(c, res.Data, limit, offset)
+	filter := model.ChatScriptFilter{
+		ScriptName: c.Query("script_name"),
+		Channel:    c.Query("channel"),
+	}
+
+	total, result, err := handler.chatScriptService.GetChatScripts(c, res.Data, filter, limit, offset)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return

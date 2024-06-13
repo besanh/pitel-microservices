@@ -14,7 +14,7 @@ import (
 
 type (
 	IChatScript interface {
-		GetChatScripts(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatScriptView, error)
+		GetChatScripts(ctx context.Context, authUser *model.AuthUser, filter model.ChatScriptFilter, limit int, offset int) (int, *[]model.ChatScriptView, error)
 		GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatScriptView, error)
 		InsertChatScript(ctx context.Context, authUser *model.AuthUser, csr model.ChatScriptRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, csr model.ChatScriptRequest, file *multipart.FileHeader) error
@@ -29,14 +29,14 @@ func NewChatScript() IChatScript {
 	return &ChatScript{}
 }
 
-func (s *ChatScript) GetChatScripts(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, chatScripts *[]model.ChatScriptView, err error) {
+func (s *ChatScript) GetChatScripts(ctx context.Context, authUser *model.AuthUser, filter model.ChatScriptFilter, limit int, offset int) (total int, chatScripts *[]model.ChatScriptView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	total, chatScripts, err = repository.ChatScriptRepo.GetChatScripts(ctx, dbCon, limit, offset)
+	total, chatScripts, err = repository.ChatScriptRepo.GetChatScripts(ctx, dbCon, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return

@@ -14,7 +14,7 @@ import (
 
 type (
 	IChatMsgSample interface {
-		GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatMsgSampleView, error)
+		GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, filter model.ChatMsgSampleFilter, limit int, offset int) (int, *[]model.ChatMsgSampleView, error)
 		GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatMsgSampleView, error)
 		InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) error
@@ -28,14 +28,14 @@ func NewChatMsgSample() IChatMsgSample {
 	return &ChatMsgSample{}
 }
 
-func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, msgSamples *[]model.ChatMsgSampleView, err error) {
+func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, filter model.ChatMsgSampleFilter, limit int, offset int) (total int, msgSamples *[]model.ChatMsgSampleView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	total, msgSamples, err = repository.ChatMsgSampleRepo.GetChatMsgSamples(ctx, dbCon, limit, offset)
+	total, msgSamples, err = repository.ChatMsgSampleRepo.GetChatMsgSamples(ctx, dbCon, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return
