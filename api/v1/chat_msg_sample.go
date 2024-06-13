@@ -39,7 +39,12 @@ func (handler *ChatMsgSample) GetChatMsgSamples(c *gin.Context) {
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
-	total, result, err := handler.chatMsgSampleService.GetChatMsgSamples(c, res.Data, limit, offset)
+	filter := model.ChatMsgSampleFilter{
+		ConnectionId: c.Query("connection_id"),
+		Channel:      c.Query("channel"),
+	}
+
+	total, result, err := handler.chatMsgSampleService.GetChatMsgSamples(c, res.Data, filter, limit, offset)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return

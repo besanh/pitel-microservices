@@ -31,6 +31,7 @@ func InitRepositories() {
 	ShareInfoRepo = NewShareInfo()
 	ManageQueueRepo = NewManageQueue()
 	ChatMsgSampleRepo = NewChatMsgSample()
+	ChatScriptRepo = NewChatScript()
 }
 
 func InitRepositoriesES() {
@@ -80,6 +81,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatMsgSample)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatScript)(nil)); err != nil {
 		log.Error(err)
 	}
 	log.Println("TABLES WERE CREATED")
