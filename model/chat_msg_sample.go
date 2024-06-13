@@ -8,7 +8,7 @@ import (
 
 type ChatMsgSample struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_msg_sample,alias:cms"`
+	bun.BaseModel `bun:"table:chat_message_sample,alias:cms"`
 	Keyword       string             `json:"keyword" bun:"keyword,type:text,notnull"`
 	Theme         string             `json:"theme" bun:"theme,type:text,notnull"`
 	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
@@ -16,7 +16,7 @@ type ChatMsgSample struct {
 	Channel       string             `json:"channel" bun:"channel,type:text,notnull"`
 	Content       string             `json:"content" bun:"content,type:text,notnull"`
 	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
 	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url,type:text"`
 }
 
@@ -31,16 +31,16 @@ type ChatMsgSampleRequest struct {
 
 type ChatMsgSampleView struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_msg_sample,alias:cms"`
-	Keyword       string             `json:"keyword" bun:"keyword,type:text,notnull"`
-	Theme         string             `json:"theme" bun:"theme,type:text,notnull"`
-	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	bun.BaseModel `bun:"table:chat_message_sample,alias:cms"`
+	Keyword       string             `json:"keyword" bun:"keyword"`
+	Theme         string             `json:"theme" bun:"theme"`
+	ConnectionId  string             `json:"connection_id" bun:"connection_id"`
 	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
-	Channel       string             `json:"channel" bun:"channel,type:text,notnull"`
-	Content       string             `json:"content" bun:"content,type:text,notnull"`
-	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,notnull"`
-	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url,type:text"`
+	Channel       string             `json:"channel" bun:"channel"`
+	Content       string             `json:"content" bun:"content"`
+	CreatedBy     string             `json:"created_by" bun:"created_by"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by"`
+	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url"`
 }
 
 func (r *ChatMsgSampleRequest) Validate() error {

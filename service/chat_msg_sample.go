@@ -93,7 +93,6 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 	}
 
 	chatMsgSample.CreatedBy = authUser.UserId
-	chatMsgSample.UpdatedBy = authUser.UserId
 	chatMsgSample.Channel = cms.Channel
 	chatMsgSample.ConnectionId = cms.ConnectionId
 	chatMsgSample.Content = cms.Content

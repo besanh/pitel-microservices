@@ -41,7 +41,7 @@ func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlCli
 		query.Where("cst.channel = ?", filter.Channel)
 	}
 	if len(filter.OaId) > 0 {
-		query.Where("cca.oa_info->cst.channel::text->0->>'oa_id' = ?", filter.OaId)
+		query.Where("connection_app.oa_info->cst.channel::text->0->>'oa_id' = ?", filter.OaId)
 	}
 
 	if limit > 0 {

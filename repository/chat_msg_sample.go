@@ -41,7 +41,7 @@ func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.I
 		query.Where("cms.channel = ?", filter.Channel)
 	}
 	if len(filter.OaId) > 0 {
-		query.Where("cca.oa_info->cms.channel::text->0->>'oa_id' = ?", filter.OaId)
+		query.Where("connection_app.oa_info->cms.channel::text->0->>'oa_id' = ?", filter.OaId)
 	}
 
 	if limit > 0 {
