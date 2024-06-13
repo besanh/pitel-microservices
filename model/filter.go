@@ -143,10 +143,12 @@ type ChatEmailFilter struct {
 
 type ChatMsgSampleFilter struct {
 	ConnectionId string `json:"connection_id"`
+	OaId         string `json:"oa_id"`
 	Channel      string `json:"channel"`
 }
 
 type ChatScriptFilter struct {
 	Channel    string `json:"channel"`
+	OaId       string `json:"oa_id"`
 	ScriptName string `json:"script_name"`
 }

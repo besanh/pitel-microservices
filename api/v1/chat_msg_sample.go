@@ -42,6 +42,7 @@ func (handler *ChatMsgSample) GetChatMsgSamples(c *gin.Context) {
 	filter := model.ChatMsgSampleFilter{
 		ConnectionId: c.Query("connection_id"),
 		Channel:      c.Query("channel"),
+		OaId:         c.Query("oa_id"),
 	}
 
 	total, result, err := handler.chatMsgSampleService.GetChatMsgSamples(c, res.Data, filter, limit, offset)
