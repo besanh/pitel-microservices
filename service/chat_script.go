@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -114,7 +113,6 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	chatScript.ScriptType = csr.ScriptType
 	chatScript.ScriptName = csr.ScriptName
 	chatScript.CreatedBy = authUser.UserId
-	chatScript.UpdatedBy = uuid.Nil.String()
 	chatScript.Channel = csr.Channel
 	chatScript.ConnectionId = csr.ConnectionId
 	chatScript.CreatedAt = time.Now()
