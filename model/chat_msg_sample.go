@@ -32,14 +32,14 @@ type ChatMsgSampleRequest struct {
 type ChatMsgSampleView struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_message_sample,alias:cms"`
-	Keyword       string             `json:"keyword" bun:"keyword,notnull"`
-	Theme         string             `json:"theme" bun:"theme,notnull"`
-	ConnectionId  string             `json:"connection_id" bun:"connection_id,notnull"`
+	Keyword       string             `json:"keyword" bun:"keyword"`
+	Theme         string             `json:"theme" bun:"theme"`
+	ConnectionId  string             `json:"connection_id" bun:"connection_id"`
 	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
-	Channel       string             `json:"channel" bun:"channel,notnull"`
-	Content       string             `json:"content" bun:"content,notnull"`
-	CreatedBy     string             `json:"created_by" bun:"created_by,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,default:null"`
+	Channel       string             `json:"channel" bun:"channel"`
+	Content       string             `json:"content" bun:"content"`
+	CreatedBy     string             `json:"created_by" bun:"created_by"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by"`
 	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url"`
 }
 
