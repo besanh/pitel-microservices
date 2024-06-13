@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"io"
 	"mime/multipart"
 	"time"
 )
 
 type (
 	IChatMsgSample interface {
-		GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (int, *[]model.ChatMsgSampleView, error)
-		GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatMsgSample, error)
+		GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, filter model.ChatMsgSampleFilter, limit int, offset int) (int, *[]model.ChatMsgSampleView, error)
+		GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatMsgSampleView, error)
 		InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error)
 		UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) error
 		DeleteChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) error
@@ -28,14 +26,14 @@ func NewChatMsgSample() IChatMsgSample {
 	return &ChatMsgSample{}
 }
 
-func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, limit int, offset int) (total int, msgSamples *[]model.ChatMsgSampleView, err error) {
+func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.AuthUser, filter model.ChatMsgSampleFilter, limit int, offset int) (total int, msgSamples *[]model.ChatMsgSampleView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	total, msgSamples, err = repository.ChatMsgSampleRepo.GetChatMsgSamples(ctx, dbCon, limit, offset)
+	total, msgSamples, err = repository.ChatMsgSampleRepo.GetChatMsgSamples(ctx, dbCon, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return
@@ -44,14 +42,14 @@ func (s *ChatMsgSample) GetChatMsgSamples(ctx context.Context, authUser *model.A
 	return
 }
 
-func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (rs *model.ChatMsgSample, err error) {
+func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string) (rs *model.ChatMsgSampleView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	rs, err = repository.ChatMsgSampleRepo.GetById(ctx, dbCon, id)
+	rs, err = repository.ChatMsgSampleRepo.GetChatMsgSampleById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return
@@ -60,7 +58,6 @@ func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *mode
 		log.Error(errors.New("not found chat msg sample"))
 		return
 	}
-
 	return
 }
 
@@ -87,8 +84,8 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 	}
 
 	var imageUrl string
-	if file != nil {
-		imageUrl, err = uploadImageToStorageChatMsgSample(ctx, file)
+	if file != nil && len(file.Filename) > 0 {
+		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
 		if err != nil {
 			log.Error(err)
 			return chatMsgSample.Id, err
@@ -136,18 +133,18 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 
 	var imageUrl string
 	if file != nil {
-		imageUrl, err = uploadImageToStorageChatMsgSample(ctx, file)
+		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
 		if err != nil {
 			log.Error(err)
 			return err
 		}
 
 		if len(chatMsgSample.ImageUrl) > 0 {
-			err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
+			err = removeFileFromStorageShareInfo(ctx, chatMsgSample.ImageUrl)
 			if err != nil {
 				log.Error(err)
 				//remove image just uploaded
-				if err = removeImageFromStorageChatMsgSample(ctx, imageUrl); err != nil {
+				if err = removeFileFromStorageShareInfo(ctx, imageUrl); err != nil {
 					log.Error(err)
 				}
 				return err
@@ -199,7 +196,7 @@ func (s *ChatMsgSample) DeleteChatMsgSampleById(ctx context.Context, authUser *m
 	}
 
 	if len(chatMsgSample.ImageUrl) > 0 {
-		err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
+		err = removeFileFromStorageShareInfo(ctx, chatMsgSample.ImageUrl)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -213,39 +210,4 @@ func (s *ChatMsgSample) DeleteChatMsgSampleById(ctx context.Context, authUser *m
 	}
 
 	return
-}
-
-func uploadImageToStorageChatMsgSample(c context.Context, file *multipart.FileHeader) (url string, err error) {
-	f, err := file.Open()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	fileBytes, err := io.ReadAll(f)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	metaData := storage.NewStoreInput(fileBytes, file.Filename)
-	isSuccess, err := storage.Instance.Store(c, *metaData)
-	if err != nil || !isSuccess {
-		log.Error(err)
-		return
-	}
-
-	input := storage.NewRetrieveInput(file.Filename)
-	_, err = storage.Instance.Retrieve(c, *input)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	url = API_DOC + "/bss-message/v1/chat-msg-sample/image/" + input.Path
-
-	return
-}
-
-func removeImageFromStorageChatMsgSample(c context.Context, fileName string) error {
-	input := storage.NewRetrieveInput(fileName)
-	return storage.Instance.RemoveFile(c, *input)
 }
