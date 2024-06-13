@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/url"
+	"path"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -312,4 +314,25 @@ func uploadImageToStorageShareInfo(c context.Context, file *multipart.FileHeader
 	url = API_DOC + "/bss-message/v1/share-info/image/" + input.Path
 
 	return
+}
+
+func removeFileFromStorageShareInfo(c context.Context, fileUrl string) error {
+	fileName, err := splitFileNameFromUrl(fileUrl)
+	if err != nil {
+		return err
+	}
+
+	input := storage.NewRetrieveInput(fileName)
+	return storage.Instance.RemoveFile(c, *input)
+}
+
+func splitFileNameFromUrl(fileUrl string) (string, error) {
+	// Parse the URL
+	parsedURL, err := url.Parse(fileUrl)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+		return "", err
+	}
+	fileName := path.Base(parsedURL.Path)
+	return fileName, nil
 }

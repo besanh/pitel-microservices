@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"io"
 	"mime/multipart"
 	"time"
 )
@@ -87,7 +85,7 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 
 	var imageUrl string
 	if file != nil && len(file.Filename) > 0 {
-		imageUrl, err = uploadImageToStorageChatMsgSample(ctx, file)
+		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
 		if err != nil {
 			log.Error(err)
 			return chatMsgSample.Id, err
@@ -135,18 +133,18 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 
 	var imageUrl string
 	if file != nil {
-		imageUrl, err = uploadImageToStorageChatMsgSample(ctx, file)
+		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
 		if err != nil {
 			log.Error(err)
 			return err
 		}
 
 		if len(chatMsgSample.ImageUrl) > 0 {
-			err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
+			err = removeFileFromStorageShareInfo(ctx, chatMsgSample.ImageUrl)
 			if err != nil {
 				log.Error(err)
 				//remove image just uploaded
-				if err = removeImageFromStorageChatMsgSample(ctx, imageUrl); err != nil {
+				if err = removeFileFromStorageShareInfo(ctx, imageUrl); err != nil {
 					log.Error(err)
 				}
 				return err
@@ -198,7 +196,7 @@ func (s *ChatMsgSample) DeleteChatMsgSampleById(ctx context.Context, authUser *m
 	}
 
 	if len(chatMsgSample.ImageUrl) > 0 {
-		err = removeImageFromStorageChatMsgSample(ctx, chatMsgSample.ImageUrl)
+		err = removeFileFromStorageShareInfo(ctx, chatMsgSample.ImageUrl)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -212,39 +210,4 @@ func (s *ChatMsgSample) DeleteChatMsgSampleById(ctx context.Context, authUser *m
 	}
 
 	return
-}
-
-func uploadImageToStorageChatMsgSample(c context.Context, file *multipart.FileHeader) (url string, err error) {
-	f, err := file.Open()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	fileBytes, err := io.ReadAll(f)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	metaData := storage.NewStoreInput(fileBytes, file.Filename)
-	isSuccess, err := storage.Instance.Store(c, *metaData)
-	if err != nil || !isSuccess {
-		log.Error(err)
-		return
-	}
-
-	input := storage.NewRetrieveInput(file.Filename)
-	_, err = storage.Instance.Retrieve(c, *input)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	url = API_DOC + "/bss-message/v1/chat-msg-sample/image/" + input.Path
-
-	return
-}
-
-func removeImageFromStorageChatMsgSample(c context.Context, fileName string) error {
-	input := storage.NewRetrieveInput(fileName)
-	return storage.Instance.RemoveFile(c, *input)
 }
