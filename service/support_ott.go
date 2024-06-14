@@ -144,7 +144,7 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 		if err != nil {
 			log.Error(err)
 			return user, err
-		} else if len(connectionQueue.Id) < 1 {
+		} else if connectionQueue == nil {
 			log.Error("connection queue " + (*connectionApps)[0].ConnectionQueueId + " not found")
 			return user, errors.New("connection queue " + (*connectionApps)[0].ConnectionQueueId + " not found")
 		}

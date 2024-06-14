@@ -173,7 +173,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	} else if len(user.QueueId) < 1 && err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
-	} else if len(conversation.ConversationId) < 1 {
+	}
+	if len(conversation.ConversationId) < 1 {
 		log.Error("conversation " + conversation.ConversationId + " not found")
 		return response.ServiceUnavailableMsg("conversation " + conversation.ConversationId + " not found")
 	}
