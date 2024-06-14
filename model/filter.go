@@ -152,3 +152,13 @@ type ChatScriptFilter struct {
 	OaId       string `json:"oa_id"`
 	ScriptName string `json:"script_name"`
 }
+
+type ChatLabelFilter struct {
+	TenantId    string       `json:"tenant_id"`
+	AppId       string       `json:"app_id"`
+	OaId        string       `json:"oa_id"`
+	LabelName   string       `json:"label_name"`
+	LabelType   string       `json:"label_type"`
+	LabelColor  string       `json:"label_color"`
+	LabelStatus sql.NullBool `json:"label_status"`
+}
