@@ -111,31 +111,32 @@ func (s *ChatLabel) UpdateChatLabelById(ctx context.Context, authUser *model.Aut
 		return errors.New("chat label not found")
 	}
 
-	requestExternal := model.ChatExtenalLabelRequest{
-		AppId:   chatLabelExist.AppId,
-		OaId:    chatLabelExist.OaId,
-		TagName: chatLabelExist.LabelName,
-	}
-
-	// TODO: update zalo and facebook
-	// because zalo and facebook does not support update label, so we can only remove that label
-	// with zalo, we only can create label with external_id~uid
-	// with facebook, we can remove and create new label
-	if chatLabelExist.LabelType == "zalo" {
-		if err = s.RequestZaloLabel(ctx, "remove-label", requestExternal); err != nil {
-			log.Error(err)
-			return
-		}
-	} else if chatLabelExist.LabelType == "facebook" {
-		if err = s.RequestFacebookLabel(ctx, "", requestExternal); err != nil {
-			log.Error(err)
-			return
-		}
-		if err = s.RequestFacebookLabel(ctx, "create-label", requestExternal); err != nil {
-			log.Error(err)
-			return
-		}
-	}
+	/**
+	* TODO: update zalo and facebook
+	because zalo and facebook does not support update label, so we can only remove that label
+	with zalo, we only can create label with external_id~uid
+	with facebook, we can remove and create new label
+	*/
+	// requestExternal := model.ChatExtenalLabelRequest{
+	// 	AppId:   chatLabelExist.AppId,
+	// 	OaId:    chatLabelExist.OaId,
+	// 	TagName: chatLabelExist.LabelName,
+	// }
+	// if chatLabelExist.LabelType == "zalo" {
+	// 	if err = s.RequestZaloLabel(ctx, "remove-label", requestExternal); err != nil {
+	// 		log.Error(err)
+	// 		return
+	// 	}
+	// } else if chatLabelExist.LabelType == "facebook" {
+	// 	if err = s.RequestFacebookLabel(ctx, "", requestExternal); err != nil {
+	// 		log.Error(err)
+	// 		return
+	// 	}
+	// 	if err = s.RequestFacebookLabel(ctx, "create-label", requestExternal); err != nil {
+	// 		log.Error(err)
+	// 		return
+	// 	}
+	// }
 
 	filter := model.ChatConnectionAppFilter{
 		AppId: request.AppId,
@@ -171,31 +172,30 @@ func (s *ChatLabel) DeleteChatLabelById(ctx context.Context, authUser *model.Aut
 		log.Error(err)
 		return err
 	}
-	chatLabelExist, err := repository.ChatLabelRepo.GetById(ctx, dbCon, id)
+	_, err = repository.ChatLabelRepo.GetById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
-	request := model.ChatExtenalLabelRequest{
-		AppId:   chatLabelExist.AppId,
-		OaId:    chatLabelExist.OaId,
-		TagName: chatLabelExist.LabelName,
-		LabelId: chatLabelExist.ExternalLabelId,
-	}
-
 	// TODO: zalo
-	if chatLabelExist.LabelType == "zalo" {
-		if err = s.RequestZaloLabel(ctx, "zalo/remove-label", request); err != nil {
-			log.Error(err)
-			return
-		}
-	} else if chatLabelExist.LabelType == "facebook" {
-		if err = s.RequestFacebookLabel(ctx, "face/remove-label", request); err != nil {
-			log.Error(err)
-			return
-		}
-	}
+	// request := model.ChatExtenalLabelRequest{
+	// 	AppId:   chatLabelExist.AppId,
+	// 	OaId:    chatLabelExist.OaId,
+	// 	TagName: chatLabelExist.LabelName,
+	// 	LabelId: chatLabelExist.ExternalLabelId,
+	// }
+	// if chatLabelExist.LabelType == "zalo" {
+	// 	if err = s.RequestZaloLabel(ctx, "zalo/remove-label", request); err != nil {
+	// 		log.Error(err)
+	// 		return
+	// 	}
+	// } else if chatLabelExist.LabelType == "facebook" {
+	// 	if err = s.RequestFacebookLabel(ctx, "face/remove-label", request); err != nil {
+	// 		log.Error(err)
+	// 		return
+	// 	}
+	// }
 
 	err = repository.ChatLabelRepo.Delete(ctx, dbCon, id)
 	if err != nil {
