@@ -17,7 +17,7 @@ type ChatMsgSample struct {
 	Content       string             `json:"content" bun:"content,type:text,notnull"`
 	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
 	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
-	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url,type:text"`
+	ImageUrl      string             `json:"image_url" bun:"image_url,type:text"`
 }
 
 type ChatMsgSampleRequest struct {
@@ -40,7 +40,7 @@ type ChatMsgSampleView struct {
 	Content       string             `json:"content" bun:"content"`
 	CreatedBy     string             `json:"created_by" bun:"created_by"`
 	UpdatedBy     string             `json:"updated_by" bun:"updated_by"`
-	ImageUrl      string             `json:"image_url,omitempty" bun:"image_url"`
+	ImageUrl      string             `json:"image_url" bun:"image_url"`
 }
 
 func (r *ChatMsgSampleRequest) Validate() error {

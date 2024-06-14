@@ -17,9 +17,9 @@ type ChatScript struct {
 	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
 	Status        bool               `json:"status" bun:"status,type:boolean,notnull"`
 	ScriptType    string             `json:"script_type" bun:"script_type,type:text,notnull"`
-	Content       string             `json:"content,omitempty" bun:"content,type:text"`                 // text script
-	FileUrl       string             `json:"file_url,omitempty" bun:"file_url,type:text"`               // file script
-	OtherScriptId string             `json:"other_script_id,omitempty" bun:"other_script_id,type:text"` // file script
+	Content       string             `json:"content" bun:"content,type:text"`   // text script
+	FileUrl       string             `json:"file_url" bun:"file_url,type:text"` // file script
+	OtherScriptId string             `json:"other_script_id" bun:"other_script_id,type:text"`
 }
 
 type ChatScriptRequest struct {
@@ -48,9 +48,9 @@ type ChatScriptView struct {
 	UpdatedBy     string             `json:"updated_by" bun:"updated_by"`
 	Status        bool               `json:"status" bun:"status"`
 	ScriptType    string             `json:"script_type" bun:"script_type"`
-	Content       string             `json:"content,omitempty" bun:"content"`                 // text script
-	FileUrl       string             `json:"file_url,omitempty" bun:"file_url"`               // file script
-	OtherScriptId string             `json:"other_script_id,omitempty" bun:"other_script_id"` // file script
+	Content       string             `json:"content" bun:"content"`   // text script
+	FileUrl       string             `json:"file_url" bun:"file_url"` // file script
+	OtherScriptId string             `json:"other_script_id" bun:"other_script_id"`
 }
 
 func (r *ChatScriptRequest) Validate() error {
