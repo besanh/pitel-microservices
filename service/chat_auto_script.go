@@ -6,7 +6,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"sort"
 	"time"
 )
 
@@ -91,6 +90,7 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 	}
 
 	scripts := make([]model.ChatAutoScriptToChatScript, 0)
+	labels := make([]model.ChatAutoScriptToChatLabel, 0)
 
 	// handle actions' content
 	for i, action := range chatAutoScriptRequest.ActionScript.Actions {
@@ -122,7 +122,52 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 					Content: action.Content,
 					Order:   i,
 				})
-			//TODO: handle label case
+		case model.AddLabels:
+			for _, addingLabelId := range action.AddLabels {
+				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, addingLabelId)
+				if err != nil {
+					log.Error(err)
+					return chatAutoScript.Id, err
+				}
+				if label == nil {
+					err = errors.New("not found label id")
+					log.Error(err)
+					return chatAutoScript.Id, err
+				}
+
+				currentTime := time.Now()
+				labels = append(labels, model.ChatAutoScriptToChatLabel{
+					ChatAutoScriptId: chatAutoScript.Id,
+					ChatLabelId:      addingLabelId,
+					ActionType:       string(model.AddLabels),
+					Order:            i,
+					CreatedAt:        currentTime,
+					UpdatedAt:        currentTime,
+				})
+			}
+		case model.RemoveLabels:
+			for _, removingLabelId := range action.AddLabels {
+				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, removingLabelId)
+				if err != nil {
+					log.Error(err)
+					return chatAutoScript.Id, err
+				}
+				if label == nil {
+					err = errors.New("not found label id")
+					log.Error(err)
+					return chatAutoScript.Id, err
+				}
+
+				currentTime := time.Now()
+				labels = append(labels, model.ChatAutoScriptToChatLabel{
+					ChatAutoScriptId: chatAutoScript.Id,
+					ChatLabelId:      removingLabelId,
+					ActionType:       string(model.RemoveLabels),
+					Order:            i,
+					CreatedAt:        currentTime,
+					UpdatedAt:        currentTime,
+				})
+			}
 		default:
 			err = errors.New("invalid action type: " + action.Type)
 			log.Error(err)
@@ -141,7 +186,7 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 	chatAutoScript.ConnectionId = chatAutoScriptRequest.ConnectionId
 	chatAutoScript.CreatedAt = time.Now()
 
-	err = repository.ChatAutoScriptRepo.InsertChatAutoScript(ctx, dbCon, chatAutoScript, scripts)
+	err = repository.ChatAutoScriptRepo.InsertChatAutoScript(ctx, dbCon, chatAutoScript, scripts, labels)
 	if err != nil {
 		log.Error(err)
 		return chatAutoScript.Id, err
@@ -182,6 +227,8 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 					chatAutoScript.SendMessageActions.Actions[j].Content = action.Content
 				}
 			}
+		case model.AddLabels:
+		case model.RemoveLabels:
 		default:
 			err = errors.New("invalid action type: " + action.Type)
 			log.Error(err)
@@ -270,40 +317,4 @@ func (s *ChatAutoScript) DeleteChatAutoScriptById(ctx context.Context, authUser 
 	}
 
 	return
-}
-
-func mergeActionScripts(chatAutoScripts *[]model.ChatAutoScriptView) *[]model.ChatAutoScriptView {
-	if chatAutoScripts == nil {
-		return nil
-	}
-	for i, cas := range *chatAutoScripts {
-		(*chatAutoScripts)[i] = mergeSingleActionScript(cas)
-	}
-	return chatAutoScripts
-}
-
-func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.ChatAutoScriptView {
-	chatAutoScript.ActionScript = new(model.AutoScriptMergedActions)
-	chatAutoScript.ActionScript.Actions = make([]model.ActionScriptActionType, 0)
-
-	for _, action := range chatAutoScript.SendMessageActions.Actions {
-		chatAutoScript.ActionScript.Actions = append(chatAutoScript.ActionScript.Actions, model.ActionScriptActionType{
-			Type:    string(model.SendMessage),
-			Content: action.Content,
-			Order:   action.Order,
-		})
-	}
-
-	for _, action := range chatAutoScript.ChatScriptLink {
-		chatAutoScript.ActionScript.Actions = append(chatAutoScript.ActionScript.Actions, model.ActionScriptActionType{
-			Type:         string(model.MoveToExistedScript),
-			ChatScriptId: action.ChatScriptId,
-			Order:        action.Order,
-		})
-	}
-
-	sort.Slice(chatAutoScript.ActionScript.Actions, func(i, j int) bool {
-		return chatAutoScript.ActionScript.Actions[i].Order < chatAutoScript.ActionScript.Actions[j].Order
-	})
-	return chatAutoScript
 }

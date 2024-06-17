@@ -14,7 +14,7 @@ import (
 type (
 	IChatAutoScript interface {
 		IRepo[model.ChatAutoScript]
-		InsertChatAutoScript(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript) error
+		InsertChatAutoScript(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
 		GetChatAutoScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatAutoScriptFilter, limit, offset int) (int, *[]model.ChatAutoScriptView, error)
 		GetChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatAutoScriptView, error)
 		DeleteChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
@@ -31,7 +31,7 @@ func NewChatAutoScript() IChatAutoScript {
 	return &ChatAutoScript{}
 }
 
-func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript) error {
+func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error {
 	tx, err := db.GetDB().BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -56,6 +56,12 @@ func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclie
 		}
 	}
 
+	for _, label := range labels {
+		if _, err = tx.NewInsert().Model(&label).Exec(ctx); err != nil {
+			return err
+		}
+	}
+
 	if err = tx.Commit(); err != nil {
 		return err
 	}
@@ -70,11 +76,17 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 			return q.Column("connection_name", "oa_info")
 		}).
 		Relation("ChatScriptLink", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				Order("chat_auto_script_to_chat_script.order ASC").
+			return q.Order("cas_cst.order ASC").
 				Limit(3)
 		}).
 		Relation("ChatScriptLink.ChatScript", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.ExcludeColumn("id")
+		}).
+		Relation("ChatLabelLink", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("cas_cl.order ASC").
+				Limit(3)
+		}).
+		Relation("ChatLabelLink.ChatLabel", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.ExcludeColumn("id")
 		})
 	if len(filter.ScriptName) > 0 {
@@ -108,11 +120,17 @@ func (repo *ChatAutoScript) GetChatAutoScriptById(ctx context.Context, db sqlcli
 			return q.Column("connection_name")
 		}).
 		Relation("ChatScriptLink", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				Order("chat_auto_script_to_chat_script.order ASC").
+			return q.Order("cas_cst.order ASC").
 				Limit(3)
 		}).
 		Relation("ChatScriptLink.ChatScript", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.ExcludeColumn("id")
+		}).
+		Relation("ChatLabelLink", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("cas_cl.order ASC").
+				Limit(3)
+		}).
+		Relation("ChatLabelLink.ChatLabel", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.ExcludeColumn("id")
 		}).
 		Where("cas.id = ?", id).
@@ -141,6 +159,12 @@ func (repo *ChatAutoScript) DeleteChatAutoScriptById(ctx context.Context, db sql
 
 	// delete related rows
 	_, err = tx.NewDelete().Model((*model.ChatAutoScriptToChatScript)(nil)).
+		Where("chat_auto_script_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = tx.NewDelete().Model((*model.ChatAutoScriptToChatLabel)(nil)).
 		Where("chat_auto_script_id = ?", id).
 		Exec(ctx)
 	if err != nil {

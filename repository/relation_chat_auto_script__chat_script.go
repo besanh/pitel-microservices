@@ -11,6 +11,7 @@ type (
 	IChatAutoScriptToChatScript interface {
 		Insert(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatAutoScriptToChatScript) error
 		Update(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatAutoScriptToChatScript) error
+		DeleteByChatScriptId(ctx context.Context, db sqlclient.ISqlClientConn, id string) (err error)
 	}
 
 	ChatAutoScriptToChatScript struct{}
@@ -35,6 +36,14 @@ func (c *ChatAutoScriptToChatScript) Update(ctx context.Context, db sqlclient.IS
 	_, err = db.GetDB().NewUpdate().
 		Model(&entity).
 		Where("chat_auto_script_id = ? and chat_script_id = ?", entity.ChatAutoScriptId, entity.ChatScriptId).
+		Exec(ctx)
+	return err
+}
+
+func (c *ChatAutoScriptToChatScript) DeleteByChatScriptId(ctx context.Context, db sqlclient.ISqlClientConn, id string) (err error) {
+	_, err = db.GetDB().NewDelete().
+		Model((*model.ChatAutoScriptToChatScript)(nil)).
+		Where("chat_script_id = ?", id).
 		Exec(ctx)
 	return err
 }

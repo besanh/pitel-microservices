@@ -12,6 +12,8 @@ type ScriptActionType string
 const (
 	MoveToExistedScript ScriptActionType = "existed_script"
 	SendMessage         ScriptActionType = "send_message"
+	AddLabels           ScriptActionType = "add_labels"
+	RemoveLabels        ScriptActionType = "remove_labels"
 )
 
 type ChatAutoScript struct {
@@ -27,6 +29,7 @@ type ChatAutoScript struct {
 	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event,type:text,notnull"`
 	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
 	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions,type:jsonb"`
+	ChatLabelLink      []*ChatAutoScriptToChatLabel  `bun:"rel:has-many,join:id=chat_auto_script_id"`
 }
 
 type AutoScriptSendMessage struct {
@@ -43,13 +46,12 @@ type AutoScriptMergedActions struct {
 }
 
 type ActionScriptActionType struct {
-	Type         string `json:"type"`
-	ChatScriptId string `json:"chat_script_id"` // use when user selected using an existed chat script
-	Content      string `json:"content"`        // sending message action
-	Order        int    `json:"order"`
-	// TODO: implement when label service added
-	//AddLabels []string
-	//RemoveLabels []string
+	Type         string   `json:"type"`
+	ChatScriptId string   `json:"chat_script_id"` // use when user selected using an existed chat script
+	Content      string   `json:"content"`        // sending message action
+	Order        int      `json:"order"`
+	AddLabels    []string `json:"add_labels"`
+	RemoveLabels []string `json:"remove_labels"`
 }
 
 type ChatAutoScriptRequest struct {
@@ -78,6 +80,7 @@ type ChatAutoScriptView struct {
 	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event"`
 	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
 	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions"`
+	ChatLabelLink      []*ChatAutoScriptToChatLabel  `bun:"rel:has-many,join:id=chat_auto_script_id"`
 	ActionScript       *AutoScriptMergedActions      `json:"action_script" bun:"-"`
 }
 
@@ -117,7 +120,14 @@ func (r *ChatAutoScriptRequest) Validate() error {
 			if len(action.Content) < 1 {
 				return errors.New("message's content is required")
 			}
-			//TODO: handle label case
+		case AddLabels:
+			if len(action.AddLabels) < 1 {
+				return errors.New("label id is required")
+			}
+		case RemoveLabels:
+			if len(action.AddLabels) < 1 {
+				return errors.New("label id is required")
+			}
 		default:
 			return errors.New("invalid action type")
 		}
