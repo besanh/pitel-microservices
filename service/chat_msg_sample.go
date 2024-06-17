@@ -131,7 +131,7 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 	}
 
 	var imageUrl string
-	if file != nil {
+	if file != nil && len(file.Filename) > 0 {
 		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
 		if err != nil {
 			log.Error(err)
