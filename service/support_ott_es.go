@@ -158,14 +158,14 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
 func UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
-	var isUpdate bool
+	// var isUpdate bool
 	newConversationId := GenerateConversationId(appId, oaId, conversationId)
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
 	if err != nil {
 		log.Error(err)
 		return err
 	} else if len(conversationExist.ExternalUserId) < 1 {
-		isUpdate = true
+		// isUpdate = true
 		// Use when routing is pitel_bss_conversation_
 		conversationExistSecond, err := repository.ConversationESRepo.GetConversationById(ctx, "", ES_INDEX_CONVERSATION, appId, newConversationId)
 		if err != nil {
@@ -205,21 +205,21 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId
 
 	// PROBLEM: Use for conv have not authUser and then having authUser
 	// TODO: insert new conv
-	if isUpdate {
-		if err := repository.ESRepo.DeleteById(ctx, ES_INDEX_CONVERSATION, newConversationId); err != nil {
-			log.Error(err)
-			return err
-		}
-		if err := repository.ESRepo.InsertLog(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
-			log.Error(err)
-			return err
-		}
-	} else {
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
-			log.Error(err)
-			return err
-		}
+	// if isUpdate {
+	// 	if err := repository.ESRepo.DeleteById(ctx, ES_INDEX_CONVERSATION, newConversationId); err != nil {
+	// 		log.Error(err)
+	// 		return err
+	// 	}
+	// 	if err := repository.ESRepo.InsertLog(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
+	// 		log.Error(err)
+	// 		return err
+	// 	}
+	// } else {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
+		log.Error(err)
+		return err
 	}
+	// }
 
 	if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversationExist, CONVERSATION_EXPIRE); err != nil {
 		log.Error(err)
