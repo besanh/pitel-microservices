@@ -145,6 +145,7 @@ type ChatMsgSampleFilter struct {
 	ConnectionId string `json:"connection_id"`
 	OaId         string `json:"oa_id"`
 	Channel      string `json:"channel"`
+	Keyword      string `json:"keyword"`
 }
 
 type ChatScriptFilter struct {
