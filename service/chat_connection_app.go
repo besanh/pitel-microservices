@@ -94,6 +94,12 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		}
 		connectionQueue = *connectionQueueExist
 		connectionApp.ConnectionQueueId = connectionQueue.GetId()
+	} else if len(data.QueueId) > 0 {
+		if err := repository.ConnectionQueueRepo.Insert(ctx, dbCon, connectionQueue); err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		}
+		connectionApp.ConnectionQueueId = connectionQueue.GetId()
 	}
 
 	if data.OaInfo.Facebook != nil || data.OaInfo.Zalo != nil {
