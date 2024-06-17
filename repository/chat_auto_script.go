@@ -69,11 +69,13 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Column("connection_name", "oa_info")
 		}).
-		Relation("ChatScripts", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("script_name", "channel", "created_by", "updated_by", "status",
-				"script_type", "content", "file_url", "other_script_id", "chat_auto_script_to_chat_script.order as order").
+		Relation("ChatScriptLink", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
 				Order("chat_auto_script_to_chat_script.order ASC").
 				Limit(3)
+		}).
+		Relation("ChatScriptLink.ChatScript", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.ExcludeColumn("id")
 		})
 	if len(filter.ScriptName) > 0 {
 		query.Where("cas.script_name ILIKE ?", "%"+filter.ScriptName+"%")
@@ -105,11 +107,13 @@ func (repo *ChatAutoScript) GetChatAutoScriptById(ctx context.Context, db sqlcli
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Column("connection_name")
 		}).
-		Relation("ChatScripts", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("script_name", "channel", "created_by", "updated_by", "status",
-				"script_type", "content", "file_url", "other_script_id", "chat_auto_script_to_chat_script.order as order").
+		Relation("ChatScriptLink", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
 				Order("chat_auto_script_to_chat_script.order ASC").
 				Limit(3)
+		}).
+		Relation("ChatScriptLink.ChatScript", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.ExcludeColumn("id")
 		}).
 		Where("cas.id = ?", id).
 		Limit(1).

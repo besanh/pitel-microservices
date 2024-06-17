@@ -90,13 +90,13 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatScript)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatAutoScriptToChatScript)(nil)); err != nil {
+		log.Error(err)
+	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatAutoScript)(nil)); err != nil {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatLabel)(nil)); err != nil {
-		log.Error(err)
-	}
-	if err := CreateTable(ctx, dbConn, (*model.ChatAutoScriptToChatScript)(nil)); err != nil {
 		log.Error(err)
 	}
 	log.Println("TABLES WERE CREATED")

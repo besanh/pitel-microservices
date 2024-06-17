@@ -108,10 +108,13 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 				return chatAutoScript.Id, err
 			}
 
+			currentTime := time.Now()
 			scripts = append(scripts, model.ChatAutoScriptToChatScript{
 				ChatAutoScriptId: chatAutoScript.Id,
 				ChatScriptId:     action.ChatScriptId,
 				Order:            i,
+				CreatedAt:        currentTime,
+				UpdatedAt:        currentTime,
 			})
 		case model.SendMessage:
 			chatAutoScript.SendMessageActions.Actions = append(chatAutoScript.SendMessageActions.Actions,
@@ -168,18 +171,17 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 	}
 
 	// handle actions' content
-	for _, action := range chatAutoScriptRequest.ActionScript.Actions {
+	for i, action := range chatAutoScriptRequest.ActionScript.Actions {
 		switch model.ScriptActionType(action.Type) {
 		case model.MoveToExistedScript:
-			// TODO: what will we do here?
+			// do nothing
 		case model.SendMessage:
 			// update content of message
-			for i, _ := range chatAutoScript.SendMessageActions.Actions {
-				if chatAutoScript.SendMessageActions.Actions[i].Order == action.Order {
-					chatAutoScript.SendMessageActions.Actions[i].Content = action.Content
+			for j, _ := range chatAutoScript.SendMessageActions.Actions {
+				if chatAutoScript.SendMessageActions.Actions[j].Order == i {
+					chatAutoScript.SendMessageActions.Actions[j].Content = action.Content
 				}
 			}
-			//TODO: handle label case
 		default:
 			err = errors.New("invalid action type: " + action.Type)
 			log.Error(err)
@@ -187,6 +189,11 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 		}
 	}
 
+	var status bool
+	if chatAutoScriptRequest.Status == "true" {
+		status = true
+	}
+	chatAutoScript.Status = status
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
 	chatAutoScript.UpdatedBy = authUser.UserId
@@ -207,14 +214,14 @@ func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, aut
 		return err
 	}
 
-	chatScript, err := repository.ChatAutoScriptRepo.GetById(ctx, dbCon, id)
+	chatAutoScript, err := repository.ChatAutoScriptRepo.GetById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
 	// check if exists
-	if chatScript == nil {
+	if chatAutoScript == nil {
 		err = errors.New("not found id")
 		log.Error(err)
 		return err
@@ -224,10 +231,10 @@ func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, aut
 	if oldStatus == "true" {
 		status = true
 	}
-	chatScript.Status = !status
-	chatScript.UpdatedBy = authUser.UserId
-	chatScript.UpdatedAt = time.Now()
-	err = repository.ChatAutoScriptRepo.Update(ctx, dbCon, *chatScript)
+	chatAutoScript.Status = !status
+	chatAutoScript.UpdatedBy = authUser.UserId
+	chatAutoScript.UpdatedAt = time.Now()
+	err = repository.ChatAutoScriptRepo.Update(ctx, dbCon, *chatAutoScript)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -287,10 +294,10 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 		})
 	}
 
-	for _, action := range chatAutoScript.ChatScripts {
+	for _, action := range chatAutoScript.ChatScriptLink {
 		chatAutoScript.ActionScript.Actions = append(chatAutoScript.ActionScript.Actions, model.ActionScriptActionType{
 			Type:         string(model.MoveToExistedScript),
-			ChatScriptId: action.Id,
+			ChatScriptId: action.ChatScriptId,
 			Order:        action.Order,
 		})
 	}

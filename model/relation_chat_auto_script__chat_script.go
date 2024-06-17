@@ -6,7 +6,7 @@ import (
 )
 
 type ChatAutoScriptToChatScript struct {
-	bun.BaseModel    `bun:"table:chat_auto_script_to_chat_script"`
+	bun.BaseModel    `bun:"table:chat_auto_script_to_chat_script,alias:caslink"`
 	ChatAutoScriptId string          `bun:"chat_auto_script_id,type:uuid,pk"`
 	ChatScriptId     string          `bun:"chat_script_id,type:uuid,pk"`
 	Order            int             `bun:"order,notnull"`

@@ -17,16 +17,16 @@ const (
 type ChatAutoScript struct {
 	*Base
 	bun.BaseModel      `bun:"table:chat_auto_script,alias:cas"`
-	ScriptName         string                `json:"script_name" bun:"script_name,type:text,notnull"`
-	Channel            string                `json:"channel" bun:"channel,type:text,notnull"`
-	ConnectionId       string                `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
-	ConnectionApp      *ChatConnectionApp    `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
-	CreatedBy          string                `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy          string                `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
-	Status             bool                  `json:"status" bun:"status,type:boolean,notnull"`
-	TriggerEvent       string                `json:"trigger_event" bun:"trigger_event,type:text,notnull"`
-	ChatScripts        []ChatScript          `bun:"m2m:chat_auto_script_to_chat_script,join:ChatAutoScript=ChatScript"`
-	SendMessageActions AutoScriptSendMessage `json:"send_message_actions" bun:"send_message_actions,type:jsonb"`
+	ScriptName         string                        `json:"script_name" bun:"script_name,type:text,notnull"`
+	Channel            string                        `json:"channel" bun:"channel,type:text,notnull"`
+	ConnectionId       string                        `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	ConnectionApp      *ChatConnectionApp            `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
+	CreatedBy          string                        `json:"created_by" bun:"created_by,type:uuid,notnull"`
+	UpdatedBy          string                        `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
+	Status             bool                          `json:"status" bun:"status,type:boolean,notnull"`
+	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event,type:text,notnull"`
+	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
+	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions,type:jsonb"`
 }
 
 type AutoScriptSendMessage struct {
@@ -68,17 +68,17 @@ type ChatAutoScriptStatusRequest struct {
 type ChatAutoScriptView struct {
 	*Base
 	bun.BaseModel      `bun:"table:chat_auto_script,alias:cas"`
-	ScriptName         string                   `json:"script_name" bun:"script_name"`
-	Channel            string                   `json:"channel" bun:"channel"`
-	ConnectionId       string                   `json:"connection_id" bun:"connection_id"`
-	ConnectionApp      *ChatConnectionApp       `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
-	CreatedBy          string                   `json:"created_by" bun:"created_by"`
-	UpdatedBy          string                   `json:"updated_by" bun:"updated_by"`
-	Status             bool                     `json:"status" bun:"status"`
-	TriggerEvent       string                   `json:"trigger_event" bun:"trigger_event"`
-	ChatScripts        []ChatScript             `bun:"m2m:chat_auto_script_to_chat_script,join:ChatAutoScript=ChatScript"`
-	SendMessageActions AutoScriptSendMessage    `json:"send_message_actions" bun:"send_message_actions"`
-	ActionScript       *AutoScriptMergedActions `json:"action_script" bun:"-"`
+	ScriptName         string                        `json:"script_name" bun:"script_name"`
+	Channel            string                        `json:"channel" bun:"channel"`
+	ConnectionId       string                        `json:"connection_id" bun:"connection_id"`
+	ConnectionApp      *ChatConnectionApp            `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
+	CreatedBy          string                        `json:"created_by" bun:"created_by"`
+	UpdatedBy          string                        `json:"updated_by" bun:"updated_by"`
+	Status             bool                          `json:"status" bun:"status"`
+	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event"`
+	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
+	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions"`
+	ActionScript       *AutoScriptMergedActions      `json:"action_script" bun:"-"`
 }
 
 func (r *ChatAutoScriptRequest) Validate() error {
