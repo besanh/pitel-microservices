@@ -16,36 +16,49 @@ const (
 
 type ChatAutoScript struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_auto_script,alias:cas"`
-	ScriptName    string             `json:"script_name" bun:"script_name,type:text,notnull"`
-	Channel       string             `json:"channel" bun:"channel,type:text,notnull"`
-	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
-	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
-	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
-	Status        bool               `json:"status" bun:"status,type:boolean,notnull"`
-	TriggerEvent  string             `json:"trigger_event" bun:"trigger_event,type:text,notnull"`
-	ActionScript  ActionScript       `json:"action_script" bun:"action_script,type:jsonb,notnull"`
+	bun.BaseModel      `bun:"table:chat_auto_script,alias:cas"`
+	ScriptName         string                `json:"script_name" bun:"script_name,type:text,notnull"`
+	Channel            string                `json:"channel" bun:"channel,type:text,notnull"`
+	ConnectionId       string                `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	ConnectionApp      *ChatConnectionApp    `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
+	CreatedBy          string                `json:"created_by" bun:"created_by,type:uuid,notnull"`
+	UpdatedBy          string                `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
+	Status             bool                  `json:"status" bun:"status,type:boolean,notnull"`
+	TriggerEvent       string                `json:"trigger_event" bun:"trigger_event,type:text,notnull"`
+	ChatScripts        []ChatScript          `bun:"m2m:chat_auto_script_to_chat_script,join:ChatAutoScript=ChatScript"`
+	SendMessageActions AutoScriptSendMessage `json:"send_message_actions" bun:"send_message_actions,type:jsonb"`
 }
 
-type ActionScript struct {
-	Actions []struct {
-		Type         string `json:"type"`
-		ChatScriptId string `json:"chat_script_id"` // use when user selects using an existed chat script
-		Content      string `json:"content"`        // sending message action
-		// TODO: implement when label service added
-		//AddLabels []string
-		//RemoveLabels []string
-	} `json:"actions"`
+type AutoScriptSendMessage struct {
+	Actions []AutoScriptSendMessageType
+}
+
+type AutoScriptSendMessageType struct {
+	Content string `json:"content"`
+	Order   int    `json:"order"`
+}
+
+type AutoScriptMergedActions struct {
+	Actions []ActionScriptActionType `json:"actions"`
+}
+
+type ActionScriptActionType struct {
+	Type         string `json:"type"`
+	ChatScriptId string `json:"chat_script_id"` // use when user selected using an existed chat script
+	Content      string `json:"content"`        // sending message action
+	Order        int    `json:"order"`
+	// TODO: implement when label service added
+	//AddLabels []string
+	//RemoveLabels []string
 }
 
 type ChatAutoScriptRequest struct {
-	ScriptName   string        `json:"script_name" form:"script_name" binding:"required"`
-	Channel      string        `json:"channel" form:"channel" binding:"required"`
-	ConnectionId string        `json:"connection_id" form:"connection_id" binding:"required"`
-	Status       string        `json:"status" form:"status" binding:"required"`
-	TriggerEvent string        `json:"trigger_event" form:"trigger_event" binding:"required"`
-	ActionScript *ActionScript `json:"action_script" form:"action_script" binding:"required"`
+	ScriptName   string                   `json:"script_name" form:"script_name" binding:"required"`
+	Channel      string                   `json:"channel" form:"channel" binding:"required"`
+	ConnectionId string                   `json:"connection_id" form:"connection_id" binding:"required"`
+	Status       string                   `json:"status" form:"status" binding:"required"`
+	TriggerEvent string                   `json:"trigger_event" form:"trigger_event" binding:"required"`
+	ActionScript *AutoScriptMergedActions `json:"action_script" form:"action_script" binding:"required"`
 }
 
 type ChatAutoScriptStatusRequest struct {
@@ -54,16 +67,18 @@ type ChatAutoScriptStatusRequest struct {
 
 type ChatAutoScriptView struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_auto_script,alias:cas"`
-	ScriptName    string             `json:"script_name" bun:"script_name"`
-	Channel       string             `json:"channel" bun:"channel"`
-	ConnectionId  string             `json:"connection_id" bun:"connection_id"`
-	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
-	CreatedBy     string             `json:"created_by" bun:"created_by"`
-	UpdatedBy     string             `json:"updated_by" bun:"updated_by"`
-	Status        bool               `json:"status" bun:"status"`
-	TriggerEvent  string             `json:"trigger_event" bun:"trigger_event"`
-	ActionScript  ActionScript       `json:"action_script" bun:"action_script"`
+	bun.BaseModel      `bun:"table:chat_auto_script,alias:cas"`
+	ScriptName         string                   `json:"script_name" bun:"script_name"`
+	Channel            string                   `json:"channel" bun:"channel"`
+	ConnectionId       string                   `json:"connection_id" bun:"connection_id"`
+	ConnectionApp      *ChatConnectionApp       `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
+	CreatedBy          string                   `json:"created_by" bun:"created_by"`
+	UpdatedBy          string                   `json:"updated_by" bun:"updated_by"`
+	Status             bool                     `json:"status" bun:"status"`
+	TriggerEvent       string                   `json:"trigger_event" bun:"trigger_event"`
+	ChatScripts        []ChatScript             `bun:"m2m:chat_auto_script_to_chat_script,join:ChatAutoScript=ChatScript"`
+	SendMessageActions AutoScriptSendMessage    `json:"send_message_actions" bun:"send_message_actions"`
+	ActionScript       *AutoScriptMergedActions `json:"action_script" bun:"-"`
 }
 
 func (r *ChatAutoScriptRequest) Validate() error {
@@ -102,6 +117,7 @@ func (r *ChatAutoScriptRequest) Validate() error {
 			if len(action.Content) < 1 {
 				return errors.New("message's content is required")
 			}
+			//TODO: handle label case
 		default:
 			return errors.New("invalid action type")
 		}

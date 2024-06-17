@@ -21,6 +21,9 @@ type ChatScript struct {
 	Content       string             `json:"content" bun:"content,type:text"`   // text script
 	FileUrl       string             `json:"file_url" bun:"file_url,type:text"` // file script
 	OtherScriptId string             `json:"other_script_id" bun:"other_script_id,type:text"`
+
+	//for mapping with chat_auto_script table
+	Order int `json:"order" bun:"-"`
 }
 
 type ChatScriptRequest struct {
