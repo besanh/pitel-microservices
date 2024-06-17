@@ -95,10 +95,17 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		connectionQueue = *connectionQueueExist
 		connectionApp.ConnectionQueueId = connectionQueue.GetId()
 	} else if len(data.QueueId) > 0 {
-		if err := repository.ConnectionQueueRepo.Insert(ctx, dbCon, connectionQueue); err != nil {
+		// TODO: remove on duplicate connection_queue
+		if err := repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, dbCon, connectionApp.Id, ""); err != nil {
 			log.Error(err)
 			return connectionApp.Id, err
 		}
+
+		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		}
+
 		connectionApp.ConnectionQueueId = connectionQueue.GetId()
 	}
 
@@ -118,19 +125,6 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	if err := repository.ChatConnectionAppRepo.Insert(ctx, dbCon, connectionApp); err != nil {
 		log.Error(err)
 		return connectionApp.Id, err
-	}
-
-	if len(data.QueueId) > 0 {
-		// TODO: remove on duplicate connection_queue
-		if err := repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, dbCon, connectionApp.Id, ""); err != nil {
-			log.Error(err)
-			return connectionApp.Id, err
-		}
-
-		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
-			log.Error(err)
-			return connectionApp.Id, err
-		}
 	}
 
 	// Step belows apply when app is available
