@@ -32,13 +32,13 @@ func (repo *ChatLabel) GetChatLabels(ctx context.Context, db sqlclient.ISqlClien
 		query.Where("tenant_id = ?", filter.TenantId)
 	}
 	if len(filter.LabelName) > 0 {
-		query.Where("Label_name = ?", filter.LabelName)
+		query.Where("label_name = ?", filter.LabelName)
 	}
 	if len(filter.LabelColor) > 0 {
-		query.Where("Label_color = ?", filter.LabelColor)
+		query.Where("label_color = ?", filter.LabelColor)
 	}
 	if filter.LabelStatus.Valid {
-		query.Where("Label_status = ?", filter.LabelStatus.Bool)
+		query.Where("label_status = ?", filter.LabelStatus.Bool)
 	}
 	query.Order("created_at desc")
 	if limit > 0 {
