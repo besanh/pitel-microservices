@@ -270,6 +270,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 
 			chatConnectionAppExist.ConnectionQueueId = connectionQueue.Id
 		} else {
+			// TODO: if connection have not connection_queue, we need to create and update it
 			// TODO: update queue in connection queue
 			connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, chatConnectionAppExist.ConnectionQueueId)
 			if err != nil {
@@ -285,6 +286,8 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 				log.Error(err)
 				return err
 			}
+
+			chatConnectionAppExist.ConnectionQueueId = connectionQueueExist.Id
 		}
 	}
 
@@ -322,7 +325,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		}
 	}
 
-	if err = repository.ChatConnectionAppRepo.Update(ctx, dbCon, *chatConnectionAppExist); err != nil {
+	if err = repository.ChatConnectionAppRepo.UpdateSpecifColumnyById(ctx, dbCon, *chatConnectionAppExist); err != nil {
 		log.Error(err)
 		return err
 	}
