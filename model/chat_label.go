@@ -18,7 +18,7 @@ type ChatLabel struct {
 	LabelColor      string `json:"label_color" bun:"label_color,type:text,notnull"`
 	LabelStatus     bool   `json:"label_status" bun:"label_status,notnull"`
 	CreatedBy       string `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy       string `json:"updated_by" bun:"updated_by,type:uuid,null,default:null"`
+	UpdatedBy       string `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
 }
 
 // Use internal
@@ -29,13 +29,17 @@ type ChatLabelRequest struct {
 	LabelColor string `json:"label_color"`
 }
 
-// Use external
-type ChatExtenalLabelRequest struct {
+/* Use for external system such as zalo, facebook
+* Zalo: labeling customer, removing label customer, delete label, getting labels
+* Facebook: creating label, associating label, removing label, retrieving label, retrieving label details, retrieving a list of all labels
+ */
+type ChatExternalLabelRequest struct {
 	AppId          string `json:"app_id"`
 	OaId           string `json:"oa_id"`
 	ExternalUserId string `json:"external_user_id"`
 	LabelId        string `json:"label_id"`
 	TagName        string `json:"tag_name"`
+	Action         string `json:"action"`
 }
 
 type ChatExternalLabelResponse struct {

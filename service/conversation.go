@@ -144,6 +144,7 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found with app_id %s", newConversationId, appId)
 		return response.NotFoundMsg("conversation " + newConversationId + " not found")
 	}
 	conversationExist.ShareInfo = &data
