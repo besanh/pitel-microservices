@@ -325,9 +325,16 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 		}
 	}
 
-	if err = repository.ChatConnectionAppRepo.UpdateSpecifColumnyById(ctx, dbCon, *chatConnectionAppExist); err != nil {
-		log.Error(err)
-		return err
+	if len(chatConnectionAppExist.ConnectionQueueId) > 0 {
+		if err = repository.ChatConnectionAppRepo.Update(ctx, repository.DBConn, *chatConnectionAppExist); err != nil {
+			log.Error(err)
+			return err
+		}
+	} else {
+		if err = repository.ChatConnectionAppRepo.UpdateSpecifColumnyById(ctx, dbCon, *chatConnectionAppExist); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	// Update share form
