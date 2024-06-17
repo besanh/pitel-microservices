@@ -29,7 +29,7 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 	filters := []map[string]any{}
 	musts := []map[string]any{}
 	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
 	}
 	if len(filter.AppId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray([]string{filter.AppId})...))
@@ -114,10 +114,10 @@ func (repo *MessageES) GetMessageById(ctx context.Context, tenantId, index, id s
 	filters := []map[string]any{}
 	musts := []map[string]any{}
 	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+tenantId))
-		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
+		filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
-	filters = append(filters, elasticsearch.MatchQuery("_id", id))
+	musts = append(filters, elasticsearch.MatchQuery("_id", id))
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{

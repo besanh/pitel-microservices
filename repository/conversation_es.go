@@ -39,7 +39,7 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	// Remove because routing maybe having pitel_conversation_
 	// filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
 	if len(tenantId) > 0 {
-		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
+		filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	if len(filter.AppId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray(filter.AppId)...))
@@ -149,13 +149,13 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 	filters := []map[string]any{}
 	musts := []map[string]any{}
 	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("_routing", index+"_"+tenantId))
-		musts = append(musts, elasticsearch.MatchQuery("tenant_id", tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
+		filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	if len(appId) > 0 {
 		filters = append(filters, elasticsearch.MatchQuery("app_id", appId))
 	}
-	filters = append(filters, elasticsearch.MatchQuery("_id", id))
+	musts = append(musts, elasticsearch.MatchQuery("_id", id))
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{
