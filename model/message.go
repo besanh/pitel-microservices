@@ -50,6 +50,7 @@ type MessageRequest struct {
 	ConversationId string                `json:"conversation_id"`
 	Content        string                `json:"content"`
 	Attachments    []*AttachmentsDetails `json:"attachments"`
+	Url            string                `json:"url"`
 }
 
 type MessageFormRequest struct {
@@ -57,6 +58,7 @@ type MessageFormRequest struct {
 	AppId          string                `form:"app_id" binding:"required"`
 	ConversationId string                `form:"conversation_id" binding:"required"`
 	File           *multipart.FileHeader `form:"file" binding:"required"`
+	Url            string                `form:"url"`
 }
 
 type MessageMarkRead struct {

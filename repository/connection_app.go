@@ -19,6 +19,7 @@ type (
 		Delete(ctx context.Context, db sqlclient.ISqlClientConn, id string) (err error)
 		SelectByQuery(ctx context.Context, db sqlclient.ISqlClientConn, params []model.Param, limit int, offset int) (entries *[]model.ChatConnectionApp, total int, err error)
 		BulkInsert(ctx context.Context, db sqlclient.ISqlClientConn, entities []model.ChatConnectionApp) (err error)
+		UpdateSpecifColumnyById(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatConnectionApp) (err error)
 	}
 	ChatConnectionApp struct {
 	}
@@ -186,6 +187,16 @@ func (r *ChatConnectionApp) SelectByQuery(ctx context.Context, db sqlclient.ISql
 func (r *ChatConnectionApp) BulkInsert(ctx context.Context, db sqlclient.ISqlClientConn, entities []model.ChatConnectionApp) (err error) {
 	_, err = db.GetDB().NewInsert().
 		Model(&entities).
+		Exec(ctx)
+	return
+}
+
+func (r *ChatConnectionApp) UpdateSpecifColumnyById(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatConnectionApp) (err error) {
+	entity.UpdatedAt = time.Now()
+	_, err = db.GetDB().NewUpdate().
+		Model(&entity).
+		Column("updated_at", "connection_name", "oa_info", "app_id", "status").
+		Where("id = ?", entity.Id).
 		Exec(ctx)
 	return
 }
