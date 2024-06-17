@@ -21,6 +21,7 @@ import (
 type (
 	IMessage interface {
 		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
+		// SendMessageToOTTAsync(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
 		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
@@ -79,11 +80,22 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	// Upload to Docs
 	if len(data.EventName) > 0 && data.EventName != "text" {
-		fileUrl, err := s.UploadDoc(ctx, data.AppId, data.OaId, file)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+		var fileUrl string
+		if file == nil {
+			if len(data.Url) < 1 && file == nil {
+				return response.BadRequestMsg("url or file is required")
+			}
+			// TODO: validate url
+			fileUrl = data.Url
+		} else {
+			fileUrlTmp, err := s.UploadDoc(ctx, data.AppId, data.OaId, file)
+			if err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+			fileUrl = fileUrlTmp
 		}
+
 		att := model.OttAttachments{
 			Payload: &model.OttPayloadMedia{
 				Url: fileUrl,
