@@ -10,7 +10,7 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *ChatLabel) RequestZaloLabel(ctx context.Context, suffixUrl string, request model.ChatExtenalLabelRequest) (err error) {
+func (s *ChatLabel) RequestZaloLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (err error) {
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/zalo/" + suffixUrl
 	client := resty.New()
 
@@ -37,7 +37,7 @@ func (s *ChatLabel) RequestZaloLabel(ctx context.Context, suffixUrl string, requ
 	}
 }
 
-func (s *ChatLabel) RequestFacebookLabel(ctx context.Context, suffixUrl string, request model.ChatExtenalLabelRequest) (err error) {
+func (s *ChatLabel) RequestFacebookLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (err error) {
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/face/" + suffixUrl
 	client := resty.New()
 

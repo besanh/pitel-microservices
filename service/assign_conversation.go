@@ -96,7 +96,6 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 				MainAllocate:   data.Status,
 			}
 			_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
-
 			if err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())

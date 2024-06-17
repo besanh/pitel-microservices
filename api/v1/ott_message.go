@@ -77,7 +77,6 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	}
 
 	shareInfoTmp, _ := jsonBody["share_info"].(map[string]any)
-	// if eventName != variables.EVENT_NAME_EXCLUDE["oa_connection"] && shareInfoTmp != nil {
 	shareInfoName, _ := shareInfoTmp["name"].(string)
 	shareInfoPhoneNumber, _ := shareInfoTmp["phone"].(string)
 	shareInfoAddress, _ := shareInfoTmp["address"].(string)
@@ -90,10 +89,8 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		City:        shareInfoCity,
 		District:    shareInfoDistrict,
 	}
-	// }
 
 	var message model.OttMessage
-	// if eventName == variables.EVENT_NAME_EXCLUDE["oa_connection"] {
 	if eventName == "oa_connection" {
 		oaInfoMessageTmp, _ := jsonBody["oa_info"].(map[string]any)
 		oaInfoMessageCode, _ := oaInfoMessageTmp["code"].(float64)
