@@ -91,7 +91,6 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 
 	scripts := make([]model.ChatAutoScriptToChatScript, 0)
 	labels := make([]model.ChatAutoScriptToChatLabel, 0)
-
 	// handle actions' content
 	for i, action := range chatAutoScriptRequest.ActionScript.Actions {
 		switch model.ScriptActionType(action.Type) {
@@ -215,20 +214,98 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 		return err
 	}
 
+	actionTypes := make(map[model.ScriptActionType]bool)
+	newScripts := make([]model.ChatAutoScriptToChatScript, 0)
+	newLabels := make([]model.ChatAutoScriptToChatLabel, 0)
 	// handle actions' content
 	for i, action := range chatAutoScriptRequest.ActionScript.Actions {
 		switch model.ScriptActionType(action.Type) {
 		case model.MoveToExistedScript:
-			// do nothing
+			// check if script id exists
+			chatScript, err := repository.ChatScriptRepo.GetById(ctx, dbCon, action.ChatScriptId)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			if chatScript == nil {
+				err = errors.New("not found chat script id")
+				log.Error(err)
+				return err
+			}
+
+			currentTime := time.Now()
+			newScripts = append(newScripts, model.ChatAutoScriptToChatScript{
+				ChatAutoScriptId: chatAutoScript.Id,
+				ChatScriptId:     action.ChatScriptId,
+				Order:            i,
+				CreatedAt:        currentTime,
+				UpdatedAt:        currentTime,
+			})
+			if _, ok := actionTypes[model.MoveToExistedScript]; !ok {
+				actionTypes[model.MoveToExistedScript] = true
+			}
 		case model.SendMessage:
 			// update content of message
 			for j, _ := range chatAutoScript.SendMessageActions.Actions {
-				if chatAutoScript.SendMessageActions.Actions[j].Order == i {
+				if i == chatAutoScript.SendMessageActions.Actions[j].Order && len(action.Content) > 0 {
 					chatAutoScript.SendMessageActions.Actions[j].Content = action.Content
 				}
 			}
+			if _, ok := actionTypes[model.SendMessage]; !ok {
+				actionTypes[model.SendMessage] = true
+			}
 		case model.AddLabels:
+			for _, addingLabelId := range action.AddLabels {
+				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, addingLabelId)
+				if err != nil {
+					log.Error(err)
+					return err
+				}
+				if label == nil {
+					err = errors.New("not found label id")
+					log.Error(err)
+					return err
+				}
+
+				currentTime := time.Now()
+				newLabels = append(newLabels, model.ChatAutoScriptToChatLabel{
+					ChatAutoScriptId: chatAutoScript.Id,
+					ChatLabelId:      addingLabelId,
+					ActionType:       string(model.AddLabels),
+					Order:            i,
+					CreatedAt:        currentTime,
+					UpdatedAt:        currentTime,
+				})
+			}
+			if _, ok := actionTypes[model.AddLabels]; !ok {
+				actionTypes[model.AddLabels] = true
+			}
 		case model.RemoveLabels:
+			for _, removingLabelId := range action.AddLabels {
+				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, removingLabelId)
+				if err != nil {
+					log.Error(err)
+					return err
+				}
+				if label == nil {
+					err = errors.New("not found label id")
+					log.Error(err)
+					return err
+				}
+
+				currentTime := time.Now()
+				newLabels = append(newLabels, model.ChatAutoScriptToChatLabel{
+					ChatAutoScriptId: chatAutoScript.Id,
+					ChatLabelId:      removingLabelId,
+					ActionType:       string(model.RemoveLabels),
+					Order:            i,
+					CreatedAt:        currentTime,
+					UpdatedAt:        currentTime,
+				})
+			}
+			if _, ok := actionTypes[model.RemoveLabels]; !ok {
+				actionTypes[model.RemoveLabels] = true
+			}
 		default:
 			err = errors.New("invalid action type: " + action.Type)
 			log.Error(err)
@@ -245,7 +322,7 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
 	chatAutoScript.UpdatedBy = authUser.UserId
 	chatAutoScript.UpdatedAt = time.Now()
-	err = repository.ChatAutoScriptRepo.Update(ctx, dbCon, *chatAutoScript)
+	err = repository.ChatAutoScriptRepo.UpdateChatAutoScriptById(ctx, dbCon, *chatAutoScript, newScripts, newLabels, actionTypes)
 	if err != nil {
 		log.Error(err)
 		return err
