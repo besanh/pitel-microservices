@@ -111,7 +111,7 @@ func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, appId
 		DocumentID: docId,
 		Routing:    index + "_" + tenantId,
 		Body:       bytes.NewReader(body),
-		Refresh:    "true",
+		// Refresh:    "true",
 	}
 	res, err := req.Do(ctx, ESClient.GetClient())
 	if err != nil {
@@ -135,7 +135,7 @@ func (repo *Elasticsearch) UpdateDocById(ctx context.Context, index, appId, docI
 		Index:      index,
 		DocumentID: docId,
 		Body:       bytes.NewReader([]byte(fmt.Sprintf(`{"doc":%s}`, body))),
-		Refresh:    "true",
+		// Refresh:    "true",
 	}
 	res, err := req.Do(ctx, ESClient.GetClient())
 	if err != nil {
