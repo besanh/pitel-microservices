@@ -130,6 +130,7 @@ func NewGRPCServer(port string) {
 	v1.NewTest(httpServer)
 	v1.NewChatMsgSample(httpServer, service.NewChatMsgSample())
 	v1.NewChatScript(httpServer, service.NewChatScript())
+	v1.NewChatAutoScript(httpServer, service.NewChatAutoScript())
 	v1.NewChatLabel(httpServer, service.NewChatLabel())
 	// httpServer.Static("/swagger/", "swagger-ui/")
 	// httpServer.Static("/swagger-doc/", "gen/openapiv2/proto/pb")
