@@ -33,7 +33,7 @@ type ChatMsgSampleRequest struct {
 type ChatMsgSampleView struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_message_sample,alias:cms"`
-	TenantId      string             `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	TenantId      string             `json:"tenant_id" bun:"tenant_id"`
 	Keyword       string             `json:"keyword" bun:"keyword"`
 	Theme         string             `json:"theme" bun:"theme"`
 	ConnectionId  string             `json:"connection_id" bun:"connection_id"`

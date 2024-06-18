@@ -41,7 +41,7 @@ type ChatScriptStatusRequest struct {
 type ChatScriptView struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_script,alias:cst"`
-	TenantId      string             `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	TenantId      string             `json:"tenant_id" bun:"tenant_id"`
 	ScriptName    string             `json:"script_name" bun:"script_name"`
 	Channel       string             `json:"channel" bun:"channel"`
 	ConnectionId  string             `json:"connection_id" bun:"connection_id"`
