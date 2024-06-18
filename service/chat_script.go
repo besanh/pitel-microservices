@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 	"mime/multipart"
+	"strconv"
 	"time"
 )
 
@@ -14,9 +16,9 @@ type (
 	IChatScript interface {
 		GetChatScripts(ctx context.Context, authUser *model.AuthUser, filter model.ChatScriptFilter, limit int, offset int) (int, *[]model.ChatScriptView, error)
 		GetChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatScriptView, error)
-		InsertChatScript(ctx context.Context, authUser *model.AuthUser, csr model.ChatScriptRequest, file *multipart.FileHeader) (string, error)
-		UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, csr model.ChatScriptRequest, file *multipart.FileHeader) error
-		UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus string) error
+		InsertChatScript(ctx context.Context, authUser *model.AuthUser, chatScriptRequest model.ChatScriptRequest, file *multipart.FileHeader) (string, error)
+		UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, chatScriptRequest model.ChatScriptRequest, file *multipart.FileHeader) error
+		UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, status sql.NullBool) error
 		DeleteChatScriptById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 
@@ -63,7 +65,7 @@ func (s *ChatScript) GetChatScriptById(ctx context.Context, authUser *model.Auth
 	return
 }
 
-func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthUser, csr model.ChatScriptRequest, file *multipart.FileHeader) (string, error) {
+func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthUser, chatScriptRequest model.ChatScriptRequest, file *multipart.FileHeader) (string, error) {
 	chatScript := model.ChatScript{
 		Base:     model.InitBase(),
 		TenantId: authUser.TenantId,
@@ -75,7 +77,7 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	}
 
 	// check if connectionApp id exists
-	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, csr.ConnectionId)
+	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, chatScriptRequest.ConnectionId)
 	if err != nil {
 		log.Error(err)
 		return chatScript.Id, err
@@ -86,9 +88,9 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 		return chatScript.Id, err
 	}
 
-	switch csr.ScriptType {
+	switch chatScriptRequest.ScriptType {
 	case "text":
-		chatScript.Content = csr.Content
+		chatScript.Content = chatScriptRequest.Content
 	case "image", "file":
 		var fileUrl string
 		if file != nil && len(file.Filename) > 0 {
@@ -100,22 +102,31 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 		}
 		chatScript.FileUrl = fileUrl
 	case "other":
-		chatScript.OtherScriptId = csr.OtherScriptId
+		if len(chatScriptRequest.OtherScriptId) > 0 {
+			chatScript.OtherScriptId = chatScriptRequest.OtherScriptId
+		}
 	default:
 		err = errors.New("invalid script type")
 		log.Error(err)
 		return chatScript.Id, err
 	}
 
-	if csr.Status == "true" {
-		chatScript.Status = true
+	statusTmp := chatScriptRequest.Status
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
+	if status.Valid {
+		chatScript.Status = status.Bool
 	}
 
-	chatScript.ScriptType = csr.ScriptType
-	chatScript.ScriptName = csr.ScriptName
+	chatScript.ScriptType = chatScriptRequest.ScriptType
+	chatScript.ScriptName = chatScriptRequest.ScriptName
 	chatScript.CreatedBy = authUser.UserId
-	chatScript.Channel = csr.Channel
-	chatScript.ConnectionId = csr.ConnectionId
+	chatScript.Channel = chatScriptRequest.Channel
+	chatScript.ConnectionId = chatScriptRequest.ConnectionId
 	chatScript.CreatedAt = time.Now()
 
 	err = repository.ChatScriptRepo.Insert(ctx, dbCon, chatScript)
@@ -127,7 +138,7 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	return chatScript.Id, nil
 }
 
-func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, csr model.ChatScriptRequest, file *multipart.FileHeader) error {
+func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, chatScriptRequest model.ChatScriptRequest, file *multipart.FileHeader) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -147,15 +158,15 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 		return err
 	}
 
-	if csr.ScriptType != chatScript.ScriptType {
+	if chatScriptRequest.ScriptType != chatScript.ScriptType {
 		err = errors.New("not meet script type")
 		log.Error(err)
 		return err
 	}
 
-	switch csr.ScriptType {
+	switch chatScriptRequest.ScriptType {
 	case "text":
-		chatScript.Content = csr.Content
+		chatScript.Content = chatScriptRequest.Content
 	case "image", "file":
 		var fileUrl string
 		if file != nil && len(file.Filename) > 0 {
@@ -177,17 +188,21 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 				}
 			}
 		}
-		chatScript.FileUrl = fileUrl
+		if len(fileUrl) > 0 {
+			chatScript.FileUrl = fileUrl
+		}
 	case "other":
-		chatScript.OtherScriptId = csr.OtherScriptId
+		if len(chatScriptRequest.OtherScriptId) > 0 {
+			chatScript.OtherScriptId = chatScriptRequest.OtherScriptId
+		}
 	default:
 		err = errors.New("invalid script type")
 		log.Error(err)
 		return err
 	}
 
-	if len(csr.ScriptName) > 0 {
-		chatScript.ScriptName = csr.ScriptName
+	if len(chatScriptRequest.ScriptName) > 0 {
+		chatScript.ScriptName = chatScriptRequest.ScriptName
 	}
 	chatScript.UpdatedBy = authUser.UserId
 	chatScript.UpdatedAt = time.Now()
@@ -200,7 +215,7 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 	return nil
 }
 
-func (s *ChatScript) UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus string) error {
+func (s *ChatScript) UpdateChatScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, status sql.NullBool) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -220,11 +235,9 @@ func (s *ChatScript) UpdateChatScriptStatusById(ctx context.Context, authUser *m
 		return err
 	}
 
-	var status bool
-	if oldStatus == "true" {
-		status = true
+	if status.Valid {
+		chatScript.Status = status.Bool
 	}
-	chatScript.Status = !status
 	chatScript.UpdatedBy = authUser.UserId
 	chatScript.UpdatedAt = time.Now()
 	err = repository.ChatScriptRepo.Update(ctx, dbCon, *chatScript)

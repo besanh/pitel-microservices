@@ -150,10 +150,11 @@ type ChatMsgSampleFilter struct {
 }
 
 type ChatScriptFilter struct {
-	TenantId   string `json:"tenant_id"`
-	Channel    string `json:"channel"`
-	OaId       string `json:"oa_id"`
-	ScriptName string `json:"script_name"`
+	TenantId   string       `json:"tenant_id"`
+	Channel    string       `json:"channel"`
+	Status     sql.NullBool `json:"status"`
+	OaId       string       `json:"oa_id"`
+	ScriptName string       `json:"script_name"`
 }
 
 type ChatLabelFilter struct {
