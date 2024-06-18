@@ -142,6 +142,7 @@ type ChatEmailFilter struct {
 }
 
 type ChatMsgSampleFilter struct {
+	TenantId     string `json:"tenant_id"`
 	ConnectionId string `json:"connection_id"`
 	OaId         string `json:"oa_id"`
 	Channel      string `json:"channel"`
@@ -149,6 +150,7 @@ type ChatMsgSampleFilter struct {
 }
 
 type ChatScriptFilter struct {
+	TenantId   string `json:"tenant_id"`
 	Channel    string `json:"channel"`
 	OaId       string `json:"oa_id"`
 	ScriptName string `json:"script_name"`
