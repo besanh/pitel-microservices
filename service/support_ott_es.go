@@ -63,20 +63,20 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		// }
 
 		// TODO: update conversation => use queue consumer
-		// tmpBytes, err := json.Marshal(conversation)
-		// if err != nil {
-		// 	log.Error(err)
-		// 	return conversation, isNew, err
-		// }
-		// esDoc := map[string]any{}
-		// if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		// 	log.Error(err)
-		// 	return conversation, isNew, err
-		// }
-		// if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
-		// 	log.Error(err)
-		// 	return conversation, isNew, err
-		// }
+		tmpBytes, err := json.Marshal(conversation)
+		if err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
+		esDoc := map[string]any{}
+		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
+		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
+			log.Error(err)
+			return conversation, isNew, err
+		}
 
 		// if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 		// 	log.Error(err)
