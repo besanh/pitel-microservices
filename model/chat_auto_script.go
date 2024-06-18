@@ -61,13 +61,13 @@ type ActionScriptActionType struct {
 }
 
 type ChatAutoScriptRequest struct {
-	ScriptName      string                   `json:"script_name" form:"script_name" binding:"required"`
-	Channel         string                   `json:"channel" form:"channel" binding:"required"`
-	ConnectionId    string                   `json:"connection_id" form:"connection_id" binding:"required"`
-	Status          string                   `json:"status" form:"status" binding:"required"`
-	TriggerEvent    string                   `json:"trigger_event" form:"trigger_event" binding:"required"`
-	TriggerKeywords []string                 `json:"trigger_keywords" form:"trigger_keywords"`
-	ActionScript    *AutoScriptMergedActions `json:"action_script" form:"action_script" binding:"required"`
+	ScriptName      string                        `json:"script_name" form:"script_name" binding:"required"`
+	Channel         string                        `json:"channel" form:"channel" binding:"required"`
+	ConnectionId    string                        `json:"connection_id" form:"connection_id" binding:"required"`
+	Status          string                        `json:"status" form:"status" binding:"required"`
+	TriggerEvent    string                        `json:"trigger_event" form:"trigger_event" binding:"required"`
+	TriggerKeywords AutoScriptTriggerKeywordsType `json:"trigger_keywords" form:"trigger_keywords"`
+	ActionScript    *AutoScriptMergedActions      `json:"action_script" form:"action_script" binding:"required"`
 }
 
 type ChatAutoScriptStatusRequest struct {
@@ -118,7 +118,7 @@ func (r *ChatAutoScriptRequest) Validate() error {
 	if !slices.Contains[[]string](variables.CHAT_AUTO_SCRIPT_EVENT, r.TriggerEvent) {
 		return errors.New("trigger event " + r.TriggerEvent + " is not supported")
 	}
-	if r.TriggerEvent == "keyword" && len(r.TriggerKeywords) < 1 {
+	if r.TriggerEvent == "keyword" && len(r.TriggerKeywords.Keywords) < 1 {
 		return errors.New("keyword is required")
 	}
 
