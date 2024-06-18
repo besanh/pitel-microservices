@@ -65,7 +65,8 @@ func (s *ChatScript) GetChatScriptById(ctx context.Context, authUser *model.Auth
 
 func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthUser, csr model.ChatScriptRequest, file *multipart.FileHeader) (string, error) {
 	chatScript := model.ChatScript{
-		Base: model.InitBase(),
+		Base:     model.InitBase(),
+		TenantId: authUser.TenantId,
 	}
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {

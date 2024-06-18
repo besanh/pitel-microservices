@@ -37,6 +37,9 @@ func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlCli
 	if len(filter.ScriptName) > 0 {
 		query.Where("cst.script_name ILIKE ?", "%"+filter.ScriptName+"%")
 	}
+	if len(filter.TenantId) > 0 {
+		query.Where("cst.tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.Channel) > 0 {
 		query.Where("cst.channel = ?", filter.Channel)
 	}

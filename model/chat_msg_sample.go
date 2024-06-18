@@ -9,6 +9,7 @@ import (
 type ChatMsgSample struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_message_sample,alias:cms"`
+	TenantId      string             `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	Keyword       string             `json:"keyword" bun:"keyword,type:text,notnull"`
 	Theme         string             `json:"theme" bun:"theme,type:text,notnull"`
 	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
@@ -32,6 +33,7 @@ type ChatMsgSampleRequest struct {
 type ChatMsgSampleView struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_message_sample,alias:cms"`
+	TenantId      string             `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	Keyword       string             `json:"keyword" bun:"keyword"`
 	Theme         string             `json:"theme" bun:"theme"`
 	ConnectionId  string             `json:"connection_id" bun:"connection_id"`
