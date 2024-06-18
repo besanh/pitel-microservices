@@ -22,7 +22,7 @@ func RequestOttLabel(ctx context.Context, requestType, suffixUrl string, request
 	client := resty.New()
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
-		SetBody(request).
+		SetBody(chatLabelAfterRequest).
 		Post(url)
 
 	if err != nil {
