@@ -243,19 +243,17 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 				CreatedAt:        currentTime,
 				UpdatedAt:        currentTime,
 			})
-			if _, ok := actionTypes[model.MoveToExistedScript]; !ok {
-				actionTypes[model.MoveToExistedScript] = true
-			}
 		case model.SendMessage:
-			// update content of message
-			for j, _ := range chatAutoScript.SendMessageActions.Actions {
-				if i == chatAutoScript.SendMessageActions.Actions[j].Order && len(action.Content) > 0 {
-					chatAutoScript.SendMessageActions.Actions[j].Content = action.Content
-				}
-			}
 			if _, ok := actionTypes[model.SendMessage]; !ok {
 				actionTypes[model.SendMessage] = true
+				//create new send message script
+				chatAutoScript.SendMessageActions = model.AutoScriptSendMessage{Actions: make([]model.AutoScriptSendMessageType, 0)}
 			}
+			chatAutoScript.SendMessageActions.Actions = append(chatAutoScript.SendMessageActions.Actions,
+				model.AutoScriptSendMessageType{
+					Content: action.Content,
+					Order:   i,
+				})
 		case model.AddLabels:
 			for _, addingLabelId := range action.AddLabels {
 				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, addingLabelId)
@@ -278,9 +276,6 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 					CreatedAt:        currentTime,
 					UpdatedAt:        currentTime,
 				})
-			}
-			if _, ok := actionTypes[model.AddLabels]; !ok {
-				actionTypes[model.AddLabels] = true
 			}
 		case model.RemoveLabels:
 			for _, removingLabelId := range action.AddLabels {
@@ -305,9 +300,6 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 					UpdatedAt:        currentTime,
 				})
 			}
-			if _, ok := actionTypes[model.RemoveLabels]; !ok {
-				actionTypes[model.RemoveLabels] = true
-			}
 		default:
 			err = errors.New("invalid action type: " + action.Type)
 			log.Error(err)
@@ -324,7 +316,7 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
 	chatAutoScript.UpdatedBy = authUser.UserId
 	chatAutoScript.UpdatedAt = time.Now()
-	err = repository.ChatAutoScriptRepo.UpdateChatAutoScriptById(ctx, dbCon, *chatAutoScript, newScripts, newLabels, actionTypes)
+	err = repository.ChatAutoScriptRepo.UpdateChatAutoScriptById(ctx, dbCon, *chatAutoScript, newScripts, newLabels)
 	if err != nil {
 		log.Error(err)
 		return err

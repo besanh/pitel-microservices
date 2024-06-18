@@ -15,7 +15,7 @@ type (
 	IChatAutoScript interface {
 		IRepo[model.ChatAutoScript]
 		InsertChatAutoScript(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
-		UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel, actionTypes map[model.ScriptActionType]bool) error
+		UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
 		GetChatAutoScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatAutoScriptFilter, limit, offset int) (int, *[]model.ChatAutoScriptView, error)
 		GetChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatAutoScriptView, error)
 		DeleteChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
@@ -70,7 +70,7 @@ func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclie
 }
 
 func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript,
-	scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel, actionTypes map[model.ScriptActionType]bool) error {
+	scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error {
 	tx, err := db.GetDB().BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -84,7 +84,9 @@ func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sql
 	}()
 
 	chatAutoScript.CreatedAt = time.Now()
-	_, err = tx.NewInsert().Model(&chatAutoScript).Exec(ctx)
+	_, err = tx.NewUpdate().Model(&chatAutoScript).
+		Where("id = ?", chatAutoScript.Id).
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -99,23 +101,11 @@ func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sql
 		}
 	}
 	if len(labels) > 0 {
-		shouldExecuteQuery := false
-		query := tx.NewDelete().Model((*model.ChatAutoScriptToChatLabel)(nil))
-		switch {
-		case actionTypes[model.AddLabels] || actionTypes[model.RemoveLabels]:
-			query.Where("chat_auto_script_id = ? AND action_type = ?", chatAutoScript.Id, labels[0].ActionType)
-			shouldExecuteQuery = true
-		case actionTypes[model.AddLabels] && actionTypes[model.RemoveLabels]:
-			query.Where("chat_auto_script_id = ?", chatAutoScript.Id)
-			shouldExecuteQuery = true
-		default:
-			// request doesn't update label
-		}
-		if shouldExecuteQuery {
-			_, err := query.Exec(ctx)
-			if err != nil {
-				return err
-			}
+		_, err := tx.NewDelete().Model((*model.ChatAutoScriptToChatLabel)(nil)).
+			Where("chat_auto_script_id = ?", chatAutoScript.Id).
+			Exec(ctx)
+		if err != nil {
+			return err
 		}
 	}
 
