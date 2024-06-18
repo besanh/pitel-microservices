@@ -13,11 +13,11 @@ import (
 func RequestOttLabel(ctx context.Context, requestType, suffixUrl string, request model.ChatExternalLabelRequest) (result model.ChatExternalLabelResponse, err error) {
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/" + requestType + "/" + suffixUrl
 	client := resty.New()
-
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(request).
 		Post(url)
+
 	if err != nil {
 		log.Error(err)
 		return
