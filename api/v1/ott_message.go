@@ -214,6 +214,6 @@ func (h *OttMessage) AskInfo(c *gin.Context) {
 		District:    shareInfoDistrict,
 	}
 
-	code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
+	code, result := h.conversationService.BulkUpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
 	c.JSON(code, result)
 }
