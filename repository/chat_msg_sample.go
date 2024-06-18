@@ -35,6 +35,9 @@ func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.I
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Column("connection_name", "oa_info")
 		})
+	if len(filter.TenantId) > 0 {
+		query.Where("cms.tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.ConnectionId) > 0 {
 		query.Where("cms.connection_id = ?", filter.ConnectionId)
 	}

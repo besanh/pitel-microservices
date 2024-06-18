@@ -63,7 +63,8 @@ func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *mode
 
 func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model.AuthUser, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) (string, error) {
 	chatMsgSample := model.ChatMsgSample{
-		Base: model.InitBase(),
+		Base:     model.InitBase(),
+		TenantId: authUser.TenantId,
 	}
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
@@ -131,7 +132,7 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 	}
 
 	var imageUrl string
-	if file != nil {
+	if file != nil && len(file.Filename) > 0 {
 		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
 		if err != nil {
 			log.Error(err)
