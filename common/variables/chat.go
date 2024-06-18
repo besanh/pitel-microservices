@@ -94,4 +94,11 @@ var (
 		"keyword",
 		"offline",
 	}
+
+	CHAT_SCRIPT_TYPE = []string{
+		"text",
+		"image",
+		"file",
+		"other",
+	}
 )
