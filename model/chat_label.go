@@ -42,7 +42,17 @@ type ChatExternalLabelRequest struct {
 	Action         string `json:"action"`
 }
 
+type ChatExternalLabelConvertedRequest struct {
+	AppId   string `json:"app_id"`
+	OaId    string `json:"oa_id"`
+	UserId  string `json:"user_id"`
+	LabelId string `json:"label_id"`
+	TagName string `json:"tag_name"`
+	Action  string `json:"action"`
+}
+
 type ChatExternalLabelResponse struct {
+	Code    string `json:"code"`
 	Error   string `json:"error"`
 	Message string `json:"message"`
 	Id      string `json:"id"`
