@@ -41,11 +41,19 @@ func (handler *ChatScript) GetChatScripts(c *gin.Context) {
 
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
+	statusTmp := c.Query("status")
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
 
 	filter := model.ChatScriptFilter{
 		ScriptName: c.Query("script_name"),
 		Channel:    c.Query("channel"),
 		OaId:       c.Query("oa_id"),
+		Status:     status,
 	}
 
 	total, result, err := handler.chatScriptService.GetChatScripts(c, res.Data, filter, limit, offset)
