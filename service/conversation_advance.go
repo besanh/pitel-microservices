@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -82,8 +81,8 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			ExternalUserId: request.ExternalUserId,
 			TagName:        request.LabelName,
 		}
-		externalUrl = "zalo/create-label-customer"
-		externalLabelResponse, errTmp := RequestZaloLabel(ctx, externalUrl, zaloRequest)
+		externalUrl = "create-label-customer"
+		externalLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
@@ -106,8 +105,8 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			LabelId:        chatLabel.GetId(),
 			TagName:        request.LabelName,
 		}
-		externalUrl = fmt.Sprintf("/me/custom_labels", "")
-		externalCreateLabelResponse, errTmp := RequestFacebookLabel(ctx, externalUrl, facebookRequest)
+		externalUrl = "create-label"
+		externalCreateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
@@ -126,8 +125,8 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			LabelId:        chatLabel.GetId(),
 			TagName:        request.LabelName,
 		}
-		externalUrl = fmt.Sprintf("/me/custom_labels", "")
-		externalAssociateLabelResponse, errTmp := RequestFacebookLabel(ctx, externalUrl, facebookAssociateRequest)
+		externalUrl = "associate-label"
+		externalAssociateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookAssociateRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
@@ -147,7 +146,6 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 
 		// TODO: update label
 		(*labelExist)[0].ExternalLabelId = externalLabelId
-
 	}
 
 	// TODO: update label
