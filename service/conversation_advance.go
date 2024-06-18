@@ -81,7 +81,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			ExternalUserId: request.ExternalUserId,
 			TagName:        request.LabelName,
 		}
-		externalUrl = "zalo/create-label-customer"
+		externalUrl = "create-label-customer"
 		externalLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
@@ -105,7 +105,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			LabelId:        chatLabel.GetId(),
 			TagName:        request.LabelName,
 		}
-		externalUrl = "/me/custom_labels"
+		externalUrl = "create-label"
 		externalCreateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
@@ -125,7 +125,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			LabelId:        chatLabel.GetId(),
 			TagName:        request.LabelName,
 		}
-		externalUrl = "/me/custom_labels"
+		externalUrl = "associate-label"
 		externalAssociateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookAssociateRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
