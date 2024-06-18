@@ -74,6 +74,7 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 		Base:               model.InitBase(),
 		TenantId:           authUser.TenantId,
 		SendMessageActions: model.AutoScriptSendMessage{Actions: make([]model.AutoScriptSendMessageType, 0)},
+		TriggerKeywords:    model.AutoScriptTriggerKeywordsType{Keywords: make([]string, 0)},
 	}
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
@@ -184,6 +185,9 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 		chatAutoScript.Status = status.Bool
 	}
 
+	if chatAutoScriptRequest.TriggerEvent == "keyword" {
+		chatAutoScript.TriggerKeywords.Keywords = chatAutoScriptRequest.TriggerKeywords
+	}
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
 	chatAutoScript.CreatedBy = authUser.UserId
@@ -317,6 +321,9 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 		chatAutoScript.Status = status.Bool
 	}
 
+	if chatAutoScriptRequest.TriggerEvent == "keyword" {
+		chatAutoScript.TriggerKeywords.Keywords = chatAutoScriptRequest.TriggerKeywords
+	}
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
 	chatAutoScript.UpdatedBy = authUser.UserId
