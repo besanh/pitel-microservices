@@ -28,9 +28,14 @@ type ChatAutoScript struct {
 	UpdatedBy          string                        `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
 	Status             bool                          `json:"status" bun:"status,type:boolean,notnull"`
 	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event,type:text,notnull"`
+	TriggerKeywords    AutoScriptTriggerKeywordsType `json:"trigger_keywords" bun:"trigger_keywords,type:jsonb"`
 	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
 	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions,type:jsonb"`
 	ChatLabelLink      []*ChatAutoScriptToChatLabel  `bun:"rel:has-many,join:id=chat_auto_script_id"`
+}
+
+type AutoScriptTriggerKeywordsType struct {
+	Keywords []string `json:"keywords"`
 }
 
 type AutoScriptSendMessage struct {
@@ -56,12 +61,13 @@ type ActionScriptActionType struct {
 }
 
 type ChatAutoScriptRequest struct {
-	ScriptName   string                   `json:"script_name" form:"script_name" binding:"required"`
-	Channel      string                   `json:"channel" form:"channel" binding:"required"`
-	ConnectionId string                   `json:"connection_id" form:"connection_id" binding:"required"`
-	Status       string                   `json:"status" form:"status" binding:"required"`
-	TriggerEvent string                   `json:"trigger_event" form:"trigger_event" binding:"required"`
-	ActionScript *AutoScriptMergedActions `json:"action_script" form:"action_script" binding:"required"`
+	ScriptName      string                        `json:"script_name" form:"script_name" binding:"required"`
+	Channel         string                        `json:"channel" form:"channel" binding:"required"`
+	ConnectionId    string                        `json:"connection_id" form:"connection_id" binding:"required"`
+	Status          string                        `json:"status" form:"status" binding:"required"`
+	TriggerEvent    string                        `json:"trigger_event" form:"trigger_event" binding:"required"`
+	TriggerKeywords AutoScriptTriggerKeywordsType `json:"trigger_keywords" form:"trigger_keywords"`
+	ActionScript    *AutoScriptMergedActions      `json:"action_script" form:"action_script" binding:"required"`
 }
 
 type ChatAutoScriptStatusRequest struct {
@@ -80,6 +86,7 @@ type ChatAutoScriptView struct {
 	UpdatedBy          string                        `json:"updated_by" bun:"updated_by"`
 	Status             bool                          `json:"status" bun:"status"`
 	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event"`
+	TriggerKeywords    AutoScriptTriggerKeywordsType `json:"trigger_keywords" bun:"trigger_keywords"`
 	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
 	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions"`
 	ChatLabelLink      []*ChatAutoScriptToChatLabel  `bun:"rel:has-many,join:id=chat_auto_script_id"`
@@ -110,6 +117,9 @@ func (r *ChatAutoScriptRequest) Validate() error {
 	}
 	if !slices.Contains[[]string](variables.CHAT_AUTO_SCRIPT_EVENT, r.TriggerEvent) {
 		return errors.New("trigger event " + r.TriggerEvent + " is not supported")
+	}
+	if r.TriggerEvent == "keyword" && len(r.TriggerKeywords.Keywords) < 1 {
+		return errors.New("keyword is required")
 	}
 
 	for _, action := range r.ActionScript.Actions {
