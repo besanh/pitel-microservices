@@ -2,7 +2,9 @@ package model
 
 import (
 	"errors"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 	"mime/multipart"
 )
 
@@ -68,8 +70,8 @@ func (r *ChatScriptRequest) Validate() error {
 	if len(r.Channel) < 1 {
 		return errors.New("channel is required")
 	}
-	if len(r.Content) < 1 {
-		return errors.New("channel is required")
+	if !slices.Contains[[]string](variables.CHAT_SCRIPT_TYPE, r.ScriptType) {
+		return errors.New("script type " + r.ScriptType + " is not supported")
 	}
 
 	return nil

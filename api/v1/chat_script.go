@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -8,6 +9,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
+	"strconv"
 )
 
 type ChatScript struct {
@@ -39,11 +41,19 @@ func (handler *ChatScript) GetChatScripts(c *gin.Context) {
 
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
+	statusTmp := c.Query("status")
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
 
 	filter := model.ChatScriptFilter{
 		ScriptName: c.Query("script_name"),
 		Channel:    c.Query("channel"),
 		OaId:       c.Query("oa_id"),
+		Status:     status,
 	}
 
 	total, result, err := handler.chatScriptService.GetChatScripts(c, res.Data, filter, limit, offset)
@@ -161,8 +171,15 @@ func (handler *ChatScript) UpdateChatScriptStatus(c *gin.Context) {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
+	statusTmp := chatScriptRequest.Status
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
 
-	err = handler.chatScriptService.UpdateChatScriptStatusById(c, res.Data, id, chatScriptRequest.Status)
+	err = handler.chatScriptService.UpdateChatScriptStatusById(c, res.Data, id, status)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
