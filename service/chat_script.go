@@ -264,12 +264,6 @@ func (s *ChatScript) DeleteChatScriptById(ctx context.Context, authUser *model.A
 		}
 	}
 
-	err = repository.ChatAutoScriptToChatScriptRepo.DeleteByChatScriptId(ctx, dbCon, id)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
 	err = repository.ChatScriptRepo.Delete(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)

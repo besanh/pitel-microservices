@@ -35,7 +35,6 @@ func InitRepositories() {
 	ChatScriptRepo = NewChatScript()
 	ChatLabelRepo = NewChatLabel()
 	ChatAutoScriptRepo = NewChatAutoScript()
-	ChatAutoScriptToChatScriptRepo = NewChatAutoScriptToChatScript()
 }
 
 func InitRepositoriesES() {
