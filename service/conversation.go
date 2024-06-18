@@ -24,9 +24,12 @@ type (
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
+		BulkUpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
+
+		// Label zalo
+		PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, labelType string, request model.ConversationLabelRequest) (labelId string, err error)
 	}
-	Conversation struct {
-	}
+	Conversation struct{}
 )
 
 func NewConversation() IConversation {
@@ -160,6 +163,35 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	return response.OKResponse()
+}
+
+func (s *Conversation) BulkUpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any) {
+	newConversationId := GenerateConversationId(appId, oaId, id)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found with app_id %s", newConversationId, appId)
+		return response.NotFoundMsg("conversation " + newConversationId + " not found")
+	}
+	conversationExist.ShareInfo = &data
+	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
+	tmpBytes, err := json.Marshal(conversationExist)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	esDoc := map[string]any{}
+	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if err := repository.ESRepo.BulkUpdateDoc(ctx, ES_INDEX_CONVERSATION, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}

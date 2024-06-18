@@ -10,7 +10,7 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *ChatLabel) RequestZaloLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (err error) {
+func RequestZaloLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (result model.ChatExternalLabelResponse, err error) {
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/zalo/" + suffixUrl
 	client := resty.New()
 
@@ -20,24 +20,22 @@ func (s *ChatLabel) RequestZaloLabel(ctx context.Context, suffixUrl string, requ
 		Post(url)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	}
 
-	var result model.ChatZaloLabelResponse
-
-	if err := json.Unmarshal([]byte(res.Body()), &result); err != nil {
+	if err = json.Unmarshal([]byte(res.Body()), &result); err != nil {
 		log.Error(err)
-		return err
+		return
 	}
-	if res.StatusCode() == 200 {
-		return nil
-	} else {
+
+	if res.StatusCode() != 200 {
 		err = errors.New(result.Message)
-		return err
 	}
+
+	return
 }
 
-func (s *ChatLabel) RequestFacebookLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (err error) {
+func RequestFacebookLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (result model.ChatExternalLabelResponse, err error) {
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/face/" + suffixUrl
 	client := resty.New()
 
@@ -55,19 +53,16 @@ func (s *ChatLabel) RequestFacebookLabel(ctx context.Context, suffixUrl string, 
 
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	}
 
-	var result model.ChatZaloLabelResponse
-
-	if err := json.Unmarshal([]byte(res.Body()), &result); err != nil {
+	if err = json.Unmarshal([]byte(res.Body()), &result); err != nil {
 		log.Error(err)
-		return err
+		return
 	}
-	if res.StatusCode() == 200 {
-		return nil
-	} else {
+	if res.StatusCode() != 200 {
 		err = errors.New(result.Message)
-		return err
 	}
+
+	return
 }

@@ -36,17 +36,32 @@ func (s *ChatLabel) InsertChatLabel(ctx context.Context, authUser *model.AuthUse
 		return chatLabel.GetId(), err
 	}
 
-	filter := model.ChatConnectionAppFilter{
+	filterChatConnection := model.ChatConnectionAppFilter{
 		AppId: request.AppId,
 		OaId:  request.OaId,
 	}
-	_, connectionExist, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+	_, connectionExist, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filterChatConnection, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return chatLabel.GetId(), err
 	} else if len(*connectionExist) < 1 {
 		log.Error("connection with app_id: " + request.AppId + ", oa_id: " + request.OaId + " not found")
 		return chatLabel.GetId(), errors.New("connection with app_id: " + request.AppId + ", oa_id: " + request.OaId + " not found")
+	}
+
+	filter := model.ChatLabelFilter{
+		TenantId:  authUser.TenantId,
+		AppId:     request.AppId,
+		OaId:      request.OaId,
+		LabelName: request.LabelName,
+	}
+	_, chatLabels, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return chatLabel.GetId(), err
+	} else if len(*chatLabels) > 0 {
+		log.Error("label with name: " + request.LabelName + " already exist")
+		return chatLabel.GetId(), errors.New("label with name: " + request.LabelName + " already exist")
 	}
 
 	chatLabel.AppId = request.AppId
@@ -112,6 +127,21 @@ func (s *ChatLabel) UpdateChatLabelById(ctx context.Context, authUser *model.Aut
 		return errors.New("chat label not found")
 	}
 
+	filter := model.ChatLabelFilter{
+		TenantId:  authUser.TenantId,
+		AppId:     request.AppId,
+		OaId:      request.OaId,
+		LabelName: request.LabelName,
+	}
+	_, chatLabels, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(*chatLabels) > 0 {
+		log.Error("label with name: " + request.LabelName + " already exist")
+		return errors.New("label with name: " + request.LabelName + " already exist")
+	}
+
 	/**
 	* TODO: update zalo and facebook
 	because zalo and facebook does not support update label, so we can only remove that label
@@ -139,11 +169,11 @@ func (s *ChatLabel) UpdateChatLabelById(ctx context.Context, authUser *model.Aut
 	// 	}
 	// }
 
-	filter := model.ChatConnectionAppFilter{
+	filterChatConnection := model.ChatConnectionAppFilter{
 		AppId: request.AppId,
 		OaId:  request.OaId,
 	}
-	_, connectionExist, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+	_, connectionExist, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filterChatConnection, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err

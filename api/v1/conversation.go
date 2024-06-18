@@ -30,6 +30,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.POST("status", handler.UpdateStatusConversation)
 		Group.PATCH(":id/reassign", handler.ReassignConversation)
 		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
+		Group.PUT("label/:label_type", handler.PutLabelToConversation)
 	}
 }
 
@@ -197,4 +198,37 @@ func (handler *Conversation) GetConversationById(c *gin.Context) {
 
 	code, result := handler.conversationService.GetConversationById(c, res.Data, appId, conversationId)
 	c.JSON(code, result)
+}
+
+func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	labelType := c.Param("label_type")
+	if len(labelType) < 1 {
+		c.JSON(response.BadRequestMsg("label_type is required"))
+		return
+	}
+
+	request := model.ConversationLabelRequest{}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	log.Info("put label to conversation payload -> ", &request)
+
+	labelId, err := handler.conversationService.PutLabelToConversation(c, res.Data, labelType, request)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OK(map[string]any{
+		"id": labelId,
+	}))
 }

@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type Conversation struct {
 	TenantId         string     `json:"tenant_id"`
@@ -14,6 +17,7 @@ type Conversation struct {
 	ExternalUserId   string     `json:"external_user_id"`
 	Username         string     `json:"username"`
 	Avatar           string     `json:"avatar"`
+	Label            []string   `json:"label"`
 	IsDone           bool       `json:"is_done"`
 	IsDoneAt         time.Time  `json:"is_done_at"`
 	IsDoneBy         string     `json:"is_done_by"`
@@ -33,6 +37,7 @@ type ConversationView struct {
 	ExternalUserId         string     `json:"external_user_id"`
 	Username               string     `json:"username"`
 	Avatar                 string     `json:"avatar"`
+	Label                  []string   `json:"label"`
 	IsDone                 bool       `json:"is_done"`
 	IsDoneAt               string     `json:"is_done_at"`
 	IsDoneBy               string     `json:"is_done_by"`
@@ -72,4 +77,41 @@ type ElasticsearchChatResponse struct {
 
 type ResponseData struct {
 	Data []map[string]any `json:"data"`
+}
+
+type ConversationLabelRequest struct {
+	AppId          string `json:"app_id"`
+	OaId           string `json:"oa_id"`
+	LabelName      string `json:"label_name"`
+	LabelId        string `json:"label_id"`
+	ExternalUserId string `json:"external_user_id"`
+	ConversationId string `json:"conversation_id"`
+}
+
+func (m *ConversationLabelRequest) Validate() error {
+	if len(m.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+
+	if len(m.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+
+	if len(m.LabelName) < 1 {
+		return errors.New("label name is required")
+	}
+
+	if len(m.LabelId) < 1 {
+		return errors.New("label id is required")
+	}
+
+	if len(m.ExternalUserId) < 1 {
+		return errors.New("external user id is required")
+	}
+
+	if len(m.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
+
+	return nil
 }
