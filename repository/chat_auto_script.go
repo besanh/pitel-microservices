@@ -8,7 +8,6 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/uptrace/bun"
-	"time"
 )
 
 type (
@@ -45,7 +44,6 @@ func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclie
 		}
 	}()
 
-	chatAutoScript.CreatedAt = time.Now()
 	_, err = tx.NewInsert().Model(&chatAutoScript).Exec(ctx)
 	if err != nil {
 		return err
@@ -79,7 +77,6 @@ func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sql
 		}
 	}()
 
-	chatAutoScript.CreatedAt = time.Now()
 	_, err = tx.NewUpdate().Model(&chatAutoScript).
 		Where("id = ?", chatAutoScript.Id).
 		Exec(ctx)
