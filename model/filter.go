@@ -167,6 +167,7 @@ type ChatLabelFilter struct {
 }
 
 type ChatAutoScriptFilter struct {
+	TenantId   string `json:"tenant_id"`
 	Channel    string `json:"channel"`
 	ScriptName string `json:"script_name"`
 	OaId       string `json:"oa_id"`

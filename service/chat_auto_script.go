@@ -33,6 +33,7 @@ func (s *ChatAutoScript) GetChatAutoScripts(ctx context.Context, authUser *model
 		return
 	}
 
+	filter.TenantId = authUser.TenantId
 	total, chatAutoScripts, err = repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, dbCon, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
@@ -69,6 +70,7 @@ func (s *ChatAutoScript) GetChatAutoScriptById(ctx context.Context, authUser *mo
 func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *model.AuthUser, chatAutoScriptRequest model.ChatAutoScriptRequest) (string, error) {
 	chatAutoScript := model.ChatAutoScript{
 		Base:               model.InitBase(),
+		TenantId:           authUser.TenantId,
 		SendMessageActions: model.AutoScriptSendMessage{Actions: make([]model.AutoScriptSendMessageType, 0)},
 	}
 	dbCon, err := HandleGetDBConSource(authUser)

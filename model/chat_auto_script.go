@@ -19,6 +19,7 @@ const (
 type ChatAutoScript struct {
 	*Base
 	bun.BaseModel      `bun:"table:chat_auto_script,alias:cas"`
+	TenantId           string                        `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	ScriptName         string                        `json:"script_name" bun:"script_name,type:text,notnull"`
 	Channel            string                        `json:"channel" bun:"channel,type:text,notnull"`
 	ConnectionId       string                        `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
@@ -70,6 +71,7 @@ type ChatAutoScriptStatusRequest struct {
 type ChatAutoScriptView struct {
 	*Base
 	bun.BaseModel      `bun:"table:chat_auto_script,alias:cas"`
+	TenantId           string                        `json:"tenant_id" bun:"tenant_id"`
 	ScriptName         string                        `json:"script_name" bun:"script_name"`
 	Channel            string                        `json:"channel" bun:"channel"`
 	ConnectionId       string                        `json:"connection_id" bun:"connection_id"`

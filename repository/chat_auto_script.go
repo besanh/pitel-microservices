@@ -158,6 +158,9 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 		Relation("ChatLabelLink.ChatLabel", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.ExcludeColumn("id")
 		})
+	if len(filter.TenantId) > 0 {
+		query.Where("cas.tenant_id = ?", filter.TenantId)
+	}
 	if len(filter.ScriptName) > 0 {
 		query.Where("cas.script_name ILIKE ?", "%"+filter.ScriptName+"%")
 	}
