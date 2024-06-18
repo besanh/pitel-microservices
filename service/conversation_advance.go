@@ -146,7 +146,6 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 
 		// TODO: update label
 		(*labelExist)[0].ExternalLabelId = externalLabelId
-
 	}
 
 	// TODO: update label
