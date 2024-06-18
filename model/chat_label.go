@@ -12,7 +12,7 @@ type ChatLabel struct {
 	TenantId        string `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	AppId           string `json:"app_id" bun:"app_id,type:text,notnull"`
 	OaId            string `json:"oa_id" bun:"oa_id,type:text,notnull"`
-	LabelName       string `json:"label_name" bun:"label_name,type:text,unique,notnull"`
+	LabelName       string `json:"label_name" bun:"label_name,type:text,notnull"`
 	LabelType       string `json:"label_type" bun:"label_type,type:text,notnull"`
 	ExternalLabelId string `json:"external_label_id" bun:"external_label_id,type:text"`
 	LabelColor      string `json:"label_color" bun:"label_color,type:text,notnull"`
@@ -43,11 +43,10 @@ type ChatExternalLabelRequest struct {
 }
 
 type ChatExternalLabelResponse struct {
-}
-
-type ChatZaloLabelResponse struct {
-	Error   int    `json:"error"`
+	Error   string `json:"error"`
 	Message string `json:"message"`
+	Id      string `json:"id"`
+	Data    []any  `json:"data"`
 }
 
 func (m *ChatLabelRequest) Validate() error {
