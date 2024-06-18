@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -83,7 +82,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			TagName:        request.LabelName,
 		}
 		externalUrl = "zalo/create-label-customer"
-		externalLabelResponse, errTmp := RequestZaloLabel(ctx, externalUrl, zaloRequest)
+		externalLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
@@ -106,8 +105,8 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			LabelId:        chatLabel.GetId(),
 			TagName:        request.LabelName,
 		}
-		externalUrl = fmt.Sprintf("/me/custom_labels", "")
-		externalCreateLabelResponse, errTmp := RequestFacebookLabel(ctx, externalUrl, facebookRequest)
+		externalUrl = "/me/custom_labels"
+		externalCreateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
@@ -126,8 +125,8 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			LabelId:        chatLabel.GetId(),
 			TagName:        request.LabelName,
 		}
-		externalUrl = fmt.Sprintf("/me/custom_labels", "")
-		externalAssociateLabelResponse, errTmp := RequestFacebookLabel(ctx, externalUrl, facebookAssociateRequest)
+		externalUrl = "/me/custom_labels"
+		externalAssociateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookAssociateRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
