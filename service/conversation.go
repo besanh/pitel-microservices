@@ -150,6 +150,7 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		log.Errorf("conversation %s not found with app_id %s", newConversationId, appId)
 		return response.NotFoundMsg("conversation " + newConversationId + " not found")
 	}
+	conversationExist.Username = data.Fullname
 	conversationExist.ShareInfo = &data
 	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
 	tmpBytes, err := json.Marshal(conversationExist)
