@@ -10,8 +10,8 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func RequestZaloLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (result model.ChatExternalLabelResponse, err error) {
-	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/zalo/" + suffixUrl
+func RequestOttLabel(ctx context.Context, requestType, suffixUrl string, request model.ChatExternalLabelRequest) (result model.ChatExternalLabelResponse, err error) {
+	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/" + requestType + "/" + suffixUrl
 	client := resty.New()
 
 	res, err := client.R().
@@ -28,38 +28,6 @@ func RequestZaloLabel(ctx context.Context, suffixUrl string, request model.ChatE
 		return
 	}
 
-	if res.StatusCode() != 200 {
-		err = errors.New(result.Message)
-	}
-
-	return
-}
-
-func RequestFacebookLabel(ctx context.Context, suffixUrl string, request model.ChatExternalLabelRequest) (result model.ChatExternalLabelResponse, err error) {
-	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/face/" + suffixUrl
-	client := resty.New()
-
-	var res *resty.Response
-	if suffixUrl != "" {
-		res, err = client.R().
-			SetHeader("Content-Type", "application/json").
-			SetBody(request).
-			Post(url)
-	} else {
-		res, err = client.R().
-			SetHeader("Content-Type", "application/json").
-			Delete(url)
-	}
-
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	if err = json.Unmarshal([]byte(res.Body()), &result); err != nil {
-		log.Error(err)
-		return
-	}
 	if res.StatusCode() != 200 {
 		err = errors.New(result.Message)
 	}
