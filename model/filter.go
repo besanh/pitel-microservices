@@ -165,3 +165,11 @@ type ChatLabelFilter struct {
 	LabelColor  string       `json:"label_color"`
 	LabelStatus sql.NullBool `json:"label_status"`
 }
+
+type ChatAutoScriptFilter struct {
+	TenantId   string       `json:"tenant_id"`
+	Channel    string       `json:"channel"`
+	ScriptName string       `json:"script_name"`
+	Status     sql.NullBool `json:"status"`
+	OaId       string       `json:"oa_id"`
+}

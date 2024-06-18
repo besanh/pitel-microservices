@@ -89,4 +89,9 @@ var (
 		"reopen",
 		"done",
 	}
+
+	CHAT_AUTO_SCRIPT_EVENT = []string{
+		"keyword",
+		"offline",
+	}
 )
