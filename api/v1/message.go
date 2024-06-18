@@ -51,6 +51,7 @@ func (h *Message) SendMessage(c *gin.Context) {
 
 		message.EventName = messageForm.EventName
 		message.AppId = messageForm.AppId
+		message.OaId = messageForm.OaId
 		message.ConversationId = messageForm.ConversationId
 		message.Url = messageForm.Url
 		file = messageForm.File

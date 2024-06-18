@@ -56,6 +56,7 @@ type MessageRequest struct {
 type MessageFormRequest struct {
 	EventName      string                `form:"event_name" binding:"required"`
 	AppId          string                `form:"app_id" binding:"required"`
+	OaId           string                `form:"oa_id" binding:"required"`
 	ConversationId string                `form:"conversation_id" binding:"required"`
 	File           *multipart.FileHeader `form:"file" binding:"required"`
 	Url            string                `form:"url"`
