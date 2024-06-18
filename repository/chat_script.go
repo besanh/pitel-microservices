@@ -47,7 +47,7 @@ func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlCli
 		query.Where("connection_app.oa_info->cst.channel::text->0->>'oa_id' = ?", filter.OaId)
 	}
 	if filter.Status.Valid {
-		query.Where("cas.status = ?", filter.Status.Bool)
+		query.Where("cst.status = ?", filter.Status.Bool)
 	}
 	query.Order("cst.created_at ASC")
 
