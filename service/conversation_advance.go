@@ -82,20 +82,18 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			TagName:        request.LabelName,
 		}
 		externalUrl = "create-label-customer"
-		externalLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
+
+		// TODO: because zalo not return id so we don't need to use it for updating label
+		_, errTmp := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
 				log.Error(err)
 				return
 			}
+			err = errTmp
 			return
 		}
-
-		externalLabelId = externalLabelResponse.Id
-
-		// TODO: update label
-		(*labelExist)[0].ExternalLabelId = externalLabelId
 	} else if labelType == "facebook" {
 		// TODO: if label does not exist, create new label, then associate to conversation)
 		facebookRequest := model.ChatExternalLabelRequest{
@@ -145,12 +143,12 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 		}
 
 		// TODO: update label
-		(*labelExist)[0].ExternalLabelId = externalLabelId
+		chatLabel.ExternalLabelId = externalLabelId
 	}
 
 	// TODO: update label
-	(*labelExist)[0].UpdatedAt = time.Now()
-	if err = repository.ChatLabelRepo.Update(ctx, dbCon, (*labelExist)[0]); err != nil {
+	chatLabel.UpdatedAt = time.Now()
+	if err = repository.ChatLabelRepo.Update(ctx, dbCon, chatLabel); err != nil {
 		log.Error(err)
 		return
 	}
