@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -8,6 +9,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
+	"strconv"
 )
 
 type ChatAutoScript struct {
@@ -40,10 +42,19 @@ func (handler *ChatAutoScript) GetChatAutoScripts(c *gin.Context) {
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
+	statusTmp := c.Query("status")
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
+
 	filter := model.ChatAutoScriptFilter{
 		ScriptName: c.Query("script_name"),
 		Channel:    c.Query("channel"),
 		OaId:       c.Query("oa_id"),
+		Status:     status,
 	}
 
 	total, result, err := handler.chatAutoScriptService.GetChatAutoScripts(c, res.Data, filter, limit, offset)
@@ -154,15 +165,22 @@ func (handler *ChatAutoScript) UpdateChatAutoScriptStatus(c *gin.Context) {
 		return
 	}
 
-	var chatScriptRequest model.ChatAutoScriptStatusRequest
-	err := c.ShouldBind(&chatScriptRequest)
+	var chatAutoScriptRequest model.ChatAutoScriptStatusRequest
+	err := c.ShouldBind(&chatAutoScriptRequest)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
+	statusTmp := chatAutoScriptRequest.Status
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
 
-	err = handler.chatAutoScriptService.UpdateChatAutoScriptStatusById(c, res.Data, id, chatScriptRequest.Status)
+	err = handler.chatAutoScriptService.UpdateChatAutoScriptStatusById(c, res.Data, id, status)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return

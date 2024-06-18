@@ -61,9 +61,9 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 
 	for order, labels := range removeLabels {
 		chatAutoScript.ActionScript.Actions = append(chatAutoScript.ActionScript.Actions, model.ActionScriptActionType{
-			Type:      string(model.RemoveLabels),
-			AddLabels: labels,
-			Order:     order,
+			Type:         string(model.RemoveLabels),
+			RemoveLabels: labels,
+			Order:        order,
 		})
 	}
 

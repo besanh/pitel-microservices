@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
+	"strconv"
 	"time"
 )
 
@@ -15,7 +17,7 @@ type (
 		GetChatAutoScriptById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatAutoScriptView, error)
 		InsertChatAutoScript(ctx context.Context, authUser *model.AuthUser, chatAutoScriptRequest model.ChatAutoScriptRequest) (string, error)
 		UpdateChatAutoScriptById(ctx context.Context, authUser *model.AuthUser, id string, chatAutoScriptRequest model.ChatAutoScriptRequest) error
-		UpdateChatAutoScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus string) error
+		UpdateChatAutoScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, status sql.NullBool) error
 		DeleteChatAutoScriptById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 
@@ -91,6 +93,7 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 		return chatAutoScript.Id, err
 	}
 
+	currentTime := time.Now()
 	scripts := make([]model.ChatAutoScriptToChatScript, 0)
 	labels := make([]model.ChatAutoScriptToChatLabel, 0)
 	// handle actions' content
@@ -109,13 +112,11 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 				return chatAutoScript.Id, err
 			}
 
-			currentTime := time.Now()
 			scripts = append(scripts, model.ChatAutoScriptToChatScript{
 				ChatAutoScriptId: chatAutoScript.Id,
 				ChatScriptId:     action.ChatScriptId,
 				Order:            i,
 				CreatedAt:        currentTime,
-				UpdatedAt:        currentTime,
 			})
 		case model.SendMessage:
 			chatAutoScript.SendMessageActions.Actions = append(chatAutoScript.SendMessageActions.Actions,
@@ -136,14 +137,12 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 					return chatAutoScript.Id, err
 				}
 
-				currentTime := time.Now()
 				labels = append(labels, model.ChatAutoScriptToChatLabel{
 					ChatAutoScriptId: chatAutoScript.Id,
 					ChatLabelId:      addingLabelId,
 					ActionType:       string(model.AddLabels),
 					Order:            i,
 					CreatedAt:        currentTime,
-					UpdatedAt:        currentTime,
 				})
 			}
 		case model.RemoveLabels:
@@ -159,14 +158,12 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 					return chatAutoScript.Id, err
 				}
 
-				currentTime := time.Now()
 				labels = append(labels, model.ChatAutoScriptToChatLabel{
 					ChatAutoScriptId: chatAutoScript.Id,
 					ChatLabelId:      removingLabelId,
 					ActionType:       string(model.RemoveLabels),
 					Order:            i,
 					CreatedAt:        currentTime,
-					UpdatedAt:        currentTime,
 				})
 			}
 		default:
@@ -176,8 +173,15 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 		}
 	}
 
-	if chatAutoScriptRequest.Status == "true" {
-		chatAutoScript.Status = true
+	statusTmp := chatAutoScriptRequest.Status
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
+	if status.Valid {
+		chatAutoScript.Status = status.Bool
 	}
 
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
@@ -185,7 +189,7 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 	chatAutoScript.CreatedBy = authUser.UserId
 	chatAutoScript.Channel = chatAutoScriptRequest.Channel
 	chatAutoScript.ConnectionId = chatAutoScriptRequest.ConnectionId
-	chatAutoScript.CreatedAt = time.Now()
+	chatAutoScript.CreatedAt = currentTime
 
 	err = repository.ChatAutoScriptRepo.InsertChatAutoScript(ctx, dbCon, chatAutoScript, scripts, labels)
 	if err != nil {
@@ -216,6 +220,7 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 		return err
 	}
 
+	currentTime := time.Now()
 	actionTypes := make(map[model.ScriptActionType]bool)
 	newScripts := make([]model.ChatAutoScriptToChatScript, 0)
 	newLabels := make([]model.ChatAutoScriptToChatLabel, 0)
@@ -235,13 +240,11 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 				return err
 			}
 
-			currentTime := time.Now()
 			newScripts = append(newScripts, model.ChatAutoScriptToChatScript{
 				ChatAutoScriptId: chatAutoScript.Id,
 				ChatScriptId:     action.ChatScriptId,
 				Order:            i,
 				CreatedAt:        currentTime,
-				UpdatedAt:        currentTime,
 			})
 		case model.SendMessage:
 			if _, ok := actionTypes[model.SendMessage]; !ok {
@@ -267,14 +270,12 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 					return err
 				}
 
-				currentTime := time.Now()
 				newLabels = append(newLabels, model.ChatAutoScriptToChatLabel{
 					ChatAutoScriptId: chatAutoScript.Id,
 					ChatLabelId:      addingLabelId,
 					ActionType:       string(model.AddLabels),
 					Order:            i,
 					CreatedAt:        currentTime,
-					UpdatedAt:        currentTime,
 				})
 			}
 		case model.RemoveLabels:
@@ -290,14 +291,12 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 					return err
 				}
 
-				currentTime := time.Now()
 				newLabels = append(newLabels, model.ChatAutoScriptToChatLabel{
 					ChatAutoScriptId: chatAutoScript.Id,
 					ChatLabelId:      removingLabelId,
 					ActionType:       string(model.RemoveLabels),
 					Order:            i,
 					CreatedAt:        currentTime,
-					UpdatedAt:        currentTime,
 				})
 			}
 		default:
@@ -307,15 +306,21 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 		}
 	}
 
-	var status bool
-	if chatAutoScriptRequest.Status == "true" {
-		status = true
+	statusTmp := chatAutoScriptRequest.Status
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
 	}
-	chatAutoScript.Status = status
+	if status.Valid {
+		chatAutoScript.Status = status.Bool
+	}
+
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
 	chatAutoScript.UpdatedBy = authUser.UserId
-	chatAutoScript.UpdatedAt = time.Now()
+	chatAutoScript.UpdatedAt = currentTime
 	err = repository.ChatAutoScriptRepo.UpdateChatAutoScriptById(ctx, dbCon, *chatAutoScript, newScripts, newLabels)
 	if err != nil {
 		log.Error(err)
@@ -325,7 +330,7 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 	return nil
 }
 
-func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, oldStatus string) error {
+func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, authUser *model.AuthUser, id string, status sql.NullBool) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -345,11 +350,9 @@ func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, aut
 		return err
 	}
 
-	var status bool
-	if oldStatus == "true" {
-		status = true
+	if status.Valid {
+		chatAutoScript.Status = status.Bool
 	}
-	chatAutoScript.Status = !status
 	chatAutoScript.UpdatedBy = authUser.UserId
 	chatAutoScript.UpdatedAt = time.Now()
 	err = repository.ChatAutoScriptRepo.Update(ctx, dbCon, *chatAutoScript)

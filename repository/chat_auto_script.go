@@ -51,16 +51,12 @@ func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclie
 		return err
 	}
 
-	for _, script := range scripts {
-		if _, err = tx.NewInsert().Model(&script).Exec(ctx); err != nil {
-			return err
-		}
+	if _, err = tx.NewInsert().Model(&scripts).Exec(ctx); err != nil {
+		return err
 	}
 
-	for _, label := range labels {
-		if _, err = tx.NewInsert().Model(&label).Exec(ctx); err != nil {
-			return err
-		}
+	if _, err = tx.NewInsert().Model(&labels).Exec(ctx); err != nil {
+		return err
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -109,16 +105,12 @@ func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sql
 		}
 	}
 
-	for _, script := range scripts {
-		if _, err = tx.NewInsert().Model(&script).Exec(ctx); err != nil {
-			return err
-		}
+	if _, err = tx.NewInsert().Model(&scripts).Exec(ctx); err != nil {
+		return err
 	}
 
-	for _, label := range labels {
-		if _, err = tx.NewInsert().Model(&label).Exec(ctx); err != nil {
-			return err
-		}
+	if _, err = tx.NewInsert().Model(&labels).Exec(ctx); err != nil {
+		return err
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -157,6 +149,9 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 	if len(filter.Channel) > 0 {
 		query.Where("cas.channel = ?", filter.Channel)
 	}
+	if filter.Status.Valid {
+		query.Where("cas.status = ?", filter.Status.Bool)
+	}
 	if len(filter.OaId) > 0 {
 		query.Where("connection_app.oa_info->cas.channel::text->0->>'oa_id' = ?", filter.OaId)
 	}
@@ -164,6 +159,7 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
+	query.Order("cas.created_at ASC")
 
 	total, err := query.ScanAndCount(ctx)
 	if errors.Is(err, sql.ErrNoRows) {
