@@ -167,9 +167,10 @@ type ChatLabelFilter struct {
 }
 
 type ChatAutoScriptFilter struct {
-	TenantId   string       `json:"tenant_id"`
-	Channel    string       `json:"channel"`
-	ScriptName string       `json:"script_name"`
-	Status     sql.NullBool `json:"status"`
-	OaId       string       `json:"oa_id"`
+	TenantId     string       `json:"tenant_id"`
+	Channel      string       `json:"channel"`
+	ScriptName   string       `json:"script_name"`
+	Status       sql.NullBool `json:"status"`
+	OaId         string       `json:"oa_id"`
+	TriggerEvent string       `json:"trigger_event"`
 }

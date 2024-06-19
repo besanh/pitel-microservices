@@ -49,12 +49,16 @@ func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclie
 		return err
 	}
 
-	if _, err = tx.NewInsert().Model(&scripts).Exec(ctx); err != nil {
-		return err
+	if len(scripts) > 0 {
+		if _, err = tx.NewInsert().Model(&scripts).Exec(ctx); err != nil {
+			return err
+		}
 	}
 
-	if _, err = tx.NewInsert().Model(&labels).Exec(ctx); err != nil {
-		return err
+	if len(labels) > 0 {
+		if _, err = tx.NewInsert().Model(&labels).Exec(ctx); err != nil {
+			return err
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -102,12 +106,16 @@ func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sql
 		}
 	}
 
-	if _, err = tx.NewInsert().Model(&scripts).Exec(ctx); err != nil {
-		return err
+	if len(scripts) > 0 {
+		if _, err = tx.NewInsert().Model(&scripts).Exec(ctx); err != nil {
+			return err
+		}
 	}
 
-	if _, err = tx.NewInsert().Model(&labels).Exec(ctx); err != nil {
-		return err
+	if len(labels) > 0 {
+		if _, err = tx.NewInsert().Model(&labels).Exec(ctx); err != nil {
+			return err
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -151,6 +159,9 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 	}
 	if len(filter.OaId) > 0 {
 		query.Where("connection_app.oa_info->cas.channel::text->0->>'oa_id' = ?", filter.OaId)
+	}
+	if len(filter.TriggerEvent) > 0 {
+		query.Where("cas.trigger_event = ?", filter.TriggerEvent)
 	}
 
 	if limit > 0 {

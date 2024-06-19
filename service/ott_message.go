@@ -306,6 +306,16 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			}
 		}
 	}
+	if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
+		if err = DetectAndExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		if err = ExecutePlannedAutoScriptWhenAgentsOffline(ctx, user, message, conversation); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+	}
 
 	return response.OKResponse()
 }

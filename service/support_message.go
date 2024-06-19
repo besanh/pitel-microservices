@@ -13,7 +13,7 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *Message) sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachments) (model.OttResponse, error) {
+func sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachments) (model.OttResponse, error) {
 	var result model.OttResponse
 	var body any
 	var resMix model.SendMessageToOttWithAttachment
