@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime/multipart"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -12,7 +14,6 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/storage"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"mime/multipart"
 )
 
 /**
@@ -195,10 +196,16 @@ func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUs
 	if data.ShareType == "facebook" {
 	} else if data.ShareType == "zalo" {
 		// TODO: upload image
-		imageUrl, err := uploadImageToStorageShareInfo(ctx, file)
-		if err != nil {
-			log.Error(err)
-			return err
+		var url string
+		if file != nil {
+			imageUrl, err := uploadImageToStorageShareInfo(ctx, file)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			url = imageUrl
+		} else if len(data.ImageUrl) > 0 {
+			url = data.ImageUrl
 		}
 
 		if len(data.AppId) > 0 {
@@ -206,7 +213,7 @@ func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUs
 		}
 		if len(file.Filename) > 0 {
 			shareInfoExist.ShareForm.Zalo.ImageName = file.Filename
-			shareInfoExist.ShareForm.Zalo.ImageUrl = imageUrl
+			shareInfoExist.ShareForm.Zalo.ImageUrl = url
 		}
 		if len(data.Title) > 0 {
 			shareInfoExist.ShareForm.Zalo.Title = data.Title
