@@ -50,6 +50,7 @@ func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.I
 	if len(filter.Keyword) > 0 {
 		query.Where("cms.keyword ILIKE ?", "%"+filter.Keyword+"%")
 	}
+	query.Order("cms.created_at desc")
 
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

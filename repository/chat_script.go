@@ -49,7 +49,7 @@ func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlCli
 	if filter.Status.Valid {
 		query.Where("cst.status = ?", filter.Status.Bool)
 	}
-	query.Order("cst.created_at ASC")
+	query.Order("cst.created_at desc")
 
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
