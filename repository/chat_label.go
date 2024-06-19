@@ -31,6 +31,9 @@ func (repo *ChatLabel) GetChatLabels(ctx context.Context, db sqlclient.ISqlClien
 	if len(filter.TenantId) > 0 {
 		query.Where("tenant_id = ?", filter.TenantId)
 	}
+	if len(filter.LabelType) > 0 {
+		query.Where("label_type = ?", filter.LabelType)
+	}
 	if len(filter.LabelName) > 0 {
 		query.Where("label_name = ?", filter.LabelName)
 	}

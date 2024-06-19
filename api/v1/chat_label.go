@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"database/sql"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -68,12 +71,20 @@ func (handler *ChatLabel) GetChatLabels(c *gin.Context) {
 	}
 
 	limit, offset := util.ParseLimit(c.Query("limit")), util.ParseOffset(c.Query("offset"))
-
+	statusTmp := c.Query("status")
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
 	filter := model.ChatLabelFilter{
-		AppId:     c.Query("app_id"),
-		OaId:      c.Query("oa_id"),
-		LabelType: c.Query("label_type"),
-		LabelName: c.Query("label_name"),
+		AppId:       c.Query("app_id"),
+		OaId:        c.Query("oa_id"),
+		LabelType:   c.Query("label_type"),
+		LabelName:   c.Query("label_name"),
+		LabelColor:  c.Query("label_color"),
+		LabelStatus: status,
 	}
 
 	total, result, err := handler.chatLabel.GetChatLabels(c, res.Data, filter, limit, offset)
