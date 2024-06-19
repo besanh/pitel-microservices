@@ -211,8 +211,10 @@ func (s *ShareInfo) UpdateConfigForm(ctx context.Context, authUser *model.AuthUs
 		if len(data.AppId) > 0 {
 			shareInfoExist.ShareForm.Zalo.AppId = data.AppId
 		}
-		if len(file.Filename) > 0 {
-			shareInfoExist.ShareForm.Zalo.ImageName = file.Filename
+		if len(url) > 0 {
+			if file != nil {
+				shareInfoExist.ShareForm.Zalo.ImageName = file.Filename
+			}
 			shareInfoExist.ShareForm.Zalo.ImageUrl = url
 		}
 		if len(data.Title) > 0 {
