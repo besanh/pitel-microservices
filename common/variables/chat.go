@@ -101,4 +101,10 @@ var (
 		"file",
 		"other",
 	}
+
+	CHAT_LABEL_ACTION = []string{
+		"create",
+		"update",
+		"delete",
+	}
 )

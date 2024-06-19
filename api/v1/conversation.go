@@ -222,6 +222,12 @@ func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 
 	log.Info("put label to conversation payload -> ", &request)
 
+	if err := request.Validate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
 	labelId, err := handler.conversationService.PutLabelToConversation(c, res.Data, labelType, request)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
