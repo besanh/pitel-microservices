@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type (
@@ -31,7 +32,7 @@ func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlCli
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cst.*")
 	if len(filter.ScriptName) > 0 {
-		query.Where("cst.script_name ILIKE ?", "%"+filter.ScriptName+"%")
+		query.Where("? ILIKE ?", bun.Ident("cst.script_name"), "%"+filter.ScriptName+"%")
 	}
 	if len(filter.TenantId) > 0 {
 		query.Where("cst.tenant_id = ?", filter.TenantId)

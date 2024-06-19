@@ -141,7 +141,7 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 		query.Where("cas.tenant_id = ?", filter.TenantId)
 	}
 	if len(filter.ScriptName) > 0 {
-		query.Where("cas.script_name ILIKE ?", "%"+filter.ScriptName+"%")
+		query.Where("? ILIKE ?", bun.Ident("cas.script_name"), "%"+filter.ScriptName+"%")
 	}
 	if len(filter.Channel) > 0 {
 		query.Where("cas.channel = ?", filter.Channel)
