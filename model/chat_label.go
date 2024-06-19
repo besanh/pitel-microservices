@@ -18,7 +18,7 @@ type ChatLabel struct {
 	LabelColor      string `json:"label_color" bun:"label_color,type:text,notnull"`
 	LabelStatus     bool   `json:"label_status" bun:"label_status,notnull"`
 	CreatedBy       string `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy       string `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
+	UpdatedBy       string `json:"updated_by" bun:"updated_by,type:uuid,nullzero,default:null"`
 }
 
 // Use internal

@@ -58,7 +58,7 @@ type MessageFormRequest struct {
 	AppId          string                `form:"app_id" binding:"required"`
 	OaId           string                `form:"oa_id" binding:"required"`
 	ConversationId string                `form:"conversation_id" binding:"required"`
-	File           *multipart.FileHeader `form:"file" binding:"required"`
+	File           *multipart.FileHeader `form:"file"`
 	Url            string                `form:"url"`
 }
 
@@ -131,5 +131,25 @@ func (m *MessageMarkRead) ValidateMarkRead() error {
 		}
 	}
 
+	return nil
+}
+
+func (m *MessageFormRequest) ValidateMessageForm() error {
+	if len(m.EventName) < 1 {
+		return errors.New("event name is required")
+	}
+	if len(m.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(m.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+	if len(m.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
+
+	if len(m.Url) < 1 && m.File == nil {
+		return errors.New("url or file is required")
+	}
 	return nil
 }

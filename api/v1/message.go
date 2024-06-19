@@ -49,6 +49,12 @@ func (h *Message) SendMessage(c *gin.Context) {
 		}
 		log.Info("send message body form: ", messageForm)
 
+		if err := messageForm.ValidateMessageForm(); err != nil {
+			log.Error(err)
+			c.JSON(response.BadRequestMsg(err))
+			return
+		}
+
 		message.EventName = messageForm.EventName
 		message.AppId = messageForm.AppId
 		message.OaId = messageForm.OaId
