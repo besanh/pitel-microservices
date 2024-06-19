@@ -85,6 +85,9 @@ func (s *ShareInfoFormRequest) ValidateUpdate() (err error) {
 	if len(s.OaId) < 1 {
 		return errors.New("oa id is required")
 	}
+	if len(s.ImageUrl) < 1 && s.Files == nil {
+		return errors.New("image_url or file is required")
+	}
 	return
 }
 
