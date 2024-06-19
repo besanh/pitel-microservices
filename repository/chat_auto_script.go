@@ -156,7 +156,7 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
-	query.Order("cas.created_at ASC")
+	query.Order("cas.created_at desc")
 
 	total, err := query.ScanAndCount(ctx)
 	if errors.Is(err, sql.ErrNoRows) {

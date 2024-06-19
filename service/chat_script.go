@@ -76,18 +76,6 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 		return chatScript.Id, err
 	}
 
-	// check if connectionApp id exists
-	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, chatScriptRequest.ConnectionId)
-	if err != nil {
-		log.Error(err)
-		return chatScript.Id, err
-	}
-	if connectionApp == nil {
-		err = errors.New("not found connection id")
-		log.Error(err)
-		return chatScript.Id, err
-	}
-
 	switch chatScriptRequest.ScriptType {
 	case "text":
 		chatScript.Content = chatScriptRequest.Content
@@ -126,7 +114,6 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	chatScript.ScriptName = chatScriptRequest.ScriptName
 	chatScript.CreatedBy = authUser.UserId
 	chatScript.Channel = chatScriptRequest.Channel
-	chatScript.ConnectionId = chatScriptRequest.ConnectionId
 	chatScript.CreatedAt = time.Now()
 
 	err = repository.ChatScriptRepo.Insert(ctx, dbCon, chatScript)
@@ -166,7 +153,9 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 
 	switch chatScriptRequest.ScriptType {
 	case "text":
-		chatScript.Content = chatScriptRequest.Content
+		if len(chatScriptRequest.Content) > 0 {
+			chatScript.Content = chatScriptRequest.Content
+		}
 	case "image", "file":
 		var fileUrl string
 		if file != nil && len(file.Filename) > 0 {
