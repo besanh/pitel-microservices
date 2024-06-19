@@ -118,5 +118,14 @@ type OttShareInfo struct {
 }
 
 type OttUploadResponse struct {
-	Data []string `json:"data"`
+	Code    string                  `json:"code"`
+	Data    []OttDataUploadResponse `json:"data"`
+	Message string                  `json:"message"`
+}
+
+type OttDataUploadResponse struct {
+	Url         string `json:"url"`
+	Name        string `json:"name"`
+	ContentType string `json:"content_type"`
+	Type        string `json:"type"`
 }
