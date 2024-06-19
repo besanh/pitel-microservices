@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
-	"github.com/uptrace/bun"
 )
 
 type (
@@ -30,10 +29,7 @@ func NewChatScript() IChatScript {
 func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatScriptFilter, limit, offset int) (int, *[]model.ChatScriptView, error) {
 	result := new([]model.ChatScriptView)
 	query := db.GetDB().NewSelect().Model(result).
-		Column("cst.*").
-		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name", "oa_info")
-		})
+		Column("cst.*")
 	if len(filter.ScriptName) > 0 {
 		query.Where("cst.script_name ILIKE ?", "%"+filter.ScriptName+"%")
 	}
@@ -42,9 +38,6 @@ func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlCli
 	}
 	if len(filter.Channel) > 0 {
 		query.Where("cst.channel = ?", filter.Channel)
-	}
-	if len(filter.OaId) > 0 {
-		query.Where("connection_app.oa_info->cst.channel::text->0->>'oa_id' = ?", filter.OaId)
 	}
 	if filter.Status.Valid {
 		query.Where("cst.status = ?", filter.Status.Bool)
@@ -68,9 +61,6 @@ func (repo *ChatScript) GetChatScriptById(ctx context.Context, db sqlclient.ISql
 	result := new(model.ChatScriptView)
 	err := db.GetDB().NewSelect().
 		Model(result).
-		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name")
-		}).
 		Where("cst.id = ?", id).
 		Limit(1).
 		Scan(ctx)
