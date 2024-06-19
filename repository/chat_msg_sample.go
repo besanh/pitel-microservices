@@ -49,7 +49,8 @@ func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.I
 	}
 	if len(filter.Keyword) > 0 {
 		keyword := "%" + filter.Keyword + "%"
-		query.Where("cms.keyword ILIKE ? or cms.theme ILIKE ?", keyword, keyword)
+		query.Where("? ILIKE ?", bun.Ident("cms.keyword"), keyword).
+			WhereOr("? ILIKE ?", bun.Ident("cms.theme"), keyword)
 	}
 	query.Order("cms.created_at desc")
 
