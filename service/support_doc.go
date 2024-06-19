@@ -42,7 +42,7 @@ func (s *Message) UploadDoc(ctx context.Context, appId, oaId string, file *multi
 			return "", err
 		}
 		if len(result.Data) > 0 {
-			return result.Data[0], nil
+			return result.Data[0].Url, nil
 		}
 		return "", nil
 	}

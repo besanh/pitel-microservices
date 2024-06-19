@@ -316,6 +316,23 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 
+		filterMessage := model.MessageFilter{
+			TenantId:       conversationEvent.TenantId,
+			ConversationId: conversationEvent.ConversationId,
+		}
+		_, message, err := repository.MessageESRepo.GetMessages(ctx, conversationEvent.TenantId, ES_INDEX, filterMessage, 1, 0)
+		if err != nil {
+			log.Error(err)
+		}
+		if len(*message) > 0 {
+			if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
+				conversationEvent.LatestMessageContent = (*message)[0].EventName
+			} else {
+				conversationEvent.LatestMessageContent = (*message)[0].Content
+			}
+			conversationEvent.LatestMessageDirection = (*message)[0].Direction
+		}
+
 		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, &conversationEvent)
 
 		// TODO: publish message
