@@ -102,8 +102,8 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 			}
 
 			if len(*userAllocates) < 1 {
-				log.Errorf("conversation not found")
-				return response.ServiceUnavailableMsg("conversation not found")
+				log.Info("conversation not found")
+				return response.OK(result)
 			}
 
 			found := false
