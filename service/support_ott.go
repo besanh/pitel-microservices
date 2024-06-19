@@ -210,7 +210,7 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 			filterQueueUser := model.ChatQueueUserFilter{
 				QueueId: []string{queue.Id},
 			}
-			_, chatQueueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterQueueUser, 1, 0)
+			_, chatQueueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterQueueUser, -1, 0)
 			if err != nil {
 				log.Error(err)
 				return user, err
@@ -227,7 +227,7 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 
 				userTmp, err := GetAllocateUser(ctx, chatSetting, isConversationExist, currentUserAllocate)
 				if err != nil {
-					user.QueueId = (*chatQueueUsers)[0].QueueId
+					user.QueueId = ""
 					user.ConnectionId = connectionQueue.ConnectionId
 					user.ConnectionQueueId = connectionQueue.Id
 					return user, err
@@ -236,7 +236,7 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 					log.Error(err)
 					return user, err
 				}
-				user.QueueId = (*chatQueueUsers)[0].QueueId
+				user.QueueId = userTmp.QueueId
 				user.ConnectionId = connectionQueue.ConnectionId
 				user.ConnectionQueueId = connectionQueue.Id
 
