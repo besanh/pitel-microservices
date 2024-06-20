@@ -98,7 +98,9 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			log.Error(err)
 			return
 		}
-		labelId = chatLabel.GetId()
+		if labelType == "zalo" {
+			externalLabelId = chatLabel.GetId()
+		}
 	} else if request.Action == "update" {
 		// TODO: we don't need to do anything
 	} else if request.Action == "delete" {
@@ -106,7 +108,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 	}
 
 	// TODO: update label for conversation => use queue
-	if err = s.putConversation(ctx, authUser, labelId, labelType, request); err != nil {
+	if err = s.putConversation(ctx, authUser, externalLabelId, labelType, request); err != nil {
 		if request.Action == "create" {
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
 				log.Error(err)
@@ -115,6 +117,8 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 		}
 		return
 	}
+
+	labelId = chatLabel.GetId()
 
 	return
 }
@@ -149,53 +153,76 @@ func (s *Conversation) handleLabelZalo(ctx context.Context, labelType string, re
 }
 
 func (s *Conversation) handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, labelType string, chatLabel model.ChatLabel, request model.ConversationLabelRequest) (externalLabelId string, err error) {
-	// TODO: if label does not exist, create new label, then associate to conversation)
+	if labelType == "facebook" {
+		labelType = "face"
+	}
+
 	facebookRequest := model.ChatExternalLabelRequest{
 		AppId:          request.AppId,
 		OaId:           request.OaId,
 		ExternalUserId: request.ExternalUserId,
-		LabelId:        chatLabel.GetId(),
+		LabelId:        request.LabelId,
 		TagName:        request.LabelName,
 	}
-	externalUrl := "create-label"
-	externalCreateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
-	if errTmp != nil {
-		log.Error(errTmp)
-		if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
-			log.Error(err)
-			return
-		}
-		return
-	}
-	externalLabelId = externalCreateLabelResponse.Id
 
-	// TODO: associating a label to oa
-	facebookAssociateRequest := model.ChatExternalLabelRequest{
-		AppId:          request.AppId,
-		OaId:           request.OaId,
-		ExternalUserId: externalLabelId,
-		LabelId:        chatLabel.GetId(),
-		TagName:        request.LabelName,
-	}
-	externalUrl = "associate-label"
-	externalAssociateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookAssociateRequest)
-	if errTmp != nil {
-		log.Error(errTmp)
-		if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
-			log.Error(err)
+	var externalUrl string
+
+	if request.Action == "create" || request.Action == "update" {
+		// TODO: if label does not exist, create new label, then associate to conversation)
+		externalUrl = "create-label"
+		externalCreateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
+		if errTmp != nil {
+			log.Error(errTmp)
+			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
+				log.Error(err)
+				return externalLabelId, err
+			}
+			return externalLabelId, errTmp
+		}
+		log.Info(externalCreateLabelResponse.Id)
+		if len(externalCreateLabelResponse.Id) > 0 {
+			externalLabelId = externalCreateLabelResponse.Id
+		} else {
+			err = errors.New("external label id not found")
+			log.Error("external label id not found")
 			return
 		}
-		err = errTmp
-		return
-	}
-	if len(externalAssociateLabelResponse.Id) > 0 {
-		externalLabelId = externalAssociateLabelResponse.Id
+
+		// TODO: associating a label to oa
+		facebookAssociateRequest := model.ChatExternalLabelRequest{
+			AppId:          request.AppId,
+			OaId:           request.OaId,
+			ExternalUserId: request.ExternalUserId,
+			LabelId:        externalLabelId,
+			TagName:        request.LabelName,
+		}
+		externalUrl = "associate-label"
+		_, errTmp = RequestOttLabel(ctx, labelType, externalUrl, facebookAssociateRequest)
+		if errTmp != nil {
+			log.Error(errTmp)
+			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
+				log.Error(err)
+				return externalLabelId, err
+			}
+			err = errTmp
+			return externalLabelId, errTmp
+		}
+	} else if request.Action == "delete" {
+		externalUrl = "remove-label"
+		_, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
+		if errTmp != nil {
+			log.Error(errTmp)
+			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
+				log.Error(err)
+				return externalLabelId, err
+			}
+			err = errTmp
+			return externalLabelId, errTmp
+		}
 	} else {
-		err = errors.New("external label id not found")
-		log.Error("external label id not found")
-		return
+		err = errors.New("invalid action")
+		log.Error("invalid action")
 	}
-
 	return
 }
 
