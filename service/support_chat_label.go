@@ -37,6 +37,7 @@ func RequestOttLabel(ctx context.Context, requestType, suffixUrl string, request
 
 	if res.StatusCode() != 200 {
 		err = errors.New(result.Message)
+		return
 	}
 
 	return

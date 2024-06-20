@@ -56,7 +56,7 @@ type ChatExternalLabelResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`
 	Id      string `json:"id"`
-	Data    []any  `json:"data"`
+	Data    any    `json:"data"`
 }
 
 func (m *ChatLabelRequest) Validate() error {
