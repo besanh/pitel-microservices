@@ -105,6 +105,9 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 		// TODO: we don't need to do anything
 	} else if request.Action == "delete" {
 		// TODO: we don't need to do anything
+		if labelType == "facebook" {
+			externalLabelId = request.LabelId
+		}
 	}
 
 	// TODO: update label for conversation => use queue
