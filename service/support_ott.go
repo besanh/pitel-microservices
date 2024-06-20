@@ -227,7 +227,6 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 
 				userTmp, err := GetAllocateUser(ctx, chatSetting, isConversationExist, currentUserAllocate)
 				if err != nil {
-					user.QueueId = ""
 					user.ConnectionId = connectionQueue.ConnectionId
 					user.ConnectionQueueId = connectionQueue.Id
 					return user, err
@@ -262,13 +261,6 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 	var authInfo model.AuthUser
 	var userLives []Subscriber
 	var isUserAccept bool
-	log.Info(len(chatSetting.ConnectionQueueUser))
-	for k, v := range chatSetting.ConnectionQueueUser {
-		log.Infof("connection queue user %d: %v", k, v)
-	}
-	for s := range WsSubscribers.Subscribers {
-		log.Info(s.UserId, s.Username, s.Level)
-	}
 
 	if strings.ToLower(chatSetting.RoutingAlias) == "random" {
 		for s := range WsSubscribers.Subscribers {
@@ -282,7 +274,6 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 			rand.NewSource(time.Now().UnixNano())
 			randomIndex := rand.Intn(len(userLives))
 			tmp := userLives[randomIndex]
-			log.Info("random user: ", &tmp)
 
 			// TODO: check user exist in queue
 			if len(chatSetting.ConnectionQueueUser) > 0 {
@@ -307,7 +298,6 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 			return user, err
 		}
 
-		log.Info("round robin user: ", userTmp)
 		userLives = append(userLives, *userTmp)
 
 		// TODO: check user exist in queue
