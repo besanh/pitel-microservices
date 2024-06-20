@@ -293,7 +293,7 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 			}
 			if len(*connectionQueueExists) > 0 {
 				for _, item := range *connectionQueueExists {
-					if item.Id != connectionQueueExist.GetId() {
+					if item.Id != connectionQueueExist.Id {
 						if err = repository.ConnectionQueueRepo.Delete(ctx, repository.DBConn, item.Id); err != nil {
 							log.Error(err)
 							return err
@@ -339,12 +339,12 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 	}
 	chatConnectionAppExist.UpdatedAt = time.Now()
 
-	if len(data.OaId) < 1 && chatConnectionAppExist.ConnectionType == "zalo" {
-		if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.ConnectionQueueId); err != nil {
-			log.Error(err)
-			return err
-		}
-	}
+	// if len(data.OaId) < 1 && chatConnectionAppExist.ConnectionType == "zalo" {
+	// 	if err = repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, repository.DBConn, "", chatConnectionAppExist.ConnectionQueueId); err != nil {
+	// 		log.Error(err)
+	// 		return err
+	// 	}
+	// }
 
 	if len(chatConnectionAppExist.ConnectionQueueId) > 0 {
 		if err = repository.ChatConnectionAppRepo.Update(ctx, repository.DBConn, *chatConnectionAppExist); err != nil {
