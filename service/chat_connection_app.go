@@ -281,6 +281,27 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 				return errors.New("connection queue " + chatConnectionAppExist.ConnectionQueueId + " not found")
 			}
 
+			// TODO: delete connection queue
+			filter := model.ConnectionQueueFilter{
+				TenantId:     authUser.TenantId,
+				ConnectionId: chatConnectionAppExist.Id,
+			}
+			_, connectionQueueExists, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, filter, -1, 0)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			if len(*connectionQueueExists) > 0 {
+				for _, item := range *connectionQueueExists {
+					if item.Id != connectionQueueExist.GetId() {
+						if err = repository.ConnectionQueueRepo.Delete(ctx, repository.DBConn, item.Id); err != nil {
+							log.Error(err)
+							return err
+						}
+					}
+				}
+			}
+
 			connectionQueueExist.QueueId = data.QueueId
 			if err = repository.ConnectionQueueRepo.Update(ctx, repository.DBConn, *connectionQueueExist); err != nil {
 				log.Error(err)
