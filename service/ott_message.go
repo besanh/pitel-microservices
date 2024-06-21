@@ -101,7 +101,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 
 	var isNew bool
-	var conversation model.Conversation
+	var conversation model.ConversationView
 
 	// TODO: check queue setting
 	user, err := CheckChatSetting(ctx, message)
@@ -146,7 +146,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			log.Error(errConv)
 			return response.ServiceUnavailableMsg(errConv.Error())
 		}
-		conversation = conversationTmp
+		if err := util.ParseAnyToAny(conversationTmp, &conversation); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
 		isNew = isNewTmp
 
 		if len(conversation.ConversationId) > 0 {

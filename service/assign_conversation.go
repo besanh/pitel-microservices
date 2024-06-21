@@ -254,7 +254,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 				break
 			}
 		}
-		var conversationEvent model.Conversation
+		var conversationEvent model.ConversationView
 		if err := util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -299,7 +299,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	if len(userUuids) > 0 {
-		conversationEvent := model.Conversation{}
+		conversationEvent := model.ConversationView{}
 		if err := util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
