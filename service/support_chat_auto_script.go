@@ -130,65 +130,8 @@ func DetectAndExecutePlannedAutoScript(ctx context.Context, user model.User, mes
 		return nil
 	}
 
-	timestamp := time.Now().UnixMilli()
-	for _, action := range script.ActionScript.Actions {
-		switch action.Type {
-		case string(model.MoveToExistedScript):
-			if err = executeScript(ctx, user, message, conversation, action.ChatScriptId, 3); err != nil {
-				return err
-			}
-		case string(model.SendMessage):
-			if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "text", action.Content, nil); err != nil {
-				return err
-			}
-		case string(model.AddLabels):
-			for _, labelId := range action.AddLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
-				if err != nil {
-					return err
-				}
-				if label == nil {
-					return errors.New("not found label")
-				}
-
-				request := model.ConversationLabelRequest{
-					AppId:          conversation.AppId,
-					OaId:           conversation.OaId,
-					LabelName:      label.LabelName,
-					LabelId:        labelId,
-					ExternalUserId: conversation.ExternalUserId,
-					ConversationId: conversation.ConversationId,
-					Action:         "create",
-				}
-				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-					return err
-				}
-			}
-		case string(model.RemoveLabels):
-			for _, labelId := range action.AddLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
-				if err != nil {
-					return err
-				}
-				if label == nil {
-					return errors.New("not found label")
-				}
-				request := model.ConversationLabelRequest{
-					AppId:          conversation.AppId,
-					OaId:           conversation.OaId,
-					LabelId:        labelId,
-					ExternalUserId: conversation.ExternalUserId,
-					LabelName:      label.LabelName,
-					ConversationId: conversation.ConversationId,
-					Action:         "delete",
-				}
-				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-					return err
-				}
-			}
-		default:
-			return errors.New("invalid action type")
-		}
+	if err = executeScriptActions(ctx, user, message, conversation, *script, err); err != nil {
+		return err
 	}
 	return nil
 }
@@ -239,6 +182,13 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	// try to execute the first script
 	script := (*chatAutoScripts)[0]
 
+	if err = executeScriptActions(ctx, user, message, conversation, script, err); err != nil {
+		return err
+	}
+	return nil
+}
+
+func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.Conversation, script model.ChatAutoScriptView, err error) error {
 	timestamp := time.Now().UnixMilli()
 	for _, action := range script.ActionScript.Actions {
 		switch action.Type {
