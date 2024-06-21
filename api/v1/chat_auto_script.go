@@ -94,7 +94,7 @@ func (handler *ChatAutoScript) InsertChatAutoScript(c *gin.Context) {
 	}
 
 	var chatScriptRequest model.ChatAutoScriptRequest
-	err := c.ShouldBind(&chatScriptRequest)
+	err := c.ShouldBindJSON(&chatScriptRequest)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -131,7 +131,7 @@ func (handler *ChatAutoScript) UpdateChatAutoScript(c *gin.Context) {
 	}
 
 	var chatScriptRequest model.ChatAutoScriptRequest
-	err := c.ShouldBind(&chatScriptRequest)
+	err := c.ShouldBindJSON(&chatScriptRequest)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.BadRequestMsg(err.Error()))
