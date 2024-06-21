@@ -225,7 +225,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				}
 			}
 		case string(model.RemoveLabels):
-			for _, labelId := range action.AddLabels {
+			for _, labelId := range action.RemoveLabels {
 				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
 				if err != nil {
 					return err
@@ -236,10 +236,10 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				request := model.ConversationLabelRequest{
 					AppId:           conversation.AppId,
 					OaId:            conversation.OaId,
+					LabelName:       label.LabelName,
 					LabelId:         labelId,
 					ExternalLabelId: label.ExternalLabelId,
 					ExternalUserId:  conversation.ExternalUserId,
-					LabelName:       label.LabelName,
 					ConversationId:  conversation.ConversationId,
 					Action:          "delete",
 				}
