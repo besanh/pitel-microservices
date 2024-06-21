@@ -10,6 +10,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -267,16 +268,29 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
+	conversationConverted := &model.ConversationView{}
+	if err := util.ParseAnyToAny(conversationExist, conversationConverted); err != nil {
+		log.Error(err)
+		return err
+	}
+
 	// TODO: get message to display, otherwise use api get conversation to get latest message
-	// filterMessage := model.MessageFilter{
-	// 	TenantId:       conversationExist.TenantId,
-	// 	ConversationId: conversationExist.ConversationId,
-	// }
-	// _, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, 1, 0)
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return err
-	// }
+	filterMessage := model.MessageFilter{
+		TenantId:       conversationExist.TenantId,
+		ConversationId: conversationExist.ConversationId,
+		IsRead:         "deactive",
+		EventNameExlucde: []string{
+			"received",
+			"seen",
+		},
+	}
+	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	conversationConverted.TotalUnRead = int64(len(*messages))
+	conversationConverted.LatestMessageContent = (*messages)[0].Content
 
 	// Event to manager
 	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
@@ -307,9 +321,9 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
 	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
 		if status == "done" {
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationExist)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
 		} else if status == "reopen" {
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, conversationExist)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
 		}
 
 		// PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &(*messages)[0])
@@ -318,9 +332,9 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	// Event to admin
 	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
 		if status == "done" {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_done"], subscriberAdmins, true, conversationExist)
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_done"], subscriberAdmins, true, conversationConverted)
 		} else if status == "reopen" {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, conversationExist)
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, conversationConverted)
 		}
 
 		// PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &(*messages)[0])

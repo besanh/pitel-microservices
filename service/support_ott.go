@@ -67,11 +67,14 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 			user.QueueId = (*userAllocations)[0].QueueId
 			user.ConnectionQueueId = (*userAllocations)[0].ConnectionQueueId
 
+			log.Info("user first: ", (*userAllocations)[0].UserId)
+
 			user, err := CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, true, &(*userAllocations)[0])
 			if err != nil {
 				log.Error(err)
 				return user, err
 			}
+			log.Info("user after: ", user.AuthUser.UserId, (*userAllocations)[0].UserId)
 			if user.AuthUser.UserId == (*userAllocations)[0].UserId {
 				user.IsReassignSame = true
 			} else {

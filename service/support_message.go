@@ -91,7 +91,7 @@ func SendEventToManage(ctx context.Context, authUser *model.AuthUser, message mo
 	return
 }
 
-func PublishConversationToOneUser(eventType string, subscriber string, subscribers []*Subscriber, isNew bool, conversation *model.Conversation) {
+func PublishConversationToOneUser(eventType string, subscriber string, subscribers []*Subscriber, isNew bool, conversation *model.ConversationView) {
 	var wg sync.WaitGroup
 	if isNew && conversation != nil && len(subscriber) > 0 {
 		event := model.Event{
@@ -119,7 +119,7 @@ func PublishConversationToOneUser(eventType string, subscriber string, subscribe
 	wg.Wait()
 }
 
-func PublishConversationToManyUser(eventType string, subscribers []string, isNew bool, conversation *model.Conversation) {
+func PublishConversationToManyUser(eventType string, subscribers []string, isNew bool, conversation *model.ConversationView) {
 	var wg sync.WaitGroup
 	if isNew && conversation != nil && len(subscribers) > 0 {
 		event := model.Event{
