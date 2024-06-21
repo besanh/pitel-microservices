@@ -211,13 +211,14 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				}
 
 				request := model.ConversationLabelRequest{
-					AppId:          conversation.AppId,
-					OaId:           conversation.OaId,
-					LabelName:      label.LabelName,
-					LabelId:        labelId,
-					ExternalUserId: conversation.ExternalUserId,
-					ConversationId: conversation.ConversationId,
-					Action:         "create",
+					AppId:           conversation.AppId,
+					OaId:            conversation.OaId,
+					LabelName:       label.LabelName,
+					LabelId:         labelId,
+					ExternalLabelId: label.ExternalLabelId,
+					ExternalUserId:  conversation.ExternalUserId,
+					ConversationId:  conversation.ConversationId,
+					Action:          "update",
 				}
 				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
 					return err
@@ -233,13 +234,14 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					return errors.New("not found label")
 				}
 				request := model.ConversationLabelRequest{
-					AppId:          conversation.AppId,
-					OaId:           conversation.OaId,
-					LabelId:        labelId,
-					ExternalUserId: conversation.ExternalUserId,
-					LabelName:      label.LabelName,
-					ConversationId: conversation.ConversationId,
-					Action:         "delete",
+					AppId:           conversation.AppId,
+					OaId:            conversation.OaId,
+					LabelId:         labelId,
+					ExternalLabelId: label.ExternalLabelId,
+					ExternalUserId:  conversation.ExternalUserId,
+					LabelName:       label.LabelName,
+					ConversationId:  conversation.ConversationId,
+					Action:          "delete",
 				}
 				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
 					return err
