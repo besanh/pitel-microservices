@@ -29,9 +29,9 @@ type ChatAutoScript struct {
 	Status             bool                          `json:"status" bun:"status,type:boolean,notnull"`
 	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event,type:text,notnull"`
 	TriggerKeywords    AutoScriptTriggerKeywordsType `json:"trigger_keywords" bun:"trigger_keywords,type:jsonb"`
-	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
+	ChatScriptLink     []*ChatAutoScriptToChatScript `json:"chat_script_link" bun:"rel:has-many,join:id=chat_auto_script_id"`
 	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions,type:jsonb"`
-	ChatLabelLink      []*ChatAutoScriptToChatLabel  `bun:"rel:has-many,join:id=chat_auto_script_id"`
+	ChatLabelLink      []*ChatAutoScriptToChatLabel  `json:"chat_label_link" bun:"rel:has-many,join:id=chat_auto_script_id"`
 }
 
 type AutoScriptTriggerKeywordsType struct {
@@ -39,7 +39,7 @@ type AutoScriptTriggerKeywordsType struct {
 }
 
 type AutoScriptSendMessage struct {
-	Actions []AutoScriptSendMessageType
+	Actions []AutoScriptSendMessageType `json:"actions"`
 }
 
 type AutoScriptSendMessageType struct {
@@ -87,9 +87,9 @@ type ChatAutoScriptView struct {
 	Status             bool                          `json:"status" bun:"status"`
 	TriggerEvent       string                        `json:"trigger_event" bun:"trigger_event"`
 	TriggerKeywords    AutoScriptTriggerKeywordsType `json:"trigger_keywords" bun:"trigger_keywords"`
-	ChatScriptLink     []*ChatAutoScriptToChatScript `bun:"rel:has-many,join:id=chat_auto_script_id"`
+	ChatScriptLink     []*ChatAutoScriptToChatScript `json:"chat_script_link" bun:"rel:has-many,join:id=chat_auto_script_id"`
 	SendMessageActions AutoScriptSendMessage         `json:"send_message_actions" bun:"send_message_actions"`
-	ChatLabelLink      []*ChatAutoScriptToChatLabel  `bun:"rel:has-many,join:id=chat_auto_script_id"`
+	ChatLabelLink      []*ChatAutoScriptToChatLabel  `json:"chat_label_link" bun:"rel:has-many,join:id=chat_auto_script_id"`
 	ActionScript       *AutoScriptMergedActions      `json:"action_script" bun:"-"`
 }
 
