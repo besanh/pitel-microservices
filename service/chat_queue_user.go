@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -121,14 +120,6 @@ func (s *ChatQueueUser) UpdateChatQueueUserById(ctx context.Context, authUser *m
 	// After insert success, remove old item
 	if total > 0 {
 		for _, item := range *chatQueueUsers {
-			// TODO: clear cache
-			chatQueueCache := cache.RCache.Get(CHAT_QUEUE + "_" + item.Id)
-			if chatQueueCache != nil {
-				if err = cache.RCache.Del([]string{CHAT_QUEUE + "_" + item.Id}); err != nil {
-					log.Error(err)
-					continue
-				}
-			}
 			if err = repository.ChatQueueUserRepo.Delete(ctx, dbCon, item.Id); err != nil {
 				log.Error(err)
 				return nil, err
