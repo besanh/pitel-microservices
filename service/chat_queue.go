@@ -199,14 +199,6 @@ func (s *ChatQueue) DeleteChatQueueById(ctx context.Context, authUser *model.Aut
 	}
 
 	// Delete queue user
-	// TODO: clear cache
-	chatQueueUserCache := cache.RCache.Get(CHAT_QUEUE + "_" + id)
-	if chatQueueUserCache != nil {
-		if err = cache.RCache.Del([]string{CHAT_QUEUE + "_" + id}); err != nil {
-			log.Error(err)
-			return err
-		}
-	}
 	if err := repository.ChatQueueUserRepo.DeleteChatQueueUsers(ctx, dbCon, id); err != nil {
 		log.Error(err)
 		return err
