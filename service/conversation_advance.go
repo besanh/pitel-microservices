@@ -106,7 +106,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 	} else if request.Action == "delete" {
 		// TODO: we don't need to do anything
 		if labelType == "facebook" {
-			externalLabelId = request.LabelId
+			externalLabelId = request.ExternalLabelId
 		}
 	}
 
@@ -164,7 +164,7 @@ func (s *Conversation) handleLabelFacebook(ctx context.Context, dbCon sqlclient.
 		AppId:          request.AppId,
 		OaId:           request.OaId,
 		ExternalUserId: request.ExternalUserId,
-		LabelId:        request.LabelId,
+		LabelId:        request.ExternalLabelId,
 		TagName:        request.LabelName,
 	}
 
