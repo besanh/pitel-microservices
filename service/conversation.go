@@ -289,8 +289,10 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		log.Error(err)
 		return err
 	}
-	conversationConverted.TotalUnRead = int64(len(*messages))
-	conversationConverted.LatestMessageContent = (*messages)[0].Content
+	if len(*messages) > 0 {
+		conversationConverted.TotalUnRead = int64(len(*messages))
+		conversationConverted.LatestMessageContent = (*messages)[0].Content
+	}
 
 	// Event to manager
 	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
