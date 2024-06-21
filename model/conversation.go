@@ -86,13 +86,14 @@ type ResponseData struct {
 }
 
 type ConversationLabelRequest struct {
-	AppId          string `json:"app_id"`
-	OaId           string `json:"oa_id"`
-	LabelName      string `json:"label_name"`
-	LabelId        string `json:"label_id"`
-	ExternalUserId string `json:"external_user_id"`
-	ConversationId string `json:"conversation_id"`
-	Action         string `json:"action"` // create, update, remove label
+	AppId           string `json:"app_id"`
+	OaId            string `json:"oa_id"`
+	LabelName       string `json:"label_name"`
+	LabelId         string `json:"label_id"`
+	ExternalLabelId string `json:"external_label_id"`
+	ExternalUserId  string `json:"external_user_id"`
+	ConversationId  string `json:"conversation_id"`
+	Action          string `json:"action"` // create, update, remove label
 }
 
 func (m *ConversationLabelRequest) Validate() error {
