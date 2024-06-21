@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -24,8 +23,8 @@ func NewChatQueueUser() IChatQueueUser {
 
 func (s *ChatQueueUser) InsertChatQueueUser(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueUserRequest) error {
 	dbCon, err := HandleGetDBConSource(authUser)
-	if err == ERR_EMPTY_CONN {
-		err = errors.New(response.ERR_EMPTY_CONN)
+	if err != nil {
+		log.Error(err)
 		return err
 	}
 	_, err = repository.ChatQueueUserRepo.GetById(ctx, dbCon, data.QueueId)
@@ -75,8 +74,8 @@ func (s *ChatQueueUser) UpdateChatQueueUserById(ctx context.Context, authUser *m
 	totalSuccess := len(data.UserId)
 	totalFail := 0
 	dbCon, err := HandleGetDBConSource(authUser)
-	if err == ERR_EMPTY_CONN {
-		err = errors.New(response.ERR_EMPTY_CONN)
+	if err != nil {
+		log.Error(err)
 		totalSuccess -= 1
 		totalFail += 1
 		return nil, err
@@ -122,6 +121,14 @@ func (s *ChatQueueUser) UpdateChatQueueUserById(ctx context.Context, authUser *m
 	// After insert success, remove old item
 	if total > 0 {
 		for _, item := range *chatQueueUsers {
+			// TODO: clear cache
+			chatQueueCache := cache.RCache.Get(CHAT_QUEUE + "_" + item.Id)
+			if chatQueueCache != nil {
+				if err = cache.RCache.Del([]string{CHAT_QUEUE + "_" + item.Id}); err != nil {
+					log.Error(err)
+					continue
+				}
+			}
 			if err = repository.ChatQueueUserRepo.Delete(ctx, dbCon, item.Id); err != nil {
 				log.Error(err)
 				return nil, err

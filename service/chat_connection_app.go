@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -309,6 +310,15 @@ func (s *ChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, aut
 			}
 
 			chatConnectionAppExist.ConnectionQueueId = connectionQueueExist.Id
+		}
+
+		// TODO: clear cache
+		chatQueueUserCache := cache.RCache.Get(CHAT_QUEUE + "_" + data.QueueId)
+		if chatQueueUserCache != nil {
+			if err = cache.RCache.Del([]string{CHAT_QUEUE + "_" + data.QueueId}); err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	}
 

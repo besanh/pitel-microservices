@@ -22,6 +22,9 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 	var userAllocate model.UserAllocate
 	var isOk bool
 
+	// TODO: use when user edit queue(include remove user from queue), then we need to check user allocation
+	var isOkFromCache bool
+
 	userAllocationCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId))
 	if userAllocationCache != nil {
 		if err := json.Unmarshal([]byte(userAllocationCache.(string)), &userAllocate); err != nil {
@@ -39,8 +42,16 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 		user.QueueId = userAllocate.QueueId
 		user.ConnectionQueueId = userAllocate.ConnectionQueueId
 
+		// TODO: because user change queue, so we need to check queue
+		queueCache := cache.RCache.Get(CHAT_QUEUE + "_" + userAllocate.QueueId)
+		if queueCache != nil {
+			isOkFromCache = true
+		}
+
 		return user, nil
-	} else {
+	}
+
+	if !isOkFromCache {
 		/**
 		* TODO: check conversation is exist or not
 		* if not exist, create
@@ -120,6 +131,8 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 			log.Infof("conversation %s allocated to username %s, id: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId)
 			return user, nil
 		}
+	} else {
+		return user, nil
 	}
 }
 
@@ -149,12 +162,12 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 			return user, errors.New("connection queue " + (*connectionApps)[0].ConnectionQueueId + " not found")
 		}
 
-		filteruserAllocation := model.UserAllocateFilter{
+		filterUserAllocation := model.UserAllocateFilter{
 			ConversationId: newConversationId,
 			QueueId:        connectionQueue.QueueId,
 			MainAllocate:   "active",
 		}
-		_, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filteruserAllocation, -1, 0)
+		_, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filterUserAllocation, -1, 0)
 		if err != nil {
 			log.Error(err)
 			return user, err
