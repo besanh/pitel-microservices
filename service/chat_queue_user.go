@@ -2,10 +2,8 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -24,8 +22,8 @@ func NewChatQueueUser() IChatQueueUser {
 
 func (s *ChatQueueUser) InsertChatQueueUser(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueUserRequest) error {
 	dbCon, err := HandleGetDBConSource(authUser)
-	if err == ERR_EMPTY_CONN {
-		err = errors.New(response.ERR_EMPTY_CONN)
+	if err != nil {
+		log.Error(err)
 		return err
 	}
 	_, err = repository.ChatQueueUserRepo.GetById(ctx, dbCon, data.QueueId)
@@ -75,8 +73,8 @@ func (s *ChatQueueUser) UpdateChatQueueUserById(ctx context.Context, authUser *m
 	totalSuccess := len(data.UserId)
 	totalFail := 0
 	dbCon, err := HandleGetDBConSource(authUser)
-	if err == ERR_EMPTY_CONN {
-		err = errors.New(response.ERR_EMPTY_CONN)
+	if err != nil {
+		log.Error(err)
 		totalSuccess -= 1
 		totalFail += 1
 		return nil, err

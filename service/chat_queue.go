@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -162,6 +163,14 @@ func (s *ChatQueue) UpdateChatQueueById(ctx context.Context, authUser *model.Aut
 			}
 			connectionUsers = append(connectionUsers, connectionUser)
 		}
+		// TODO: clear cache
+		chatQueueUserCache := cache.RCache.Get(CHAT_QUEUE + "_" + id)
+		if chatQueueUserCache != nil {
+			if err = cache.RCache.Del([]string{CHAT_QUEUE + "_" + id}); err != nil {
+				log.Error(err)
+				return err
+			}
+		}
 		if err = repository.ConnectionQueueRepo.BulkInsert(ctx, dbCon, connectionUsers); err != nil {
 			log.Error(err)
 			return err
@@ -189,7 +198,7 @@ func (s *ChatQueue) DeleteChatQueueById(ctx context.Context, authUser *model.Aut
 		return err
 	}
 
-	// Delete queue User
+	// Delete queue user
 	if err := repository.ChatQueueUserRepo.DeleteChatQueueUsers(ctx, dbCon, id); err != nil {
 		log.Error(err)
 		return err
