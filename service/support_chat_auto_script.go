@@ -373,7 +373,8 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 		return errors.New("not found chat script")
 	}
 	if !chatScript.Status {
-		return errors.New("can not execute inactive chat script")
+		// this script is inactive so just skip it
+		return nil
 	}
 
 	timestamp := time.Now().UnixMilli()
