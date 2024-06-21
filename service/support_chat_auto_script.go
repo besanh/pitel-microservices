@@ -12,7 +12,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"golang.org/x/exp/slices"
 	"sort"
 	"strings"
 	"time"
@@ -144,56 +143,47 @@ func DetectAndExecutePlannedAutoScript(ctx context.Context, user model.User, mes
 			}
 		case string(model.AddLabels):
 			for _, labelId := range action.AddLabels {
-				if message.MessageType == "zalo" {
-					label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
-					if err != nil {
-						return err
-					}
-					if label == nil {
-						return errors.New("not found label")
-					}
+				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
+				if err != nil {
+					return err
+				}
+				if label == nil {
+					return errors.New("not found label")
+				}
 
-					request := model.ConversationLabelRequest{
-						AppId:          message.AppId,
-						OaId:           message.OaId,
-						LabelName:      label.LabelName,
-						LabelId:        labelId,
-						ExternalUserId: message.ExternalUserId,
-						ConversationId: conversation.ConversationId,
-						Action:         "create",
-					}
-					if err = handleLabelZalo(ctx, message.MessageType, request); err != nil {
-						return err
-					}
-				} else if message.MessageType == "facebook" {
-					//TODO: handle fb flow
+				request := model.ConversationLabelRequest{
+					AppId:          conversation.AppId,
+					OaId:           conversation.OaId,
+					LabelName:      label.LabelName,
+					LabelId:        labelId,
+					ExternalUserId: conversation.ExternalUserId,
+					ConversationId: conversation.ConversationId,
+					Action:         "create",
+				}
+				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+					return err
 				}
 			}
 		case string(model.RemoveLabels):
 			for _, labelId := range action.AddLabels {
-				if message.MessageType == "zalo" {
-					label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
-					if err != nil {
-						return err
-					}
-					if label == nil {
-						return errors.New("not found label")
-					}
-
-					request := model.ConversationLabelRequest{
-						AppId:          message.AppId,
-						OaId:           message.OaId,
-						LabelName:      label.LabelName,
-						LabelId:        labelId,
-						ExternalUserId: message.ExternalUserId,
-						ConversationId: conversation.ConversationId,
-						Action:         "delete",
-					}
-					if err = handleLabelZalo(ctx, message.MessageType, request); err != nil {
-						return err
-					}
-				} else if message.MessageType == "facebook" {
-					//TODO: handle fb flow
+				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
+				if err != nil {
+					return err
+				}
+				if label == nil {
+					return errors.New("not found label")
+				}
+				request := model.ConversationLabelRequest{
+					AppId:          conversation.AppId,
+					OaId:           conversation.OaId,
+					LabelId:        labelId,
+					ExternalUserId: conversation.ExternalUserId,
+					LabelName:      label.LabelName,
+					ConversationId: conversation.ConversationId,
+					Action:         "delete",
+				}
+				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+					return err
 				}
 			}
 		default:
@@ -261,7 +251,50 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 				return err
 			}
 		case string(model.AddLabels):
+			for _, labelId := range action.AddLabels {
+				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
+				if err != nil {
+					return err
+				}
+				if label == nil {
+					return errors.New("not found label")
+				}
+
+				request := model.ConversationLabelRequest{
+					AppId:          conversation.AppId,
+					OaId:           conversation.OaId,
+					LabelName:      label.LabelName,
+					LabelId:        labelId,
+					ExternalUserId: conversation.ExternalUserId,
+					ConversationId: conversation.ConversationId,
+					Action:         "create",
+				}
+				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+					return err
+				}
+			}
 		case string(model.RemoveLabels):
+			for _, labelId := range action.AddLabels {
+				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
+				if err != nil {
+					return err
+				}
+				if label == nil {
+					return errors.New("not found label")
+				}
+				request := model.ConversationLabelRequest{
+					AppId:          conversation.AppId,
+					OaId:           conversation.OaId,
+					LabelId:        labelId,
+					ExternalUserId: conversation.ExternalUserId,
+					LabelName:      label.LabelName,
+					ConversationId: conversation.ConversationId,
+					Action:         "delete",
+				}
+				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+					return err
+				}
+			}
 		default:
 			return errors.New("invalid action type")
 		}
@@ -429,31 +462,5 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 			return errors.New("invalid script type")
 		}
 	}
-	return nil
-}
-
-func handleLabelZalo(ctx context.Context, labelType string, request model.ConversationLabelRequest) error {
-	zaloRequest := model.ChatExternalLabelRequest{
-		AppId:          request.AppId,
-		OaId:           request.OaId,
-		ExternalUserId: request.ExternalUserId,
-		TagName:        request.LabelName,
-	}
-	var externalUrl string
-	if request.Action == "create" {
-		externalUrl = "create-label-customer"
-	} else if request.Action == "update" {
-		// we don't need to do anything
-	} else if request.Action == "delete" {
-		externalUrl = "remove-label-customer"
-	}
-	if slices.Contains([]string{"create", "delete"}, request.Action) {
-		_, err := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-	}
-
 	return nil
 }
