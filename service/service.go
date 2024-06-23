@@ -53,7 +53,7 @@ var (
 	API_DOC                       string = ""
 	API_CRM                       string = ""
 	ENABLE_PUBLISH_ADMIN          bool   = false
-	ENABLE_CHAT_AUTO_SCRIPT_REPLY        = false
+	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool   = false
 	AAA_HOST                      string = ""
 
 	// Storage

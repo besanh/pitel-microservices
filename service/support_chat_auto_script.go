@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
@@ -94,8 +93,19 @@ func containsKeyword(message string, keywords []string) bool {
 	return false
 }
 
-func DetectAndExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.Conversation) error {
+func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.Conversation) error {
+	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
+		return err
+	}
+	if err := ExecutePlannedAutoScriptWhenAgentsOffline(ctx, user, message, conversation); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.Conversation) error {
 	if user.AuthUser == nil {
+		log.Error("not found auth user info")
 		return nil
 	}
 	filter := model.ChatAutoScriptFilter{
@@ -109,10 +119,8 @@ func DetectAndExecutePlannedAutoScript(ctx context.Context, user model.User, mes
 	if err != nil {
 		return err
 	}
-	if total == 0 || chatAutoScripts == nil {
-		return nil
-	}
-	if len(*chatAutoScripts) == 0 {
+	if total == 0 {
+		log.Debug("not found any auto scripts")
 		return nil
 	}
 
@@ -127,6 +135,7 @@ func DetectAndExecutePlannedAutoScript(ctx context.Context, user model.User, mes
 	}
 	if script == nil {
 		// not matching any keywords
+		log.Debug("not found matching keyword")
 		return nil
 	}
 
@@ -138,25 +147,13 @@ func DetectAndExecutePlannedAutoScript(ctx context.Context, user model.User, mes
 
 func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation model.Conversation) error {
 	if user.AuthUser == nil {
+		log.Error("not found auth user info")
 		return nil
 	}
 
-	filterQueueUser := model.ChatQueueUserFilter{
-		QueueId: []string{user.QueueId},
-	}
-	total, chatQueueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterQueueUser, 1, 0)
-	if err != nil {
-		return err
-	}
-	if total == 0 {
-		return nil
-	}
-	userLives, err := anyUsersOnline(chatQueueUsers)
-	if err != nil {
-		return err
-	}
-	if userLives {
+	if len(WsSubscribers.Subscribers) > 0 {
 		// has online agents -> do nothing
+		log.Debug("no agents online right now")
 		return nil
 	}
 
@@ -171,14 +168,15 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	if err != nil {
 		return err
 	}
-	if total == 0 || chatAutoScripts == nil {
-		return nil
-	}
-	if len(*chatAutoScripts) == 0 {
+	if total == 0 {
+		log.Debug("not found any auto scripts")
 		return nil
 	}
 
 	chatAutoScripts = mergeActionScripts(chatAutoScripts)
+	if len(*chatAutoScripts) == 0 {
+		return nil
+	}
 	// try to execute the first script
 	script := (*chatAutoScripts)[0]
 
@@ -218,10 +216,37 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					ExternalLabelId: label.ExternalLabelId,
 					ExternalUserId:  conversation.ExternalUserId,
 					ConversationId:  conversation.ConversationId,
-					Action:          "update",
+					Action:          "",
 				}
-				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-					return err
+
+				if conversation.ConversationType == "zalo" {
+					request.Action = "update"
+					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+						return err
+					}
+				} else if conversation.ConversationType == "facebook" {
+					if len(label.ExternalLabelId) > 0 {
+						request.Action = "update"
+					} else {
+						// request fb to create new external label id
+						request.Action = "create"
+						externalLabelId, err := handleLabelFacebook(ctx, repository.DBConn, conversation.ConversationType, *label, request)
+						if err != nil {
+							return err
+						}
+						// update external label id
+						label.ExternalLabelId = externalLabelId
+						if err := repository.ChatLabelRepo.Update(ctx, repository.DBConn, *label); err != nil {
+							return err
+						}
+
+						//switch to update
+						request.Action = "update"
+						request.ExternalLabelId = externalLabelId
+					}
+					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+						return err
+					}
 				}
 			}
 		case string(model.RemoveLabels):
@@ -233,6 +258,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				if label == nil {
 					return errors.New("not found label")
 				}
+
 				request := model.ConversationLabelRequest{
 					AppId:           conversation.AppId,
 					OaId:            conversation.OaId,
@@ -241,10 +267,23 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					ExternalLabelId: label.ExternalLabelId,
 					ExternalUserId:  conversation.ExternalUserId,
 					ConversationId:  conversation.ConversationId,
-					Action:          "delete",
+					Action:          "",
 				}
-				if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-					return err
+
+				if conversation.ConversationType == "zalo" {
+					request.Action = "delete"
+					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+						return err
+					}
+				} else if conversation.ConversationType == "facebook" {
+					if len(label.ExternalLabelId) > 0 {
+						request.Action = "delete"
+						if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+							return err
+						}
+					} else {
+						// do nothing
+					}
 				}
 			}
 		default:
@@ -252,29 +291,6 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 		}
 	}
 	return nil
-}
-
-func anyUsersOnline(queueUsers *[]model.ChatQueueUser) (bool, error) {
-	userLives := make([]Subscriber, 0)
-	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
-	if err != nil {
-		log.Error(err)
-		return false, err
-	}
-	for _, item := range subscribers {
-		s := Subscriber{}
-		if err := json.Unmarshal([]byte(item), &s); err != nil {
-			log.Error(err)
-			return false, err
-		}
-		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) {
-			userLives = append(userLives, s)
-		}
-	}
-	if len(userLives) > 0 {
-		return true, nil
-	}
-	return false, nil
 }
 
 func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.Conversation,
@@ -341,10 +357,10 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 		return err
 	}
 	esDoc := map[string]any{}
-	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		return err
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -357,7 +373,9 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 				return err
 			}
 		} else {
-			log.Errorf("queue %s not found in send event to manage", user.QueueId)
+			err = errors.New(fmt.Sprintf("queue %s not found in send event to manage", user.QueueId))
+			log.Error(err)
+			return err
 		}
 	}
 	return nil
