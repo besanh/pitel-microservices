@@ -305,6 +305,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 					result.TotalFail += 1
 					return response.ServiceUnavailableMsg(err.Error())
 				}
+				// TODO: add queue to update
 				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.AppId, item.Id, esDoc); err != nil {
 					log.Error(err)
 					result.TotalSuccess -= 1

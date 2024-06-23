@@ -278,11 +278,11 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	filterMessage := model.MessageFilter{
 		TenantId:       conversationExist.TenantId,
 		ConversationId: conversationExist.ConversationId,
-		IsRead:         "deactive",
-		EventNameExlucde: []string{
-			"received",
-			"seen",
-		},
+		// IsRead:         "deactive",
+		// EventNameExlucde: []string{
+		// 	"received",
+		// 	"seen",
+		// },
 	}
 	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, -1, 0)
 	if err != nil {
@@ -290,8 +290,12 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return err
 	}
 	if len(*messages) > 0 {
-		conversationConverted.TotalUnRead = int64(len(*messages))
 		conversationConverted.LatestMessageContent = (*messages)[0].Content
+		for _, item := range *messages {
+			if item.IsRead == "deactive" {
+				conversationConverted.TotalUnRead += 1
+			}
+		}
 	}
 
 	// Event to manager
