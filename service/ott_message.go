@@ -34,6 +34,7 @@ func NewOttMessage() IOttMessage {
 /**
 * PROBLEM: chat vao thi sao biet user thuoc db nao
 * Khi chuyen qua fins thi lam sao biet setting nay cua db nao
+* IMPROVE: add channel, mutex
  */
 func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (int, any) {
 	isExistChatApp, err := CheckConfigAppCache(ctx, data.AppId)

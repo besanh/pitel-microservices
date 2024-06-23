@@ -79,12 +79,13 @@ func (handler *ChatLabel) GetChatLabels(c *gin.Context) {
 		status.Bool = statusTmp
 	}
 	filter := model.ChatLabelFilter{
-		AppId:       c.Query("app_id"),
-		OaId:        c.Query("oa_id"),
-		LabelType:   c.Query("label_type"),
-		LabelName:   c.Query("label_name"),
-		LabelColor:  c.Query("label_color"),
-		LabelStatus: status,
+		AppId:           c.Query("app_id"),
+		OaId:            c.Query("oa_id"),
+		LabelType:       c.Query("label_type"),
+		LabelName:       c.Query("label_name"),
+		LabelColor:      c.Query("label_color"),
+		LabelStatus:     status,
+		ExternalLabelId: c.Query("external_label_id"),
 	}
 
 	total, result, err := handler.chatLabel.GetChatLabels(c, res.Data, filter, limit, offset)
