@@ -110,29 +110,27 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	} else if request.Action == "update" {
 		if labelType == "facebook" {
 			// Get id to update
-			if len(request.ExternalLabelId) > 0 {
-				filterTmp := model.ChatLabelFilter{
-					TenantId:  authUser.TenantId,
-					AppId:     request.AppId,
-					OaId:      request.OaId,
-					LabelName: request.LabelName,
-					LabelType: labelType,
-				}
-				_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
-				if errTmp != nil {
-					log.Error(errTmp)
-					return
-				}
-				if len(*labelExist) == 0 {
-					log.Error("chat label " + request.LabelName + " not found")
-					err = errors.New("chat label " + request.LabelName + " not found")
-					return
-				}
-				(*labelExist)[0].ExternalLabelId = externalLabelId
-				if err = repository.ChatLabelRepo.Update(ctx, dbCon, (*labelExist)[0]); err != nil {
-					log.Error(err)
-					return
-				}
+			filterTmp := model.ChatLabelFilter{
+				TenantId:  authUser.TenantId,
+				AppId:     request.AppId,
+				OaId:      request.OaId,
+				LabelName: request.LabelName,
+				LabelType: labelType,
+			}
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
+				return
+			}
+			if len(*labelExist) == 0 {
+				log.Error("chat label " + request.LabelName + " not found")
+				err = errors.New("chat label " + request.LabelName + " not found")
+				return
+			}
+			(*labelExist)[0].ExternalLabelId = externalLabelId
+			if err = repository.ChatLabelRepo.Update(ctx, dbCon, (*labelExist)[0]); err != nil {
+				log.Error(err)
+				return
 			}
 		} else {
 			externalLabelId = chatLabel.GetId()
@@ -306,10 +304,14 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 				if item.(map[string]any)["label_id"] == labelId {
 					continue
 				}
+				isExist := checkItemExist(objmap, map[string]string{"label_id": labelId})
+				if !isExist {
+					objmap = append(objmap, map[string]any{
+						"label_id": labelId,
+					})
+					break
+				}
 			}
-			objmap = append(objmap, map[string]any{
-				"label_id": labelId,
-			})
 		}
 	}
 
