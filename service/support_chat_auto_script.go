@@ -220,6 +220,11 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				}
 
 				if conversation.ConversationType == "zalo" {
+					request.Action = "create"
+					if err = handleLabelZalo(ctx, conversation.ConversationType, request); err != nil {
+						return err
+					}
+					// switch to update because this label already exists
 					request.Action = "update"
 					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
 						return err
