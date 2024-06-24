@@ -43,6 +43,9 @@ func (repo *ChatLabel) GetChatLabels(ctx context.Context, db sqlclient.ISqlClien
 	if filter.LabelStatus.Valid {
 		query.Where("label_status = ?", filter.LabelStatus.Bool)
 	}
+	if len(filter.ExternalLabelId) > 0 {
+		query.Where("external_label_id = ?", filter.ExternalLabelId)
+	}
 	query.Order("created_at desc")
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

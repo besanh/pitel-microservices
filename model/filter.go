@@ -157,13 +157,14 @@ type ChatScriptFilter struct {
 }
 
 type ChatLabelFilter struct {
-	TenantId    string       `json:"tenant_id"`
-	AppId       string       `json:"app_id"`
-	OaId        string       `json:"oa_id"`
-	LabelName   string       `json:"label_name"`
-	LabelType   string       `json:"label_type"`
-	LabelColor  string       `json:"label_color"`
-	LabelStatus sql.NullBool `json:"label_status"`
+	TenantId        string       `json:"tenant_id"`
+	AppId           string       `json:"app_id"`
+	OaId            string       `json:"oa_id"`
+	LabelName       string       `json:"label_name"`
+	LabelType       string       `json:"label_type"`
+	LabelColor      string       `json:"label_color"`
+	LabelStatus     sql.NullBool `json:"label_status"`
+	ExternalLabelId string       `json:"external_label_id"`
 }
 
 type ChatAutoScriptFilter struct {

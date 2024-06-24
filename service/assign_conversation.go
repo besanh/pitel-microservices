@@ -63,14 +63,16 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	var queueId string
+	var queueIds []string
 	if len(*manageQueueUsers) > 0 {
-		queueId = (*manageQueueUsers)[0].QueueId
+		for _, item := range *manageQueueUsers {
+			queueIds = append(queueIds, item.QueueId)
+		}
 	}
 
 	filterUserInQueue := model.ChatQueueUserFilter{
 		TenantId: authUser.TenantId,
-		QueueId:  []string{queueId},
+		QueueId:  queueIds,
 	}
 
 	_, userInQueues, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterUserInQueue, -1, 0)
@@ -91,33 +93,20 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	}
 	if authUser.Source == "authen" {
 		if authUser.Level == "manager" || authUser.Level == "admin" {
-			conversationFilter := model.UserAllocateFilter{
-				ConversationId: data.ConversationId,
-				MainAllocate:   data.Status,
+			chatManageQueueUserFiler := model.ChatManageQueueUserFilter{
+				TenantId: authUser.TenantId,
+				QueueId:  connectionQueueExist.QueueId,
 			}
-			_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+			_, chatManageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManageQueueUserFiler, 1, 0)
 			if err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
 			}
-
-			if len(*userAllocates) < 1 {
-				log.Info("conversation not found")
-				return response.OK(result)
-			}
-
-			found := false
-			for _, existing := range result {
-				if (*userAllocates)[0].UserId == existing.UserId {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if len(*chatManageQueueUsers) > 0 {
 				result = append(result, model.ChatQueueUserView{
-					TenantId: (*userAllocates)[0].TenantId,
-					QueueId:  (*userAllocates)[0].QueueId,
-					UserId:   (*userAllocates)[0].UserId,
+					TenantId: (*chatManageQueueUsers)[0].TenantId,
+					QueueId:  (*chatManageQueueUsers)[0].QueueId,
+					UserId:   (*chatManageQueueUsers)[0].ManageId,
 				})
 			}
 		}
@@ -265,7 +254,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 				break
 			}
 		}
-		var conversationEvent model.Conversation
+		var conversationEvent model.ConversationView
 		if err := util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
@@ -310,7 +299,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	if len(userUuids) > 0 {
-		conversationEvent := model.Conversation{}
+		conversationEvent := model.ConversationView{}
 		if err := util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
