@@ -69,7 +69,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		OaId:        request.OaId,
 		LabelName:   request.LabelName,
 		LabelType:   labelType,
-		LabelColor:  "",
+		LabelColor:  request.LabelColor,
 		LabelStatus: true,
 		CreatedBy:   authUser.UserId,
 	}
