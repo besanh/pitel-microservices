@@ -93,7 +93,7 @@ func containsKeyword(message string, keywords []string) bool {
 	return false
 }
 
-func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.Conversation) error {
+func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
 	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func ExecutePlannedAutoScript(ctx context.Context, user model.User, message mode
 	return nil
 }
 
-func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.Conversation) error {
+func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
 	if user.AuthUser == nil {
 		log.Error("not found auth user info")
 		return nil
@@ -145,7 +145,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 	return nil
 }
 
-func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation model.Conversation) error {
+func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
 	if user.AuthUser == nil {
 		log.Error("not found auth user info")
 		return nil
@@ -186,7 +186,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	return nil
 }
 
-func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.Conversation, script model.ChatAutoScriptView, err error) error {
+func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView, script model.ChatAutoScriptView, err error) error {
 	timestamp := time.Now().UnixMilli()
 	for _, action := range script.ActionScript.Actions {
 		switch action.Type {
@@ -293,7 +293,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 	return nil
 }
 
-func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.Conversation,
+func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
 	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
 	if containsKeyword(content, variables.PERSONALIZATION_KEYWORD) {
 		pageName := conversation.OaName
@@ -381,7 +381,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 	return nil
 }
 
-func executeScript(ctx context.Context, user model.User, message model.Message, conversation model.Conversation,
+func executeScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
 	id string, limit int) error {
 	if limit < 1 {
 		return errors.New("out of limit in executing chat script")
