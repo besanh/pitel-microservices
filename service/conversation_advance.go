@@ -102,6 +102,8 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	} else if request.Action == "update" {
 		if labelType == "facebook" {
 			externalLabelId = request.ExternalLabelId
+		} else {
+			externalLabelId = chatLabel.GetId()
 		}
 	} else if request.Action == "delete" {
 		if labelType == "facebook" {
@@ -133,16 +135,16 @@ func handleLabelZalo(ctx context.Context, labelType string, request model.Conver
 		TagName:        request.LabelName,
 	}
 	var externalUrl string
-	if request.Action == "create" {
+	if request.Action == "create" || request.Action == "update" {
 		externalUrl = "create-label-customer"
 	} else if request.Action == "update" {
-		// TODO: we don't need to do anything
+
 	} else if request.Action == "delete" {
 		externalUrl = "remove-label-customer"
 	}
 
 	// TODO: because zalo not return id so we don't need to use it for updating label
-	if slices.Contains([]string{"create", "delete"}, request.Action) {
+	if slices.Contains([]string{"create", "update", "delete"}, request.Action) {
 		_, errTmp := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
@@ -238,15 +240,15 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	}
 
 	objmap := []any{}
-	labalesExist := []any{}
-	if err = json.Unmarshal([]byte(conversationExist.Label), &labalesExist); err != nil {
+	labelsExist := []any{}
+	if err = json.Unmarshal([]byte(conversationExist.Label), &labelsExist); err != nil {
 		log.Error(err)
 		return
 	}
 
 	// TODO: because zalo only assign one label for one conversation
 	if labelType == "facebook" {
-		for _, item := range labalesExist {
+		for _, item := range labelsExist {
 			tmp := map[string]string{}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
@@ -256,6 +258,11 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 				continue
 			}
 			if len(tmp["label_id"]) > 0 {
+				for _, item := range objmap {
+					if item.(map[string]any)["label_id"] == tmp["label_id"] {
+						continue
+					}
+				}
 				objmap = append(objmap, map[string]any{
 					"label_id": tmp["label_id"],
 				})
@@ -265,6 +272,11 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 
 	if request.Action == "create" || request.Action == "update" {
 		if len(labelId) > 0 {
+			for _, item := range objmap {
+				if item.(map[string]any)["label_id"] == labelId {
+					continue
+				}
+			}
 			objmap = append(objmap, map[string]any{
 				"label_id": labelId,
 			})
