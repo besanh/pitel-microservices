@@ -87,9 +87,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		if err = handleLabelZalo(ctx, labelType, request); err != nil {
 			return
 		}
-		if request.Action == "create" || request.Action == "update" || request.Action == "delete" {
-			labelId = chatLabel.GetId()
-		}
+		labelId = chatLabel.GetId()
 	} else if labelType == "facebook" {
 		externalLabelId, err = handleLabelFacebook(ctx, dbCon, labelType, chatLabel, request)
 		if err != nil {
@@ -300,20 +298,27 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 
 	if request.Action == "create" || request.Action == "update" {
 		if len(labelId) > 0 {
-			for _, item := range objmap {
-				if item.(map[string]any)["label_id"] == labelId {
-					continue
+			if len(labelsExist) > 0 {
+				for _, item := range objmap {
+					if item.(map[string]any)["label_id"] == labelId {
+						continue
+					}
+					isExist := checkItemExist(objmap, map[string]string{"label_id": labelId})
+					if !isExist {
+						objmap = append(objmap, map[string]any{
+							"label_id": labelId,
+						})
+						break
+					}
 				}
-				isExist := checkItemExist(objmap, map[string]string{"label_id": labelId})
-				if !isExist {
-					objmap = append(objmap, map[string]any{
-						"label_id": labelId,
-					})
-					break
-				}
+			} else {
+				objmap = append(objmap, map[string]any{
+					"label_id": labelId,
+				})
 			}
 		}
 	}
+	log.Info("label_id: ", labelId)
 
 	result, err := json.Marshal(objmap)
 	if err != nil {
