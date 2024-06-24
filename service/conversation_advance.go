@@ -299,17 +299,23 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	if request.Action == "create" || request.Action == "update" {
 		if len(labelId) > 0 {
 			if len(labelsExist) > 0 {
-				for _, item := range objmap {
-					if item.(map[string]any)["label_id"] == labelId {
+				for _, item := range labelsExist {
+					id := item.(map[string]any)["label_id"].(string)
+					if id == labelId {
 						continue
 					}
-					isExist := checkItemExist(objmap, map[string]string{"label_id": labelId})
+					isExist := checkItemExist(objmap, map[string]string{"label_id": id})
 					if !isExist {
 						objmap = append(objmap, map[string]any{
-							"label_id": labelId,
+							"label_id": id,
 						})
-						break
 					}
+				}
+				isExist := checkItemExist(objmap, map[string]string{"label_id": labelId})
+				if !isExist {
+					objmap = append(objmap, map[string]any{
+						"label_id": labelId,
+					})
 				}
 			} else {
 				objmap = append(objmap, map[string]any{
