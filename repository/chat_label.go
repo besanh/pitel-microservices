@@ -6,6 +6,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type (
@@ -41,7 +42,11 @@ func (repo *ChatLabel) GetChatLabels(ctx context.Context, db sqlclient.ISqlClien
 		query.Where("label_type = ?", filter.LabelType)
 	}
 	if len(filter.LabelName) > 0 {
-		query.Where("label_name = ?", filter.LabelName)
+		if filter.IsSearchExactly.Valid && filter.IsSearchExactly.Bool {
+			query.Where("label_name = ?", filter.LabelName)
+		} else {
+			query.Where("? = ?", bun.Ident("label_name"), filter.LabelName)
+		}
 	}
 	if len(filter.LabelColor) > 0 {
 		query.Where("label_color = ?", filter.LabelColor)
@@ -51,6 +56,26 @@ func (repo *ChatLabel) GetChatLabels(ctx context.Context, db sqlclient.ISqlClien
 	}
 	if len(filter.ExternalLabelId) > 0 {
 		query.Where("external_label_id = ?", filter.ExternalLabelId)
+	}
+	if len(filter.LabelIds) > 0 {
+		query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			listUuid := make([]string, 0)
+			externalId := make([]string, 0)
+			for _, item := range filter.LabelIds {
+				if IsValidUUID(item) {
+					listUuid = append(listUuid, item)
+				} else {
+					externalId = append(externalId, item)
+				}
+			}
+			if len(listUuid) > 0 {
+				q.Where("id IN (?)", bun.In(listUuid))
+			}
+			if len(externalId) > 0 {
+				q.Where("external_label_id IN (?)", bun.In(externalId))
+			}
+			return q
+		})
 	}
 	query.Order("created_at desc")
 	if limit > 0 {
