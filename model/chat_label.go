@@ -70,6 +70,10 @@ func (m *ChatLabelRequest) Validate() error {
 		return errors.New("label name is required")
 	}
 
+	if len(m.LabelName) > 15 {
+		return errors.New("label name is no longer than 15 characters")
+	}
+
 	if len(m.LabelColor) < 1 {
 		return errors.New("label color is required")
 	}
