@@ -28,6 +28,10 @@ func mergeActionScripts(chatAutoScripts *[]model.ChatAutoScriptView) *[]model.Ch
 	return chatAutoScripts
 }
 
+/*
+ * chat auto scripts after being fetched from db need to be aggregated from 3 fields (send_message, script_link, label_link)
+ * into one single field for easier managing
+ */
 func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.ChatAutoScriptView {
 	chatAutoScript.ActionScript = new(model.AutoScriptMergedActions)
 	chatAutoScript.ActionScript.Actions = make([]model.ActionScriptActionType, 0)
@@ -86,6 +90,9 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 	return chatAutoScript
 }
 
+/*
+ * Handle execute main chat auto script's logics (detecting keywords, offline agents)
+ */
 func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
 	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
 		return err
@@ -96,6 +103,9 @@ func ExecutePlannedAutoScript(ctx context.Context, user model.User, message mode
 	return nil
 }
 
+/*
+ * Handle detect keywords in message's content then executing the first matching script
+ */
 func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
 	if user.AuthUser == nil {
 		log.Error("not found auth user info")
@@ -138,6 +148,9 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 	return nil
 }
 
+/*
+ * Handle detect agents online status then executing the first matching script
+ */
 func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
 	if user.AuthUser == nil {
 		log.Error("not found auth user info")
@@ -179,6 +192,9 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	return nil
 }
 
+/*
+ * Handle chat auto script's logics
+ */
 func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView, script model.ChatAutoScriptView, err error) error {
 	timestamp := time.Now().UnixMilli()
 	for _, action := range script.ActionScript.Actions {
@@ -292,6 +308,9 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 	return nil
 }
 
+/*
+ * send scripted message pre-defined from chat auto script or chat script to ott & es
+ */
 func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
 	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
 	if slices.Contains[[]string](variables.PERSONALIZATION_KEYWORD, content) {
@@ -389,6 +408,9 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 	return nil
 }
 
+/*
+ * execute chat script based on its script type accordingly
+ */
 func executeScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
 	id string, limit int) error {
 	if limit < 1 {
