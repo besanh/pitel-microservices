@@ -6,14 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"sort"
-	"strings"
-	"time"
+	"golang.org/x/exp/slices"
 )
 
 func mergeActionScripts(chatAutoScripts *[]model.ChatAutoScriptView) *[]model.ChatAutoScriptView {
@@ -84,15 +86,6 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 	return chatAutoScript
 }
 
-func containsKeyword(message string, keywords []string) bool {
-	for _, keyword := range keywords {
-		if strings.Contains(message, keyword) {
-			return true
-		}
-	}
-	return false
-}
-
 func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
 	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
 		return err
@@ -120,7 +113,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 		return err
 	}
 	if total == 0 {
-		log.Debug("not found any auto scripts")
+		log.Info("not found any auto scripts")
 		return nil
 	}
 
@@ -128,14 +121,14 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 	// try to execute the first script
 	var script *model.ChatAutoScriptView
 	for _, scriptView := range *chatAutoScripts {
-		if containsKeyword(message.Content, scriptView.TriggerKeywords.Keywords) {
+		if slices.Contains[[]string](scriptView.TriggerKeywords.Keywords, message.Content) {
 			script = &scriptView
 			break
 		}
 	}
 	if script == nil {
 		// not matching any keywords
-		log.Debug("not found matching keyword")
+		log.Info("not found matching keyword")
 		return nil
 	}
 
@@ -153,7 +146,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 
 	if len(WsSubscribers.Subscribers) > 0 {
 		// has online agents -> do nothing
-		log.Debug("no agents online right now")
+		log.Info("not executed offline auto script because agents are online")
 		return nil
 	}
 
@@ -169,7 +162,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 		return err
 	}
 	if total == 0 {
-		log.Debug("not found any auto scripts")
+		log.Info("not found any auto scripts")
 		return nil
 	}
 
@@ -301,7 +294,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 
 func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
 	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
-	if containsKeyword(content, variables.PERSONALIZATION_KEYWORD) {
+	if slices.Contains[[]string](variables.PERSONALIZATION_KEYWORD, content) {
 		pageName := conversation.OaName
 		customerName := conversation.Username
 		content = strings.ReplaceAll(content, "{{page_name}}", pageName)
