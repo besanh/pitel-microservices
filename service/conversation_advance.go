@@ -31,17 +31,15 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		LabelName:       request.LabelName,
 		IsSearchExactly: sql.NullBool{Bool: true, Valid: true},
 	}
-	_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, 1, 0)
+	_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if request.Action == "create" {
-		if len(*chatLabelExist) > 0 {
-			log.Error("chat label " + request.LabelName + " already exists")
-			err = errors.New("chat label " + request.LabelName + " already exists")
-			return
-		}
+	if len(*chatLabelExist) > 1 {
+		log.Error("chat label " + request.LabelName + " already exists")
+		err = errors.New("chat label " + request.LabelName + " already exists")
+		return
 	}
 
 	// TODO: validate appId and oaId
@@ -81,10 +79,8 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		if err = handleLabelZalo(ctx, labelType, request); err != nil {
 			return
 		}
-		if request.Action == "create" {
+		if request.Action == "create" || request.Action == "update" || request.Action == "delete" {
 			labelId = chatLabel.GetId()
-		} else if request.Action == "update" || request.Action == "delete" {
-			labelId = (*chatLabelExist)[0].GetId()
 		}
 	} else if labelType == "facebook" {
 		externalLabelId, err = handleLabelFacebook(ctx, dbCon, labelType, chatLabel, request)
@@ -104,9 +100,10 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 			externalLabelId = chatLabel.GetId()
 		}
 	} else if request.Action == "update" {
-		// TODO: we don't need to do anything
+		if labelType == "facebook" {
+			externalLabelId = request.ExternalLabelId
+		}
 	} else if request.Action == "delete" {
-		// TODO: we don't need to do anything
 		if labelType == "facebook" {
 			externalLabelId = request.ExternalLabelId
 		}
@@ -184,7 +181,6 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 			}
 			return externalLabelId, errTmp
 		}
-		log.Info(externalCreateLabelResponse.Id)
 		if len(externalCreateLabelResponse.Id) > 0 {
 			externalLabelId = externalCreateLabelResponse.Id
 		} else {
@@ -197,8 +193,8 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 		facebookAssociateRequest := model.ChatExternalLabelRequest{
 			AppId:          request.AppId,
 			OaId:           request.OaId,
-			ExternalUserId: request.ExternalUserId,
 			LabelId:        externalLabelId,
+			ExternalUserId: request.ExternalUserId,
 			TagName:        request.LabelName,
 		}
 		externalUrl = "associate-label"
@@ -259,16 +255,20 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 			if request.Action == "delete" && tmp["label_id"] == labelId {
 				continue
 			}
-			objmap = append(objmap, map[string]any{
-				"label_id": tmp["label_id"],
-			})
+			if len(tmp["label_id"]) > 0 {
+				objmap = append(objmap, map[string]any{
+					"label_id": tmp["label_id"],
+				})
+			}
 		}
 	}
 
 	if request.Action == "create" || request.Action == "update" {
-		objmap = append(objmap, map[string]any{
-			"label_id": labelId,
-		})
+		if len(labelId) > 0 {
+			objmap = append(objmap, map[string]any{
+				"label_id": labelId,
+			})
+		}
 	}
 
 	result, err := json.Marshal(objmap)
