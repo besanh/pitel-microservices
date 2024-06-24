@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"slices"
@@ -23,11 +24,12 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		return
 	}
 	filter := model.ChatLabelFilter{
-		TenantId:  authUser.TenantId,
-		AppId:     request.AppId,
-		OaId:      request.OaId,
-		LabelType: labelType,
-		LabelName: request.LabelName,
+		TenantId:        authUser.TenantId,
+		AppId:           request.AppId,
+		OaId:            request.OaId,
+		LabelType:       labelType,
+		LabelName:       request.LabelName,
+		IsSearchExactly: sql.NullBool{Bool: true, Valid: true},
 	}
 	_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, 1, 0)
 	if err != nil {
@@ -67,7 +69,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		OaId:        request.OaId,
 		LabelName:   request.LabelName,
 		LabelType:   labelType,
-		LabelColor:  "",
+		LabelColor:  request.LabelColor,
 		LabelStatus: true,
 		CreatedBy:   authUser.UserId,
 	}

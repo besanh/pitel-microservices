@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"time"
 
 	"github.com/google/uuid"
@@ -98,6 +99,8 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
+
+	var conversationCustomViews []model.ConversationCustomView
 	if len(*conversations) > 0 {
 		for k, conv := range *conversations {
 			filter := model.MessageFilter{
@@ -135,9 +138,43 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 			}
 
 			(*conversations)[k] = conv
+
+			// TODO: parse label
+			var conversationCustomView model.ConversationCustomView
+			if err := util.ParseAnyToAny((*conversations)[k], &conversationCustomView); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+
+			if !reflect.DeepEqual((*conversations)[k].Label, "") {
+				var labels []map[string]string
+				if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+				chatLabelIds := []string{}
+				if len(labels) > 0 {
+					for _, item := range labels {
+						chatLabelIds = append(chatLabelIds, item["label_id"])
+					}
+					if len(chatLabelIds) > 0 {
+						_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+							LabelIds: chatLabelIds,
+						}, -1, 0)
+						if err != nil {
+							log.Error(err)
+							return response.ServiceUnavailableMsg(err.Error())
+						}
+						if len(*chatLabelExist) > 0 {
+							conversationCustomView.Label = chatLabelExist
+						}
+					}
+				}
+			}
+			conversationCustomViews = append(conversationCustomViews, conversationCustomView)
 		}
 	}
-	return response.Pagination(conversations, total, limit, offset)
+	return response.Pagination(conversationCustomViews, len(conversationCustomViews), limit, offset)
 }
 
 func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any) {
@@ -358,6 +395,37 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
 		return response.ServiceUnavailableMsg("conversation " + conversationId + " with app_id " + appId + " not found")
 	}
+	var conversationCustomView model.ConversationCustomView
+	if err := util.ParseAnyToAny(conversationExist, &conversationCustomView); err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
 
-	return response.OK(conversationExist)
+	if !reflect.DeepEqual(conversationExist.Label, "") {
+		var labels []map[string]string
+		if err = json.Unmarshal([]byte(conversationExist.Label), &labels); err != nil {
+			log.Error(err)
+			return response.ServiceUnavailableMsg(err.Error())
+		}
+		chatLabelIds := []string{}
+		if len(labels) > 0 {
+			for _, item := range labels {
+				chatLabelIds = append(chatLabelIds, item["label_id"])
+			}
+			if len(chatLabelIds) > 0 {
+				_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+					LabelIds: chatLabelIds,
+				}, -1, 0)
+				if err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+				if len(*chatLabelExist) > 0 {
+					conversationCustomView.Label = chatLabelExist
+				}
+			}
+		}
+	}
+
+	return response.OK(conversationCustomView)
 }

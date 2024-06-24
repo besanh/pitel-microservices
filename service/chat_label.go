@@ -133,11 +133,11 @@ func (s *ChatLabel) UpdateChatLabelById(ctx context.Context, authUser *model.Aut
 		OaId:      request.OaId,
 		LabelName: request.LabelName,
 	}
-	_, chatLabels, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, 1, 0)
+	_, chatLabels, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
-	} else if len(*chatLabels) > 0 {
+	} else if len(*chatLabels) > 1 {
 		log.Error("label with name: " + request.LabelName + " already exist")
 		return errors.New("label with name: " + request.LabelName + " already exist")
 	}

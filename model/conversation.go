@@ -52,6 +52,29 @@ type ConversationView struct {
 	LatestMessageDirection string          `json:"latest_message_direction"`
 }
 
+type ConversationCustomView struct {
+	TenantId               string       `json:"tenant_id"`
+	ConversationId         string       `json:"conversation_id"`
+	ConversationType       string       `json:"conversation_type"`
+	AppId                  string       `json:"app_id"`
+	OaId                   string       `json:"oa_id"`
+	OaName                 string       `json:"oa_name"`
+	OaAvatar               string       `json:"oa_avatar"`
+	ShareInfo              *ShareInfo   `json:"share_info"`
+	ExternalUserId         string       `json:"external_user_id"`
+	Username               string       `json:"username"`
+	Avatar                 string       `json:"avatar"`
+	Label                  *[]ChatLabel `json:"label"`
+	IsDone                 bool         `json:"is_done"`
+	IsDoneAt               string       `json:"is_done_at"`
+	IsDoneBy               string       `json:"is_done_by"`
+	CreatedAt              string       `json:"created_at"`
+	UpdatedAt              string       `json:"updated_at"`
+	TotalUnRead            int64        `json:"total_unread"`
+	LatestMessageContent   string       `json:"latest_message_content"`
+	LatestMessageDirection string       `json:"latest_message_direction"`
+}
+
 type ElasticsearchChatResponse struct {
 	Took     int  `json:"took"`
 	TimedOut bool `json:"timed_out"`
@@ -92,6 +115,7 @@ type ConversationLabelRequest struct {
 	ExternalUserId  string `json:"external_user_id"`
 	ConversationId  string `json:"conversation_id"`
 	Action          string `json:"action"` // create, update, remove label
+	LabelColor      string `json:"label_color"`
 }
 
 func (m *ConversationLabelRequest) Validate() error {

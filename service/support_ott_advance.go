@@ -247,8 +247,8 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			return
 		}
 		if len(*connections) < 1 {
-			log.Errorf("connect for app_id: %s, oa_id: %s not found", appId, oaId)
-			err = fmt.Errorf("connect for app_id: %s, oa_id: %s not found", appId, oaId)
+			err = fmt.Errorf("connect for app_id: %s, oa_id: %s, connection_type: %s not found", appId, oaId, connectionType)
+			log.Error(err)
 			return
 		}
 

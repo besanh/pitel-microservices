@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -12,6 +15,7 @@ import (
 )
 
 func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
+	var conversationCustomViews []model.ConversationCustomView
 	filter.TenantId = authUser.TenantId
 	if authUser.Source == "authen" {
 		var queueUuids string
@@ -34,7 +38,44 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 
-		return response.Pagination(conversations, total, limit, offset)
+		if len(*conversations) > 0 {
+			for _, item := range *conversations {
+				var conversationCustomView model.ConversationCustomView
+				if err := util.ParseAnyToAny(item, &conversationCustomView); err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+
+				if !reflect.DeepEqual(item.Label, "") {
+					var labels []map[string]string
+					if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
+					chatLabelIds := []string{}
+					if len(labels) > 0 {
+						for _, item := range labels {
+							chatLabelIds = append(chatLabelIds, item["label_id"])
+						}
+						if len(chatLabelIds) > 0 {
+							_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+								LabelIds: chatLabelIds,
+							}, -1, 0)
+							if err != nil {
+								log.Error(err)
+								return response.ServiceUnavailableMsg(err.Error())
+							}
+							if len(*chatLabelExist) > 0 {
+								conversationCustomView.Label = chatLabelExist
+							}
+						}
+					}
+				}
+				conversationCustomViews = append(conversationCustomViews, conversationCustomView)
+			}
+		}
+
+		return response.Pagination(conversationCustomViews, total, limit, offset)
 	} else {
 		return response.Pagination(nil, 0, limit, offset)
 	}
