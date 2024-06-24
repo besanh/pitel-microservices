@@ -7,6 +7,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type (
@@ -45,7 +46,15 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	}
 	if len(filter.ConnectionType) > 0 && len(filter.OaId) > 0 {
 		query.Where("oa_info->?::text->0->>'oa_id' = ?", filter.ConnectionType, filter.OaId)
+	} else if len(filter.OaId) > 0 {
+		query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			query.Where("oa_info->'zalo'::text->0->>'oa_id' = ?", filter.OaId).
+				WhereOr("oa_info->'facebook'::text->0->>'oa_id' = ?", filter.OaId)
+
+			return q
+		})
 	}
+
 	if len(filter.ConnectionType) > 0 {
 		query.Where("connection_type = ?", filter.ConnectionType)
 	}
