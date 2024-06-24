@@ -137,7 +137,7 @@ func (r *ChatAutoScriptRequest) Validate() error {
 				return errors.New("label id is required")
 			}
 		case RemoveLabels:
-			if len(action.AddLabels) < 1 {
+			if len(action.RemoveLabels) < 1 {
 				return errors.New("label id is required")
 			}
 		default:

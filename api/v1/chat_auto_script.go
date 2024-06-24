@@ -51,10 +51,11 @@ func (handler *ChatAutoScript) GetChatAutoScripts(c *gin.Context) {
 	}
 
 	filter := model.ChatAutoScriptFilter{
-		ScriptName: c.Query("script_name"),
-		Channel:    c.Query("channel"),
-		OaId:       c.Query("oa_id"),
-		Status:     status,
+		ScriptName:   c.Query("script_name"),
+		Channel:      c.Query("channel"),
+		OaId:         c.Query("oa_id"),
+		Status:       status,
+		TriggerEvent: c.Query("trigger_event"),
 	}
 
 	total, result, err := handler.chatAutoScriptService.GetChatAutoScripts(c, res.Data, filter, limit, offset)

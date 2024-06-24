@@ -112,6 +112,11 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 				log.Error(err)
 				return chatAutoScript.Id, err
 			}
+			if !chatScript.Status {
+				err = errors.New("can not refer to inactive chat script")
+				log.Error(err)
+				return chatAutoScript.Id, err
+			}
 
 			scripts = append(scripts, model.ChatAutoScriptToChatScript{
 				ChatAutoScriptId: chatAutoScript.Id,
@@ -147,7 +152,7 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 				})
 			}
 		case model.RemoveLabels:
-			for _, removingLabelId := range action.AddLabels {
+			for _, removingLabelId := range action.RemoveLabels {
 				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, removingLabelId)
 				if err != nil {
 					log.Error(err)
@@ -240,6 +245,11 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 			}
 			if chatScript == nil {
 				err = errors.New("not found chat script id")
+				log.Error(err)
+				return err
+			}
+			if !chatScript.Status {
+				err = errors.New("can not refer to inactive chat script")
 				log.Error(err)
 				return err
 			}

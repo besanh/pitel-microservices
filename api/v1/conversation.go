@@ -228,7 +228,7 @@ func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 		return
 	}
 
-	labelId, err := handler.conversationService.PutLabelToConversation(c, res.Data, labelType, request)
+	labelId, err := service.PutLabelToConversation(c, res.Data, labelType, request)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
