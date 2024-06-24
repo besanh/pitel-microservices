@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+
 	"github.com/pkg/errors"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
@@ -128,15 +129,13 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 			return q.Column("connection_name", "oa_info")
 		}).
 		Relation("ChatScriptLink", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("cas_cst.order ASC").
-				Limit(3)
+			return q.Order("cas_cst.order ASC")
 		}).
 		Relation("ChatScriptLink.ChatScript", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.ExcludeColumn("id")
 		}).
 		Relation("ChatLabelLink", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("cas_cl.order ASC").
-				Limit(3)
+			return q.Order("cas_cl.order ASC")
 		}).
 		Relation("ChatLabelLink.ChatLabel", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.ExcludeColumn("id")
@@ -182,15 +181,13 @@ func (repo *ChatAutoScript) GetChatAutoScriptById(ctx context.Context, db sqlcli
 			return q.Column("connection_name")
 		}).
 		Relation("ChatScriptLink", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("cas_cst.order ASC").
-				Limit(3)
+			return q.Order("cas_cst.order ASC")
 		}).
 		Relation("ChatScriptLink.ChatScript", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.ExcludeColumn("id")
 		}).
 		Relation("ChatLabelLink", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("cas_cl.order ASC").
-				Limit(3)
+			return q.Order("cas_cl.order ASC")
 		}).
 		Relation("ChatLabelLink.ChatLabel", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.ExcludeColumn("id")
