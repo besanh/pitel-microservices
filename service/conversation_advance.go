@@ -30,16 +30,24 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		LabelType:       labelType,
 		LabelName:       request.LabelName,
 		IsSearchExactly: sql.NullBool{Bool: true, Valid: true},
+		ExternalLabelId: request.ExternalLabelId,
 	}
-	_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, -1, 0)
+	_, chatLabelExists, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if len(*chatLabelExist) > 1 {
+	if len(*chatLabelExists) > 1 {
 		log.Error("chat label " + request.LabelName + " already exists")
 		err = errors.New("chat label " + request.LabelName + " already exists")
 		return
+	}
+	if request.Action == "update" {
+		if len(*chatLabelExists) == 0 {
+			log.Error("chat label " + request.LabelName + " not found")
+			err = errors.New("chat label " + request.LabelName + " not found")
+			return
+		}
 	}
 
 	// TODO: validate appId and oaId
@@ -101,7 +109,31 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		}
 	} else if request.Action == "update" {
 		if labelType == "facebook" {
-			externalLabelId = request.ExternalLabelId
+			// Get id to update
+			if len(request.ExternalLabelId) > 0 {
+				filterTmp := model.ChatLabelFilter{
+					TenantId:  authUser.TenantId,
+					AppId:     request.AppId,
+					OaId:      request.OaId,
+					LabelName: request.LabelName,
+					LabelType: labelType,
+				}
+				_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+				if errTmp != nil {
+					log.Error(errTmp)
+					return
+				}
+				if len(*labelExist) == 0 {
+					log.Error("chat label " + request.LabelName + " not found")
+					err = errors.New("chat label " + request.LabelName + " not found")
+					return
+				}
+				(*labelExist)[0].ExternalLabelId = externalLabelId
+				if err = repository.ChatLabelRepo.Update(ctx, dbCon, (*labelExist)[0]); err != nil {
+					log.Error(err)
+					return
+				}
+			}
 		} else {
 			externalLabelId = chatLabel.GetId()
 		}
@@ -258,14 +290,12 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 				continue
 			}
 			if len(tmp["label_id"]) > 0 {
-				for _, item := range objmap {
-					if item.(map[string]any)["label_id"] == tmp["label_id"] {
-						continue
-					}
+				isExist := checkItemExist(objmap, tmp)
+				if !isExist {
+					objmap = append(objmap, map[string]any{
+						"label_id": tmp["label_id"],
+					})
 				}
-				objmap = append(objmap, map[string]any{
-					"label_id": tmp["label_id"],
-				})
 			}
 		}
 	}
@@ -302,6 +332,15 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return
+	}
+	return
+}
+
+func checkItemExist(objmap []any, tmp map[string]string) (isExist bool) {
+	for _, item := range objmap {
+		if item.(map[string]any)["label_id"] == tmp["label_id"] {
+			return true
+		}
 	}
 	return
 }
