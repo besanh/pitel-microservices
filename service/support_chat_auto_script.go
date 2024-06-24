@@ -351,9 +351,18 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 		return err
 	}
 
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found", conversation.ConversationId)
+		return err
+	}
+
 	// >update conversation doc on ES
-	conversation.UpdatedAt = time.Now().Format(time.RFC3339)
-	tmpBytes, err := json.Marshal(conversation)
+	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
+	tmpBytes, err := json.Marshal(conversationExist)
 	if err != nil {
 		return err
 	}
@@ -361,7 +370,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		return err
 	}
-	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversationExist.AppId, conversationExist.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
