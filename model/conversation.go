@@ -115,6 +115,7 @@ type ConversationLabelRequest struct {
 	ExternalUserId  string `json:"external_user_id"`
 	ConversationId  string `json:"conversation_id"`
 	Action          string `json:"action"` // create, update, remove label
+	LabelColor      string `json:"label_color"`
 }
 
 func (m *ConversationLabelRequest) Validate() error {
