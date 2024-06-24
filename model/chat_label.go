@@ -2,7 +2,9 @@ package model
 
 import (
 	"errors"
+	"regexp"
 
+	"github.com/tel4vn/fins-microservices/common/regex"
 	"github.com/uptrace/bun"
 )
 
@@ -72,6 +74,10 @@ func (m *ChatLabelRequest) Validate() error {
 
 	if len(m.LabelName) > 15 {
 		return errors.New("label name is no longer than 15 characters")
+	}
+	re := regexp.MustCompile(regex.REGEX_NORMAL)
+	if !re.MatchString(m.LabelName) {
+		return errors.New("label name " + m.LabelName + " includes invalid characters")
 	}
 
 	if len(m.LabelColor) < 1 {

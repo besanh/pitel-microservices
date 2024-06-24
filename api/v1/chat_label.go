@@ -78,6 +78,13 @@ func (handler *ChatLabel) GetChatLabels(c *gin.Context) {
 		status.Valid = true
 		status.Bool = statusTmp
 	}
+	isSearchExactlyTmp := c.Query("is_search_exactly")
+	var isSearchExactly sql.NullBool
+	if len(isSearchExactlyTmp) > 0 {
+		isSearchExactlyTmp, _ := strconv.ParseBool(isSearchExactlyTmp)
+		isSearchExactly.Valid = true
+		isSearchExactly.Bool = isSearchExactlyTmp
+	}
 	filter := model.ChatLabelFilter{
 		AppId:           c.Query("app_id"),
 		OaId:            c.Query("oa_id"),
