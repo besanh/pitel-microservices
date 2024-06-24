@@ -152,7 +152,7 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 				})
 			}
 		case model.RemoveLabels:
-			for _, removingLabelId := range action.AddLabels {
+			for _, removingLabelId := range action.RemoveLabels {
 				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, removingLabelId)
 				if err != nil {
 					log.Error(err)
