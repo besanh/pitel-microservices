@@ -89,21 +89,17 @@ func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sql
 	}
 
 	//remove old related scripts
-	if len(scripts) > 0 {
-		_, err = tx.NewDelete().Model((*model.ChatAutoScriptToChatScript)(nil)).
-			Where("chat_auto_script_id = ?", chatAutoScript.Id).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
+	_, err = tx.NewDelete().Model((*model.ChatAutoScriptToChatScript)(nil)).
+		Where("chat_auto_script_id = ?", chatAutoScript.Id).
+		Exec(ctx)
+	if err != nil {
+		return err
 	}
-	if len(labels) > 0 {
-		_, err := tx.NewDelete().Model((*model.ChatAutoScriptToChatLabel)(nil)).
-			Where("chat_auto_script_id = ?", chatAutoScript.Id).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
+	_, err = tx.NewDelete().Model((*model.ChatAutoScriptToChatLabel)(nil)).
+		Where("chat_auto_script_id = ?", chatAutoScript.Id).
+		Exec(ctx)
+	if err != nil {
+		return err
 	}
 
 	if len(scripts) > 0 {
@@ -159,6 +155,9 @@ func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient
 	}
 	if len(filter.OaId) > 0 {
 		query.Where("connection_app.oa_info->cas.channel::text->0->>'oa_id' = ?", filter.OaId)
+	}
+	if len(filter.TriggerEvent) > 0 {
+		query.Where("cas.trigger_event = ?", filter.TriggerEvent)
 	}
 
 	if limit > 0 {

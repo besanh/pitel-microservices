@@ -16,7 +16,7 @@ import (
 /**
 * Create in internal system, then create in external
  */
-func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, labelType string, request model.ConversationLabelRequest) (labelId string, err error) {
+func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, labelType string, request model.ConversationLabelRequest) (labelId string, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -76,7 +76,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 
 	// TODO: create label zalo
 	if labelType == "zalo" {
-		if err = s.handleLabelZalo(ctx, labelType, request); err != nil {
+		if err = handleLabelZalo(ctx, labelType, request); err != nil {
 			return
 		}
 		if request.Action == "create" {
@@ -85,7 +85,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 			labelId = (*chatLabelExist)[0].GetId()
 		}
 	} else if labelType == "facebook" {
-		externalLabelId, err = s.handleLabelFacebook(ctx, dbCon, labelType, chatLabel, request)
+		externalLabelId, err = handleLabelFacebook(ctx, dbCon, labelType, chatLabel, request)
 		if err != nil {
 			return
 		}
@@ -111,7 +111,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 	}
 
 	// TODO: update label for conversation => use queue
-	if err = s.putConversation(ctx, authUser, externalLabelId, labelType, request); err != nil {
+	if err = putConversation(ctx, authUser, externalLabelId, labelType, request); err != nil {
 		if request.Action == "create" {
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
 				log.Error(err)
@@ -126,7 +126,7 @@ func (s *Conversation) PutLabelToConversation(ctx context.Context, authUser *mod
 	return
 }
 
-func (s *Conversation) handleLabelZalo(ctx context.Context, labelType string, request model.ConversationLabelRequest) (err error) {
+func handleLabelZalo(ctx context.Context, labelType string, request model.ConversationLabelRequest) (err error) {
 	zaloRequest := model.ChatExternalLabelRequest{
 		AppId:          request.AppId,
 		OaId:           request.OaId,
@@ -155,7 +155,7 @@ func (s *Conversation) handleLabelZalo(ctx context.Context, labelType string, re
 	return
 }
 
-func (s *Conversation) handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, labelType string, chatLabel model.ChatLabel, request model.ConversationLabelRequest) (externalLabelId string, err error) {
+func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, labelType string, chatLabel model.ChatLabel, request model.ConversationLabelRequest) (externalLabelId string, err error) {
 	if labelType == "facebook" {
 		labelType = "face"
 	}
@@ -229,7 +229,7 @@ func (s *Conversation) handleLabelFacebook(ctx context.Context, dbCon sqlclient.
 	return
 }
 
-func (s *Conversation) putConversation(ctx context.Context, authUser *model.AuthUser, labelId, labelType string, request model.ConversationLabelRequest) (err error) {
+func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, labelType string, request model.ConversationLabelRequest) (err error) {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId)
 	if err != nil {
 		log.Error(err)

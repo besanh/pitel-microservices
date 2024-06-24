@@ -107,4 +107,9 @@ var (
 		"update",
 		"delete",
 	}
+
+	PERSONALIZATION_KEYWORD = []string{
+		"{{page_name}}",
+		"{{customer_name}}",
+	}
 )
