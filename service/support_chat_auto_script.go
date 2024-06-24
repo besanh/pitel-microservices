@@ -236,6 +236,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 						}
 						// update external label id
 						label.ExternalLabelId = externalLabelId
+						label.UpdatedBy = user.AuthUser.UserId
 						if err := repository.ChatLabelRepo.Update(ctx, repository.DBConn, *label); err != nil {
 							return err
 						}
