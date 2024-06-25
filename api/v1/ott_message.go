@@ -56,6 +56,17 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	timestamp, _ := strconv.ParseInt(timestampTmp, 10, 64)
 	msgId, _ := jsonBody["msg_id"].(string)
 	content, _ := jsonBody["text"].(string)
+	isEchoTmp, _ := jsonBody["is_echo"].(string)
+	var isEcho bool
+	if len(isEchoTmp) > 0 {
+		var err error
+		isEcho, err = strconv.ParseBool(isEchoTmp)
+		if err != nil {
+			log.Error(err)
+			c.JSON(response.ServiceUnavailableMsg(err))
+			return
+		}
+	}
 	attachmentsTmp, _ := jsonBody["attachments"].([]any)
 	attachmentsAny := make([]any, 0)
 	for item := range attachmentsTmp {
@@ -160,6 +171,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			MsgId:          msgId,
 			Content:        content,
 			Attachments:    &attachments,
+			IsEcho:         isEcho,
 		}
 
 		if !slices.Contains([]string{"facebook", "zalo"}, messageType) {

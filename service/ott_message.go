@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -69,6 +70,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		UserAppname:         data.Username,
 		CreatedAt:           time.Now(),
 		ShareInfo:           data.ShareInfo,
+		IsEcho:              data.IsEcho,
 	}
 	if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
 		message.ReadTime = timestamp
@@ -159,6 +161,44 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
 				log.Error(errMsg)
 				return response.ServiceUnavailableMsg(errMsg.Error())
+			}
+			if message.IsEcho {
+				echoedMessageDocId := uuid.NewString()
+				currentTime := time.Now()
+				echoedMessage := model.Message{
+					TenantId:            conversation.TenantId,
+					ParentExternalMsgId: "",
+					Id:                  echoedMessageDocId,
+					MessageType:         conversation.ConversationType,
+					ConversationId:      conversation.ConversationId,
+					ExternalMsgId:       data.MsgId,
+					EventName:           message.EventName,
+					Direction:           variables.DIRECTION["send"],
+					AppId:               conversation.AppId,
+					OaId:                conversation.OaId,
+					Avatar:              conversation.OaAvatar,
+					SupporterId:         "",
+					SupporterName:       "Admin OA", // admin oa
+					SendTime:            currentTime,
+					SendTimestamp:       currentTime.UnixMilli(),
+					Content:             message.Content,
+					Attachments:         message.Attachments,
+					CreatedAt:           currentTime,
+					IsRead:              "deactive",
+					IsEcho:              message.IsEcho,
+				}
+				if user.AuthUser.Level != "manager" {
+					if len(user.QueueId) > 0 {
+						if err := SendEventToManage(ctx, user.AuthUser, echoedMessage, user.QueueId); err != nil {
+							log.Error(err)
+							return response.ServiceUnavailableMsg(err.Error())
+						}
+					} else {
+						err := fmt.Errorf("queue %s not found in send event to manage", user.QueueId)
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
+				}
 			}
 		} else {
 			log.Error("conversation " + conversation.ConversationId + " not found")
