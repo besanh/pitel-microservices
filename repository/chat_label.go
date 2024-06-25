@@ -45,7 +45,7 @@ func (repo *ChatLabel) GetChatLabels(ctx context.Context, db sqlclient.ISqlClien
 		if filter.IsSearchExactly.Valid && filter.IsSearchExactly.Bool {
 			query.Where("label_name = ?", filter.LabelName)
 		} else {
-			query.Where("? = ?", bun.Ident("label_name"), filter.LabelName)
+			query.Where("? ILIKE ?", bun.Ident("label_name"), "%"+filter.LabelName+"%")
 		}
 	}
 	if len(filter.LabelColor) > 0 {
