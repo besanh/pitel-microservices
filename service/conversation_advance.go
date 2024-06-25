@@ -153,6 +153,25 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	} else if request.Action == "delete" {
 		if labelType == "facebook" {
 			externalLabelId = request.ExternalLabelId
+		} else {
+			filterTmp := model.ChatLabelFilter{
+				TenantId:  authUser.TenantId,
+				AppId:     request.AppId,
+				OaId:      request.OaId,
+				LabelName: request.LabelName,
+				LabelType: labelType,
+			}
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
+				return
+			}
+			if len(*labelExist) == 0 {
+				log.Error("chat label " + request.LabelName + " not found")
+				err = errors.New("chat label " + request.LabelName + " not found")
+				return
+			}
+			externalLabelId = (*labelExist)[0].Id
 		}
 	}
 
@@ -338,6 +357,25 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 				objmap = append(objmap, map[string]any{
 					"label_id": labelId,
 				})
+			}
+		}
+	} else if request.Action == "delete" {
+		if labelType == "zalo" {
+			for _, item := range labelsExist {
+				tmp := map[string]string{}
+				if err = util.ParseAnyToAny(item, &tmp); err != nil {
+					log.Error(err)
+					continue
+				}
+				if tmp["label_id"] == labelId {
+					continue
+				}
+				isExist := checkItemExist(objmap, tmp)
+				if !isExist {
+					objmap = append(objmap, map[string]any{
+						"label_id": tmp["label_id"],
+					})
+				}
 			}
 		}
 	}
