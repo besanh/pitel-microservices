@@ -395,11 +395,6 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
 		return response.ServiceUnavailableMsg("conversation " + conversationId + " with app_id " + appId + " not found")
 	}
-	var conversationCustomView model.ConversationCustomView
-	if err := util.ParseAnyToAny(conversationExist, &conversationCustomView); err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
 
 	if !reflect.DeepEqual(conversationExist.Label, "") {
 		var labels []map[string]string
@@ -421,11 +416,24 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 				if len(*chatLabelExist) > 0 {
-					conversationCustomView.Label = chatLabelExist
+					tmp, err := json.Marshal(*chatLabelExist)
+					if err != nil {
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
+					conversationExist.Label = tmp
+				} else {
+					conversationExist.Label = []byte("[]")
 				}
+			} else {
+				conversationExist.Label = []byte("[]")
 			}
+		} else {
+			conversationExist.Label = []byte("[]")
 		}
+	} else {
+		conversationExist.Label = []byte("[]")
 	}
 
-	return response.OK(conversationCustomView)
+	return response.OK(conversationExist)
 }

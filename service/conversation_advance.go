@@ -30,16 +30,22 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		LabelType:       labelType,
 		LabelName:       request.LabelName,
 		IsSearchExactly: sql.NullBool{Bool: true, Valid: true},
+		ExternalLabelId: request.ExternalLabelId,
 	}
-	_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, 1, 0)
+	_, chatLabelExists, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if request.Action == "create" {
-		if len(*chatLabelExist) > 0 {
-			log.Error("chat label " + request.LabelName + " already exists")
-			err = errors.New("chat label " + request.LabelName + " already exists")
+	if len(*chatLabelExists) > 1 {
+		log.Error("chat label " + request.LabelName + " already exists")
+		err = errors.New("chat label " + request.LabelName + " already exists")
+		return
+	}
+	if request.Action == "update" {
+		if len(*chatLabelExists) == 0 {
+			log.Error("chat label " + request.LabelName + " not found")
+			err = errors.New("chat label " + request.LabelName + " not found")
 			return
 		}
 	}
@@ -81,11 +87,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		if err = handleLabelZalo(ctx, labelType, request); err != nil {
 			return
 		}
-		if request.Action == "create" {
-			labelId = chatLabel.GetId()
-		} else if request.Action == "update" || request.Action == "delete" {
-			labelId = (*chatLabelExist)[0].GetId()
-		}
+		labelId = chatLabel.GetId()
 	} else if labelType == "facebook" {
 		externalLabelId, err = handleLabelFacebook(ctx, dbCon, labelType, chatLabel, request)
 		if err != nil {
@@ -104,9 +106,51 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 			externalLabelId = chatLabel.GetId()
 		}
 	} else if request.Action == "update" {
-		// TODO: we don't need to do anything
+		if labelType == "facebook" {
+			// Get id to update
+			filterTmp := model.ChatLabelFilter{
+				TenantId:  authUser.TenantId,
+				AppId:     request.AppId,
+				OaId:      request.OaId,
+				LabelName: request.LabelName,
+				LabelType: labelType,
+			}
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
+				return
+			}
+			if len(*labelExist) == 0 {
+				log.Error("chat label " + request.LabelName + " not found")
+				err = errors.New("chat label " + request.LabelName + " not found")
+				return
+			}
+			(*labelExist)[0].ExternalLabelId = externalLabelId
+			if err = repository.ChatLabelRepo.Update(ctx, dbCon, (*labelExist)[0]); err != nil {
+				log.Error(err)
+				return
+			}
+		} else {
+			filterTmp := model.ChatLabelFilter{
+				TenantId:  authUser.TenantId,
+				AppId:     request.AppId,
+				OaId:      request.OaId,
+				LabelName: request.LabelName,
+				LabelType: labelType,
+			}
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
+				return
+			}
+			if len(*labelExist) == 0 {
+				log.Error("chat label " + request.LabelName + " not found")
+				err = errors.New("chat label " + request.LabelName + " not found")
+				return
+			}
+			externalLabelId = (*labelExist)[0].Id
+		}
 	} else if request.Action == "delete" {
-		// TODO: we don't need to do anything
 		if labelType == "facebook" {
 			externalLabelId = request.ExternalLabelId
 		}
@@ -136,16 +180,16 @@ func handleLabelZalo(ctx context.Context, labelType string, request model.Conver
 		TagName:        request.LabelName,
 	}
 	var externalUrl string
-	if request.Action == "create" {
+	if request.Action == "create" || request.Action == "update" {
 		externalUrl = "create-label-customer"
 	} else if request.Action == "update" {
-		// TODO: we don't need to do anything
+
 	} else if request.Action == "delete" {
 		externalUrl = "remove-label-customer"
 	}
 
 	// TODO: because zalo not return id so we don't need to use it for updating label
-	if slices.Contains([]string{"create", "delete"}, request.Action) {
+	if slices.Contains([]string{"create", "update", "delete"}, request.Action) {
 		_, errTmp := RequestOttLabel(ctx, labelType, externalUrl, zaloRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
@@ -184,7 +228,6 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 			}
 			return externalLabelId, errTmp
 		}
-		log.Info(externalCreateLabelResponse.Id)
 		if len(externalCreateLabelResponse.Id) > 0 {
 			externalLabelId = externalCreateLabelResponse.Id
 		} else {
@@ -197,8 +240,8 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 		facebookAssociateRequest := model.ChatExternalLabelRequest{
 			AppId:          request.AppId,
 			OaId:           request.OaId,
-			ExternalUserId: request.ExternalUserId,
 			LabelId:        externalLabelId,
+			ExternalUserId: request.ExternalUserId,
 			TagName:        request.LabelName,
 		}
 		externalUrl = "associate-label"
@@ -242,15 +285,15 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	}
 
 	objmap := []any{}
-	labalesExist := []any{}
-	if err = json.Unmarshal([]byte(conversationExist.Label), &labalesExist); err != nil {
+	labelsExist := []any{}
+	if err = json.Unmarshal([]byte(conversationExist.Label), &labelsExist); err != nil {
 		log.Error(err)
 		return
 	}
 
 	// TODO: because zalo only assign one label for one conversation
 	if labelType == "facebook" {
-		for _, item := range labalesExist {
+		for _, item := range labelsExist {
 			tmp := map[string]string{}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
@@ -259,17 +302,46 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 			if request.Action == "delete" && tmp["label_id"] == labelId {
 				continue
 			}
-			objmap = append(objmap, map[string]any{
-				"label_id": tmp["label_id"],
-			})
+			if len(tmp["label_id"]) > 0 {
+				isExist := checkItemExist(objmap, tmp)
+				if !isExist {
+					objmap = append(objmap, map[string]any{
+						"label_id": tmp["label_id"],
+					})
+				}
+			}
 		}
 	}
 
 	if request.Action == "create" || request.Action == "update" {
-		objmap = append(objmap, map[string]any{
-			"label_id": labelId,
-		})
+		if len(labelId) > 0 {
+			if len(labelsExist) > 0 {
+				for _, item := range labelsExist {
+					id := item.(map[string]any)["label_id"].(string)
+					if id == labelId {
+						continue
+					}
+					isExist := checkItemExist(objmap, map[string]string{"label_id": id})
+					if !isExist {
+						objmap = append(objmap, map[string]any{
+							"label_id": id,
+						})
+					}
+				}
+				isExist := checkItemExist(objmap, map[string]string{"label_id": labelId})
+				if !isExist {
+					objmap = append(objmap, map[string]any{
+						"label_id": labelId,
+					})
+				}
+			} else {
+				objmap = append(objmap, map[string]any{
+					"label_id": labelId,
+				})
+			}
+		}
 	}
+	log.Info("label_id: ", labelId)
 
 	result, err := json.Marshal(objmap)
 	if err != nil {
@@ -290,6 +362,15 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return
+	}
+	return
+}
+
+func checkItemExist(objmap []any, tmp map[string]string) (isExist bool) {
+	for _, item := range objmap {
+		if item.(map[string]any)["label_id"] == tmp["label_id"] {
+			return true
+		}
 	}
 	return
 }
