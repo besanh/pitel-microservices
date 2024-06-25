@@ -35,6 +35,7 @@ type Message struct {
 	CreatedAt           time.Time         `json:"created_at"`
 	UpdatedAt           time.Time         `json:"updated_at"`
 	ShareInfo           *ShareInfo        `json:"share_info"`
+	IsEcho              bool              `json:"-"`
 }
 
 type AttachmentsDetails struct {
