@@ -12,10 +12,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"golang.org/x/exp/slices"
 )
 
 func mergeActionScripts(chatAutoScripts *[]model.ChatAutoScriptView) *[]model.ChatAutoScriptView {
@@ -131,7 +131,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 	// try to execute the first script
 	var script *model.ChatAutoScriptView
 	for _, scriptView := range *chatAutoScripts {
-		if slices.Contains[[]string](scriptView.TriggerKeywords.Keywords, message.Content) {
+		if util.ContainKeywords(message.Content, scriptView.TriggerKeywords.Keywords) {
 			script = &scriptView
 			break
 		}
@@ -313,7 +313,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
  */
 func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
 	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
-	if slices.Contains[[]string](variables.PERSONALIZATION_KEYWORD, content) {
+	if util.ContainKeywords(content, variables.PERSONALIZATION_KEYWORDS) {
 		pageName := conversation.OaName
 		customerName := conversation.Username
 		content = strings.ReplaceAll(content, "{{page_name}}", pageName)
