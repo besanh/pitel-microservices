@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strconv"
+	"time"
+
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"strconv"
-	"time"
 )
 
 type (
@@ -293,7 +294,7 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 				})
 			}
 		case model.RemoveLabels:
-			for _, removingLabelId := range action.AddLabels {
+			for _, removingLabelId := range action.RemoveLabels {
 				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, removingLabelId)
 				if err != nil {
 					log.Error(err)
