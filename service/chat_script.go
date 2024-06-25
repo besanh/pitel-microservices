@@ -4,12 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
 	"mime/multipart"
 	"strconv"
 	"time"
+
+	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/fins-microservices/repository"
 )
 
 type (
@@ -145,10 +146,19 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 		return err
 	}
 
-	if chatScriptRequest.ScriptType != chatScript.ScriptType {
-		err = errors.New("not meet script type")
-		log.Error(err)
-		return err
+	// request changes script type
+	if chatScript.ScriptType != chatScriptRequest.ScriptType {
+		chatScript.Content = ""
+		chatScript.OtherScriptId = ""
+		if chatScript.ScriptType == "image" || chatScript.ScriptType == "file" {
+			if len(chatScript.FileUrl) > 0 {
+				if err = removeFileFromStorageShareInfo(ctx, chatScript.FileUrl); err != nil {
+					log.Error(err)
+					return err
+				}
+				chatScript.FileUrl = ""
+			}
+		}
 	}
 
 	switch chatScriptRequest.ScriptType {
@@ -190,9 +200,21 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 		return err
 	}
 
+	statusTmp := chatScriptRequest.Status
+	var status sql.NullBool
+	if len(statusTmp) > 0 {
+		statusTmp, _ := strconv.ParseBool(statusTmp)
+		status.Valid = true
+		status.Bool = statusTmp
+	}
+	if status.Valid {
+		chatScript.Status = status.Bool
+	}
 	if len(chatScriptRequest.ScriptName) > 0 {
 		chatScript.ScriptName = chatScriptRequest.ScriptName
 	}
+	chatScript.ScriptType = chatScriptRequest.ScriptType
+	chatScript.Channel = chatScriptRequest.Channel
 	chatScript.UpdatedBy = authUser.UserId
 	chatScript.UpdatedAt = time.Now()
 	err = repository.ChatScriptRepo.Update(ctx, dbCon, *chatScript)
