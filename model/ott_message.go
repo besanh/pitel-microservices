@@ -18,7 +18,7 @@ type OttMessage struct {
 	QuoteMsgId     string            `json:"quote_msg_id"`
 	ReactIcon      string            `json:"react_icon"`
 	Attachments    *[]OttAttachments `json:"attachments"`
-	IsEcho         bool              `json:"-"`
+	IsEcho         bool              `json:"is_echo"`
 }
 
 type OttAttachments struct {
