@@ -131,7 +131,24 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 				return
 			}
 		} else {
-			externalLabelId = chatLabel.GetId()
+			filterTmp := model.ChatLabelFilter{
+				TenantId:  authUser.TenantId,
+				AppId:     request.AppId,
+				OaId:      request.OaId,
+				LabelName: request.LabelName,
+				LabelType: labelType,
+			}
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
+				return
+			}
+			if len(*labelExist) == 0 {
+				log.Error("chat label " + request.LabelName + " not found")
+				err = errors.New("chat label " + request.LabelName + " not found")
+				return
+			}
+			externalLabelId = (*labelExist)[0].Id
 		}
 	} else if request.Action == "delete" {
 		if labelType == "facebook" {
