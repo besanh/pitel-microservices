@@ -161,3 +161,12 @@ func ParseQueryArray(slice []string) []string {
 	}
 	return result
 }
+
+func ContainKeywords(content string, keywords []string) bool {
+	for _, keyword := range keywords {
+		if strings.Contains(content, keyword) {
+			return true
+		}
+	}
+	return false
+}

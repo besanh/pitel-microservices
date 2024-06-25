@@ -108,7 +108,7 @@ var (
 		"delete",
 	}
 
-	PERSONALIZATION_KEYWORD = []string{
+	PERSONALIZATION_KEYWORDS = []string{
 		"{{page_name}}",
 		"{{customer_name}}",
 	}

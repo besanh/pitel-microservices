@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -159,50 +158,14 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			message.ConversationId = conversation.ConversationId
 			message.IsRead = "deactive"
 			if message.IsEcho {
-				currentTime := time.Now()
-				echoedMessage := model.Message{
-					TenantId:            conversation.TenantId,
-					ParentExternalMsgId: "",
-					Id:                  docId,
-					ConversationId:      conversation.ConversationId,
-					MessageType:         conversation.ConversationType,
-					ExternalMsgId:       data.MsgId,
-					EventName:           message.EventName,
-					Direction:           variables.DIRECTION["send"],
-					AppId:               conversation.AppId,
-					OaId:                conversation.OaId,
-					Avatar:              conversation.OaAvatar,
-					SupporterId:         "",
-					SupporterName:       "Admin OA", // admin oa
-					SendTime:            currentTime,
-					SendTimestamp:       currentTime.UnixMilli(),
-					Content:             message.Content,
-					Attachments:         message.Attachments,
-					CreatedAt:           currentTime,
-					IsRead:              "deactive",
-					IsEcho:              message.IsEcho,
-				}
-				if user.AuthUser.Level != "manager" {
-					if len(user.QueueId) > 0 {
-						if err := SendEventToManage(ctx, user.AuthUser, echoedMessage, user.QueueId); err != nil {
-							log.Error(err)
-							return response.ServiceUnavailableMsg(err.Error())
-						}
-					} else {
-						err := fmt.Errorf("queue %s not found in send event to manage", user.QueueId)
-						log.Error(err)
-						return response.ServiceUnavailableMsg(err.Error())
-					}
-				}
-				if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, echoedMessage); errMsg != nil {
-					log.Error(errMsg)
-					return response.ServiceUnavailableMsg(errMsg.Error())
-				}
-			} else {
-				if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
-					log.Error(errMsg)
-					return response.ServiceUnavailableMsg(errMsg.Error())
-				}
+				message.Direction = variables.DIRECTION["send"]
+				message.Avatar = conversation.OaAvatar
+				message.SupporterId = ""
+				message.SupporterName = "Admin OA"
+			}
+			if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
+				log.Error(errMsg)
+				return response.ServiceUnavailableMsg(errMsg.Error())
 			}
 		} else {
 			log.Error("conversation " + conversation.ConversationId + " not found")
