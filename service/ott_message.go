@@ -156,6 +156,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		isNew = isNewTmp
 
 		if len(conversation.ConversationId) > 0 {
+			message.ConversationId = conversation.ConversationId
+			message.IsRead = "deactive"
 			if message.IsEcho {
 				currentTime := time.Now()
 				echoedMessage := model.Message{
@@ -197,8 +199,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					return response.ServiceUnavailableMsg(errMsg.Error())
 				}
 			} else {
-				message.ConversationId = conversation.ConversationId
-				message.IsRead = "deactive"
 				if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
 					log.Error(errMsg)
 					return response.ServiceUnavailableMsg(errMsg.Error())
