@@ -158,19 +158,14 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		if len(conversation.ConversationId) > 0 {
 			message.ConversationId = conversation.ConversationId
 			message.IsRead = "deactive"
-			if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
-				log.Error(errMsg)
-				return response.ServiceUnavailableMsg(errMsg.Error())
-			}
 			if message.IsEcho {
-				echoedMessageDocId := uuid.NewString()
 				currentTime := time.Now()
 				echoedMessage := model.Message{
 					TenantId:            conversation.TenantId,
 					ParentExternalMsgId: "",
-					Id:                  echoedMessageDocId,
-					MessageType:         conversation.ConversationType,
+					Id:                  docId,
 					ConversationId:      conversation.ConversationId,
+					MessageType:         conversation.ConversationType,
 					ExternalMsgId:       data.MsgId,
 					EventName:           message.EventName,
 					Direction:           variables.DIRECTION["send"],
@@ -198,6 +193,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						log.Error(err)
 						return response.ServiceUnavailableMsg(err.Error())
 					}
+				}
+				if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, echoedMessage); errMsg != nil {
+					log.Error(errMsg)
+					return response.ServiceUnavailableMsg(errMsg.Error())
+				}
+			} else {
+				if errMsg := InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); errMsg != nil {
+					log.Error(errMsg)
+					return response.ServiceUnavailableMsg(errMsg.Error())
 				}
 			}
 		} else {
