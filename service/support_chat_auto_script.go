@@ -212,7 +212,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				return err
 			}
 		case string(model.SendMessage):
-			if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "text", action.Content, nil); err != nil {
+			if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", action.Content, nil); err != nil {
 				return err
 			}
 		case string(model.AddLabels):
@@ -319,7 +319,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 /*
  * send scripted message pre-defined from chat auto script or chat script to ott & es
  */
-func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
+func executeSendScriptedMessage(ctx context.Context, user model.User, conversation model.ConversationView,
 	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
 	if util.ContainKeywords(content, variables.PERSONALIZATION_KEYWORDS) {
 		pageName := conversation.OaName
@@ -437,7 +437,7 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 	switch chatScript.ScriptType {
 	case "text":
 		content := chatScript.Content
-		if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "text", content, nil); err != nil {
+		if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", content, nil); err != nil {
 			return err
 		}
 	case "file":
@@ -448,7 +448,7 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 			},
 			AttType: "file",
 		})
-		if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "file", "", attachments); err != nil {
+		if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "file", "", attachments); err != nil {
 			return err
 		}
 	case "image":
@@ -459,7 +459,7 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 			},
 			AttType: "image",
 		})
-		if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "image", "", attachments); err != nil {
+		if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "image", "", attachments); err != nil {
 			return err
 		}
 	case "other":
