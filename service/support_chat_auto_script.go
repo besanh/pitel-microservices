@@ -45,6 +45,10 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 	}
 
 	for _, action := range chatAutoScript.ChatScriptLink {
+		if action.ChatScript == nil {
+			log.Error("not found this chat script's info, id: ", action.ChatScriptId)
+			continue
+		}
 		chatAutoScript.ActionScript.Actions = append(chatAutoScript.ActionScript.Actions, model.ActionScriptActionType{
 			Type:         string(model.MoveToExistedScript),
 			ChatScriptId: action.ChatScriptId,
@@ -55,6 +59,10 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 	addLabels := make(map[int][]string)
 	removeLabels := make(map[int][]string)
 	for _, action := range chatAutoScript.ChatLabelLink {
+		if action.ChatLabel == nil {
+			log.Error("not found this chat label's info, id: ", action.ChatLabelId)
+			continue
+		}
 		if action.ActionType == string(model.AddLabels) {
 			if addLabels[action.Order] == nil || len(addLabels[action.Order]) == 0 {
 				addLabels[action.Order] = make([]string, 0)
@@ -204,7 +212,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				return err
 			}
 		case string(model.SendMessage):
-			if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "text", action.Content, nil); err != nil {
+			if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", action.Content, nil); err != nil {
 				return err
 			}
 		case string(model.AddLabels):
@@ -311,7 +319,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 /*
  * send scripted message pre-defined from chat auto script or chat script to ott & es
  */
-func executeSendScriptedMessage(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
+func executeSendScriptedMessage(ctx context.Context, user model.User, conversation model.ConversationView,
 	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
 	if util.ContainKeywords(content, variables.PERSONALIZATION_KEYWORDS) {
 		pageName := conversation.OaName
@@ -363,7 +371,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 	log.Info("message to es: ", scriptedMessage)
 
 	// Should to queue
-	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, message.AppId, docId, scriptedMessage); err != nil {
+	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -395,7 +403,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 	// >send message to manager/admin
 	if user.AuthUser.Level != "manager" {
 		if len(user.QueueId) > 0 {
-			if err := SendEventToManage(ctx, user.AuthUser, message, user.QueueId); err != nil {
+			if err := SendEventToManage(ctx, user.AuthUser, scriptedMessage, user.QueueId); err != nil {
 				log.Error(err)
 				return err
 			}
@@ -429,7 +437,7 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 	switch chatScript.ScriptType {
 	case "text":
 		content := chatScript.Content
-		if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "text", content, nil); err != nil {
+		if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", content, nil); err != nil {
 			return err
 		}
 	case "file":
@@ -440,7 +448,7 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 			},
 			AttType: "file",
 		})
-		if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "file", "", attachments); err != nil {
+		if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "file", "", attachments); err != nil {
 			return err
 		}
 	case "image":
@@ -451,7 +459,7 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 			},
 			AttType: "image",
 		})
-		if err = executeSendScriptedMessage(ctx, user, message, conversation, timestamp, "image", "", attachments); err != nil {
+		if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "image", "", attachments); err != nil {
 			return err
 		}
 	case "other":
