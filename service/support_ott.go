@@ -155,7 +155,7 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 
 		filterUserAllocation := model.UserAllocateFilter{
 			ConversationId: newConversationId,
-			QueueId:        connectionQueue.QueueId,
+			QueueId:        []string{connectionQueue.QueueId},
 			MainAllocate:   "active",
 		}
 		_, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filterUserAllocation, -1, 0)
