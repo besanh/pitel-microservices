@@ -42,7 +42,7 @@ func (repo *UserAllocate) GetUserAllocates(ctx context.Context, db sqlclient.ISq
 		query.Where("user_id IN (?)", bun.In(filter.UserId))
 	}
 	if len(filter.QueueId) > 0 {
-		query.Where("queue_id = ?", filter.QueueId)
+		query.Where("queue_id IN (?)", bun.In(filter.QueueId))
 	}
 	if len(filter.ConversationId) > 0 {
 		query.Where("conversation_id = ?", filter.ConversationId)
