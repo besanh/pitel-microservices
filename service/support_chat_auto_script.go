@@ -14,6 +14,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
+	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -96,6 +97,25 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 		return chatAutoScript.ActionScript.Actions[i].Order < chatAutoScript.ActionScript.Actions[j].Order
 	})
 	return chatAutoScript
+}
+
+func processLabels(ctx context.Context, dbCon sqlclient.ISqlClientConn, labels []model.ChatAutoScriptToChatLabel, labelIds []string,
+	chatLabelAction model.ChatLabelAction) ([]model.ChatAutoScriptToChatLabel, error) {
+	for _, labelId := range labelIds {
+		label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, labelId)
+		if err != nil || label == nil {
+			return labels, fmt.Errorf("not found label id: %v", err)
+		}
+
+		labels = append(labels, model.ChatAutoScriptToChatLabel{
+			ChatLabelId:      labelId,
+			ChatAutoScriptId: chatLabelAction.ChatAutoScriptId,
+			ActionType:       chatLabelAction.ActionType,
+			Order:            chatLabelAction.Order,
+			CreatedAt:        chatLabelAction.CreatedAt,
+		})
+	}
+	return labels, nil
 }
 
 /*

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -104,12 +105,8 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 		case model.MoveToExistedScript:
 			// check if script id exists
 			chatScript, err := repository.ChatScriptRepo.GetById(ctx, dbCon, action.ChatScriptId)
-			if err != nil {
-				log.Error(err)
-				return chatAutoScript.Id, err
-			}
-			if chatScript == nil {
-				err = errors.New("not found chat script id")
+			if err != nil || chatScript == nil {
+				err = fmt.Errorf("not found chat script id, err=%v", err)
 				log.Error(err)
 				return chatAutoScript.Id, err
 			}
@@ -132,46 +129,26 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 					Order:   i,
 				})
 		case model.AddLabels:
-			for _, addingLabelId := range action.AddLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, addingLabelId)
-				if err != nil {
-					log.Error(err)
-					return chatAutoScript.Id, err
-				}
-				if label == nil {
-					err = errors.New("not found label id")
-					log.Error(err)
-					return chatAutoScript.Id, err
-				}
-
-				labels = append(labels, model.ChatAutoScriptToChatLabel{
-					ChatAutoScriptId: chatAutoScript.Id,
-					ChatLabelId:      addingLabelId,
-					ActionType:       string(model.AddLabels),
-					Order:            i,
-					CreatedAt:        currentTime,
-				})
+			labels, err = processLabels(ctx, dbCon, labels, action.AddLabels, model.ChatLabelAction{
+				ChatAutoScriptId: chatAutoScript.Id,
+				ActionType:       string(model.AddLabels),
+				Order:            i,
+				CreatedAt:        currentTime,
+			})
+			if err != nil {
+				log.Error(err)
+				return chatAutoScript.Id, err
 			}
 		case model.RemoveLabels:
-			for _, removingLabelId := range action.RemoveLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, removingLabelId)
-				if err != nil {
-					log.Error(err)
-					return chatAutoScript.Id, err
-				}
-				if label == nil {
-					err = errors.New("not found label id")
-					log.Error(err)
-					return chatAutoScript.Id, err
-				}
-
-				labels = append(labels, model.ChatAutoScriptToChatLabel{
-					ChatAutoScriptId: chatAutoScript.Id,
-					ChatLabelId:      removingLabelId,
-					ActionType:       string(model.RemoveLabels),
-					Order:            i,
-					CreatedAt:        currentTime,
-				})
+			labels, err = processLabels(ctx, dbCon, labels, action.RemoveLabels, model.ChatLabelAction{
+				ChatAutoScriptId: chatAutoScript.Id,
+				ActionType:       string(model.RemoveLabels),
+				Order:            i,
+				CreatedAt:        currentTime,
+			})
+			if err != nil {
+				log.Error(err)
+				return chatAutoScript.Id, err
 			}
 		default:
 			err = errors.New("invalid action type: " + action.Type)
@@ -218,17 +195,12 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 	}
 
 	chatAutoScript, err := repository.ChatAutoScriptRepo.GetById(ctx, dbCon, id)
-	if err != nil {
+	if err != nil || chatAutoScript == nil {
+		err = fmt.Errorf("not found chat script id, err=%v", err)
 		log.Error(err)
 		return err
 	}
 
-	// check if exists
-	if chatAutoScript == nil {
-		err = errors.New("not found id")
-		log.Error(err)
-		return err
-	}
 	// clear old messages
 	chatAutoScript.SendMessageActions.Actions = make([]model.AutoScriptSendMessageType, 0)
 
@@ -241,12 +213,8 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 		case model.MoveToExistedScript:
 			// check if script id exists
 			chatScript, err := repository.ChatScriptRepo.GetById(ctx, dbCon, action.ChatScriptId)
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			if chatScript == nil {
-				err = errors.New("not found chat script id")
+			if err != nil || chatScript == nil {
+				err = fmt.Errorf("not found chat script id, err=%v", err)
 				log.Error(err)
 				return err
 			}
@@ -269,46 +237,26 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 					Order:   i,
 				})
 		case model.AddLabels:
-			for _, addingLabelId := range action.AddLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, addingLabelId)
-				if err != nil {
-					log.Error(err)
-					return err
-				}
-				if label == nil {
-					err = errors.New("not found label id")
-					log.Error(err)
-					return err
-				}
-
-				newLabels = append(newLabels, model.ChatAutoScriptToChatLabel{
-					ChatAutoScriptId: chatAutoScript.Id,
-					ChatLabelId:      addingLabelId,
-					ActionType:       string(model.AddLabels),
-					Order:            i,
-					CreatedAt:        currentTime,
-				})
+			newLabels, err = processLabels(ctx, dbCon, newLabels, action.AddLabels, model.ChatLabelAction{
+				ChatAutoScriptId: chatAutoScript.Id,
+				ActionType:       string(model.AddLabels),
+				Order:            i,
+				CreatedAt:        currentTime,
+			})
+			if err != nil {
+				log.Error(err)
+				return err
 			}
 		case model.RemoveLabels:
-			for _, removingLabelId := range action.RemoveLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, dbCon, removingLabelId)
-				if err != nil {
-					log.Error(err)
-					return err
-				}
-				if label == nil {
-					err = errors.New("not found label id")
-					log.Error(err)
-					return err
-				}
-
-				newLabels = append(newLabels, model.ChatAutoScriptToChatLabel{
-					ChatAutoScriptId: chatAutoScript.Id,
-					ChatLabelId:      removingLabelId,
-					ActionType:       string(model.RemoveLabels),
-					Order:            i,
-					CreatedAt:        currentTime,
-				})
+			newLabels, err = processLabels(ctx, dbCon, newLabels, action.RemoveLabels, model.ChatLabelAction{
+				ChatAutoScriptId: chatAutoScript.Id,
+				ActionType:       string(model.RemoveLabels),
+				Order:            i,
+				CreatedAt:        currentTime,
+			})
+			if err != nil {
+				log.Error(err)
+				return err
 			}
 		default:
 			err = errors.New("invalid action type: " + action.Type)
