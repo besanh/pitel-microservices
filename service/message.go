@@ -81,8 +81,8 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	// Upload to Docs
 	if len(data.EventName) > 0 && data.EventName != "text" {
 		var fileUrl string
-		if file.Size == 0 {
-			if len(data.Url) < 1 && file == nil {
+		if file == nil {
+			if len(data.Url) < 1 {
 				return response.BadRequestMsg("url or file is required")
 			}
 			// TODO: validate url
@@ -94,6 +94,9 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 			fileUrl = fileUrlTmp
+		}
+		if len(fileUrl) < 1 {
+			return response.BadRequestMsg("file url is required")
 		}
 
 		att := model.OttAttachments{
