@@ -107,15 +107,11 @@ func getConversationByFilter(ctx context.Context, queueUuids string, filter mode
 			conversationIds = append(conversationIds, item.ConversationId)
 		}
 	}
-	if len(conversationIds) < 1 {
-		log.Error("list conversation not found")
-		return total, nil, err
-	}
 	filter.ConversationId = conversationIds
 	total, conversations, err = repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return total, nil, err
+		return
 	}
 	if total > 0 {
 		for k, conv := range *conversations {
