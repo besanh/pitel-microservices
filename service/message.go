@@ -81,7 +81,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	// Upload to Docs
 	if len(data.EventName) > 0 && data.EventName != "text" {
 		var fileUrl string
-		if file == nil {
+		if file.Size == 0 {
 			if len(data.Url) < 1 && file == nil {
 				return response.BadRequestMsg("url or file is required")
 			}

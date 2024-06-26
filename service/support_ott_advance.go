@@ -208,7 +208,8 @@ func CheckConfigAppCache(ctx context.Context, appId string) (isExist bool, err e
 		isExist = true
 	} else {
 		filter := model.AppFilter{
-			AppId: appId,
+			AppId:  appId,
+			Status: "active",
 		}
 		total, chatApp, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
