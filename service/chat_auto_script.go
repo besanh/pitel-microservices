@@ -330,8 +330,6 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 
 	if chatAutoScriptRequest.TriggerEvent == "keyword" {
 		chatAutoScript.TriggerKeywords.Keywords = chatAutoScriptRequest.TriggerKeywords.Keywords
-	} else {
-		chatAutoScript.TriggerKeywords.Keywords = make([]string, 0)
 	}
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
