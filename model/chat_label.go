@@ -75,7 +75,7 @@ func (m *ChatLabelRequest) Validate() error {
 	if len(m.LabelName) > 15 {
 		return errors.New("label name is no longer than 15 characters")
 	}
-	re := regexp.MustCompile(regex.REGEX_NORMAL)
+	re := regexp.MustCompile(regex.REGEX_TEXT_ACCENT)
 	if !re.MatchString(m.LabelName) {
 		return errors.New("label name " + m.LabelName + " includes invalid characters")
 	}
