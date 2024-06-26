@@ -45,6 +45,10 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 	}
 
 	for _, action := range chatAutoScript.ChatScriptLink {
+		if action.ChatScript == nil {
+			log.Warning("not found this chat script's info, id: ", action.ChatScriptId)
+			continue
+		}
 		chatAutoScript.ActionScript.Actions = append(chatAutoScript.ActionScript.Actions, model.ActionScriptActionType{
 			Type:         string(model.MoveToExistedScript),
 			ChatScriptId: action.ChatScriptId,
@@ -55,6 +59,10 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 	addLabels := make(map[int][]string)
 	removeLabels := make(map[int][]string)
 	for _, action := range chatAutoScript.ChatLabelLink {
+		if action.ChatLabel == nil {
+			log.Warning("not found this chat label's info, id: ", action.ChatLabelId)
+			continue
+		}
 		if action.ActionType == string(model.AddLabels) {
 			if addLabels[action.Order] == nil || len(addLabels[action.Order]) == 0 {
 				addLabels[action.Order] = make([]string, 0)
@@ -363,7 +371,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 	log.Info("message to es: ", scriptedMessage)
 
 	// Should to queue
-	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, message.AppId, docId, scriptedMessage); err != nil {
+	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -395,7 +403,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, message mo
 	// >send message to manager/admin
 	if user.AuthUser.Level != "manager" {
 		if len(user.QueueId) > 0 {
-			if err := SendEventToManage(ctx, user.AuthUser, message, user.QueueId); err != nil {
+			if err := SendEventToManage(ctx, user.AuthUser, scriptedMessage, user.QueueId); err != nil {
 				log.Error(err)
 				return err
 			}

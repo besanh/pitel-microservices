@@ -229,9 +229,10 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 		log.Error(err)
 		return err
 	}
+	// clear old messages
+	chatAutoScript.SendMessageActions.Actions = make([]model.AutoScriptSendMessageType, 0)
 
 	currentTime := time.Now()
-	actionTypes := make(map[model.ScriptActionType]bool)
 	newScripts := make([]model.ChatAutoScriptToChatScript, 0)
 	newLabels := make([]model.ChatAutoScriptToChatLabel, 0)
 	// handle actions' content
@@ -262,11 +263,6 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 				CreatedAt:        currentTime,
 			})
 		case model.SendMessage:
-			if _, ok := actionTypes[model.SendMessage]; !ok {
-				actionTypes[model.SendMessage] = true
-				//create new send message script
-				chatAutoScript.SendMessageActions = model.AutoScriptSendMessage{Actions: make([]model.AutoScriptSendMessageType, 0)}
-			}
 			chatAutoScript.SendMessageActions.Actions = append(chatAutoScript.SendMessageActions.Actions,
 				model.AutoScriptSendMessageType{
 					Content: action.Content,
@@ -334,6 +330,8 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 
 	if chatAutoScriptRequest.TriggerEvent == "keyword" {
 		chatAutoScript.TriggerKeywords.Keywords = chatAutoScriptRequest.TriggerKeywords.Keywords
+	} else {
+		chatAutoScript.TriggerKeywords.Keywords = make([]string, 0)
 	}
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName
