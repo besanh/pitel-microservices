@@ -46,7 +46,7 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 
 	for _, action := range chatAutoScript.ChatScriptLink {
 		if action.ChatScript == nil {
-			log.Warning("not found this chat script's info, id: ", action.ChatScriptId)
+			log.Error("not found this chat script's info, id: ", action.ChatScriptId)
 			continue
 		}
 		chatAutoScript.ActionScript.Actions = append(chatAutoScript.ActionScript.Actions, model.ActionScriptActionType{
@@ -60,7 +60,7 @@ func mergeSingleActionScript(chatAutoScript model.ChatAutoScriptView) model.Chat
 	removeLabels := make(map[int][]string)
 	for _, action := range chatAutoScript.ChatLabelLink {
 		if action.ChatLabel == nil {
-			log.Warning("not found this chat label's info, id: ", action.ChatLabelId)
+			log.Error("not found this chat label's info, id: ", action.ChatLabelId)
 			continue
 		}
 		if action.ActionType == string(model.AddLabels) {
