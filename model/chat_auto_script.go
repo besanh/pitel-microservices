@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
