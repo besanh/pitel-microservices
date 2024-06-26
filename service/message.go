@@ -88,7 +88,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			// TODO: validate url
 			fileUrl = data.Url
 		} else {
-			fileUrlTmp, err := s.UploadDoc(ctx, data.AppId, data.OaId, file)
+			fileUrlTmp, err := UploadDoc(ctx, data.AppId, data.OaId, file)
 			if err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())

@@ -15,6 +15,7 @@ type (
 		IRepo[model.ChatMsgSample]
 		GetChatMsgSamples(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatMsgSampleFilter, limit, offset int) (int, *[]model.ChatMsgSampleView, error)
 		GetChatMsgSampleById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatMsgSampleView, error)
+		UpdateById(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatMsgSampleView) error
 	}
 
 	ChatMsgSample struct {
@@ -33,7 +34,7 @@ func (repo *ChatMsgSample) GetChatMsgSamples(ctx context.Context, db sqlclient.I
 	query := db.GetDB().NewSelect().Model(result).
 		Column("cms.*").
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name", "oa_info")
+			return q.Column("connection_name", "connection_type", "app_id", "oa_info", "status")
 		})
 	if len(filter.TenantId) > 0 {
 		query.Where("cms.tenant_id = ?", filter.TenantId)
@@ -72,7 +73,7 @@ func (repo *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, db sqlclien
 	err := db.GetDB().NewSelect().
 		Model(result).
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name")
+			return q.Column("connection_name", "connection_type", "app_id", "oa_info", "status")
 		}).
 		Where("cms.id = ?", id).
 		Limit(1).
@@ -83,4 +84,15 @@ func (repo *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, db sqlclien
 		return nil, err
 	}
 	return result, nil
+}
+
+func (repo *ChatMsgSample) UpdateById(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatMsgSampleView) error {
+	_, err := db.GetDB().NewUpdate().
+		Model(&entity).
+		Where("id = ?", entity.Id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

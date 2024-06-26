@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+	"mime/multipart"
+	"time"
+
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"mime/multipart"
-	"time"
 )
 
 type (
@@ -83,10 +85,16 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 		log.Error(err)
 		return chatMsgSample.Id, err
 	}
+	var oaId string
+	if connectionApp.ConnectionType == "zalo" && len(connectionApp.OaInfo.Zalo) > 0 {
+		oaId = connectionApp.OaInfo.Zalo[0].OaId
+	} else if connectionApp.ConnectionType == "facebook" && len(connectionApp.OaInfo.Facebook) > 0 {
+		oaId = connectionApp.OaInfo.Facebook[0].OaId
+	}
 
 	var imageUrl string
 	if file != nil && len(file.Filename) > 0 {
-		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
+		imageUrl, err = UploadDoc(ctx, connectionApp.AppId, oaId, file)
 		if err != nil {
 			log.Error(err)
 			return chatMsgSample.Id, err
@@ -118,37 +126,30 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 		return err
 	}
 
-	chatMsgSample, err := repository.ChatMsgSampleRepo.GetById(ctx, dbCon, id)
-	if err != nil {
+	chatMsgSample, err := repository.ChatMsgSampleRepo.GetChatMsgSampleById(ctx, dbCon, id)
+	if err != nil || chatMsgSample == nil {
+		err = fmt.Errorf("not found id, err=%v", err)
 		log.Error(err)
 		return err
 	}
-
-	// check if exists
-	if chatMsgSample == nil {
-		err = errors.New("not found id")
+	if chatMsgSample.ConnectionApp == nil {
+		err = errors.New("not found connection id")
 		log.Error(err)
 		return err
+	}
+	var oaId string
+	if chatMsgSample.ConnectionApp.ConnectionType == "zalo" && len(chatMsgSample.ConnectionApp.OaInfo.Zalo) > 0 {
+		oaId = chatMsgSample.ConnectionApp.OaInfo.Zalo[0].OaId
+	} else if chatMsgSample.ConnectionApp.ConnectionType == "facebook" && len(chatMsgSample.ConnectionApp.OaInfo.Facebook) > 0 {
+		oaId = chatMsgSample.ConnectionApp.OaInfo.Facebook[0].OaId
 	}
 
 	var imageUrl string
 	if file != nil && len(file.Filename) > 0 {
-		imageUrl, err = uploadImageToStorageShareInfo(ctx, file)
+		imageUrl, err = UploadDoc(ctx, chatMsgSample.ConnectionApp.AppId, oaId, file)
 		if err != nil {
 			log.Error(err)
 			return err
-		}
-
-		if len(chatMsgSample.ImageUrl) > 0 {
-			err = removeFileFromStorageShareInfo(ctx, chatMsgSample.ImageUrl)
-			if err != nil {
-				log.Error(err)
-				//remove image just uploaded
-				if err = removeFileFromStorageShareInfo(ctx, imageUrl); err != nil {
-					log.Error(err)
-				}
-				return err
-			}
 		}
 	}
 
@@ -166,7 +167,7 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 	}
 	chatMsgSample.UpdatedBy = authUser.UserId
 	chatMsgSample.UpdatedAt = time.Now()
-	err = repository.ChatMsgSampleRepo.Update(ctx, dbCon, *chatMsgSample)
+	err = repository.ChatMsgSampleRepo.UpdateById(ctx, dbCon, *chatMsgSample)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -193,14 +194,6 @@ func (s *ChatMsgSample) DeleteChatMsgSampleById(ctx context.Context, authUser *m
 		err = errors.New("not found id")
 		log.Error(err)
 		return err
-	}
-
-	if len(chatMsgSample.ImageUrl) > 0 {
-		err = removeFileFromStorageShareInfo(ctx, chatMsgSample.ImageUrl)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
 	}
 
 	err = repository.ChatMsgSampleRepo.Delete(ctx, dbCon, id)

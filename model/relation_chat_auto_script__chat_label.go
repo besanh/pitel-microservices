@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/uptrace/bun"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type ChatAutoScriptToChatLabel struct {
@@ -15,4 +16,11 @@ type ChatAutoScriptToChatLabel struct {
 	ChatLabel        *ChatLabel      `json:"chat_label" bun:"rel:belongs-to,join:chat_label_id=id"`
 	CreatedAt        time.Time       `json:"created_at" bun:"created_at,notnull"`
 	UpdatedAt        time.Time       `json:"updated_at" bun:"updated_at,notnull"`
+}
+
+type ChatLabelAction struct {
+	ChatAutoScriptId string
+	ActionType       string
+	Order            int
+	CreatedAt        time.Time
 }
