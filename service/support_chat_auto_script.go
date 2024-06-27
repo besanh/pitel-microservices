@@ -175,6 +175,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 			log.Error(err)
 			return err
 		}
+		chatAutoScripts = *scripts
 	}
 
 	chatAutoScripts = *mergeActionScripts(&chatAutoScripts)
@@ -252,6 +253,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 			log.Error(err)
 			return err
 		}
+		chatAutoScripts = scripts
 	}
 
 	chatAutoScripts = mergeActionScripts(chatAutoScripts)
