@@ -15,7 +15,7 @@ type (
 	IChatAutoScript interface {
 		IRepo[model.ChatAutoScript]
 		InsertChatAutoScript(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
-		UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
+		UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScriptView, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
 		GetChatAutoScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatAutoScriptFilter, limit, offset int) (int, *[]model.ChatAutoScriptView, error)
 		GetChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatAutoScriptView, error)
 		DeleteChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
@@ -68,7 +68,7 @@ func (repo *ChatAutoScript) InsertChatAutoScript(ctx context.Context, db sqlclie
 	return nil
 }
 
-func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript,
+func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScriptView,
 	scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error {
 	tx, err := db.GetDB().BeginTx(ctx, nil)
 	if err != nil {
@@ -178,7 +178,7 @@ func (repo *ChatAutoScript) GetChatAutoScriptById(ctx context.Context, db sqlcli
 	err := db.GetDB().NewSelect().
 		Model(result).
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name")
+			return q.Column("connection_name", "oa_info")
 		}).
 		Relation("ChatScriptLink", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("cas_cst.order ASC")
