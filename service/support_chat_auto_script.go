@@ -152,7 +152,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 		Status:       sql.NullBool{Valid: true, Bool: true},
 	}
 
-	chatAutoScripts := make([]model.ChatAutoScriptView, 0)
+	var chatAutoScripts *[]model.ChatAutoScriptView
 	key := GenerateChatAutoScriptId(filter.TenantId, filter.Channel, conversation.AppId, filter.OaId, filter.TriggerEvent)
 	chatAutoScriptsCache := cache.RCache.Get(key)
 	if chatAutoScriptsCache != nil {
@@ -175,13 +175,13 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 			log.Error(err)
 			return err
 		}
-		chatAutoScripts = *scripts
+		chatAutoScripts = scripts
 	}
 
-	chatAutoScripts = *mergeActionScripts(&chatAutoScripts)
+	chatAutoScripts = mergeActionScripts(chatAutoScripts)
 	// try to execute the first script
 	var script *model.ChatAutoScriptView
-	for _, scriptView := range chatAutoScripts {
+	for _, scriptView := range *chatAutoScripts {
 		if util.ContainKeywords(message.Content, scriptView.TriggerKeywords.Keywords) {
 			script = &scriptView
 			break
