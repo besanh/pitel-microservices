@@ -207,7 +207,15 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 		return nil
 	}
 
-	if len(WsSubscribers.Subscribers) > 0 {
+	// check if subscribers' level is agent/user
+	userLive := false
+	for s := range WsSubscribers.Subscribers {
+		if s.Level == "user" || s.Level == "agent" {
+			userLive = true
+			break
+		}
+	}
+	if userLive {
 		// has online agents -> do nothing
 		log.Info("not executed offline auto script because agents are online")
 		return nil
