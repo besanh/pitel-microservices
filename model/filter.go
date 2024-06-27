@@ -69,7 +69,7 @@ type UserAllocateFilter struct {
 	OaId           string   `json:"oa_id"`
 	ConversationId string   `json:"conversation_id"`
 	UserId         []string `json:"user_id"`
-	QueueId        string   `json:"queue_id"`
+	QueueId        []string `json:"queue_id"`
 	AllocatedTime  int64    `json:"allocated_time"`
 	MainAllocate   string   `json:"main_allocate"`
 }
