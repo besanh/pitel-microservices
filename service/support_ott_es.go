@@ -47,9 +47,10 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		conversation.OaAvatar = conversationExist.OaAvatar
 		conversation.ExternalUserId = conversationExist.ExternalUserId
 		conversation.Username = conversationExist.Username
-		conversation.Username = conversationExist.Username
 		conversation.Avatar = conversationExist.Avatar
+		conversation.Label = conversationExist.Label
 		conversation.IsDone = conversationExist.IsDone
+		conversation.IsDoneAt = conversationExist.IsDoneAt
 		conversation.IsDoneBy = conversationExist.IsDoneBy
 		conversation.UpdatedAt = time.Now().Format(time.RFC3339)
 
