@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
@@ -146,19 +147,35 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 		TriggerEvent: "keyword",
 		Status:       sql.NullBool{Valid: true, Bool: true},
 	}
-	total, chatAutoScripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
-	if err != nil {
-		return err
-	}
-	if total == 0 {
-		log.Info("not found any auto scripts")
-		return nil
+
+	chatAutoScripts := make([]model.ChatAutoScriptView, 0)
+	key := CHAT_AUTO_SCRIPT + "_" + filter.TenantId + "_" + filter.Channel + "_" + filter.OaId + "_" + filter.TriggerEvent
+	chatAutoScriptsCache := cache.RCache.Get(key)
+	if chatAutoScriptsCache != nil {
+		if err := json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
+			log.Error(err)
+			return err
+		}
+	} else {
+		total, scripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
+		if err != nil {
+			return err
+		}
+		if total == 0 {
+			log.Info("not found any auto scripts")
+			return nil
+		}
+
+		if err = cache.RCache.Set(key, scripts, CHAT_AUTO_SCRIPT_EXPIRE); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
-	chatAutoScripts = mergeActionScripts(chatAutoScripts)
+	chatAutoScripts = *mergeActionScripts(&chatAutoScripts)
 	// try to execute the first script
 	var script *model.ChatAutoScriptView
-	for _, scriptView := range *chatAutoScripts {
+	for _, scriptView := range chatAutoScripts {
 		if util.ContainKeywords(message.Content, scriptView.TriggerKeywords.Keywords) {
 			script = &scriptView
 			break
@@ -170,7 +187,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 		return nil
 	}
 
-	if err = executeScriptActions(ctx, user, message, conversation, *script, err); err != nil {
+	if err := executeScriptActions(ctx, user, message, conversation, *script); err != nil {
 		return err
 	}
 	return nil
@@ -198,13 +215,29 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 		TriggerEvent: "offline",
 		Status:       sql.NullBool{Valid: true, Bool: true},
 	}
-	total, chatAutoScripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
-	if err != nil {
-		return err
-	}
-	if total == 0 {
-		log.Info("not found any auto scripts")
-		return nil
+
+	var chatAutoScripts *[]model.ChatAutoScriptView
+	key := CHAT_AUTO_SCRIPT + "_" + filter.TenantId + "_" + filter.Channel + "_" + filter.OaId + "_" + filter.TriggerEvent
+	chatAutoScriptsCache := cache.RCache.Get(key)
+	if chatAutoScriptsCache != nil {
+		if err := json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
+			log.Error(err)
+			return err
+		}
+	} else {
+		total, scripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
+		if err != nil {
+			return err
+		}
+		if total == 0 {
+			log.Info("not found any auto scripts")
+			return nil
+		}
+
+		if err = cache.RCache.Set(key, scripts, CHAT_AUTO_SCRIPT_EXPIRE); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	chatAutoScripts = mergeActionScripts(chatAutoScripts)
@@ -214,7 +247,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	// try to execute the first script
 	script := (*chatAutoScripts)[0]
 
-	if err = executeScriptActions(ctx, user, message, conversation, script, err); err != nil {
+	if err := executeScriptActions(ctx, user, message, conversation, script); err != nil {
 		return err
 	}
 	return nil
@@ -223,16 +256,16 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 /*
  * Handle chat auto script's logics
  */
-func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView, script model.ChatAutoScriptView, err error) error {
+func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView, script model.ChatAutoScriptView) error {
 	timestamp := time.Now().UnixMilli()
 	for _, action := range script.ActionScript.Actions {
 		switch action.Type {
 		case string(model.MoveToExistedScript):
-			if err = executeScript(ctx, user, message, conversation, action.ChatScriptId, 3); err != nil {
+			if err := executeScript(ctx, user, message, conversation, action.ChatScriptId, 3); err != nil {
 				return err
 			}
 		case string(model.SendMessage):
-			if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", action.Content, nil); err != nil {
+			if err := executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", action.Content, nil); err != nil {
 				return err
 			}
 		case string(model.AddLabels):
