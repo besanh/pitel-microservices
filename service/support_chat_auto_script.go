@@ -20,6 +20,10 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
+func GenerateChatAutoScriptId(tenantId, channel, appId, oaId, triggerEvent string) string {
+	return CHAT_AUTO_SCRIPT + "_" + tenantId + "_" + channel + "_" + appId + "_" + oaId + "_" + triggerEvent
+}
+
 func mergeActionScripts(chatAutoScripts *[]model.ChatAutoScriptView) *[]model.ChatAutoScriptView {
 	if chatAutoScripts == nil {
 		return nil
@@ -149,7 +153,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 	}
 
 	chatAutoScripts := make([]model.ChatAutoScriptView, 0)
-	key := CHAT_AUTO_SCRIPT + "_" + filter.TenantId + "_" + filter.Channel + "_" + filter.OaId + "_" + filter.TriggerEvent
+	key := GenerateChatAutoScriptId(filter.TenantId, filter.Channel, conversation.AppId, filter.OaId, filter.TriggerEvent)
 	chatAutoScriptsCache := cache.RCache.Get(key)
 	if chatAutoScriptsCache != nil {
 		if err := json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
@@ -217,7 +221,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	}
 
 	var chatAutoScripts *[]model.ChatAutoScriptView
-	key := CHAT_AUTO_SCRIPT + "_" + filter.TenantId + "_" + filter.Channel + "_" + filter.OaId + "_" + filter.TriggerEvent
+	key := GenerateChatAutoScriptId(filter.TenantId, filter.Channel, conversation.AppId, filter.OaId, filter.TriggerEvent)
 	chatAutoScriptsCache := cache.RCache.Get(key)
 	if chatAutoScriptsCache != nil {
 		if err := json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
