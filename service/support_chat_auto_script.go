@@ -163,6 +163,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 	} else {
 		total, scripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
 		if err != nil {
+			log.Error(err)
 			return err
 		}
 		if total == 0 {
@@ -231,6 +232,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	} else {
 		total, scripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
 		if err != nil {
+			log.Error(err)
 			return err
 		}
 		if total == 0 {
