@@ -187,16 +187,18 @@ func (s *ChatAutoScript) InsertChatAutoScript(ctx context.Context, authUser *mod
 
 	// clear cache
 	var key string
-	if chatAutoScript.Channel == "zalo" {
+	if chatAutoScript.Channel == "zalo" && len(connectionApp.OaInfo.Zalo) > 0 {
 		key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, connectionApp.OaInfo.Zalo[0].AppId,
 			connectionApp.OaInfo.Zalo[0].OaId, chatAutoScript.TriggerEvent)
-	} else if chatAutoScript.Channel == "facebook" {
+	} else if chatAutoScript.Channel == "facebook" && len(connectionApp.OaInfo.Facebook) > 0 {
 		key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, connectionApp.OaInfo.Facebook[0].AppId,
 			connectionApp.OaInfo.Facebook[0].OaId, chatAutoScript.TriggerEvent)
 	}
-	if err = cache.RCache.Del([]string{key}); err != nil {
-		log.Error(err)
-		return chatAutoScript.Id, err
+	if len(key) > 0 {
+		if err = cache.RCache.Del([]string{key}); err != nil {
+			log.Error(err)
+			return chatAutoScript.Id, err
+		}
 	}
 
 	return chatAutoScript.Id, nil
@@ -308,16 +310,18 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 	// clear cache
 	if chatAutoScript.ConnectionApp != nil {
 		var key string
-		if chatAutoScript.Channel == "zalo" {
+		if chatAutoScript.Channel == "zalo" && len(chatAutoScript.ConnectionApp.OaInfo.Zalo) > 0 {
 			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Zalo[0].AppId,
 				chatAutoScript.ConnectionApp.OaInfo.Zalo[0].OaId, chatAutoScript.TriggerEvent)
-		} else if chatAutoScript.Channel == "facebook" {
+		} else if chatAutoScript.Channel == "facebook" && len(chatAutoScript.ConnectionApp.OaInfo.Facebook) > 0 {
 			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Facebook[0].AppId,
 				chatAutoScript.ConnectionApp.OaInfo.Facebook[0].OaId, chatAutoScript.TriggerEvent)
 		}
-		if err = cache.RCache.Del([]string{key}); err != nil {
-			log.Error(err)
-			return err
+		if len(key) > 0 {
+			if err = cache.RCache.Del([]string{key}); err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	}
 
@@ -358,16 +362,18 @@ func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, aut
 	if chatAutoScript.ConnectionApp != nil {
 		// clear cache
 		var key string
-		if chatAutoScript.Channel == "zalo" {
+		if chatAutoScript.Channel == "zalo" && len(chatAutoScript.ConnectionApp.OaInfo.Zalo) > 0 {
 			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Zalo[0].AppId,
 				chatAutoScript.ConnectionApp.OaInfo.Zalo[0].OaId, chatAutoScript.TriggerEvent)
-		} else if chatAutoScript.Channel == "facebook" {
+		} else if chatAutoScript.Channel == "facebook" && len(chatAutoScript.ConnectionApp.OaInfo.Facebook) > 0 {
 			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Facebook[0].AppId,
 				chatAutoScript.ConnectionApp.OaInfo.Facebook[0].OaId, chatAutoScript.TriggerEvent)
 		}
-		if err = cache.RCache.Del([]string{key}); err != nil {
-			log.Error(err)
-			return err
+		if len(key) > 0 {
+			if err = cache.RCache.Del([]string{key}); err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	}
 
@@ -403,16 +409,18 @@ func (s *ChatAutoScript) DeleteChatAutoScriptById(ctx context.Context, authUser 
 	if chatAutoScript.ConnectionApp != nil {
 		// clear cache
 		var key string
-		if chatAutoScript.Channel == "zalo" {
+		if chatAutoScript.Channel == "zalo" && len(chatAutoScript.ConnectionApp.OaInfo.Zalo) > 0 {
 			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Zalo[0].AppId,
 				chatAutoScript.ConnectionApp.OaInfo.Zalo[0].OaId, chatAutoScript.TriggerEvent)
-		} else if chatAutoScript.Channel == "facebook" {
+		} else if chatAutoScript.Channel == "facebook" && len(chatAutoScript.ConnectionApp.OaInfo.Facebook) > 0 {
 			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Facebook[0].AppId,
 				chatAutoScript.ConnectionApp.OaInfo.Facebook[0].OaId, chatAutoScript.TriggerEvent)
 		}
-		if err = cache.RCache.Del([]string{key}); err != nil {
-			log.Error(err)
-			return err
+		if len(key) > 0 {
+			if err = cache.RCache.Del([]string{key}); err != nil {
+				log.Error(err)
+				return err
+			}
 		}
 	}
 	return
