@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -17,7 +16,6 @@ type (
 		IRepo[model.ChatAutoScript]
 		InsertChatAutoScript(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScript, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
 		UpdateChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScriptView, scripts []model.ChatAutoScriptToChatScript, labels []model.ChatAutoScriptToChatLabel) error
-		UpdateChatAutoScriptStatus(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScriptView) error
 		GetChatAutoScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatAutoScriptFilter, limit, offset int) (int, *[]model.ChatAutoScriptView, error)
 		GetChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatAutoScriptView, error)
 		DeleteChatAutoScriptById(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
@@ -121,14 +119,6 @@ func (repo *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, db sql
 		return err
 	}
 	return nil
-}
-
-func (repo *ChatAutoScript) UpdateChatAutoScriptStatus(ctx context.Context, db sqlclient.ISqlClientConn, chatAutoScript model.ChatAutoScriptView) error {
-	chatAutoScript.UpdatedAt = time.Now()
-	_, err := db.GetDB().NewUpdate().Model(&chatAutoScript).
-		Where("id = ?", chatAutoScript.Id).
-		Exec(ctx)
-	return err
 }
 
 func (repo *ChatAutoScript) GetChatAutoScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatAutoScriptFilter, limit, offset int) (int, *[]model.ChatAutoScriptView, error) {

@@ -335,38 +335,57 @@ func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, aut
 		return err
 	}
 
-	chatAutoScript, err := repository.ChatAutoScriptRepo.GetChatAutoScriptById(ctx, dbCon, id)
+	chatAutoScriptView, err := repository.ChatAutoScriptRepo.GetChatAutoScriptById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
 	// check if exists
-	if chatAutoScript == nil {
+	if chatAutoScriptView == nil {
 		err = errors.New("not found id")
 		log.Error(err)
 		return err
 	}
 
 	if status.Valid {
-		chatAutoScript.Status = status.Bool
+		chatAutoScriptView.Status = status.Bool
 	}
-	chatAutoScript.UpdatedBy = authUser.UserId
-	err = repository.ChatAutoScriptRepo.UpdateChatAutoScriptStatus(ctx, dbCon, *chatAutoScript)
+	chatAutoScriptView.UpdatedBy = authUser.UserId
+
+	chatAutoScript := model.ChatAutoScript{
+		Base:               chatAutoScriptView.Base,
+		BaseModel:          chatAutoScriptView.BaseModel,
+		TenantId:           chatAutoScriptView.TenantId,
+		ScriptName:         chatAutoScriptView.ScriptName,
+		Channel:            chatAutoScriptView.Channel,
+		ConnectionId:       chatAutoScriptView.ConnectionId,
+		ConnectionApp:      chatAutoScriptView.ConnectionApp,
+		CreatedBy:          chatAutoScriptView.CreatedBy,
+		UpdatedBy:          chatAutoScriptView.UpdatedBy,
+		Status:             chatAutoScriptView.Status,
+		TriggerEvent:       chatAutoScriptView.TriggerEvent,
+		TriggerKeywords:    chatAutoScriptView.TriggerKeywords,
+		ChatScriptLink:     chatAutoScriptView.ChatScriptLink,
+		SendMessageActions: chatAutoScriptView.SendMessageActions,
+		ChatLabelLink:      chatAutoScriptView.ChatLabelLink,
+	}
+
+	err = repository.ChatAutoScriptRepo.Update(ctx, dbCon, chatAutoScript)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
-	if chatAutoScript.ConnectionApp != nil {
+	if chatAutoScriptView.ConnectionApp != nil {
 		// clear cache
 		var key string
-		if chatAutoScript.Channel == "zalo" && len(chatAutoScript.ConnectionApp.OaInfo.Zalo) > 0 {
-			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Zalo[0].AppId,
-				chatAutoScript.ConnectionApp.OaInfo.Zalo[0].OaId, chatAutoScript.TriggerEvent)
-		} else if chatAutoScript.Channel == "facebook" && len(chatAutoScript.ConnectionApp.OaInfo.Facebook) > 0 {
-			key = GenerateChatAutoScriptId(chatAutoScript.TenantId, chatAutoScript.Channel, chatAutoScript.ConnectionApp.OaInfo.Facebook[0].AppId,
-				chatAutoScript.ConnectionApp.OaInfo.Facebook[0].OaId, chatAutoScript.TriggerEvent)
+		if chatAutoScriptView.Channel == "zalo" && len(chatAutoScriptView.ConnectionApp.OaInfo.Zalo) > 0 {
+			key = GenerateChatAutoScriptId(chatAutoScriptView.TenantId, chatAutoScriptView.Channel, chatAutoScriptView.ConnectionApp.OaInfo.Zalo[0].AppId,
+				chatAutoScriptView.ConnectionApp.OaInfo.Zalo[0].OaId, chatAutoScriptView.TriggerEvent)
+		} else if chatAutoScriptView.Channel == "facebook" && len(chatAutoScriptView.ConnectionApp.OaInfo.Facebook) > 0 {
+			key = GenerateChatAutoScriptId(chatAutoScriptView.TenantId, chatAutoScriptView.Channel, chatAutoScriptView.ConnectionApp.OaInfo.Facebook[0].AppId,
+				chatAutoScriptView.ConnectionApp.OaInfo.Facebook[0].OaId, chatAutoScriptView.TriggerEvent)
 		}
 		if len(key) > 0 {
 			if err = cache.RCache.Del([]string{key}); err != nil {
