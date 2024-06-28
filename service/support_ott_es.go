@@ -26,7 +26,6 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		ShareInfo:        data.ShareInfo,
 		ExternalUserId:   data.ExternalUserId,
 		CreatedAt:        time.Now().Format(time.RFC3339),
-		UpdatedAt:        time.Now().Format(time.RFC3339),
 	}
 	shareInfo := data.ShareInfo
 	isExisted := false
@@ -52,6 +51,7 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		conversation.IsDone = conversationExist.IsDone
 		conversation.IsDoneAt = conversationExist.IsDoneAt
 		conversation.IsDoneBy = conversationExist.IsDoneBy
+		conversation.CreatedAt = conversationExist.CreatedAt
 		conversation.UpdatedAt = time.Now().Format(time.RFC3339)
 
 		conversation.ShareInfo = shareInfo

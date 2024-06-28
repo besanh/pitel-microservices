@@ -318,7 +318,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 	if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
-		if err = ExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
+		if err = ExecutePlannedAutoScript(ctx, user, message, &conversation); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}

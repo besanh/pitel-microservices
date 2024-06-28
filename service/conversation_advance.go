@@ -303,9 +303,33 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 		return
 	}
 
+	result, err := UpdateConversationLabelList(conversationExist.Label, labelType, request.Action, labelId)
+	if err != nil {
+		return err
+	}
+	conversationExist.Label = result
+
+	tmpBytes, err := json.Marshal(conversationExist)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	esDoc := map[string]any{}
+	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		log.Error(err)
+		return
+	}
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId, esDoc); err != nil {
+		log.Error(err)
+		return
+	}
+	return
+}
+
+func UpdateConversationLabelList(existLabels json.RawMessage, labelType string, action string, labelId string) (result []byte, err error) {
 	objmap := []any{}
 	labelsExist := []any{}
-	if err = json.Unmarshal([]byte(conversationExist.Label), &labelsExist); err != nil {
+	if err = json.Unmarshal([]byte(existLabels), &labelsExist); err != nil {
 		log.Error(err)
 		return
 	}
@@ -318,7 +342,7 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 				log.Error(err)
 				continue
 			}
-			if request.Action == "delete" && tmp["label_id"] == labelId {
+			if action == "delete" && tmp["label_id"] == labelId {
 				continue
 			}
 			if len(tmp["label_id"]) > 0 {
@@ -332,7 +356,7 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 		}
 	}
 
-	if request.Action == "create" || request.Action == "update" {
+	if action == "create" || action == "update" {
 		if len(labelId) > 0 {
 			if len(labelsExist) > 0 {
 				for _, item := range labelsExist {
@@ -359,7 +383,7 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 				})
 			}
 		}
-	} else if request.Action == "delete" {
+	} else if action == "delete" {
 		if labelType == "zalo" {
 			for _, item := range labelsExist {
 				tmp := map[string]string{}
@@ -381,23 +405,8 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	}
 	log.Info("label_id: ", labelId)
 
-	result, err := json.Marshal(objmap)
+	result, err = json.Marshal(objmap)
 	if err != nil {
-		log.Error(err)
-	}
-	conversationExist.Label = result
-
-	tmpBytes, err := json.Marshal(conversationExist)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	esDoc := map[string]any{}
-	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		log.Error(err)
-		return
-	}
-	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return
 	}
