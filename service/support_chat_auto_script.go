@@ -126,7 +126,7 @@ func processLabels(ctx context.Context, dbCon sqlclient.ISqlClientConn, labels [
 /*
  * Handle execute main chat auto script's logics (detecting keywords, offline agents)
  */
-func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
+func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) error {
 	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
 		return err
 	}
@@ -139,7 +139,10 @@ func ExecutePlannedAutoScript(ctx context.Context, user model.User, message mode
 /*
  * Handle detect keywords in message's content then executing the first matching script
  */
-func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
+func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) error {
+	if conversation == nil {
+		return errors.New("not found conversation")
+	}
 	if user.AuthUser == nil {
 		log.Error("not found auth user info")
 		return nil
@@ -202,7 +205,10 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 /*
  * Handle detect agents online status then executing the first matching script
  */
-func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView) error {
+func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) error {
+	if conversation == nil {
+		return errors.New("not found conversation")
+	}
 	if user.AuthUser == nil {
 		log.Error("not found auth user info")
 		return nil
@@ -272,7 +278,11 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 /*
  * Handle chat auto script's logics
  */
-func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView, script model.ChatAutoScriptView) error {
+func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView, script model.ChatAutoScriptView) error {
+	if conversation == nil {
+		return errors.New("not found conversation")
+	}
+
 	subscribers := make([]string, 0)
 	for s := range WsSubscribers.Subscribers {
 		if (user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId) || (conversation.TenantId == s.TenantId) {
@@ -322,6 +332,12 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
 						return err
 					}
+
+					newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, labelId)
+					if err != nil {
+						return err
+					}
+					conversation.Label = newLabels
 				} else if conversation.ConversationType == "facebook" {
 					if len(label.ExternalLabelId) > 0 {
 						request.Action = "update"
@@ -342,29 +358,21 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 						//switch to update
 						request.Action = "update"
 						request.ExternalLabelId = externalLabelId
-					}
-					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-						return err
+						if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+							return err
+						}
+
+						newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, externalLabelId)
+						if err != nil {
+							return err
+						}
+						conversation.Label = newLabels
 					}
 				}
 			}
 
 			if len(action.AddLabels) > 0 {
-				conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
-				if err != nil {
-					log.Error(err)
-					return err
-				} else if len(conversationExist.ConversationId) < 1 {
-					log.Errorf("conversation %s not found", conversation.ConversationId)
-					return err
-				}
-
-				var conversationEvent model.ConversationView
-				if err = util.ParseAnyToAny(conversationExist, &conversationEvent); err != nil {
-					log.Error(err)
-					return err
-				}
-				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscribers, true, &conversationEvent)
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscribers, true, conversation)
 			}
 		case string(model.RemoveLabels):
 			for _, labelId := range action.RemoveLabels {
@@ -392,12 +400,24 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
 						return err
 					}
+
+					newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, labelId)
+					if err != nil {
+						return err
+					}
+					conversation.Label = newLabels
 				} else if conversation.ConversationType == "facebook" {
 					if len(label.ExternalLabelId) > 0 {
 						request.Action = "delete"
 						if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
 							return err
 						}
+
+						newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, label.ExternalLabelId)
+						if err != nil {
+							return err
+						}
+						conversation.Label = newLabels
 					} else {
 						// do nothing
 					}
@@ -405,21 +425,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 			}
 
 			if len(action.RemoveLabels) > 0 {
-				conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
-				if err != nil {
-					log.Error(err)
-					return err
-				} else if len(conversationExist.ConversationId) < 1 {
-					log.Errorf("conversation %s not found", conversation.ConversationId)
-					return err
-				}
-
-				var conversationEvent model.ConversationView
-				if err = util.ParseAnyToAny(conversationExist, &conversationEvent); err != nil {
-					log.Error(err)
-					return err
-				}
-				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscribers, true, &conversationEvent)
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscribers, true, conversation)
 			}
 		default:
 			return errors.New("invalid action type")
@@ -431,8 +437,12 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 /*
  * send scripted message pre-defined from chat auto script or chat script to ott & es
  */
-func executeSendScriptedMessage(ctx context.Context, user model.User, conversation model.ConversationView,
+func executeSendScriptedMessage(ctx context.Context, user model.User, conversation *model.ConversationView,
 	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
+	if conversation == nil {
+		return errors.New("not found conversation")
+	}
+
 	if util.ContainKeywords(content, variables.PERSONALIZATION_KEYWORDS) {
 		pageName := conversation.OaName
 		customerName := conversation.Username
@@ -488,18 +498,9 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 		return err
 	}
 
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
-	if err != nil {
-		log.Error(err)
-		return err
-	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found", conversation.ConversationId)
-		return err
-	}
-
 	// >update conversation doc on ES
-	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
-	tmpBytes, err := json.Marshal(conversationExist)
+	conversation.UpdatedAt = time.Now().Format(time.RFC3339)
+	tmpBytes, err := json.Marshal(conversation)
 	if err != nil {
 		return err
 	}
@@ -507,7 +508,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		return err
 	}
-	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversationExist.AppId, conversationExist.ConversationId, esDoc); err != nil {
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -531,8 +532,11 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 /*
  * execute chat script based on its script type accordingly
  */
-func executeScript(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView,
+func executeScript(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView,
 	id string, limit int) error {
+	if conversation == nil {
+		return errors.New("not found conversation")
+	}
 	if limit < 1 {
 		return errors.New("out of limit in executing chat script")
 	}
