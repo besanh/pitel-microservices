@@ -273,6 +273,13 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
  * Handle chat auto script's logics
  */
 func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation model.ConversationView, script model.ChatAutoScriptView) error {
+	subscribers := make([]string, 0)
+	for s := range WsSubscribers.Subscribers {
+		if (user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId) || (conversation.TenantId == s.TenantId) {
+			subscribers = append(subscribers, s.Id)
+		}
+	}
+
 	timestamp := time.Now().UnixMilli()
 	for _, action := range script.ActionScript.Actions {
 		switch action.Type {
@@ -341,6 +348,22 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					}
 				}
 			}
+
+			//send event to wss
+			conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
+			if err != nil {
+				log.Error(err)
+				return err
+			} else if len(conversationExist.ConversationId) < 1 {
+				log.Errorf("conversation %s not found", conversation.ConversationId)
+				return err
+			}
+			var conversationEvent model.ConversationView
+			if err = util.ParseAnyToAny(conversationExist, &conversationEvent); err != nil {
+				log.Error(err)
+				return err
+			}
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscribers, true, &conversationEvent)
 		case string(model.RemoveLabels):
 			for _, labelId := range action.RemoveLabels {
 				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
@@ -378,6 +401,22 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					}
 				}
 			}
+
+			//send event to wss
+			conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
+			if err != nil {
+				log.Error(err)
+				return err
+			} else if len(conversationExist.ConversationId) < 1 {
+				log.Errorf("conversation %s not found", conversation.ConversationId)
+				return err
+			}
+			var conversationEvent model.ConversationView
+			if err = util.ParseAnyToAny(conversationExist, &conversationEvent); err != nil {
+				log.Error(err)
+				return err
+			}
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscribers, true, &conversationEvent)
 		default:
 			return errors.New("invalid action type")
 		}
