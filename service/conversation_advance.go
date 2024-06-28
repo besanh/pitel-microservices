@@ -326,19 +326,19 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	return
 }
 
-func UpdateConversationLabelList(existLabels json.RawMessage, labelType string, action string, labelId string) ([]byte, error) {
+func UpdateConversationLabelList(existLabels json.RawMessage, labelType string, action string, labelId string) (result []byte, err error) {
 	objmap := []any{}
 	labelsExist := []any{}
-	if err := json.Unmarshal([]byte(existLabels), &labelsExist); err != nil {
+	if err = json.Unmarshal([]byte(existLabels), &labelsExist); err != nil {
 		log.Error(err)
-		return nil, err
+		return
 	}
 
 	// TODO: because zalo only assign one label for one conversation
 	if labelType == "facebook" {
 		for _, item := range labelsExist {
 			tmp := map[string]string{}
-			if err := util.ParseAnyToAny(item, &tmp); err != nil {
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
 				continue
 			}
@@ -387,7 +387,7 @@ func UpdateConversationLabelList(existLabels json.RawMessage, labelType string, 
 		if labelType == "zalo" {
 			for _, item := range labelsExist {
 				tmp := map[string]string{}
-				if err := util.ParseAnyToAny(item, &tmp); err != nil {
+				if err = util.ParseAnyToAny(item, &tmp); err != nil {
 					log.Error(err)
 					continue
 				}
@@ -405,12 +405,12 @@ func UpdateConversationLabelList(existLabels json.RawMessage, labelType string, 
 	}
 	log.Info("label_id: ", labelId)
 
-	result, err := json.Marshal(objmap)
+	result, err = json.Marshal(objmap)
 	if err != nil {
 		log.Error(err)
-		return nil, err
+		return
 	}
-	return result, err
+	return
 }
 
 func checkItemExist(objmap []any, tmp map[string]string) (isExist bool) {
