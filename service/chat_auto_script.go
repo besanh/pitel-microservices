@@ -352,8 +352,7 @@ func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, aut
 		chatAutoScript.Status = status.Bool
 	}
 	chatAutoScript.UpdatedBy = authUser.UserId
-	chatAutoScript.UpdatedAt = time.Now()
-	err = repository.ChatAutoScriptRepo.UpdateChatAutoScriptById(ctx, dbCon, *chatAutoScript, nil, nil)
+	err = repository.ChatAutoScriptRepo.UpdateChatAutoScriptStatus(ctx, dbCon, *chatAutoScript)
 	if err != nil {
 		log.Error(err)
 		return err
