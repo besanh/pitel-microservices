@@ -73,16 +73,18 @@ var (
 	}
 
 	EVENT_CHAT map[string]string = map[string]string{
-		"oa_connection":           "oa_connection",
-		"submit_info":             "submit_info",
-		"ask_info":                "ask_info",
-		"message_created":         "message_created",
-		"conversation_created":    "conversation_created",
-		"conversation_done":       "conversation_done",
-		"conversation_assigned":   "conversation_assigned",
-		"conversation_unassigned": "conversation_unassigned",
-		"conversation_removed":    "conversation_removed",
-		"conversation_reopen":     "conversation_reopen",
+		"oa_connection":              "oa_connection",
+		"submit_info":                "submit_info",
+		"ask_info":                   "ask_info",
+		"message_created":            "message_created",
+		"conversation_created":       "conversation_created",
+		"conversation_done":          "conversation_done",
+		"conversation_assigned":      "conversation_assigned",
+		"conversation_unassigned":    "conversation_unassigned",
+		"conversation_removed":       "conversation_removed",
+		"conversation_reopen":        "conversation_reopen",
+		"conversation_add_labels":    "conversation_add_labels",
+		"conversation_remove_labels": "conversation_remove_labels",
 	}
 
 	STATUS_CONVERSATION []string = []string{
