@@ -10,6 +10,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -353,22 +354,10 @@ func (s *ChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, aut
 	}
 	chatAutoScriptView.UpdatedBy = authUser.UserId
 
-	chatAutoScript := model.ChatAutoScript{
-		Base:               chatAutoScriptView.Base,
-		BaseModel:          chatAutoScriptView.BaseModel,
-		TenantId:           chatAutoScriptView.TenantId,
-		ScriptName:         chatAutoScriptView.ScriptName,
-		Channel:            chatAutoScriptView.Channel,
-		ConnectionId:       chatAutoScriptView.ConnectionId,
-		ConnectionApp:      chatAutoScriptView.ConnectionApp,
-		CreatedBy:          chatAutoScriptView.CreatedBy,
-		UpdatedBy:          chatAutoScriptView.UpdatedBy,
-		Status:             chatAutoScriptView.Status,
-		TriggerEvent:       chatAutoScriptView.TriggerEvent,
-		TriggerKeywords:    chatAutoScriptView.TriggerKeywords,
-		ChatScriptLink:     chatAutoScriptView.ChatScriptLink,
-		SendMessageActions: chatAutoScriptView.SendMessageActions,
-		ChatLabelLink:      chatAutoScriptView.ChatLabelLink,
+	var chatAutoScript model.ChatAutoScript
+	if err = util.ParseAnyToAny(chatAutoScriptView, &chatAutoScript); err != nil {
+		log.Error(err)
+		return err
 	}
 
 	err = repository.ChatAutoScriptRepo.Update(ctx, dbCon, chatAutoScript)
