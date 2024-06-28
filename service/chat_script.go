@@ -83,7 +83,7 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	case "image", "file":
 		var fileUrl string
 		if file != nil && len(file.Filename) > 0 {
-			fileUrl, err = uploadImageToStorageShareInfo(ctx, file)
+			fileUrl, err = UploadDoc(ctx, "", "", file)
 			if err != nil {
 				log.Error(err)
 				return chatScript.Id, err
@@ -151,13 +151,7 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 		chatScript.Content = ""
 		chatScript.OtherScriptId = ""
 		if chatScript.ScriptType == "image" || chatScript.ScriptType == "file" {
-			if len(chatScript.FileUrl) > 0 {
-				if err = removeFileFromStorageShareInfo(ctx, chatScript.FileUrl); err != nil {
-					log.Error(err)
-					return err
-				}
-				chatScript.FileUrl = ""
-			}
+			chatScript.FileUrl = ""
 		}
 	}
 
@@ -169,22 +163,10 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 	case "image", "file":
 		var fileUrl string
 		if file != nil && len(file.Filename) > 0 {
-			fileUrl, err = uploadImageToStorageShareInfo(ctx, file)
+			fileUrl, err = UploadDoc(ctx, "", "", file)
 			if err != nil {
 				log.Error(err)
 				return err
-			}
-
-			if len(chatScript.FileUrl) > 0 {
-				err = removeFileFromStorageShareInfo(ctx, chatScript.FileUrl)
-				if err != nil {
-					log.Error(err)
-					//remove image just uploaded
-					if err = removeFileFromStorageShareInfo(ctx, fileUrl); err != nil {
-						log.Error(err)
-					}
-					return err
-				}
 			}
 		}
 		if len(fileUrl) > 0 {
@@ -278,14 +260,6 @@ func (s *ChatScript) DeleteChatScriptById(ctx context.Context, authUser *model.A
 		err = errors.New("not found id")
 		log.Error(err)
 		return err
-	}
-
-	if len(chatScript.FileUrl) > 0 {
-		err = removeFileFromStorageShareInfo(ctx, chatScript.FileUrl)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
 	}
 
 	err = repository.ChatScriptRepo.Delete(ctx, dbCon, id)
