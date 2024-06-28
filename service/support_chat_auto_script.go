@@ -350,9 +350,21 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 			}
 
 			if len(action.AddLabels) > 0 {
-				if err := PublishConversationLabelEvent(ctx, user, conversation, subscribers, "conversation_add_labels"); err != nil {
+				conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
+				if err != nil {
+					log.Error(err)
+					return err
+				} else if len(conversationExist.ConversationId) < 1 {
+					log.Errorf("conversation %s not found", conversation.ConversationId)
 					return err
 				}
+
+				var conversationEvent model.ConversationView
+				if err = util.ParseAnyToAny(conversationExist, &conversationEvent); err != nil {
+					log.Error(err)
+					return err
+				}
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscribers, true, &conversationEvent)
 			}
 		case string(model.RemoveLabels):
 			for _, labelId := range action.RemoveLabels {
@@ -393,33 +405,26 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 			}
 
 			if len(action.RemoveLabels) > 0 {
-				if err := PublishConversationLabelEvent(ctx, user, conversation, subscribers, "conversation_remove_labels"); err != nil {
+				conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
+				if err != nil {
+					log.Error(err)
+					return err
+				} else if len(conversationExist.ConversationId) < 1 {
+					log.Errorf("conversation %s not found", conversation.ConversationId)
 					return err
 				}
+
+				var conversationEvent model.ConversationView
+				if err = util.ParseAnyToAny(conversationExist, &conversationEvent); err != nil {
+					log.Error(err)
+					return err
+				}
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscribers, true, &conversationEvent)
 			}
 		default:
 			return errors.New("invalid action type")
 		}
 	}
-	return nil
-}
-
-func PublishConversationLabelEvent(ctx context.Context, user model.User, conversation model.ConversationView, subscribers []string, eventChat string) error {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, user.AuthUser.TenantId, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId)
-	if err != nil {
-		log.Error(err)
-		return err
-	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found", conversation.ConversationId)
-		return err
-	}
-
-	var conversationEvent model.ConversationView
-	if err = util.ParseAnyToAny(conversationExist, &conversationEvent); err != nil {
-		log.Error(err)
-		return err
-	}
-	PublishConversationToManyUser(variables.EVENT_CHAT[eventChat], subscribers, true, &conversationEvent)
 	return nil
 }
 
