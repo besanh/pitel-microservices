@@ -2,8 +2,9 @@ package model
 
 import (
 	"errors"
-	"github.com/uptrace/bun"
 	"mime/multipart"
+
+	"github.com/uptrace/bun"
 )
 
 type ChatMsgSample struct {
@@ -59,7 +60,7 @@ func (r *ChatMsgSampleRequest) Validate() error {
 		return errors.New("channel is required")
 	}
 	if len(r.Content) < 1 {
-		return errors.New("channel is required")
+		return errors.New("content is required")
 	}
 
 	return nil

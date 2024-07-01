@@ -297,6 +297,7 @@ func (s *ChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, authUser 
 	if chatAutoScriptRequest.TriggerEvent == "keyword" {
 		chatAutoScript.TriggerKeywords.Keywords = chatAutoScriptRequest.TriggerKeywords.Keywords
 	}
+	chatAutoScript.Channel = chatAutoScriptRequest.Channel
 	chatAutoScript.ConnectionId = chatAutoScriptRequest.ConnectionId
 	chatAutoScript.TriggerEvent = chatAutoScriptRequest.TriggerEvent
 	chatAutoScript.ScriptName = chatAutoScriptRequest.ScriptName

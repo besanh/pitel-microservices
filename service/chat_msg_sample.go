@@ -119,7 +119,7 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 	return chatMsgSample.Id, nil
 }
 
-func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, cms model.ChatMsgSampleRequest, file *multipart.FileHeader) error {
+func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *model.AuthUser, id string, chatMsgSampleRequest model.ChatMsgSampleRequest, file *multipart.FileHeader) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -153,15 +153,11 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 		}
 	}
 
-	if len(cms.Keyword) > 0 {
-		chatMsgSample.Keyword = cms.Keyword
-	}
-	if len(cms.Theme) > 0 {
-		chatMsgSample.Theme = cms.Theme
-	}
-	if len(cms.Content) > 0 {
-		chatMsgSample.Content = cms.Content
-	}
+	chatMsgSample.Keyword = chatMsgSampleRequest.Keyword
+	chatMsgSample.Theme = chatMsgSampleRequest.Theme
+	chatMsgSample.Content = chatMsgSampleRequest.Content
+	chatMsgSample.Channel = chatMsgSampleRequest.Channel
+	chatMsgSample.ConnectionId = chatMsgSampleRequest.ConnectionId
 	if len(imageUrl) > 0 {
 		chatMsgSample.ImageUrl = imageUrl
 	}
