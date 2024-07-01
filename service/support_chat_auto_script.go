@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -369,9 +370,15 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				}
 			}
 
+			tmp := conversation.Label
+			if err := GetLabelsInfo(ctx, conversation); err != nil {
+				return err
+			}
 			if len(action.AddLabels) > 0 {
 				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscribers, true, conversation)
 			}
+			// wipe out labels detailed info and set it to label ids list
+			conversation.Label = tmp
 		case string(model.RemoveLabels):
 			for _, labelId := range action.RemoveLabels {
 				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
@@ -422,9 +429,15 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 				}
 			}
 
+			tmp := conversation.Label
+			if err := GetLabelsInfo(ctx, conversation); err != nil {
+				return err
+			}
 			if len(action.RemoveLabels) > 0 {
 				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscribers, true, conversation)
 			}
+			// wipe out labels detailed info and set it to label ids list
+			conversation.Label = tmp
 		default:
 			return errors.New("invalid action type")
 		}
@@ -584,6 +597,48 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 		if err != nil {
 			return errors.New("invalid script type")
 		}
+	}
+	return nil
+}
+
+func GetLabelsInfo(ctx context.Context, conversation *model.ConversationView) error {
+	if !reflect.DeepEqual(conversation.Label, "") {
+		var labels []map[string]string
+		if err := json.Unmarshal([]byte(conversation.Label), &labels); err != nil {
+			log.Error(err)
+			return err
+		}
+		chatLabelIds := []string{}
+		if len(labels) > 0 {
+			for _, item := range labels {
+				chatLabelIds = append(chatLabelIds, item["label_id"])
+			}
+			if len(chatLabelIds) > 0 {
+				_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+					LabelIds: chatLabelIds,
+				}, -1, 0)
+				if err != nil {
+					log.Error(err)
+					return err
+				}
+				if len(*chatLabelExist) > 0 {
+					tmp, err := json.Marshal(*chatLabelExist)
+					if err != nil {
+						log.Error(err)
+						return err
+					}
+					conversation.Label = tmp
+				} else {
+					conversation.Label = []byte("[]")
+				}
+			} else {
+				conversation.Label = []byte("[]")
+			}
+		} else {
+			conversation.Label = []byte("[]")
+		}
+	} else {
+		conversation.Label = []byte("[]")
 	}
 	return nil
 }
