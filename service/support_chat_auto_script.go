@@ -339,9 +339,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					}
 					conversation.Label = newLabels
 				} else if conversation.ConversationType == "facebook" {
-					if len(label.ExternalLabelId) > 0 {
-						request.Action = "update"
-					} else {
+					if len(label.ExternalLabelId) < 1 {
 						// request fb to create new external label id
 						request.Action = "create"
 						externalLabelId, err := handleLabelFacebook(ctx, repository.DBConn, conversation.ConversationType, *label, request)
@@ -354,20 +352,20 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 						if err := repository.ChatLabelRepo.Update(ctx, repository.DBConn, *label); err != nil {
 							return err
 						}
-
-						//switch to update
-						request.Action = "update"
+						// update external label id to request
 						request.ExternalLabelId = externalLabelId
-						if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-							return err
-						}
-
-						newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, externalLabelId)
-						if err != nil {
-							return err
-						}
-						conversation.Label = newLabels
 					}
+					//switch to update
+					request.Action = "update"
+					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+						return err
+					}
+
+					newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, request.ExternalLabelId)
+					if err != nil {
+						return err
+					}
+					conversation.Label = newLabels
 				}
 			}
 
