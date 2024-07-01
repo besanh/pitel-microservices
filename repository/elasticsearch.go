@@ -7,17 +7,15 @@ import (
 	"fmt"
 
 	"github.com/elastic/go-elasticsearch/esapi"
-	"github.com/tel4vn/fins-microservices/common/log"
-	rabbitmq "github.com/tel4vn/fins-microservices/internal/rabbitmq/driver"
-	"github.com/tel4vn/fins-microservices/model"
+	// rabbitmq "github.com/tel4vn/fins-microservices/internal/rabbitmq/driver"
 )
 
 type (
 	IElasticsearch interface {
 		CheckAliasExist(ctx context.Context, index, alias string) (bool, error)
 		CreateAlias(ctx context.Context, index, alias string) error
-		CreateDocRabbitMQ(ctx context.Context, index, tenant, routing, uuid string, esDoc map[string]any) (bool, error)
-		CreateAliasRabbitMQ(ctx context.Context, index, alias string) (bool, error)
+		// CreateDocRabbitMQ(ctx context.Context, index, tenant, routing, uuid string, esDoc map[string]any) (bool, error)
+		// CreateAliasRabbitMQ(ctx context.Context, index, alias string) (bool, error)
 		InsertLog(ctx context.Context, tenantId, index, appId, docId string, esDoc map[string]any) error
 		UpdateDocById(ctx context.Context, index, appId, docId string, esDoc map[string]any) error
 		BulkUpdateDoc(ctx context.Context, index string, esDoc map[string]any) error
@@ -60,46 +58,46 @@ func (repo *Elasticsearch) CreateAlias(ctx context.Context, index, alias string)
 	return nil
 }
 
-func (repo *Elasticsearch) CreateAliasRabbitMQ(ctx context.Context, index, alias string) (bool, error) {
-	log.Infof("create alias: %s", alias)
-	data := model.AliasCreate{
-		Index: index,
-		Name:  index + "_" + alias,
-	}
-	var actions []any
-	addAction := make(map[string]any)
-	addAction["add"] = data
-	actions = append(actions, addAction)
-	bodyData := make(map[string]any)
-	bodyData["actions"] = actions
-	var payload model.RabbitMQPayload
-	payload.HttpMethod = "POST"
-	payload.Uri = "/_aliases"
-	payload.Body = bodyData
-	err := rabbitmq.RabbitConnector.Publish(payload)
-	if err != nil {
-		log.Error(err)
-		return false, err
-	} else {
-		log.Infof("alias %s is created", alias)
-		return true, nil
-	}
-}
-func (repo *Elasticsearch) CreateDocRabbitMQ(ctx context.Context, index, tenant, routing, uuid string, esDoc map[string]any) (bool, error) {
-	payload := model.RabbitMQPayload{
-		HttpMethod: "POST",
-		Uri:        "/" + index + "_" + tenant + "/_doc/" + uuid + "/_create?routing=" + index + "_" + routing,
-		Body:       esDoc,
-	}
-	err := rabbitmq.RabbitConnector.Publish(payload)
-	if err != nil {
-		log.Error(err)
-		return false, err
-	} else {
-		log.Infof("push log chat %s to rabbitmq success", uuid)
-		return true, nil
-	}
-}
+// func (repo *Elasticsearch) CreateAliasRabbitMQ(ctx context.Context, index, alias string) (bool, error) {
+// 	log.Infof("create alias: %s", alias)
+// 	data := model.AliasCreate{
+// 		Index: index,
+// 		Name:  index + "_" + alias,
+// 	}
+// 	var actions []any
+// 	addAction := make(map[string]any)
+// 	addAction["add"] = data
+// 	actions = append(actions, addAction)
+// 	bodyData := make(map[string]any)
+// 	bodyData["actions"] = actions
+// 	var payload model.RabbitMQPayload
+// 	payload.HttpMethod = "POST"
+// 	payload.Uri = "/_aliases"
+// 	payload.Body = bodyData
+// 	err := rabbitmq.RabbitConnector.Publish(payload)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return false, err
+// 	} else {
+// 		log.Infof("alias %s is created", alias)
+// 		return true, nil
+// 	}
+// }
+// func (repo *Elasticsearch) CreateDocRabbitMQ(ctx context.Context, index, tenant, routing, uuid string, esDoc map[string]any) (bool, error) {
+// 	payload := model.RabbitMQPayload{
+// 		HttpMethod: "POST",
+// 		Uri:        "/" + index + "_" + tenant + "/_doc/" + uuid + "/_create?routing=" + index + "_" + routing,
+// 		Body:       esDoc,
+// 	}
+// 	err := rabbitmq.RabbitConnector.Publish(payload)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return false, err
+// 	} else {
+// 		log.Infof("push log chat %s to rabbitmq success", uuid)
+// 		return true, nil
+// 	}
+// }
 
 func (repo *Elasticsearch) InsertLog(ctx context.Context, tenantId, index, appId, docId string, esDoc map[string]any) error {
 	body, err := json.Marshal(esDoc)

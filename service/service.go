@@ -84,6 +84,9 @@ var (
 	SMTP_MAILPORT       int    = 0
 	SMTP_INFORM         bool   = false
 	ENABLE_NOTIFY_EMAIL bool   = false
+
+	// Queue
+	BSS_CHAT_QUEUE_NAME string = "bss_chat_request_queue"
 )
 
 type (

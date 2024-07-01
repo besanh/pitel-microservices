@@ -126,11 +126,11 @@ func processLabels(ctx context.Context, dbCon sqlclient.ISqlClientConn, labels [
 /*
  * Handle execute main chat auto script's logics (detecting keywords, offline agents)
  */
-func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) error {
-	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversation); err != nil {
+func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversationView *model.ConversationView) error {
+	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversationView); err != nil {
 		return err
 	}
-	if err := ExecutePlannedAutoScriptWhenAgentsOffline(ctx, user, message, conversation); err != nil {
+	if err := ExecutePlannedAutoScriptWhenAgentsOffline(ctx, user, message, conversationView); err != nil {
 		return err
 	}
 	return nil
@@ -435,26 +435,25 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 /*
  * send scripted message pre-defined from chat auto script or chat script to ott & es
  */
-func executeSendScriptedMessage(ctx context.Context, user model.User, conversation *model.ConversationView,
-	timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
-	if conversation == nil {
+func executeSendScriptedMessage(ctx context.Context, user model.User, conversationView *model.ConversationView, timestamp int64, eventName, content string, attachments []*model.OttAttachments) error {
+	if conversationView == nil {
 		return errors.New("not found conversation")
 	}
 
 	if util.ContainKeywords(content, variables.PERSONALIZATION_KEYWORDS) {
-		pageName := conversation.OaName
-		customerName := conversation.Username
+		pageName := conversationView.OaName
+		customerName := conversationView.Username
 		content = strings.ReplaceAll(content, "{{page_name}}", pageName)
 		content = strings.ReplaceAll(content, "{{customer_name}}", customerName)
 	}
 
 	// >send message to ott
 	ottMessage := model.SendMessageToOtt{
-		Type:          conversation.ConversationType,
+		Type:          conversationView.ConversationType,
 		EventName:     eventName,
-		AppId:         conversation.AppId,
-		OaId:          conversation.OaId,
-		Uid:           conversation.ExternalUserId,
+		AppId:         conversationView.AppId,
+		OaId:          conversationView.OaId,
+		Uid:           conversationView.ExternalUserId,
 		SupporterId:   user.AuthUser.UserId,
 		SupporterName: user.AuthUser.Username,
 		Timestamp:     fmt.Sprintf("%d", timestamp),
@@ -470,17 +469,17 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	docId := uuid.NewString()
 	// Store ES
 	scriptedMessage := model.Message{
-		TenantId:            conversation.TenantId,
+		TenantId:            conversationView.TenantId,
 		ParentExternalMsgId: "",
 		Id:                  docId,
-		MessageType:         conversation.ConversationType,
-		ConversationId:      conversation.ConversationId,
+		MessageType:         conversationView.ConversationType,
+		ConversationId:      conversationView.ConversationId,
 		ExternalMsgId:       resOtt.Data.MsgId,
 		EventName:           eventName,
 		Direction:           variables.DIRECTION["send"],
-		AppId:               conversation.AppId,
-		OaId:                conversation.OaId,
-		Avatar:              conversation.Avatar,
+		AppId:               conversationView.AppId,
+		OaId:                conversationView.OaId,
+		Avatar:              conversationView.Avatar,
 		SupporterId:         user.AuthUser.UserId,
 		SupporterName:       user.AuthUser.Fullname,
 		SendTime:            time.Now(),
@@ -491,22 +490,19 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	log.Info("message to es: ", scriptedMessage)
 
 	// Should to queue
-	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
+	if err := InsertES(ctx, conversationView.TenantId, ES_INDEX, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
 		log.Error(err)
 		return err
 	}
 
 	// >update conversation doc on ES
-	conversation.UpdatedAt = time.Now().Format(time.RFC3339)
-	tmpBytes, err := json.Marshal(conversation)
-	if err != nil {
+	conversationView.UpdatedAt = time.Now().Format(time.RFC3339)
+	conversation := model.Conversation{}
+	if err := util.ParseAnyToAny(conversationView, &conversation); err != nil {
+		log.Error(err)
 		return err
 	}
-	esDoc := map[string]any{}
-	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		return err
-	}
-	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
+	if err = PublishPutConversationToChatQueue(ctx, conversation); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -519,7 +515,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 				return err
 			}
 		} else {
-			err = errors.New(fmt.Sprintf("queue %s not found in send event to manage", user.QueueId))
+			err = errors.New("queue " + user.QueueId + " not found in send event to manage")
 			log.Error(err)
 			return err
 		}
@@ -581,9 +577,7 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 			return err
 		}
 	default:
-		if err != nil {
-			return errors.New("invalid script type")
-		}
+		return errors.New("invalid script type")
 	}
 	return nil
 }
