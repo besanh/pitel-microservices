@@ -8,6 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/internal/queue"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -259,6 +260,19 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 		}
 
 		connectionApp = (*connections)[0]
+	}
+	return
+}
+
+func PublishPutConversationToChatQueue(ctx context.Context, conversation model.Conversation) (err error) {
+	var b []byte
+	if b, err = json.Marshal(conversation); err != nil {
+		log.Error(err)
+		return
+	}
+	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_QUEUE_NAME, b); err != nil {
+		log.Error(err)
+		return
 	}
 	return
 }

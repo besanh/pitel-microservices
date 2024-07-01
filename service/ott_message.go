@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/adjust/rmq/v5"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -13,6 +15,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
+	"github.com/tel4vn/fins-microservices/internal/queue"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 	"golang.org/x/exp/slices"
@@ -24,10 +27,14 @@ type (
 		GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any)
 		PostShareInfoEvent(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
 	}
-	OttMessage struct{}
+	OttMessage struct {
+		NumConsumer int
+		mux         *sync.RWMutex
+	}
 )
 
 func NewOttMessage() IOttMessage {
+
 	return &OttMessage{}
 }
 
@@ -106,7 +113,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	var conversation model.ConversationView
 
 	// TODO: check queue setting
-	user, err := CheckChatSetting(ctx, message)
+	user, err := s.CheckChatSetting(ctx, message)
 	if user.AuthUser != nil {
 		data.TenantId = user.AuthUser.TenantId
 		message.TenantId = user.AuthUser.TenantId
@@ -143,7 +150,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 	}
 	if user.IsOk {
-		conversationTmp, isNewTmp, errConv := UpSertConversation(ctx, user.ConnectionId, data)
+		conversationTmp, isNewTmp, errConv := s.UpSertConversation(ctx, user.ConnectionId, data)
 		if errConv != nil {
 			log.Error(errConv)
 			return response.ServiceUnavailableMsg(errConv.Error())
@@ -317,6 +324,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			}
 		}
 	}
+
 	if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
 		if err = ExecutePlannedAutoScript(ctx, user, message, &conversation); err != nil {
 			log.Error(err)
@@ -361,4 +369,59 @@ func (s *OttMessage) PostShareInfoEvent(ctx context.Context, authUser *model.Aut
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	return response.OKResponse()
+}
+
+func (s *OttMessage) InitQueueRequest() {
+	isExist := queue.RMQ.Server.IsHasQueue(BSS_CHAT_QUEUE_NAME)
+	if isExist {
+		queue.RMQ.Server.RemoveQueue(BSS_CHAT_QUEUE_NAME)
+	}
+
+	if s.NumConsumer < 1 {
+		s.NumConsumer = 1
+	}
+
+	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_QUEUE_NAME, s.handleEsQueue, s.NumConsumer); err != nil {
+		log.Error(err)
+	}
+}
+
+func (s *OttMessage) handleEsQueue(d rmq.Delivery) {
+	payload := model.Conversation{}
+	if err := util.ParseAnyToAny(d.Payload(), &payload); err != nil {
+		log.Error(err)
+		d.Reject()
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		tmpBytes, err := json.Marshal(payload)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		esDoc := map[string]any{}
+		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, payload.AppId, payload.ConversationId, esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+	}()
+
+	select {
+	case <-done:
+		d.Ack()
+	case <-ctx.Done():
+		log.Errorf("handleEsQueue exceeded timeout, msg=%s", d.Payload())
+		d.Reject()
+	}
 }

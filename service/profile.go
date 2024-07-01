@@ -63,7 +63,7 @@ func (s *Profile) GetUpdateProfileByUserId(ctx context.Context, authUser *model.
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 
-				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversationExist.AppId, conversationExist.ConversationId, esDoc); err != nil {
+				if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}

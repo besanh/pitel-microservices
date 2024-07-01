@@ -11,7 +11,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/queue"
 	elasticsearch "github.com/tel4vn/fins-microservices/internal/elasticsearch"
-	"github.com/tel4vn/fins-microservices/internal/messagequeue"
 	"github.com/tel4vn/fins-microservices/internal/queuetask"
 	"github.com/tel4vn/fins-microservices/internal/rabbitmq"
 	"github.com/tel4vn/fins-microservices/internal/redis"
@@ -46,11 +45,10 @@ func init() {
 	}
 
 	cfg := Config{
-		Port:       env.GetStringENV("PORT", "8000"),
-		gRPCPort:   env.GetStringENV("GRPC_PORT", "8001"),
-		AAA_Adress: env.GetStringENV("AAA_ADRESS", "aaa-service:8001"),
-		LogLevel:   env.GetStringENV("LOG_LEVEL", "error"),
-		LogFile:    env.GetStringENV("LOG_FILE", "log/console.log"),
+		Port:     env.GetStringENV("PORT", "8000"),
+		gRPCPort: env.GetStringENV("GRPC_PORT", "8002"),
+		LogLevel: env.GetStringENV("LOG_LEVEL", "error"),
+		LogFile:  env.GetStringENV("LOG_FILE", "log/console.log"),
 	}
 
 	sqlClientConfig := sqlclient.SqlConfig{
@@ -83,38 +81,35 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
-	queue.RMQ = queue.NewRMQ(queue.Rcfg{
-		Address:  env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
+
+	// Init Redis Message Queue
+	redisCfg := queue.Rcfg{
+		Address:  env.GetStringENV("REDIS_ADDRESS", "localhost"),
 		Password: env.GetStringENV("REDIS_PASSWORD", ""),
-		DB:       9,
-	})
-	// rabbitmqconfig := rmq.Config{
-	// 	Uri:                  env.GetStringENV("RMQ_HOST", "rabbitmq.dev.fins.vn"),
-	// 	ChannelNotifyTimeout: 100 * time.Millisecond,
-	// 	Reconnect: struct {
-	// 		Interval   time.Duration
-	// 		MaxAttempt int
-	// 	}{
-	// 		Interval:   500 * time.Millisecond,
-	// 		MaxAttempt: 7200,
-	// 	},
-	// }
-	// rmq.RabbitConnector = rmq.New(rabbitmqconfig)
-	// rmq.RabbitConnector.RoutingKey = "es.writer"
-	// rmq.RabbitConnector.ExchangeName = "events"
-	// if err := rmq.RabbitConnector.Ping(); err != nil {
-	// 	panic(err)
-	// }
-	rabbitMQConfig := rabbitmq.Config{
-		Addr:         env.GetStringENV("RMQ_HOST", "rabbitmq.dev.fins.vn"),
-		ExchangeName: env.GetStringENV("RMQ_EXCHANGE_NAME", "bss-message"),
-		QueueName:    env.GetStringENV("RMQ_QUEUE_NAME", "bss-chat"),
+		DB:       env.GetIntENV("REDIS_RMQ_DATABASE", 9),
+	}
+	queue.RMQ = queue.NewRMQ(redisCfg)
+
+	// RabbitMQ
+	rabbitmqconfig := rabbitmq.Config{
+		Uri:                  env.GetStringENV("RMQ_HOST", "amqp://guest:guest@localhost:5672/"),
+		ChannelNotifyTimeout: 10 * time.Second,
+		Reconnect: struct {
+			Interval   time.Duration
+			MaxAttempt int
+		}{
+			Interval:   500 * time.Millisecond,
+			MaxAttempt: 7200,
+		},
 	}
 
-	err = messagequeue.NewMQConn(rabbitMQConfig)
-	if err != nil {
+	rabbitmq.RabbitConnector = rabbitmq.New(rabbitmqconfig)
+	rabbitmq.RabbitConnector.RoutingKey = env.GetStringENV("RABBITMQ_ROUTING_KEY", "bss-chat")
+	rabbitmq.RabbitConnector.ExchangeName = env.GetStringENV("RABBITMQ_EXCHANGE_NAME", "bss-message")
+	if err := rabbitmq.RabbitConnector.Ping(); err != nil {
 		panic(err)
 	}
+
 	esCfg := elasticsearch.Config{
 		Username:              env.GetStringENV("ES_USERNAME", "elastic"),
 		Password:              env.GetStringENV("ES_PASSWORD", "tel4vnEs2021"),
@@ -136,6 +131,7 @@ func init() {
 	// goauth.GoAuthClient = goauth.NewGoAuth(cache.RCache.GetClient())
 	// authMdw.SetupGoGuardian()
 	authMdw.AuthMdw = authMdw.NewGatewayAuthMiddleware(env.GetStringENV("ENV", "dev"))
+
 	config = cfg
 }
 
@@ -239,3 +235,11 @@ func setAppLogger(cfg Config, file *os.File) {
 	}
 	log.SetOutput(io.MultiWriter(os.Stdout, file))
 }
+
+// package main
+
+// import "github.com/tel4vn/fins-microservices/cmd"
+
+// func main() {
+// 	cmd.Execute()
+// }

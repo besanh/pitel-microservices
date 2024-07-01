@@ -309,17 +309,7 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	}
 	conversationExist.Label = result
 
-	tmpBytes, err := json.Marshal(conversationExist)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	esDoc := map[string]any{}
-	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		log.Error(err)
-		return
-	}
-	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId, esDoc); err != nil {
+	if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 		log.Error(err)
 		return
 	}
