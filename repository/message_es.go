@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/elastic/go-elasticsearch/esapi"
-	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/model"
@@ -65,7 +64,6 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 	if err != nil {
 		return 0, nil, err
 	}
-	log.Infof("buf %s", buf)
 	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
@@ -256,7 +254,6 @@ func (repo *MessageES) searchWithScroll(ctx context.Context, tenantId, index str
 	if err != nil {
 		return
 	}
-	log.Infof("buf 2 %s", buf)
 	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
