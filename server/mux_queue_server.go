@@ -1,12 +1,9 @@
 package server
 
 import (
-	"time"
-
 	"github.com/hibiken/asynq"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/queuetask"
 )
 
 func NewMuxServer() {
@@ -25,16 +22,16 @@ func NewMuxServer() {
 			},
 		},
 	)
-	configQueueTask := queuetask.QueueTask{
-		RedisUrl: env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
-		MaxRetry: env.GetIntENV("QUEUE_TASK_MAX_RETRY", 3),
-		Timeout:  env.GetTimeDurationENV("QUEUE_TASK_TIMEOUT", 30*time.Second),
-	}
-	NewServeMuxQueueTask(srv, configQueueTask)
+	// configQueueTask := queuetask.QueueTask{
+	// 	RedisUrl: env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
+	// 	MaxRetry: env.GetIntENV("QUEUE_TASK_MAX_RETRY", 3),
+	// 	Timeout:  env.GetTimeDurationENV("QUEUE_TASK_TIMEOUT", 30*time.Second),
+	// }
+	NewServeMuxQueueTask(srv)
 }
 
 // Worker process queue task background
-func NewServeMuxQueueTask(srv *asynq.Server, config queuetask.QueueTask) {
+func NewServeMuxQueueTask(srv *asynq.Server) {
 	// ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	// defer cancel()
 
