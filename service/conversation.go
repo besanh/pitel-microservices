@@ -200,6 +200,8 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
+
+	// IMPROVE: should we update direction es or use queue ?
 	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -287,7 +289,8 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 			log.Error(err)
 			return err
 		}
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+
+		if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 			log.Error(err)
 			if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*userAllocate)[0]); err != nil {
 				log.Error(err)

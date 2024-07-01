@@ -24,7 +24,7 @@ type S3Config struct {
 	ContentType string
 }
 
-func (config S3Config) String() string {
+func (config *S3Config) String() string {
 	return fmt.Sprintf("AccessKey:%s Endpoint:%s UseSSL:%t BucketName:%s Location:%s ContentType:%s",
 		config.AccessKey, config.Endpoint, config.UseSSL, config.BucketName, config.Location, config.ContentType)
 }

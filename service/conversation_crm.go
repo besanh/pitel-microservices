@@ -91,7 +91,9 @@ func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids [
 	conversationIds := []string{}
 	conversationFilter := model.UserAllocateFilter{
 		TenantId: filter.TenantId,
-		QueueId:  queueUuids,
+	}
+	if len(queueUuids) > 0 {
+		conversationFilter.QueueId = queueUuids
 	}
 	if filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"

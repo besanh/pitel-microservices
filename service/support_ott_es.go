@@ -13,7 +13,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func UpSertConversation(ctx context.Context, connectionId string, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
+func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId string, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
 	newConversationId := GenerateConversationId(data.AppId, data.OaId, data.ExternalUserId)
 	conversation = model.Conversation{
 		TenantId:         data.TenantId,
@@ -64,25 +64,11 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		// }
 
 		// TODO: update conversation => use queue consumer
-		tmpBytes, err := json.Marshal(conversation)
-		if err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		esDoc := map[string]any{}
-		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
+		if err := PublishPutConversationToChatQueue(ctx, conversation); err != nil {
 			log.Error(err)
 			return conversation, isNew, err
 		}
 
-		// if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
-		// 	log.Error(err)
-		// 	return conversation, isNew, err
-		// }
 		isExisted = true
 		return conversation, isNew, nil
 	}
@@ -160,7 +146,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
+func (s *OttMessage) UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
 	var isUpdate bool
 	newConversationId := GenerateConversationId(appId, oaId, conversationId)
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
@@ -218,7 +204,7 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId
 			return err
 		}
 	} else {
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
+		if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 			log.Error(err)
 			return err
 		}

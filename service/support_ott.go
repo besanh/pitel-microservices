@@ -16,7 +16,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func CheckChatSetting(ctx context.Context, message model.Message) (model.User, error) {
+func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message) (model.User, error) {
 	var user model.User
 	var authInfo model.AuthUser
 	// var userAllocate model.UserAllocate
@@ -69,7 +69,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 
 			log.Info("user first: ", (*userAllocations)[0].UserId)
 
-			user, err := CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, true, &(*userAllocations)[0])
+			user, err := s.CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, true, &(*userAllocations)[0])
 			if err != nil {
 				log.Error(err)
 				return user, err
@@ -98,7 +98,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 			return user, nil
 		}
 	} else {
-		user, err := CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, false, nil)
+		user, err := s.CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, false, nil)
 		if err != nil {
 			log.Error(err)
 			return user, err
@@ -130,7 +130,7 @@ func CheckChatSetting(ctx context.Context, message model.Message) (model.User, e
 /**
 * Check all setting to allocate conversation to user
  */
-func CheckAllSetting(ctx context.Context, newConversationId string, message model.Message, isConversationExist bool, currentUserAllocate *model.UserAllocate) (user model.User, err error) {
+func (s *OttMessage) CheckAllSetting(ctx context.Context, newConversationId string, message model.Message, isConversationExist bool, currentUserAllocate *model.UserAllocate) (user model.User, err error) {
 	var authInfo model.AuthUser
 	connectionFilter := model.ChatConnectionAppFilter{
 		ConnectionType: message.MessageType,
@@ -229,7 +229,7 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 					ConnectionQueueUser: *chatQueueUsers,
 				}
 
-				userTmp, err := GetAllocateUser(ctx, chatSetting, isConversationExist, currentUserAllocate)
+				userTmp, err := s.GetAllocateUser(ctx, chatSetting, isConversationExist, currentUserAllocate)
 				if err != nil {
 					user.ConnectionId = connectionQueue.ConnectionId
 					user.ConnectionQueueId = connectionQueue.Id
@@ -260,7 +260,7 @@ func CheckAllSetting(ctx context.Context, newConversationId string, message mode
 * if isConversationExist = true,  it means conversation is exist, and we can get user from user_allocate
 * if isConversationExist = false, it means conversation is not exist, we need to get user from chat_setting
  */
-func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConversationExist bool, currentUserAllocate *model.UserAllocate) (user model.User, err error) {
+func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConversationExist bool, currentUserAllocate *model.UserAllocate) (user model.User, err error) {
 	userAllocate := model.UserAllocate{}
 	var authInfo model.AuthUser
 	var userLives []Subscriber
@@ -338,7 +338,7 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 		if len(tenantId) < 1 {
 			tenantId = (*currentUserAllocate).TenantId
 		}
-		if err = UpdateConversationById(ctx, tenantId, *currentUserAllocate, chatSetting.Message); err != nil {
+		if err = s.UpdateConversationById(ctx, tenantId, *currentUserAllocate, chatSetting.Message); err != nil {
 			log.Error(err)
 			return user, err
 		}
@@ -414,7 +414,7 @@ func GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConve
 	}
 }
 
-func UpdateConversationById(ctx context.Context, tenantId string, userAllocate model.UserAllocate, message model.Message) error {
+func (s *OttMessage) UpdateConversationById(ctx context.Context, tenantId string, userAllocate model.UserAllocate, message model.Message) error {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, message.AppId, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId))
 	if err != nil {
 		return err
@@ -436,7 +436,8 @@ func UpdateConversationById(ctx context.Context, tenantId string, userAllocate m
 	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		return err
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, message.AppId, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), esDoc); err != nil {
+	if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+		log.Error(err)
 		return err
 	}
 
