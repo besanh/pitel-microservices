@@ -70,8 +70,8 @@ func init() {
 	}); err != nil {
 		panic(err)
 	}
+
 	// Init Redis Message Queue
-	log.Info("initializing redis message queue")
 	redisCfg := queue.Rcfg{
 		Address:  env.GetStringENV("REDIS_ADDRESS", "localhost"),
 		Password: env.GetStringENV("REDIS_PASSWORD", ""),
