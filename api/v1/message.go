@@ -27,6 +27,7 @@ func NewMessage(engine *gin.Engine, messageService service.IMessage) {
 		Group.GET("", handler.GetMessages)
 		Group.POST("read", handler.MarkReadMessages)
 		Group.POST("share-info", handler.ShareInfo)
+		Group.GET("scroll", handler.GetMessagesWithScrollAPI)
 	}
 }
 
@@ -145,5 +146,23 @@ func (h *Message) ShareInfo(c *gin.Context) {
 	log.Info("share info body: ", shareInfo)
 
 	code, result := h.messageService.ShareInfo(c, res.Data, shareInfo)
+	c.JSON(code, result)
+}
+
+func (h *Message) GetMessagesWithScrollAPI(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+	limit := util.ParseLimit(c.Query("limit"))
+	scrollId := c.Query("scroll_id")
+
+	filter := model.MessageFilter{
+		ConversationId: c.Query("conversation_id"),
+		ExternalUserId: c.Query("external_user_id"),
+	}
+
+	code, result := h.messageService.GetMessagesWithScrollAPI(c, res.Data, filter, limit, scrollId)
 	c.JSON(code, result)
 }

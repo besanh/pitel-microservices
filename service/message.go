@@ -23,6 +23,7 @@ type (
 		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
 		// SendMessageToOTTAsync(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
 		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
+		GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (int, any)
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
 	}
@@ -243,6 +244,22 @@ func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, fil
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	return response.Pagination(messages, total, limit, offset)
+}
+
+func (s *Message) GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (int, any) {
+	messages, total, respScrollId, err := repository.MessageESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX, filter, limit, scrollId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if messages == nil {
+		messages = make([]*model.Message, 0)
+	}
+	result := map[string]any{
+		"messages":  messages,
+		"scroll_id": respScrollId,
+	}
+	return response.Pagination(result, total, limit, 0)
 }
 
 func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any) {

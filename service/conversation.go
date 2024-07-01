@@ -22,6 +22,7 @@ type (
 	IConversation interface {
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
+		GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
 		GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
@@ -175,6 +176,120 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		}
 	}
 	return response.Pagination(conversationCustomViews, len(conversationCustomViews), limit, offset)
+}
+
+func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any) {
+	conversationIds := []string{}
+	conversationFilter := model.UserAllocateFilter{
+		TenantId: authUser.TenantId,
+		UserId:   []string{authUser.UserId},
+	}
+	if filter.IsDone.Valid {
+		conversationFilter.MainAllocate = "deactive"
+	} else {
+		conversationFilter.MainAllocate = "active"
+	}
+	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if total > 0 {
+		for _, item := range *userAllocations {
+			conversationIds = append(conversationIds, item.ConversationId)
+		}
+	}
+	if len(conversationIds) < 1 {
+		log.Error("list conversation not found")
+		return response.Pagination(nil, 0, limit, 0)
+	}
+	filter.ConversationId = conversationIds
+	filter.TenantId = authUser.TenantId
+	conversations, _, respScrollId, err := repository.ConversationESRepo.SearchWithScroll(ctx, "", ES_INDEX_CONVERSATION, filter, limit, scrollId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+
+	conversationCustomViews := make([]model.ConversationCustomView, 0)
+	if len(conversations) > 0 {
+		for k, conv := range conversations {
+			filter := model.MessageFilter{
+				TenantId:       conv.TenantId,
+				ConversationId: conv.ConversationId,
+				IsRead:         "deactive",
+				EventNameExlucde: []string{
+					"received",
+					"seen",
+				},
+			}
+			_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+			if err != nil {
+				log.Error(err)
+				break
+			}
+			conv.TotalUnRead = int64(len(*messages))
+
+			filterMessage := model.MessageFilter{
+				TenantId:       conv.TenantId,
+				ConversationId: conv.ConversationId,
+			}
+			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			if err != nil {
+				log.Error(err)
+				break
+			}
+			if len(*message) > 0 {
+				if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
+					conv.LatestMessageContent = (*message)[0].EventName
+				} else {
+					conv.LatestMessageContent = (*message)[0].Content
+				}
+				conv.LatestMessageDirection = (*message)[0].Direction
+			}
+
+			conversations[k] = conv
+
+			// TODO: parse label
+			var conversationCustomView model.ConversationCustomView
+			if err := util.ParseAnyToAny(conversations[k], &conversationCustomView); err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+
+			if !reflect.DeepEqual(conversations[k].Label, "") {
+				var labels []map[string]string
+				if err = json.Unmarshal([]byte(conversations[k].Label), &labels); err != nil {
+					log.Error(err)
+					return response.ServiceUnavailableMsg(err.Error())
+				}
+				chatLabelIds := []string{}
+				if len(labels) > 0 {
+					for _, item := range labels {
+						chatLabelIds = append(chatLabelIds, item["label_id"])
+					}
+					if len(chatLabelIds) > 0 {
+						_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+							LabelIds: chatLabelIds,
+						}, -1, 0)
+						if err != nil {
+							log.Error(err)
+							return response.ServiceUnavailableMsg(err.Error())
+						}
+						if len(*chatLabelExist) > 0 {
+							conversationCustomView.Label = chatLabelExist
+						}
+					}
+				}
+			}
+			conversationCustomViews = append(conversationCustomViews, conversationCustomView)
+		}
+	}
+	result := map[string]any{
+		"conversations": conversationCustomViews,
+		"scroll_id":     respScrollId,
+	}
+	return response.Pagination(result, len(conversationCustomViews), limit, 0)
 }
 
 func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any) {
