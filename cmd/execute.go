@@ -8,9 +8,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/queue"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
-	"github.com/tel4vn/fins-microservices/internal/queuetask"
+	"github.com/tel4vn/fins-microservices/internal/queue"
 	"github.com/tel4vn/fins-microservices/internal/rabbitmq"
 	"github.com/tel4vn/fins-microservices/internal/redis"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
@@ -110,12 +109,12 @@ func init() {
 	repository.ESClient = elasticsearch.NewElasticsearchClient(esCfg)
 
 	// Queue task
-	queueTaskConfig := queuetask.QueueTask{
-		RedisUrl: env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
-		MaxRetry: env.GetIntENV("QUEUE_TASK_MAX_RETRY", 3),
-		Timeout:  env.GetTimeDurationENV("QUEUE_TASK_TIMEOUT", 30*time.Second),
-	}
-	queuetask.NewQueueTaskClient(queueTaskConfig)
+	// queueTaskConfig := queuetask.QueueTask{
+	// 	RedisUrl: env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
+	// 	MaxRetry: env.GetIntENV("QUEUE_TASK_MAX_RETRY", 3),
+	// 	Timeout:  env.GetTimeDurationENV("QUEUE_TASK_TIMEOUT", 30*time.Second),
+	// }
+	// queuetask.NewQueueTaskClient(queueTaskConfig)
 
 	// goauth.GoAuthClient = goauth.NewGoAuth(cache.RCache.GetClient())
 	// authMdw.SetupGoGuardian()
@@ -124,8 +123,24 @@ func init() {
 	config = cfg
 }
 
+func initRedis() {
+	var err error
+	if redis.Redis, err = redis.NewRedis(redis.Config{
+		Addr:         env.GetStringENV("REDIS_ADDRESS", "localhost:6379"),
+		Password:     env.GetStringENV("REDIS_PASSWORD", ""),
+		DB:           env.GetIntENV("REDIS_DATABASE", 0),
+		PoolSize:     30,
+		PoolTimeout:  20,
+		IdleTimeout:  10,
+		ReadTimeout:  20,
+		WriteTimeout: 15,
+	}); err != nil {
+		panic(err)
+	}
+}
+
 func Execute() {
-	var rootCmd = cobra.Command{Use: "chat-service"}
+	var rootCmd = cobra.Command{Use: "chat"}
 	rootCmd.AddCommand(cmdMain)
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err)

@@ -31,6 +31,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.25.1 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/adjust/uniuri v0.0.0-20130923163420-498743145e60 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20230218143504-906a9b012302 // indirect
 	github.com/alicebob/miniredis/v2 v2.32.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
@@ -71,10 +72,13 @@ require (
 	golang.org/x/sync v0.7.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240506185236-b8a5c65736ae // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/bsm/ratelimit.v1 v1.0.0-20170922094635-f56db5e73a5e // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/redis.v3 v3.6.4 // indirect
 )
 
 require (
+	github.com/adjust/rmq v1.0.0
 	github.com/adjust/rmq/v5 v5.2.0
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

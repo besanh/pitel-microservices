@@ -57,6 +57,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	msgId, _ := jsonBody["msg_id"].(string)
 	content, _ := jsonBody["text"].(string)
 	isEchoTmp, _ := jsonBody["is_echo"].(string)
+
 	var isEcho bool
 	if len(isEchoTmp) > 0 {
 		var err error
@@ -67,6 +68,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			return
 		}
 	}
+
 	attachmentsTmp, _ := jsonBody["attachments"].([]any)
 	attachmentsAny := make([]any, 0)
 	for item := range attachmentsTmp {

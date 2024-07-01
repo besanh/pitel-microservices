@@ -134,7 +134,6 @@ func (r *RabbitMQ) Ping() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to open channel")
 	}
-	log.Info("RabbitMQ ping successfully")
 	defer channel.Close()
 	return nil
 }
