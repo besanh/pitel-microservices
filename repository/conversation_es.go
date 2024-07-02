@@ -16,11 +16,13 @@ import (
 
 type (
 	IConversationES interface {
+		IESGenericRepo[model.Conversation]
 		GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.ConversationView, error)
 		GetConversationById(ctx context.Context, tenantId, index, appId, id string) (*model.Conversation, error)
 		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollId string, scrollDurations ...time.Duration) (entries []*model.ConversationView, total int, respScrollId string, err error)
 	}
 	ConversationES struct {
+		ESGenericRepo[model.Conversation]
 	}
 )
 
@@ -234,7 +236,7 @@ func (repo *ConversationES) SearchWithScroll(ctx context.Context, tenantId, inde
 		}
 		body, err = repo.searchWithScroll(ctx, tenantId, index, filter, size, scrollDuration)
 	} else {
-		body, err = repo.scrollAPI(ctx, scrollId)
+		body, err = repo.ScrollAPI(ctx, scrollId)
 	}
 	if err != nil || body == nil {
 		return
@@ -265,7 +267,8 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 	// Remove because routing maybe having pitel_conversation_
 	// filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
 	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
+		//filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
 	if len(filter.AppId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray(filter.AppId)...))
@@ -335,21 +338,6 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 		client.Search.WithTrackTotalHits(true),
 		client.Search.WithPretty(),
 		client.Search.WithScroll(scrollDuration),
-	)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-	result, err = elasticsearch.ParseSearchResponse((*esapi.Response)(res))
-	return
-}
-
-func (repo *ConversationES) scrollAPI(ctx context.Context, scrollId string) (result *model.SearchReponse, err error) {
-	client := ESClient.GetClient()
-	res, err := client.Scroll(
-		client.Scroll.WithContext(ctx),
-		client.Scroll.WithScrollID(scrollId),
-		client.Scroll.WithScroll(time.Minute),
 	)
 	if err != nil {
 		return

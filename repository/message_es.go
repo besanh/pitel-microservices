@@ -14,11 +14,13 @@ import (
 
 type (
 	IMessageES interface {
+		IESGenericRepo[model.Message]
 		GetMessages(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit, offset int) (int, *[]model.Message, error)
 		GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error)
 		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (entries []*model.Message, total int, respScrollId string, err error)
 	}
 	MessageES struct {
+		ESGenericRepo[model.Message]
 	}
 )
 
@@ -195,7 +197,7 @@ func (repo *MessageES) SearchWithScroll(ctx context.Context, tenantId, index str
 		}
 		body, err = repo.searchWithScroll(ctx, tenantId, index, filter, limit, scrollDuration)
 	} else {
-		body, err = repo.scrollAPI(ctx, scrollId)
+		body, err = repo.ScrollAPI(ctx, scrollId)
 	}
 	if err != nil || body == nil {
 		return
@@ -262,21 +264,6 @@ func (repo *MessageES) searchWithScroll(ctx context.Context, tenantId, index str
 		client.Search.WithTrackTotalHits(true),
 		client.Search.WithPretty(),
 		client.Search.WithScroll(scrollDuration),
-	)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
-	result, err = elasticsearch.ParseSearchResponse((*esapi.Response)(res))
-	return
-}
-
-func (repo *MessageES) scrollAPI(ctx context.Context, scrollId string) (result *model.SearchReponse, err error) {
-	client := ESClient.GetClient()
-	res, err := client.Scroll(
-		client.Scroll.WithContext(ctx),
-		client.Scroll.WithScrollID(scrollId),
-		client.Scroll.WithScroll(time.Minute),
 	)
 	if err != nil {
 		return
