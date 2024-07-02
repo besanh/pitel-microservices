@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/elastic/go-elasticsearch/esapi"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/model"
@@ -12,10 +14,13 @@ import (
 
 type (
 	IMessageES interface {
+		IESGenericRepo[model.Message]
 		GetMessages(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit, offset int) (int, *[]model.Message, error)
 		GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error)
+		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.Message, respScrollId string, err error)
 	}
 	MessageES struct {
+		ESGenericRepo[model.Message]
 	}
 )
 
@@ -181,4 +186,89 @@ func (repo *MessageES) GetMessageById(ctx context.Context, tenantId, index, id s
 		result = data
 	}
 	return &result, nil
+}
+
+func (repo *MessageES) SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.Message, respScrollId string, err error) {
+	var body *model.SearchReponse
+	if len(scrollId) < 1 {
+		scrollDuration := 5 * time.Minute
+		if len(scrollDurations) > 0 {
+			scrollDuration = scrollDurations[0]
+		}
+		body, err = repo.searchWithScroll(ctx, tenantId, index, filter, limit, scrollDuration)
+	} else {
+		body, err = repo.ScrollAPI(ctx, scrollId)
+	}
+	if err != nil || body == nil {
+		return
+	}
+	total = body.Hits.Total.Value
+	hits := body.Hits.Hits
+	respScrollId = body.ScrollId
+	entries = make([]*model.Message, 0)
+	for _, hit := range hits {
+		entry := &model.Message{}
+		if err = util.ParseAnyToAny(hit.Source, entry); err != nil {
+			return
+		}
+		entries = append(entries, entry)
+	}
+	return total, entries, respScrollId, nil
+}
+
+func (repo *MessageES) searchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, size int, scrollDuration time.Duration) (result *model.SearchReponse, err error) {
+	filters := []map[string]any{}
+	musts := []map[string]any{}
+	if len(tenantId) > 0 {
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
+	}
+	if len(filter.AppId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray([]string{filter.AppId})...))
+	}
+	if len(filter.ConversationId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("conversation_id", util.ParseToAnyArray([]string{filter.ConversationId})...))
+	}
+	if len(filter.IsRead) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("is_read", util.ParseToAnyArray([]string{filter.IsRead})...))
+	}
+
+	boolQuery := map[string]any{
+		"bool": map[string]any{
+			"filter": filters,
+			"must":   musts,
+		},
+	}
+
+	// search
+	searchSource := map[string]any{
+		"query":   boolQuery,
+		"_source": true,
+		"size":    0,
+		"sort": []any{
+			elasticsearch.Order("send_time", false),
+		},
+	}
+	if size > 0 {
+		searchSource["size"] = size
+	}
+
+	buf, err := elasticsearch.EncodeAny(searchSource)
+	if err != nil {
+		return
+	}
+	client := ESClient.GetClient()
+	res, err := client.Search(
+		client.Search.WithContext(ctx),
+		client.Search.WithIndex(index),
+		client.Search.WithBody(&buf),
+		client.Search.WithTrackTotalHits(true),
+		client.Search.WithPretty(),
+		client.Search.WithScroll(scrollDuration),
+	)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	result, err = elasticsearch.ParseSearchResponse((*esapi.Response)(res))
+	return
 }

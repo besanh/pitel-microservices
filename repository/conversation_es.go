@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/elastic/go-elasticsearch/esapi"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/model"
@@ -14,10 +16,13 @@ import (
 
 type (
 	IConversationES interface {
+		IESGenericRepo[model.Conversation]
 		GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.ConversationView, error)
 		GetConversationById(ctx context.Context, tenantId, index, appId, id string) (*model.Conversation, error)
+		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.ConversationView, respScrollId string, err error)
 	}
 	ConversationES struct {
+		ESGenericRepo[model.Conversation]
 	}
 )
 
@@ -220,4 +225,124 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 		result = data
 	}
 	return &result, nil
+}
+
+func (repo *ConversationES) SearchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.ConversationView, respScrollId string, err error) {
+	var body *model.SearchReponse
+	if len(scrollId) < 1 {
+		scrollDuration := 5 * time.Minute
+		if len(scrollDurations) > 0 {
+			scrollDuration = scrollDurations[0]
+		}
+		body, err = repo.searchWithScroll(ctx, tenantId, index, filter, size, scrollDuration)
+	} else {
+		body, err = repo.ScrollAPI(ctx, scrollId)
+	}
+	if err != nil || body == nil {
+		return
+	}
+	total = body.Hits.Total.Value
+	hits := body.Hits.Hits
+	respScrollId = body.ScrollId
+	entries = make([]*model.ConversationView, 0)
+	for _, hit := range hits {
+		entry := &model.ConversationView{}
+		if err = util.ParseAnyToAny(hit.Source, entry); err != nil {
+			return
+		}
+		entries = append(entries, entry)
+	}
+	return total, entries, respScrollId, nil
+}
+
+func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollDuration time.Duration) (result *model.SearchReponse, err error) {
+	filters := []map[string]any{}
+	musts := []map[string]any{}
+	insensitiveBool, _ := strconv.ParseBool(filter.Insensitive)
+	insensitive := sql.NullBool{
+		Bool:  insensitiveBool,
+		Valid: true,
+	}
+
+	// Remove because routing maybe having pitel_conversation_
+	// filters = append(filters, elasticsearch.TermQuery("_routing", index+"_"+tenantId))
+	if len(tenantId) > 0 {
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
+		//filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
+	}
+	if len(filter.AppId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray(filter.AppId)...))
+	}
+	if len(filter.ConversationId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("conversation_id", util.ParseToAnyArray(filter.ConversationId)...))
+	}
+	if len(filter.Username) > 0 {
+		// Search like
+		filters = append(filters, elasticsearch.WildcardQuery("username", "*"+filter.Username, insensitive))
+	}
+	if len(filter.PhoneNumber) > 0 {
+		filters = append(filters, elasticsearch.WildcardQuery("phone_number", "*"+filter.PhoneNumber, sql.NullBool{}))
+	}
+	if len(filter.Email) > 0 {
+		filters = append(filters, elasticsearch.WildcardQuery("email", "*"+filter.Email, insensitive))
+	}
+	if filter.IsDone.Valid {
+		bq := map[string]any{
+			"bool": map[string]any{
+				"filter": []map[string]any{
+					{
+						"bool": map[string]any{
+							"must": map[string]any{
+								"wildcard": map[string]any{
+									"is_done": strconv.FormatBool(filter.IsDone.Bool),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		filters = append(filters, bq)
+	}
+
+	boolQuery := map[string]any{
+		"bool": map[string]any{
+			"filter": filters,
+			"must":   musts,
+		},
+	}
+
+	// search
+	searchSource := map[string]any{
+		"query":   boolQuery,
+		"_source": true,
+		"size":    0,
+		"sort": []any{
+			elasticsearch.Order("updated_at", false),
+			elasticsearch.Order("created_at", false),
+		},
+	}
+	if size > 0 {
+		searchSource["size"] = size
+	}
+
+	buf, err := elasticsearch.EncodeAny(searchSource)
+	if err != nil {
+		return
+	}
+	client := ESClient.GetClient()
+	res, err := client.Search(
+		client.Search.WithContext(ctx),
+		client.Search.WithIndex(index),
+		client.Search.WithBody(&buf),
+		client.Search.WithTrackTotalHits(true),
+		client.Search.WithPretty(),
+		client.Search.WithScroll(scrollDuration),
+	)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	result, err = elasticsearch.ParseSearchResponse((*esapi.Response)(res))
+	return
 }
