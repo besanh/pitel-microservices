@@ -33,9 +33,12 @@ type (
 	}
 )
 
-func NewOttMessage() IOttMessage {
+var OttMessageService IOttMessage
 
-	return &OttMessage{}
+func NewOttMessage() IOttMessage {
+	s := &OttMessage{}
+	s.InitQueueRequest()
+	return s
 }
 
 /**
@@ -377,18 +380,18 @@ func (s *OttMessage) InitQueueRequest() {
 		queue.RMQ.Server.RemoveQueue(BSS_CHAT_QUEUE_NAME)
 	}
 
-	if s.NumConsumer < 1 {
-		s.NumConsumer = 1
-	}
+	// if s.NumConsumer < 1 {
+	// 	s.NumConsumer = 1
+	// }
 
-	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_QUEUE_NAME, s.handleEsQueue, s.NumConsumer); err != nil {
+	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_QUEUE_NAME, s.handleEsConversationQueue, 1); err != nil {
 		log.Error(err)
 	}
 }
 
-func (s *OttMessage) handleEsQueue(d rmq.Delivery) {
+func (s *OttMessage) handleEsConversationQueue(d rmq.Delivery) {
 	payload := model.Conversation{}
-	if err := util.ParseAnyToAny(d.Payload(), &payload); err != nil {
+	if err := util.ParseStringToAny(d.Payload(), &payload); err != nil {
 		log.Error(err)
 		d.Reject()
 		return
@@ -400,7 +403,9 @@ func (s *OttMessage) handleEsQueue(d rmq.Delivery) {
 	done := make(chan struct{})
 
 	go func() {
-		defer close(done)
+		defer func() {
+			close(done)
+		}()
 		tmpBytes, err := json.Marshal(payload)
 		if err != nil {
 			log.Error(err)
@@ -419,8 +424,10 @@ func (s *OttMessage) handleEsQueue(d rmq.Delivery) {
 
 	select {
 	case <-done:
+		// job have been success
 		d.Ack()
 	case <-ctx.Done():
+		// exceeded timeout
 		log.Errorf("handleEsQueue exceeded timeout, msg=%s", d.Payload())
 		d.Reject()
 	}

@@ -10,7 +10,8 @@ import (
 
 	"github.com/elastic/go-elasticsearch/esapi"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
-	log "github.com/sirupsen/logrus"
+
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 )
