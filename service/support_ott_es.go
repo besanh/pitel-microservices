@@ -64,9 +64,11 @@ func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId string
 		// }
 
 		// TODO: update conversation => use queue consumer
-		if err := PublishPutConversationToChatQueue(ctx, conversation); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
+		if !data.IsEcho {
+			if err := PublishPutConversationToChatQueue(ctx, conversation); err != nil {
+				log.Error(err)
+				return conversation, isNew, err
+			}
 		}
 
 		isExisted = true
