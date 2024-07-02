@@ -25,6 +25,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 	Group := engine.Group("bss-message/v1/conversation")
 	{
 		Group.GET("", handler.GetConversations)
+		Group.GET("scroll", handler.GetConversationsWithScrollAPI)
 		Group.GET("manager", handler.GetConversationsByManager)
 		Group.PUT(":app_id/:oa_id/:id", handler.UpdateConversation)
 		Group.POST("status", handler.UpdateStatusConversation)
@@ -60,6 +61,35 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 	}
 
 	code, result := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
+	c.JSON(code, result)
+}
+
+func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	limit := util.ParseLimit(c.Query("limit"))
+	scrollId := c.Query("scroll_id")
+
+	isDone := sql.NullBool{}
+	if len(c.Query("is_done")) > 0 {
+		isDone.Valid = true
+		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
+	}
+
+	filter := model.ConversationFilter{
+		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
+		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
+		Username:       c.Query("username"),
+		PhoneNumber:    c.Query("phone_number"),
+		Email:          c.Query("email"),
+		IsDone:         isDone,
+	}
+
+	code, result := handler.conversationService.GetConversationsWithScrollAPI(c, res.Data, filter, limit, scrollId)
 	c.JSON(code, result)
 }
 
