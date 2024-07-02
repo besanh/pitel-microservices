@@ -205,7 +205,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	}
 	filter.ConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
-	conversations, _, respScrollId, err := repository.ConversationESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, scrollId)
+	_, conversations, respScrollId, err := repository.ConversationESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, scrollId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())

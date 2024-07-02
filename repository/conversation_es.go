@@ -19,7 +19,7 @@ type (
 		IESGenericRepo[model.Conversation]
 		GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.ConversationView, error)
 		GetConversationById(ctx context.Context, tenantId, index, appId, id string) (*model.Conversation, error)
-		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollId string, scrollDurations ...time.Duration) (entries []*model.ConversationView, total int, respScrollId string, err error)
+		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.ConversationView, respScrollId string, err error)
 	}
 	ConversationES struct {
 		ESGenericRepo[model.Conversation]
@@ -227,7 +227,7 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 	return &result, nil
 }
 
-func (repo *ConversationES) SearchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollId string, scrollDurations ...time.Duration) (entries []*model.ConversationView, total int, respScrollId string, err error) {
+func (repo *ConversationES) SearchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.ConversationView, respScrollId string, err error) {
 	var body *model.SearchReponse
 	if len(scrollId) < 1 {
 		scrollDuration := 5 * time.Minute
@@ -252,7 +252,7 @@ func (repo *ConversationES) SearchWithScroll(ctx context.Context, tenantId, inde
 		}
 		entries = append(entries, entry)
 	}
-	return entries, total, respScrollId, nil
+	return total, entries, respScrollId, nil
 }
 
 func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, index string, filter model.ConversationFilter, size int, scrollDuration time.Duration) (result *model.SearchReponse, err error) {

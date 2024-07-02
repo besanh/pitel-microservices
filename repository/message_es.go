@@ -17,7 +17,7 @@ type (
 		IESGenericRepo[model.Message]
 		GetMessages(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit, offset int) (int, *[]model.Message, error)
 		GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error)
-		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (entries []*model.Message, total int, respScrollId string, err error)
+		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.Message, respScrollId string, err error)
 	}
 	MessageES struct {
 		ESGenericRepo[model.Message]
@@ -188,7 +188,7 @@ func (repo *MessageES) GetMessageById(ctx context.Context, tenantId, index, id s
 	return &result, nil
 }
 
-func (repo *MessageES) SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (entries []*model.Message, total int, respScrollId string, err error) {
+func (repo *MessageES) SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.Message, respScrollId string, err error) {
 	var body *model.SearchReponse
 	if len(scrollId) < 1 {
 		scrollDuration := 5 * time.Minute
@@ -213,7 +213,7 @@ func (repo *MessageES) SearchWithScroll(ctx context.Context, tenantId, index str
 		}
 		entries = append(entries, entry)
 	}
-	return entries, total, respScrollId, nil
+	return total, entries, respScrollId, nil
 }
 
 func (repo *MessageES) searchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, size int, scrollDuration time.Duration) (result *model.SearchReponse, err error) {

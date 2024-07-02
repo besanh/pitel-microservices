@@ -248,7 +248,7 @@ func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, fil
 }
 
 func (s *Message) GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (int, any) {
-	messages, total, respScrollId, err := repository.MessageESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX, filter, limit, scrollId)
+	total, messages, respScrollId, err := repository.MessageESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX, filter, limit, scrollId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
