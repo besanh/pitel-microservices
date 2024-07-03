@@ -9,6 +9,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -176,7 +177,8 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	}
 
 	// TODO: update label for conversation => use queue
-	if err = putConversation(ctx, authUser, externalLabelId, labelType, request); err != nil {
+	conversation, err := putConversation(ctx, authUser, externalLabelId, labelType, request)
+	if err != nil {
 		if request.Action == "create" {
 			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
 				log.Error(err)
@@ -187,6 +189,36 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	}
 
 	labelId = chatLabel.GetId()
+
+	// TODO: add event
+	conversationConverted := &model.ConversationView{}
+	if err = util.ParseAnyToAny(conversation, conversationConverted); err != nil {
+		log.Error(err)
+		return
+	}
+
+	if ENABLE_PUBLISH_ADMIN {
+		var subscriberAdmins []string
+		var subscriberManagers []string
+		for s := range WsSubscribers.Subscribers {
+			if s.TenantId == authUser.TenantId {
+				if s.Level == "admin" {
+					subscriberAdmins = append(subscriberAdmins, s.Id)
+				}
+				if s.Level == "manager" {
+					subscriberManagers = append(subscriberManagers, s.Id)
+				}
+			}
+		}
+
+		if request.Action == "create" {
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscriberAdmins, true, conversationConverted)
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscriberManagers, true, conversationConverted)
+		} else if request.Action == "delete" {
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscriberAdmins, true, conversationConverted)
+			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscriberManagers, true, conversationConverted)
+		}
+	}
 
 	return
 }
@@ -293,8 +325,8 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 	return
 }
 
-func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, labelType string, request model.ConversationLabelRequest) (err error) {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId)
+func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, labelType string, request model.ConversationLabelRequest) (conversationExist *model.Conversation, err error) {
+	conversationExist, err = repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, request.AppId, request.ConversationId)
 	if err != nil {
 		log.Error(err)
 		return
@@ -305,7 +337,7 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 
 	result, err := UpdateConversationLabelList(conversationExist.Label, labelType, request.Action, labelId)
 	if err != nil {
-		return err
+		return
 	}
 	conversationExist.Label = result
 
