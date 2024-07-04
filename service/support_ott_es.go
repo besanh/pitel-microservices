@@ -48,9 +48,10 @@ func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId string
 		conversation.Username = conversationExist.Username
 		conversation.Avatar = conversationExist.Avatar
 		conversation.Label = conversationExist.Label
-		conversation.IsDone = conversationExist.IsDone
-		conversation.IsDoneAt = conversationExist.IsDoneAt
-		conversation.IsDoneBy = conversationExist.IsDoneBy
+		conversation.IsDone = false
+		conversation.IsDoneBy = ""
+		isDoneAt, _ := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
+		conversation.IsDoneAt = isDoneAt
 		conversation.CreatedAt = conversationExist.CreatedAt
 		conversation.UpdatedAt = time.Now().Format(time.RFC3339)
 
