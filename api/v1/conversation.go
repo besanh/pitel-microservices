@@ -33,7 +33,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
 		Group.PUT("label/:label_type", handler.PutLabelToConversation)
 		Group.PUT("major", handler.UpdateMajorStatusConversation)
-		Group.PUT("follow", handler.UpdateFollowingStatusConversation)
+		Group.PUT("following", handler.UpdateFollowingStatusConversation)
 	}
 }
 
@@ -329,17 +329,17 @@ func (handler *Conversation) UpdateFollowingStatusConversation(c *gin.Context) {
 	}
 	appId, _ := jsonBody["app_id"].(string)
 	conversationId, _ := jsonBody["conversation_id"].(string)
-	followTmp, _ := jsonBody["follow"].(string)
+	followingTmp, _ := jsonBody["following"].(string)
 
 	log.Info("payload of updating following status of conversation -> ", jsonBody)
 
-	followStatus := false
-	if len(followTmp) > 0 {
-		tmp, _ := strconv.ParseBool(followTmp)
-		followStatus = tmp
+	followingStatus := false
+	if len(followingTmp) > 0 {
+		tmp, _ := strconv.ParseBool(followingTmp)
+		followingStatus = tmp
 	}
 
-	err := handler.conversationService.UpdateFollowingStatusConversation(c, res.Data, appId, conversationId, followStatus)
+	err := handler.conversationService.UpdateFollowingStatusConversation(c, res.Data, appId, conversationId, followingStatus)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
