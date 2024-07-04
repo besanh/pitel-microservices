@@ -198,6 +198,9 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	}
 
 	if ENABLE_PUBLISH_ADMIN {
+		if err = GetLabelsInfo(ctx, conversationConverted); err != nil {
+			return
+		}
 		var subscriberAdmins []string
 		var subscriberManagers []string
 		for s := range WsSubscribers.Subscribers {
