@@ -201,25 +201,19 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		if err = GetLabelsInfo(ctx, conversationConverted); err != nil {
 			return
 		}
-		var subscriberAdmins []string
-		var subscriberManagers []string
+		var subscribers []string
 		for s := range WsSubscribers.Subscribers {
 			if s.TenantId == authUser.TenantId {
-				if s.Level == "admin" {
-					subscriberAdmins = append(subscriberAdmins, s.Id)
-				}
-				if s.Level == "manager" {
-					subscriberManagers = append(subscriberManagers, s.Id)
+				if s.Level == "admin" || s.Level == "manager" {
+					subscribers = append(subscribers, s.Id)
 				}
 			}
 		}
 
-		if request.Action == "create" {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscriberAdmins, true, conversationConverted)
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscriberManagers, true, conversationConverted)
+		if request.Action == "create" || request.Action == "update" {
+			go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscribers, true, conversationConverted)
 		} else if request.Action == "delete" {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscriberAdmins, true, conversationConverted)
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscriberManagers, true, conversationConverted)
+			go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscribers, true, conversationConverted)
 		}
 	}
 
