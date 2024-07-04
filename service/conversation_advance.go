@@ -197,29 +197,80 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		return
 	}
 
-	if ENABLE_PUBLISH_ADMIN {
-		if err = GetLabelsInfo(ctx, conversationConverted); err != nil {
-			return
+	if err = GetLabelsInfo(ctx, conversationConverted); err != nil {
+		return
+	}
+
+	var subscribers []*Subscriber
+	var subscriberAdmins []string
+	// var subscriberManagers []string
+	for s := range WsSubscribers.Subscribers {
+		if s.TenantId == authUser.TenantId {
+			subscribers = append(subscribers, s)
+			if s.Level == "admin" {
+				subscriberAdmins = append(subscriberAdmins, s.Id)
+			}
+			// if s.Level == "manager" {
+			// 	subscriberManagers = append(subscriberManagers, s.Id)
+			// }
 		}
-		var subscriberAdmins []string
-		var subscriberManagers []string
-		for s := range WsSubscribers.Subscribers {
-			if s.TenantId == authUser.TenantId {
-				if s.Level == "admin" {
-					subscriberAdmins = append(subscriberAdmins, s.Id)
-				}
-				if s.Level == "manager" {
-					subscriberManagers = append(subscriberManagers, s.Id)
-				}
+	}
+
+	// TODO: publish event to user normal
+	filterUserAllocate := model.UserAllocateFilter{
+		TenantId:       authUser.TenantId,
+		AppId:          request.AppId,
+		OaId:           request.OaId,
+		ConversationId: request.ConversationId,
+	}
+	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filterUserAllocate, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	} else if len(*userAllocate) > 0 {
+		// Publish to user normal
+		if request.Action == "create" || request.Action == "update" {
+			if len(subscribers) > 0 {
+				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_add_labels"], (*userAllocate)[0].UserId, subscribers, true, conversationConverted)
+			}
+		} else if request.Action == "delete" {
+			if len(subscribers) > 0 {
+				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_remove_labels"], (*userAllocate)[0].UserId, subscribers, true, conversationConverted)
 			}
 		}
 
-		if request.Action == "create" {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscriberAdmins, true, conversationConverted)
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscriberManagers, true, conversationConverted)
+		// TODO: get user manager then publish
+		manageQueueUserFilter := model.ChatManageQueueUserFilter{
+			TenantId: authUser.TenantId,
+			QueueId:  (*userAllocate)[0].QueueId,
+		}
+		_, manageQueueUser, errTmp := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, manageQueueUserFilter, 1, 0)
+		if errTmp != nil {
+			err = errTmp
+			log.Error(err)
+			return
+		} else if len(*manageQueueUser) > 0 {
+			if request.Action == "create" || request.Action == "update" {
+				if len(subscribers) > 0 {
+					go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_add_labels"], (*manageQueueUser)[0].ManageId, subscribers, true, conversationConverted)
+				}
+			} else if request.Action == "delete" {
+				if len(subscribers) > 0 {
+					go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_remove_labels"], (*manageQueueUser)[0].ManageId, subscribers, true, conversationConverted)
+				}
+			}
+		}
+	}
+
+	if ENABLE_PUBLISH_ADMIN {
+		if request.Action == "create" || request.Action == "update" {
+			if len(subscribers) > 0 {
+				go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscriberAdmins, true, conversationConverted)
+			}
 		} else if request.Action == "delete" {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscriberAdmins, true, conversationConverted)
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscriberManagers, true, conversationConverted)
+			if len(subscribers) > 0 {
+				go PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscriberAdmins, true, conversationConverted)
+			}
 		}
 	}
 
