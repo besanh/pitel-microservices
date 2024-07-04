@@ -93,6 +93,16 @@ func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
 	}
+	major := sql.NullBool{}
+	if len(c.Query("major")) > 0 {
+		major.Valid = true
+		major.Bool, _ = strconv.ParseBool(c.Query("major"))
+	}
+	following := sql.NullBool{}
+	if len(c.Query("following")) > 0 {
+		following.Valid = true
+		following.Bool, _ = strconv.ParseBool(c.Query("following"))
+	}
 
 	filter := model.ConversationFilter{
 		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
@@ -101,6 +111,8 @@ func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 		PhoneNumber:    c.Query("phone_number"),
 		Email:          c.Query("email"),
 		IsDone:         isDone,
+		Major:          major,
+		Following:      following,
 	}
 
 	code, result := handler.conversationService.GetConversationsWithScrollAPI(c, res.Data, filter, limit, scrollId)
@@ -297,7 +309,7 @@ func (handler *Conversation) UpdateMajorStatusConversation(c *gin.Context) {
 	}
 	appId, _ := jsonBody["app_id"].(string)
 	conversationId, _ := jsonBody["conversation_id"].(string)
-	majorTmp, _ := jsonBody["major_status"].(string)
+	majorTmp, _ := jsonBody["major"].(string)
 
 	log.Info("payload of updating major status of conversation -> ", jsonBody)
 

@@ -726,12 +726,12 @@ func (s *Conversation) UpdateFollowingStatusConversation(ctx context.Context, au
 	// Event to manager
 	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
 	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
-		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_follow"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_following"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
 	}
 
 	// Event to admin
 	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
-		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_follow"], subscriberAdmins, true, conversationConverted)
+		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_following"], subscriberAdmins, true, conversationConverted)
 	}
 
 	return nil

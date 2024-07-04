@@ -340,6 +340,42 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 		}
 		filters = append(filters, bq)
 	}
+	if filter.Major.Valid {
+		bq := map[string]any{
+			"bool": map[string]any{
+				"filter": []map[string]any{
+					{
+						"bool": map[string]any{
+							"must": map[string]any{
+								"wildcard": map[string]any{
+									"major": strconv.FormatBool(filter.Major.Bool),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		filters = append(filters, bq)
+	}
+	if filter.Following.Valid {
+		bq := map[string]any{
+			"bool": map[string]any{
+				"filter": []map[string]any{
+					{
+						"bool": map[string]any{
+							"must": map[string]any{
+								"wildcard": map[string]any{
+									"following": strconv.FormatBool(filter.Following.Bool),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		filters = append(filters, bq)
+	}
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{
