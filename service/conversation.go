@@ -27,9 +27,6 @@ type (
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
-
-		// Label zalo
-		//PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, labelType string, request model.ConversationLabelRequest) (labelId string, err error)
 	}
 	Conversation struct{}
 )

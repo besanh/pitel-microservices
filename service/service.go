@@ -53,7 +53,6 @@ var (
 	OTT_VERSION                   string = ""
 	API_SHARE_INFO_HOST           string = ""
 	API_DOC                       string = ""
-	API_CRM                       string = ""
 	ENABLE_PUBLISH_ADMIN          bool   = false
 	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool   = false
 	AAA_HOST                      string = ""
