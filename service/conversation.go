@@ -583,13 +583,14 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 
 	userAllocateTmp := (*userAllocate)[0]
 
-	if len(preferRequest.Major) > 0 {
+	switch preferRequest.Type {
+	case "major":
 		tmp, _ := strconv.ParseBool(preferRequest.Major)
 		conversationExist.Major = tmp
-	}
-	if len(preferRequest.Following) > 0 {
+	case "following":
 		tmp, _ := strconv.ParseBool(preferRequest.Following)
 		conversationExist.Following = tmp
+	default:
 	}
 
 	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
@@ -643,12 +644,10 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 	// Event to manager
 	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
 	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
-		switch {
-		case len(preferRequest.Major) > 0 && len(preferRequest.Following) > 0:
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_preference"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
-		case len(preferRequest.Major) > 0:
+		switch preferRequest.Type {
+		case "major":
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_major"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
-		case len(preferRequest.Following) > 0:
+		case "following":
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_following"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
 		default:
 		}
@@ -656,12 +655,10 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 
 	// Event to admin
 	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
-		switch {
-		case len(preferRequest.Major) > 0 && len(preferRequest.Following) > 0:
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_preference"], subscriberAdmins, true, conversationConverted)
-		case len(preferRequest.Major) > 0:
+		switch preferRequest.Type {
+		case "major":
 			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_major"], subscriberAdmins, true, conversationConverted)
-		case len(preferRequest.Following) > 0:
+		case "following":
 			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_following"], subscriberAdmins, true, conversationConverted)
 		default:
 		}
