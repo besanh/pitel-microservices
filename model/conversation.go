@@ -21,6 +21,8 @@ type Conversation struct {
 	ExternalUserId   string          `json:"external_user_id"`
 	Username         string          `json:"username"`
 	Avatar           string          `json:"avatar"`
+	Major            bool            `json:"major"`
+	Following        bool            `json:"following"`
 	Label            json.RawMessage `json:"label"`
 	IsDone           bool            `json:"is_done"`
 	IsDoneAt         time.Time       `json:"is_done_at"`
@@ -41,6 +43,8 @@ type ConversationView struct {
 	ExternalUserId         string          `json:"external_user_id"`
 	Username               string          `json:"username"`
 	Avatar                 string          `json:"avatar"`
+	Major                  bool            `json:"major"`
+	Following              bool            `json:"following"`
 	Label                  json.RawMessage `json:"label"`
 	IsDone                 bool            `json:"is_done"`
 	IsDoneAt               string          `json:"is_done_at"`
@@ -64,6 +68,8 @@ type ConversationCustomView struct {
 	ExternalUserId         string       `json:"external_user_id"`
 	Username               string       `json:"username"`
 	Avatar                 string       `json:"avatar"`
+	Major                  bool         `json:"major"`
+	Following              bool         `json:"following"`
 	Label                  *[]ChatLabel `json:"label"`
 	IsDone                 bool         `json:"is_done"`
 	IsDoneAt               string       `json:"is_done_at"`

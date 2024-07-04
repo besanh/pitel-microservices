@@ -32,6 +32,8 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.PATCH(":id/reassign", handler.ReassignConversation)
 		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
 		Group.PUT("label/:label_type", handler.PutLabelToConversation)
+		Group.PUT("major", handler.UpdateMajorStatusConversation)
+		Group.PUT("follow", handler.UpdateFollowingStatusConversation)
 	}
 }
 
@@ -50,6 +52,16 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
 	}
+	major := sql.NullBool{}
+	if len(c.Query("major")) > 0 {
+		major.Valid = true
+		major.Bool, _ = strconv.ParseBool(c.Query("major"))
+	}
+	following := sql.NullBool{}
+	if len(c.Query("following")) > 0 {
+		following.Valid = true
+		following.Bool, _ = strconv.ParseBool(c.Query("following"))
+	}
 
 	filter := model.ConversationFilter{
 		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
@@ -58,6 +70,8 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 		PhoneNumber:    c.Query("phone_number"),
 		Email:          c.Query("email"),
 		IsDone:         isDone,
+		Major:          major,
+		Following:      following,
 	}
 
 	code, result := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
@@ -267,4 +281,68 @@ func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 	c.JSON(response.OK(map[string]any{
 		"id": labelId,
 	}))
+}
+
+func (handler *Conversation) UpdateMajorStatusConversation(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	jsonBody := make(map[string]any)
+	if err := c.ShouldBindJSON(&jsonBody); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	appId, _ := jsonBody["app_id"].(string)
+	conversationId, _ := jsonBody["conversation_id"].(string)
+	majorTmp, _ := jsonBody["major_status"].(string)
+
+	log.Info("payload of updating major status of conversation -> ", jsonBody)
+
+	majorStatus := false
+	if len(majorTmp) > 0 {
+		tmp, _ := strconv.ParseBool(majorTmp)
+		majorStatus = tmp
+	}
+
+	err := handler.conversationService.UpdateMajorStatusConversation(c, res.Data, appId, conversationId, majorStatus)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
+}
+
+func (handler *Conversation) UpdateFollowingStatusConversation(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	jsonBody := make(map[string]any)
+	if err := c.ShouldBindJSON(&jsonBody); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	appId, _ := jsonBody["app_id"].(string)
+	conversationId, _ := jsonBody["conversation_id"].(string)
+	followTmp, _ := jsonBody["follow"].(string)
+
+	log.Info("payload of updating following status of conversation -> ", jsonBody)
+
+	followStatus := false
+	if len(followTmp) > 0 {
+		tmp, _ := strconv.ParseBool(followTmp)
+		followStatus = tmp
+	}
+
+	err := handler.conversationService.UpdateFollowingStatusConversation(c, res.Data, appId, conversationId, followStatus)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }

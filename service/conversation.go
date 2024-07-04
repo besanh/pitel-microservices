@@ -27,6 +27,8 @@ type (
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
+		UpdateMajorStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId string, status bool) error
+		UpdateFollowingStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId string, status bool) error
 	}
 	Conversation struct{}
 )
@@ -551,4 +553,186 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 	}
 
 	return response.OK(conversationExist)
+}
+
+func (s *Conversation) UpdateMajorStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId string, status bool) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found", conversationId)
+		return errors.New("conversation " + conversationId + " not found")
+	}
+
+	filter := model.UserAllocateFilter{
+		AppId:          appId,
+		ConversationId: conversationId,
+		MainAllocate:   "active",
+	}
+	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*userAllocate) < 1 {
+		log.Errorf("conversation %s not found with active user", conversationId)
+		return errors.New("conversation " + conversationId + " not found with active user")
+	}
+
+	userAllocateTmp := (*userAllocate)[0]
+
+	// set major conversation
+	conversationExist.Major = status
+	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
+	tmpBytes, err := json.Marshal(conversationExist)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	esDoc := map[string]any{}
+	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	conversationConverted := &model.ConversationView{}
+	if err = util.ParseAnyToAny(conversationExist, conversationConverted); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// Event to manager
+	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(manageQueueUser.Id) < 1 {
+		log.Error("queue " + userAllocateTmp.QueueId + " not found")
+		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+	}
+
+	var subscribers []*Subscriber
+	var subscriberAdmins []string
+	var subscriberManagers []string
+	for s := range WsSubscribers.Subscribers {
+		if s.TenantId == authUser.TenantId {
+			subscribers = append(subscribers, s)
+			if s.Level == "admin" {
+				subscriberAdmins = append(subscriberAdmins, s.Id)
+			}
+			if s.Level == "manager" {
+				subscriberManagers = append(subscriberManagers, s.Id)
+			}
+		}
+	}
+
+	// Event to manager
+	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_major"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+	}
+
+	// Event to admin
+	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
+		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_major"], subscriberAdmins, true, conversationConverted)
+	}
+
+	return nil
+}
+
+func (s *Conversation) UpdateFollowingStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId string, status bool) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found", conversationId)
+		return errors.New("conversation " + conversationId + " not found")
+	}
+
+	filter := model.UserAllocateFilter{
+		AppId:          appId,
+		ConversationId: conversationId,
+		MainAllocate:   "active",
+	}
+	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*userAllocate) < 1 {
+		log.Errorf("conversation %s not found with active user", conversationId)
+		return errors.New("conversation " + conversationId + " not found with active user")
+	}
+
+	userAllocateTmp := (*userAllocate)[0]
+
+	// set following conversation
+	conversationExist.Following = status
+	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
+	tmpBytes, err := json.Marshal(conversationExist)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	esDoc := map[string]any{}
+	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	conversationConverted := &model.ConversationView{}
+	if err = util.ParseAnyToAny(conversationExist, conversationConverted); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// Event to manager
+	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(manageQueueUser.Id) < 1 {
+		log.Error("queue " + userAllocateTmp.QueueId + " not found")
+		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+	}
+
+	var subscribers []*Subscriber
+	var subscriberAdmins []string
+	var subscriberManagers []string
+	for s := range WsSubscribers.Subscribers {
+		if s.TenantId == authUser.TenantId {
+			subscribers = append(subscribers, s)
+			if s.Level == "admin" {
+				subscriberAdmins = append(subscriberAdmins, s.Id)
+			}
+			if s.Level == "manager" {
+				subscriberManagers = append(subscriberManagers, s.Id)
+			}
+		}
+	}
+
+	// Event to manager
+	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_follow"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+	}
+
+	// Event to admin
+	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
+		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_follow"], subscriberAdmins, true, conversationConverted)
+	}
+
+	return nil
 }
