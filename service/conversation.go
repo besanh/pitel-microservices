@@ -629,14 +629,14 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 	var subscribers []*Subscriber
 	var subscriberAdmins []string
 	var subscriberManagers []string
-	for s := range WsSubscribers.Subscribers {
-		if s.TenantId == authUser.TenantId {
-			subscribers = append(subscribers, s)
-			if s.Level == "admin" {
-				subscriberAdmins = append(subscriberAdmins, s.Id)
+	for sub := range WsSubscribers.Subscribers {
+		if sub.TenantId == authUser.TenantId {
+			subscribers = append(subscribers, sub)
+			if sub.Level == "admin" {
+				subscriberAdmins = append(subscriberAdmins, sub.Id)
 			}
-			if s.Level == "manager" {
-				subscriberManagers = append(subscriberManagers, s.Id)
+			if sub.Level == "manager" {
+				subscriberManagers = append(subscriberManagers, sub.Id)
 			}
 		}
 	}
