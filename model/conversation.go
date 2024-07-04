@@ -124,6 +124,13 @@ type ConversationLabelRequest struct {
 	LabelColor      string `json:"label_color"`
 }
 
+type ConversationPreferenceRequest struct {
+	AppId     string `json:"app_id"`
+	OaId      string `json:"oa_id"`
+	Major     string `json:"major"`
+	Following string `json:"following"`
+}
+
 func (m *ConversationLabelRequest) Validate() error {
 	if len(m.AppId) < 1 {
 		return errors.New("app id is required")
@@ -147,6 +154,20 @@ func (m *ConversationLabelRequest) Validate() error {
 
 	if !slices.Contains(variables.CHAT_LABEL_ACTION, m.Action) {
 		return errors.New("action " + m.Action + " is not supported")
+	}
+
+	return nil
+}
+
+func (m *ConversationPreferenceRequest) Validate() error {
+	if len(m.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(m.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+	if len(m.Major) < 1 && len(m.Following) < 1 {
+		return errors.New("major or following is required")
 	}
 
 	return nil

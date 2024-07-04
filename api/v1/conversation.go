@@ -32,8 +32,7 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.PATCH(":id/reassign", handler.ReassignConversation)
 		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
 		Group.PUT("label/:label_type", handler.PutLabelToConversation)
-		Group.PUT("major", handler.UpdateMajorStatusConversation)
-		Group.PUT("following", handler.UpdateFollowingStatusConversation)
+		Group.PUT("preference", handler.UpdateUserPreferenceConversation)
 	}
 }
 
@@ -295,63 +294,24 @@ func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 	}))
 }
 
-func (handler *Conversation) UpdateMajorStatusConversation(c *gin.Context) {
+func (handler *Conversation) UpdateUserPreferenceConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
 		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
 		return
 	}
 
-	jsonBody := make(map[string]any)
-	if err := c.ShouldBindJSON(&jsonBody); err != nil {
+	preferenceRequest := model.ConversationPreferenceRequest{}
+	if err := c.ShouldBindJSON(&preferenceRequest); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	appId, _ := jsonBody["app_id"].(string)
-	conversationId, _ := jsonBody["conversation_id"].(string)
-	majorTmp, _ := jsonBody["major"].(string)
-
-	log.Info("payload of updating major status of conversation -> ", jsonBody)
-
-	majorStatus := false
-	if len(majorTmp) > 0 {
-		tmp, _ := strconv.ParseBool(majorTmp)
-		majorStatus = tmp
-	}
-
-	err := handler.conversationService.UpdateMajorStatusConversation(c, res.Data, appId, conversationId, majorStatus)
-	if err != nil {
-		c.JSON(response.ServiceUnavailableMsg(err.Error()))
-		return
-	}
-	c.JSON(response.OKResponse())
-}
-
-func (handler *Conversation) UpdateFollowingStatusConversation(c *gin.Context) {
-	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
-
-	jsonBody := make(map[string]any)
-	if err := c.ShouldBindJSON(&jsonBody); err != nil {
+	if err := preferenceRequest.Validate(); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	appId, _ := jsonBody["app_id"].(string)
-	conversationId, _ := jsonBody["conversation_id"].(string)
-	followingTmp, _ := jsonBody["following"].(string)
 
-	log.Info("payload of updating following status of conversation -> ", jsonBody)
-
-	followingStatus := false
-	if len(followingTmp) > 0 {
-		tmp, _ := strconv.ParseBool(followingTmp)
-		followingStatus = tmp
-	}
-
-	err := handler.conversationService.UpdateFollowingStatusConversation(c, res.Data, appId, conversationId, followingStatus)
+	err := handler.conversationService.UpdateUserPreferenceConversation(c, res.Data, preferenceRequest)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
