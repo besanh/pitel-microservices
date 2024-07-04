@@ -128,6 +128,14 @@ func processLabels(ctx context.Context, dbCon sqlclient.ISqlClientConn, labels [
  * Handle execute main chat auto script's logics (detecting keywords, offline agents)
  */
 func ExecutePlannedAutoScript(ctx context.Context, user model.User, message model.Message, conversationView *model.ConversationView) error {
+	if user.AuthUser == nil {
+		log.Error("not found auth user info")
+		return nil
+	}
+	if message.IsEcho {
+		return nil
+	}
+
 	if err := DetectKeywordsAndExecutePlannedAutoScript(ctx, user, message, conversationView); err != nil {
 		return err
 	}
