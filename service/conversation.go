@@ -556,19 +556,18 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 }
 
 func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error {
-	appId, conversationId := preferRequest.AppId, preferRequest.ConversationId
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, preferRequest.AppId, preferRequest.ConversationId)
 	if err != nil {
 		log.Error(err)
 		return err
 	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found", conversationId)
-		return errors.New("conversation " + conversationId + " not found")
+		log.Errorf("conversation %s not found", preferRequest.ConversationId)
+		return errors.New("conversation " + preferRequest.ConversationId + " not found")
 	}
 
 	filter := model.UserAllocateFilter{
-		AppId:          appId,
-		ConversationId: conversationId,
+		AppId:          preferRequest.AppId,
+		ConversationId: preferRequest.ConversationId,
 		MainAllocate:   "active",
 	}
 	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
@@ -577,35 +576,22 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return err
 	}
 	if len(*userAllocate) < 1 {
-		log.Errorf("conversation %s not found with active user", conversationId)
-		return errors.New("conversation " + conversationId + " not found with active user")
+		log.Errorf("conversation %s not found with active user", preferRequest.ConversationId)
+		return errors.New("conversation " + preferRequest.ConversationId + " not found with active user")
 	}
 
 	userAllocateTmp := (*userAllocate)[0]
 
-	switch preferRequest.Type {
+	tmp, _ := strconv.ParseBool(preferRequest.PreferenceValue)
+	switch preferRequest.PreferenceType {
 	case "major":
-		tmp, _ := strconv.ParseBool(preferRequest.Value)
 		conversationExist.Major = tmp
 	case "following":
-		tmp, _ := strconv.ParseBool(preferRequest.Value)
 		conversationExist.Following = tmp
 	default:
 	}
 
-	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
-	tmpBytes, err := json.Marshal(conversationExist)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	esDoc := map[string]any{}
-	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
-		log.Error(err)
-		return err
-	}
-
-	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+	if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -626,43 +612,7 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
 	}
 
-	var subscribers []*Subscriber
-	var subscriberAdmins []string
-	var subscriberManagers []string
-	for sub := range WsSubscribers.Subscribers {
-		if sub.TenantId == authUser.TenantId {
-			subscribers = append(subscribers, sub)
-			if sub.Level == "admin" {
-				subscriberAdmins = append(subscriberAdmins, sub.Id)
-			}
-			if sub.Level == "manager" {
-				subscriberManagers = append(subscriberManagers, sub.Id)
-			}
-		}
-	}
-
-	// Event to manager
-	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-	if isExist && len(manageQueueUser.ManageId) > 0 {
-		switch preferRequest.Type {
-		case "major":
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_major"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
-		case "following":
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_following"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
-		default:
-		}
-	}
-
-	// Event to admin
-	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
-		switch preferRequest.Type {
-		case "major":
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_major"], subscriberAdmins, true, conversationConverted)
-		case "following":
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_user_put_following"], subscriberAdmins, true, conversationConverted)
-		default:
-		}
-	}
+	s.publishConversationEventToManagerAndAdmin(authUser, manageQueueUser, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
 
 	return nil
 }

@@ -497,3 +497,34 @@ func checkItemExist(objmap []any, tmp map[string]string) (isExist bool) {
 	}
 	return
 }
+
+/*
+ * send event conversation to manager and admin subscribers
+ */
+func (s *Conversation) publishConversationEventToManagerAndAdmin(authUser *model.AuthUser, manageQueueUser *model.ChatManageQueueUser, eventName string, conversationConverted *model.ConversationView) {
+	var subscribers []*Subscriber
+	var subscriberAdmins []string
+	var subscriberManagers []string
+	for sub := range WsSubscribers.Subscribers {
+		if sub.TenantId == authUser.TenantId {
+			subscribers = append(subscribers, sub)
+			if sub.Level == "admin" {
+				subscriberAdmins = append(subscriberAdmins, sub.Id)
+			}
+			if sub.Level == "manager" {
+				subscriberManagers = append(subscriberManagers, sub.Id)
+			}
+		}
+	}
+
+	// Event to manager
+	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+	if isExist && len(manageQueueUser.ManageId) > 0 {
+		PublishConversationToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+	}
+
+	// Event to admin
+	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
+		PublishConversationToManyUser(variables.EVENT_CHAT[eventName], subscriberAdmins, true, conversationConverted)
+	}
+}

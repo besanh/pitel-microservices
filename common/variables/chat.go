@@ -116,4 +116,9 @@ var (
 		"{{page_name}}",
 		"{{customer_name}}",
 	}
+
+	PREFERENCE_EVENT map[string]string = map[string]string{
+		"major":     "conversation_user_put_major",
+		"following": "conversation_user_put_following",
+	}
 )
