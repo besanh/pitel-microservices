@@ -61,6 +61,8 @@ type ConversationFilter struct {
 	Email          string       `json:"email"`
 	Insensitive    string       `json:"insensitive"`
 	IsDone         sql.NullBool `json:"is_done"`
+	Major          sql.NullBool `json:"major"`
+	Following      sql.NullBool `json:"following"`
 }
 
 type UserAllocateFilter struct {
