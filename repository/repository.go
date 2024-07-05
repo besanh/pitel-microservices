@@ -36,6 +36,7 @@ func InitRepositories() {
 	ChatScriptRepo = NewChatScript()
 	ChatLabelRepo = NewChatLabel()
 	ChatAutoScriptRepo = NewChatAutoScript()
+	ChatPolicySettingRepo = NewChatPolicySetting()
 }
 
 func InitRepositoriesES() {
@@ -100,6 +101,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatLabel)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatPolicySetting)(nil)); err != nil {
 		log.Error(err)
 	}
 	log.Println("TABLES WERE CREATED")

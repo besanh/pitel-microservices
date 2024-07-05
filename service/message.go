@@ -68,6 +68,11 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		}
 	}
 
+	// block messages sent outside of chat window
+	if err := CheckOutOfChatWindowTime(ctx, conversation.TenantId, conversation.ConversationType, conversation.UpdatedAt); err != nil {
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+
 	timestampTmp := time.Now().UnixMilli()
 	timestamp := fmt.Sprintf("%d", timestampTmp)
 	eventName := "text"
