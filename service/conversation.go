@@ -643,7 +643,7 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 
 	// Event to manager
 	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
+	if isExist && len(manageQueueUser.ManageId) > 0 {
 		switch preferRequest.Type {
 		case "major":
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_user_put_major"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
