@@ -520,11 +520,12 @@ func (s *Conversation) publishConversationEventToManagerAndAdmin(authUser *model
 	// Event to manager
 	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
 	if isExist && len(manageQueueUser.ManageId) > 0 {
-		PublishConversationToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+		go PublishConversationToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.ManageId, subscribers, true, conversationConverted)
 	}
 
 	// Event to admin
 	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
-		PublishConversationToManyUser(variables.EVENT_CHAT[eventName], subscriberAdmins, true, conversationConverted)
+		go PublishConversationToManyUser(variables.EVENT_CHAT[eventName], subscriberAdmins, true, conversationConverted)
 	}
+	go PublishConversationToOneUser(variables.EVENT_CHAT[eventName], authUser.UserId, subscribers, true, conversationConverted)
 }
