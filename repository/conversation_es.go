@@ -87,7 +87,7 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 					{
 						"bool": map[string]any{
 							"must": map[string]any{
-								"wildcard": map[string]any{
+								"term": map[string]any{
 									"major": strconv.FormatBool(filter.Major.Bool),
 								},
 							},
@@ -105,7 +105,7 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 					{
 						"bool": map[string]any{
 							"must": map[string]any{
-								"wildcard": map[string]any{
+								"term": map[string]any{
 									"following": strconv.FormatBool(filter.Following.Bool),
 								},
 							},
@@ -347,7 +347,7 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 					{
 						"bool": map[string]any{
 							"must": map[string]any{
-								"wildcard": map[string]any{
+								"term": map[string]any{
 									"major": strconv.FormatBool(filter.Major.Bool),
 								},
 							},
@@ -365,7 +365,7 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 					{
 						"bool": map[string]any{
 							"must": map[string]any{
-								"wildcard": map[string]any{
+								"term": map[string]any{
 									"following": strconv.FormatBool(filter.Following.Bool),
 								},
 							},
