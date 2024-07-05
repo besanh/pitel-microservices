@@ -612,13 +612,6 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 	}
 
 	s.publishConversationEventToManagerAndAdmin(authUser, manageQueueUser, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
-	var subscribers []*Subscriber
-	for s := range WsSubscribers.Subscribers {
-		if s.TenantId == authUser.TenantId {
-			subscribers = append(subscribers, s)
-		}
-	}
-	go PublishConversationToOneUser(variables.PREFERENCE_EVENT[preferRequest.PreferenceType], authUser.UserId, subscribers, true, conversationConverted)
 
 	return nil
 }
