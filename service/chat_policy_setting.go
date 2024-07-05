@@ -114,6 +114,20 @@ func (s *ChatPolicySetting) UpdateChatPolicySettingById(ctx context.Context, aut
 		return err
 	}
 
+	// check already exist setting
+	filter := model.ChatPolicyFilter{
+		TenantId:       authUser.TenantId,
+		ConnectionType: request.ConnectionType,
+	}
+	total, _, err := repository.ChatPolicySettingRepo.GetChatPolicySettings(ctx, dbCon, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if total > 0 {
+		return errors.New("policy setting already exists")
+	}
+
 	policySetting, err := repository.ChatPolicySettingRepo.GetById(ctx, dbCon, id)
 	if err != nil || policySetting == nil {
 		err = fmt.Errorf("not found policy setting, err=%v", err)
