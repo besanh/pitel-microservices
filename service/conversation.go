@@ -303,7 +303,6 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 	}
 	conversationExist.Username = data.Fullname
 	conversationExist.ShareInfo = &data
-	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
 	tmpBytes, err := json.Marshal(conversationExist)
 	if err != nil {
 		log.Error(err)
