@@ -556,7 +556,7 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 }
 
 func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error {
-	appId, conversationId := preferRequest.AppId, preferRequest.OaId
+	appId, conversationId := preferRequest.AppId, preferRequest.ConversationId
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
@@ -585,10 +585,10 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 
 	switch preferRequest.Type {
 	case "major":
-		tmp, _ := strconv.ParseBool(preferRequest.Major)
+		tmp, _ := strconv.ParseBool(preferRequest.Value)
 		conversationExist.Major = tmp
 	case "following":
-		tmp, _ := strconv.ParseBool(preferRequest.Following)
+		tmp, _ := strconv.ParseBool(preferRequest.Value)
 		conversationExist.Following = tmp
 	default:
 	}

@@ -125,11 +125,11 @@ type ConversationLabelRequest struct {
 }
 
 type ConversationPreferenceRequest struct {
-	AppId     string `json:"app_id"`
-	OaId      string `json:"oa_id"`
-	Major     string `json:"major"`
-	Following string `json:"following"`
-	Type      string `json:"type"` // major, following
+	AppId          string `json:"app_id"`
+	OaId           string `json:"oa_id"`
+	ConversationId string `json:"conversation_id"`
+	Value          string `json:"value"`
+	Type           string `json:"type"` // major, following
 }
 
 func (m *ConversationLabelRequest) Validate() error {
@@ -167,17 +167,17 @@ func (m *ConversationPreferenceRequest) Validate() error {
 	if len(m.OaId) < 1 {
 		return errors.New("oa id is required")
 	}
+	if len(m.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
 	switch m.Type {
 	case "major":
-		if len(m.Major) < 1 {
-			return errors.New("major is required")
-		}
 	case "following":
-		if len(m.Following) < 1 {
-			return errors.New("following is required")
-		}
 	default:
 		return errors.New("type " + m.Type + " is not supported")
+	}
+	if len(m.Value) < 1 {
+		return errors.New(m.Type + " is required")
 	}
 
 	return nil
