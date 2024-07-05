@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -76,10 +75,23 @@ func (s *ChatPolicySetting) InsertChatPolicySetting(ctx context.Context, authUse
 		return policySetting.Id, err
 	}
 
+	// check already exist setting
+	filter := model.ChatPolicyFilter{
+		TenantId:       authUser.TenantId,
+		ConnectionType: request.ConnectionType,
+	}
+	total, _, err := repository.ChatPolicySettingRepo.GetChatPolicySettings(ctx, dbCon, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return policySetting.Id, err
+	}
+	if total > 0 {
+		return policySetting.Id, errors.New("policy setting already exists")
+	}
+
 	policySetting.CreatedBy = authUser.UserId
 	policySetting.ConnectionType = request.ConnectionType
 	policySetting.ChatWindowTime = request.ChatWindowTime
-	policySetting.CreatedAt = time.Now()
 
 	if err = repository.ChatPolicySettingRepo.Insert(ctx, dbCon, policySetting); err != nil {
 		log.Error(err)
@@ -110,7 +122,6 @@ func (s *ChatPolicySetting) UpdateChatPolicySettingById(ctx context.Context, aut
 	}
 	policySetting.ConnectionType = request.ConnectionType
 	policySetting.UpdatedBy = authUser.UserId
-	policySetting.UpdatedAt = time.Now()
 	if err = repository.ChatPolicySettingRepo.Update(ctx, dbCon, *policySetting); err != nil {
 		log.Error(err)
 		return err

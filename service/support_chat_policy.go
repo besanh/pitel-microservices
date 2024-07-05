@@ -12,10 +12,6 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-var (
-	ErrOutOfChatWindow = errors.New("out of chat window time")
-)
-
 func GeneratePolicySettingKeyId(tenantId, connectionType string) string {
 	return CHAT_POLICY_SETTING + "_" + tenantId + "_" + connectionType
 }
@@ -45,6 +41,8 @@ func CheckOutOfChatWindowTime(ctx context.Context, tenantId, connectionType, las
 			log.Error(err)
 			return err
 		}
+
+		chatWindowDuration = policySetting.ChatWindowTime
 	} else {
 		filter := model.ChatPolicyFilter{
 			TenantId:       tenantId,
@@ -72,10 +70,13 @@ func CheckOutOfChatWindowTime(ctx context.Context, tenantId, connectionType, las
 		log.Error(err)
 		return err
 	}
+	if chatWindowDuration < 0 {
+		chatWindowDuration = 0
+	}
 	windowEndTime := lastMessageAt.Add(time.Duration(chatWindowDuration) * time.Second)
 
 	if currentTime.After(windowEndTime) {
-		return ErrOutOfChatWindow
+		return errors.New("out of chat window time")
 	}
 
 	return nil

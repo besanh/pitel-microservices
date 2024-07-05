@@ -47,7 +47,7 @@ var (
 	CHAT_AUTO_SCRIPT           = "chat_auto_script"
 	CHAT_AUTO_SCRIPT_EXPIRE    = 30 * time.Minute
 	CHAT_POLICY_SETTING        = "chat_policy_setting"
-	CHAT_POLICY_SETTING_EXPIRE = 31536000 * time.Second // a year since policies rarely change
+	CHAT_POLICY_SETTING_EXPIRE = 24 * time.Hour // a day since policies are rarely changed
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
