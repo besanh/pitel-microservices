@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,7 @@ type (
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
+		UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error
 	}
 	Conversation struct{}
 )
@@ -301,7 +303,6 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 	}
 	conversationExist.Username = data.Fullname
 	conversationExist.ShareInfo = &data
-	conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
 	tmpBytes, err := json.Marshal(conversationExist)
 	if err != nil {
 		log.Error(err)
@@ -551,4 +552,66 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 	}
 
 	return response.OK(conversationExist)
+}
+
+func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, preferRequest.AppId, preferRequest.ConversationId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(conversationExist.ConversationId) < 1 {
+		log.Errorf("conversation %s not found", preferRequest.ConversationId)
+		return errors.New("conversation " + preferRequest.ConversationId + " not found")
+	}
+
+	filter := model.UserAllocateFilter{
+		AppId:          preferRequest.AppId,
+		ConversationId: preferRequest.ConversationId,
+		MainAllocate:   "active",
+	}
+	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*userAllocate) < 1 {
+		log.Errorf("conversation %s not found with active user", preferRequest.ConversationId)
+		return errors.New("conversation " + preferRequest.ConversationId + " not found with active user")
+	}
+
+	userAllocateTmp := (*userAllocate)[0]
+
+	tmp, _ := strconv.ParseBool(preferRequest.PreferenceValue)
+	switch preferRequest.PreferenceType {
+	case "major":
+		conversationExist.Major = tmp
+	case "following":
+		conversationExist.Following = tmp
+	default:
+	}
+
+	if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	conversationConverted := &model.ConversationView{}
+	if err = util.ParseAnyToAny(conversationExist, conversationConverted); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// Event to manager
+	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if len(manageQueueUser.Id) < 1 {
+		log.Error("queue " + userAllocateTmp.QueueId + " not found")
+		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+	}
+
+	s.publishConversationEventToManagerAndAdmin(authUser, manageQueueUser, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
+
+	return nil
 }

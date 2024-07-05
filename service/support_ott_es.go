@@ -47,6 +47,8 @@ func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId string
 		conversation.ExternalUserId = conversationExist.ExternalUserId
 		conversation.Username = conversationExist.Username
 		conversation.Avatar = conversationExist.Avatar
+		conversation.Major = conversationExist.Major
+		conversation.Following = conversationExist.Following
 		conversation.Label = conversationExist.Label
 		conversation.IsDone = false
 		conversation.IsDoneBy = ""

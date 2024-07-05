@@ -73,18 +73,20 @@ var (
 	}
 
 	EVENT_CHAT map[string]string = map[string]string{
-		"oa_connection":              "oa_connection",
-		"submit_info":                "submit_info",
-		"ask_info":                   "ask_info",
-		"message_created":            "message_created",
-		"conversation_created":       "conversation_created",
-		"conversation_done":          "conversation_done",
-		"conversation_assigned":      "conversation_assigned",
-		"conversation_unassigned":    "conversation_unassigned",
-		"conversation_removed":       "conversation_removed",
-		"conversation_reopen":        "conversation_reopen",
-		"conversation_add_labels":    "conversation_add_labels",
-		"conversation_remove_labels": "conversation_remove_labels",
+		"oa_connection":                   "oa_connection",
+		"submit_info":                     "submit_info",
+		"ask_info":                        "ask_info",
+		"message_created":                 "message_created",
+		"conversation_created":            "conversation_created",
+		"conversation_done":               "conversation_done",
+		"conversation_assigned":           "conversation_assigned",
+		"conversation_unassigned":         "conversation_unassigned",
+		"conversation_removed":            "conversation_removed",
+		"conversation_reopen":             "conversation_reopen",
+		"conversation_add_labels":         "conversation_add_labels",
+		"conversation_remove_labels":      "conversation_remove_labels",
+		"conversation_user_put_major":     "conversation_user_put_major",
+		"conversation_user_put_following": "conversation_user_put_following",
 	}
 
 	STATUS_CONVERSATION []string = []string{
@@ -113,5 +115,10 @@ var (
 	PERSONALIZATION_KEYWORDS = []string{
 		"{{page_name}}",
 		"{{customer_name}}",
+	}
+
+	PREFERENCE_EVENT map[string]string = map[string]string{
+		"major":     "conversation_user_put_major",
+		"following": "conversation_user_put_following",
 	}
 )
