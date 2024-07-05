@@ -84,9 +84,11 @@ func initConfigService() {
 
 	// Zalo
 	service.ZALO_SHARE_INFO_SUBTITLE = env.GetStringENV("ZALO_SHARE_INFO_SUBTITLE", "")
+	service.ZALO_POLICY_CHAT_WINDOW = env.GetIntENV("ZALO_POLICY_CHAT_WINDOW", 604800) // 7 days in secs
 
 	// Facebook
 	service.FACEBOOK_GRAPH_API_VERSION = env.GetStringENV("FACEBOOK_GRAPH_API_VERSION", "")
+	service.FACEBOOK_POLICY_CHAT_WINDOW = env.GetIntENV("FACEBOOK_POLICY_CHAT_WINDOW", 86400) // 1 day in secs
 
 	// DB for cronjob
 	service.DB_HOST = env.GetStringENV("DB_HOST", "")

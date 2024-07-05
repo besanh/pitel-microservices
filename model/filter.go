@@ -180,3 +180,8 @@ type ChatAutoScriptFilter struct {
 	OaId         string       `json:"oa_id"`
 	TriggerEvent string       `json:"trigger_event"`
 }
+
+type ChatPolicyFilter struct {
+	TenantId       string `json:"tenant_id"`
+	ConnectionType string `json:"connection_type"`
+}
