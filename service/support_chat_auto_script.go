@@ -460,6 +460,9 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	if conversationView == nil {
 		return errors.New("not found conversation")
 	}
+	if err := CheckOutOfChatWindowTime(ctx, conversationView.TenantId, conversationView.ConversationType, conversationView.UpdatedAt); err != nil {
+		return err
+	}
 
 	if util.ContainKeywords(content, variables.PERSONALIZATION_KEYWORDS) {
 		pageName := conversationView.OaName

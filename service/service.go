@@ -28,24 +28,26 @@ var (
 	ES_INDEX_CONVERSATION = "" // = "pitel_bss_conversation"
 
 	// Redis
-	CONVERSATION             = "conversation"
-	CONVERSATION_EXPIRE      = 30 * time.Minute
-	CHAT_QUEUE               = "chat_queue"
-	CHAT_QUEUE_EXPIRE        = 30 * time.Minute
-	CHAT_ROUTING             = "chat_routing"
-	CHAT_ROUTING_EXPIRE      = 1 * time.Hour
-	CHAT_QUEUE_USER          = "chat_queue_user"
-	CHAT_QUEUE_USER_EXPIRE   = 10 * time.Minute
-	CHAT_APP                 = "chat_app"
-	CHAT_APP_EXPIRE          = 6 * time.Hour
-	USER_ALLOCATE            = "user_allocate"
-	USER_ALLOCATE_EXPIRE     = 1 * time.Hour
-	MANAGE_QUEUE_USER        = "manage_queue_user"
-	MANAGE_QUEUE_USER_EXPIRE = 1 * time.Hour
-	CHAT_CONNECTION          = "chat_connection"
-	CHAT_CONNECTION_EXPIRE   = 5 * time.Minute
-	CHAT_AUTO_SCRIPT         = "chat_auto_script"
-	CHAT_AUTO_SCRIPT_EXPIRE  = 30 * time.Minute
+	CONVERSATION               = "conversation"
+	CONVERSATION_EXPIRE        = 30 * time.Minute
+	CHAT_QUEUE                 = "chat_queue"
+	CHAT_QUEUE_EXPIRE          = 30 * time.Minute
+	CHAT_ROUTING               = "chat_routing"
+	CHAT_ROUTING_EXPIRE        = 1 * time.Hour
+	CHAT_QUEUE_USER            = "chat_queue_user"
+	CHAT_QUEUE_USER_EXPIRE     = 10 * time.Minute
+	CHAT_APP                   = "chat_app"
+	CHAT_APP_EXPIRE            = 6 * time.Hour
+	USER_ALLOCATE              = "user_allocate"
+	USER_ALLOCATE_EXPIRE       = 1 * time.Hour
+	MANAGE_QUEUE_USER          = "manage_queue_user"
+	MANAGE_QUEUE_USER_EXPIRE   = 1 * time.Hour
+	CHAT_CONNECTION            = "chat_connection"
+	CHAT_CONNECTION_EXPIRE     = 5 * time.Minute
+	CHAT_AUTO_SCRIPT           = "chat_auto_script"
+	CHAT_AUTO_SCRIPT_EXPIRE    = 30 * time.Minute
+	CHAT_POLICY_SETTING        = "chat_policy_setting"
+	CHAT_POLICY_SETTING_EXPIRE = 24 * time.Hour // a day since policies are rarely changed
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
@@ -65,9 +67,11 @@ var (
 
 	// Zalo
 	ZALO_SHARE_INFO_SUBTITLE string = ""
+	ZALO_POLICY_CHAT_WINDOW  int    = 0
 
 	// Facebook
-	FACEBOOK_GRAPH_API_VERSION string = ""
+	FACEBOOK_GRAPH_API_VERSION  string = ""
+	FACEBOOK_POLICY_CHAT_WINDOW int    = 0
 
 	// DB PG
 	DB_HOST     string = ""
