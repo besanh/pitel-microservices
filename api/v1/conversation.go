@@ -198,6 +198,17 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
 	}
+	major := sql.NullBool{}
+	if len(c.Query("major")) > 0 {
+		major.Valid = true
+		major.Bool, _ = strconv.ParseBool(c.Query("major"))
+	}
+	following := sql.NullBool{}
+	if len(c.Query("following")) > 0 {
+		following.Valid = true
+		following.Bool, _ = strconv.ParseBool(c.Query("following"))
+	}
+
 	filter := model.ConversationFilter{
 		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
 		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
@@ -205,6 +216,8 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		PhoneNumber:    c.Query("phone_number"),
 		Email:          c.Query("email"),
 		IsDone:         isDone,
+		Major:          major,
+		Following:      following,
 	}
 
 	code, result := handler.conversationService.GetConversationsByManage(c, res.Data, filter, limit, offset)
