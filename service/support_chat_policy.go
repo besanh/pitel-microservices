@@ -64,19 +64,22 @@ func CheckOutOfChatWindowTime(ctx context.Context, tenantId, connectionType, las
 			}
 		}
 	}
-	currentTime := time.Now()
-	lastMessageAt, err := time.Parse(time.RFC3339, lastMessageTimestamp)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	if chatWindowDuration < 0 {
-		chatWindowDuration = 0
-	}
-	windowEndTime := lastMessageAt.Add(time.Duration(chatWindowDuration) * time.Second)
 
-	if currentTime.After(windowEndTime) {
-		return errors.New("out of chat window time")
+	if len(lastMessageTimestamp) > 0 {
+		currentTime := time.Now()
+		lastMessageAt, err := time.Parse(time.RFC3339, lastMessageTimestamp)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if chatWindowDuration < 0 {
+			chatWindowDuration = 0
+		}
+		windowEndTime := lastMessageAt.Add(time.Duration(chatWindowDuration) * time.Second)
+
+		if currentTime.After(windowEndTime) {
+			return errors.New("out of chat window time")
+		}
 	}
 
 	return nil
