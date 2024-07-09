@@ -517,10 +517,12 @@ func (s *Conversation) publishConversationEventToManagerAndAdmin(authUser *model
 		}
 	}
 
-	// Event to manager
-	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-	if isExist && len(manageQueueUser.ManageId) > 0 {
-		go PublishConversationToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+	if manageQueueUser != nil {
+		// Event to manager
+		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+		if isExist && len(manageQueueUser.ManageId) > 0 {
+			go PublishConversationToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+		}
 	}
 
 	// Event to admin
