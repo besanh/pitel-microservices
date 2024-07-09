@@ -569,17 +569,6 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		ConversationId: preferRequest.ConversationId,
 		MainAllocate:   "active",
 	}
-	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	if len(*userAllocate) < 1 {
-		log.Errorf("conversation %s not found with active user", preferRequest.ConversationId)
-		return errors.New("conversation " + preferRequest.ConversationId + " not found with active user")
-	}
-
-	userAllocateTmp := (*userAllocate)[0]
 
 	tmp, _ := strconv.ParseBool(preferRequest.PreferenceValue)
 	switch preferRequest.PreferenceType {
@@ -601,17 +590,26 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return err
 	}
 
-	// Event to manager
-	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
-	} else if len(manageQueueUser.Id) < 1 {
-		log.Error("queue " + userAllocateTmp.QueueId + " not found")
-		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
 	}
-
-	s.publishConversationEventToManagerAndAdmin(authUser, manageQueueUser, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
+	if len(*userAllocate) > 0 {
+		userAllocateTmp := (*userAllocate)[0]
+		// Event to manager
+		manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+		if err != nil {
+			log.Error(err)
+			return err
+		} else if len(manageQueueUser.Id) < 1 {
+			log.Error("queue " + userAllocateTmp.QueueId + " not found")
+			return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+		}
+		s.publishConversationEventToManagerAndAdmin(authUser, manageQueueUser, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
+	} else {
+		s.publishConversationEventToManagerAndAdmin(authUser, nil, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
+	}
 
 	return nil
 }
