@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package proto.chatAuth;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+// import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+// import "google/protobuf/struct.proto";\
+
+message AuthUser {
+  string tenant_id = 1;
+  string user_id = 3;
+  string username = 4;
+  string level = 11;
+  string role_id = 12;
+}
+
+message VerifyTokenResponse {
+  string code = 1;
+  string message = 2;
+  AuthUser data = 3;
+}
+
+message VerifyTokenRequest { string token = 1; }
+
+message RefreshTokenRequest { string refresh_token = 1; }
+
+message RefreshTokenResponse {
+  string code = 1;
+  string message = 2;
+  RefreshTokenResponseData data = 3;
+}
+
+message RefreshTokenResponseData {
+  int32 expired_in = 1;
+  string token = 2;
+  string refresh_token = 3;
+}
+
+service ChatTokenService {
+  rpc VerifyToken(VerifyTokenRequest) returns (VerifyTokenResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/token/verify"
+      body : "*"
+    };
+  };
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/token/refresh"
+      body : "*"
+    };
+  };
+}

@@ -38,6 +38,13 @@ func AuthMiddleware(c *gin.Context) *model.AAAResponse {
 	}
 
 	res := AAAMiddleware(c, bssAuthRequest)
+	if res == nil {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return nil
+	}
 
 	return res
 }
@@ -159,8 +166,6 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 		userInfo.UnitUuid, _ = resp["unit_uuid"].(string)
 		userInfo.UnitName, _ = resp["unit_name"].(string)
 		userInfo.RoleUuid, _ = resp["role_uuid"].(string)
-		userInfo.Extension, _ = resp["extension"].(string)
-		userInfo.ExtensionUuid, _ = resp["extension_uuid"].(string)
 
 		cache.RCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 3*time.Minute)
 	}
@@ -174,7 +179,6 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 				Level:    userInfo.Level,
 				Source:   bssAuthRequest.Source,
 				Token:    bssAuthRequest.Token,
-				UnitUuid: userInfo.UnitUuid,
 				Fullname: userInfo.FirstName + " " + userInfo.MiddleName + " " + userInfo.LastName,
 			},
 		}
