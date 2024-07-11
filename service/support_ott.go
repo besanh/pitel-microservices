@@ -53,7 +53,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 	filter := model.UserAllocateFilter{
 		ConversationId: GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId),
 	}
-	_, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	_, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return user, err
@@ -108,7 +108,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 			ConversationId: GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId),
 			MainAllocate:   "deactive",
 		}
-		_, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+		_, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return user, err
@@ -130,7 +130,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 /**
 * Check all setting to allocate conversation to user
  */
-func (s *OttMessage) CheckAllSetting(ctx context.Context, newConversationId string, message model.Message, isConversationExist bool, currentUserAllocate *model.UserAllocate) (user model.User, err error) {
+func (s *OttMessage) CheckAllSetting(ctx context.Context, newConversationId string, message model.Message, isConversationExist bool, currentUserAllocate *model.AllocateUser) (user model.User, err error) {
 	var authInfo model.AuthUser
 	connectionFilter := model.ChatConnectionAppFilter{
 		ConnectionType: message.MessageType,
@@ -158,7 +158,7 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, newConversationId stri
 			QueueId:        []string{connectionQueue.QueueId},
 			MainAllocate:   "active",
 		}
-		_, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filterUserAllocation, -1, 0)
+		_, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filterUserAllocation, -1, 0)
 		if err != nil {
 			log.Error(err)
 			return user, err
@@ -260,8 +260,8 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, newConversationId stri
 * if isConversationExist = true,  it means conversation is exist, and we can get user from user_allocate
 * if isConversationExist = false, it means conversation is not exist, we need to get user from chat_setting
  */
-func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConversationExist bool, currentUserAllocate *model.UserAllocate) (user model.User, err error) {
-	userAllocate := model.UserAllocate{}
+func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.ChatSetting, isConversationExist bool, currentUserAllocate *model.AllocateUser) (user model.User, err error) {
+	userAllocate := model.AllocateUser{}
 	var authInfo model.AuthUser
 	var userLives []Subscriber
 	var isUserAccept bool
@@ -359,7 +359,7 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 	} else {
 		if len(userLives) > 0 {
 			if len(chatSetting.Message.ConversationId) > 0 {
-				total, conversationDeactiveExist, errConv := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, model.UserAllocateFilter{
+				total, conversationDeactiveExist, errConv := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, model.UserAllocateFilter{
 					AppId:          chatSetting.Message.AppId,
 					ConversationId: chatSetting.Message.ConversationId,
 				}, -1, 0)
@@ -368,14 +368,14 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 					return user, errConv
 				}
 				if total > 0 {
-					if err := repository.UserAllocateRepo.DeleteUserAllocates(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
+					if err := repository.UserAllocateRepo.DeleteAllocateUsers(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
 						log.Error(err)
 						return user, err
 					}
 				}
 			}
 
-			userAllocate = model.UserAllocate{
+			userAllocate = model.AllocateUser{
 				Base:               model.InitBase(),
 				TenantId:           chatSetting.ConnectionApp.TenantId,
 				ConversationId:     conversationId,
@@ -414,7 +414,7 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 	}
 }
 
-func (s *OttMessage) UpdateConversationById(ctx context.Context, tenantId string, userAllocate model.UserAllocate, message model.Message) error {
+func (s *OttMessage) UpdateConversationById(ctx context.Context, tenantId string, userAllocate model.AllocateUser, message model.Message) error {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, message.AppId, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId))
 	if err != nil {
 		return err

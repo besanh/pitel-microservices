@@ -78,7 +78,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	} else {
 		conversationFilter.MainAllocate = "active"
 	}
-	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -188,7 +188,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	} else {
 		conversationFilter.MainAllocate = "active"
 	}
-	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -349,7 +349,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		ConversationId: conversationId,
 		MainAllocate:   statusAllocate,
 	}
-	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	_, userAllocate, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -477,12 +477,12 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// Event to manager
-	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
+	isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
+	if isExist && (manageQueueUser.UserId != conversationExist.IsDoneBy) {
 		if status == "done" {
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.UserId, subscribers, true, conversationConverted)
 		} else if status == "reopen" {
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.UserId, subscribers, true, conversationConverted)
 		}
 
 		// PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &(*messages)[0])
@@ -590,7 +590,7 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return err
 	}
 
-	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	_, userAllocate, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err

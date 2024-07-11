@@ -208,7 +208,7 @@ func CheckConfigAppCache(ctx context.Context, appId string) (isExist bool, err e
 	if chatAppCache != nil {
 		isExist = true
 	} else {
-		filter := model.AppFilter{
+		filter := model.ChatAppFilter{
 			AppId:  appId,
 			Status: "active",
 		}

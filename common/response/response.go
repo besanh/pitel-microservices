@@ -11,24 +11,36 @@ import (
 )
 
 const (
-	ERR_TOKEN_IS_EMPTY       = "token is empty"
-	ERR_TOKEN_IS_INVALID     = "token is invalid"
-	ERR_TOKEN_IS_EXPIRED     = "token is expired"
-	ERR_EMPTY_CONN           = "empty connection"
-	ERR_DATA_NOT_FOUND       = "data not found"
-	ERR_DATA_INVALID         = "data is invalid"
-	ERR_EXAMPLE_NOT_FOUND    = "example not found"
-	ERR_EXAMPLE_INVALID      = "example is invalid"
-	ERR_CAMPAIGN_NOT_FOUND   = "campaign not found"
-	ERR_CAMPAIGN_INVALID     = "campaign is invalid"
-	ERR_MASTERDATA_NOT_FOUND = "masterdata not found"
-	ERR_MASTERDATA_INVALID   = "masterdata is invalid"
-	ERR_INSERT_FAILED        = "insert failed"
-	ERR_GET_FAILED           = "get failed"
-	ERR_PUT_FAILED           = "put failed"
-	ERR_PATCH_FAILED         = "patch failed"
-	ERR_DELETE_FAILED        = "delete failed"
-	ERR_VALIDATION_FAILED    = "validation failed"
+	ERR_TOKEN_IS_EMPTY            = "token is empty"
+	ERR_TOKEN_IS_INVALID          = "token is invalid"
+	ERR_TOKEN_IS_EXPIRED          = "token is expired"
+	ERR_EMPTY_CONN                = "empty connection"
+	ERR_DATA_NOT_FOUND            = "data not found"
+	ERR_DATA_INVALID              = "data is invalid"
+	ERR_EXAMPLE_NOT_FOUND         = "example not found"
+	ERR_EXAMPLE_INVALID           = "example is invalid"
+	ERR_CAMPAIGN_NOT_FOUND        = "campaign not found"
+	ERR_CAMPAIGN_INVALID          = "campaign is invalid"
+	ERR_MASTERDATA_NOT_FOUND      = "masterdata not found"
+	ERR_MASTERDATA_INVALID        = "masterdata is invalid"
+	ERR_INSERT_FAILED             = "insert failed"
+	ERR_GET_FAILED                = "get failed"
+	ERR_PUT_FAILED                = "put failed"
+	ERR_PATCH_FAILED              = "patch failed"
+	ERR_DELETE_FAILED             = "delete failed"
+	ERR_VALIDATION_FAILED         = "validation failed"
+	ERR_INVALID_USERNAME_PASSWORD = "invalid username or password"
+
+	ERR_REQUEST_INVALID         = "request invalid"
+	ERR_REQUEST_IS_EXISTED      = "request is existed"
+	ERR_REQUEST_NOTFOUND        = "request not found"
+	ERR_REQUEST_IS_EXPIRED      = "request is expired"
+	ERR_REQUEST_CODE_IS_INVALID = "request code is invalid"
+
+	ERR_PERMISSION_DENIED = "permission denied"
+
+	// Success
+	SUCCESS = "success"
 )
 
 var MAP_ERR_RESPONSE = map[string]struct {

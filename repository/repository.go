@@ -37,6 +37,10 @@ func InitRepositories() {
 	ChatLabelRepo = NewChatLabel()
 	ChatAutoScriptRepo = NewChatAutoScript()
 	ChatPolicySettingRepo = NewChatPolicySetting()
+	VendorRepo = NewVendor()
+	ChatIntegrateSystemRepo = NewChatIntegrateSystem()
+	ChatRoleRepo = NewChatRole()
+	ChatUserRepo = NewChatUser()
 }
 
 func InitRepositoriesES() {
@@ -67,7 +71,7 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatQueueUser)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.UserAllocate)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.AllocateUser)(nil)); err != nil {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ConnectionQueue)(nil)); err != nil {
@@ -106,18 +110,25 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatPolicySetting)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatVendor)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatIntegrateSystem)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatTenantIntegrateSystem)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatRole)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatUser)(nil)); err != nil {
+		log.Error(err)
+	}
 	log.Println("TABLES WERE CREATED")
 }
 
 func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
-	if _, err := db.GetDB().NewAddColumn().Model((*model.ChatApp)(nil)).IfNotExists().ColumnExpr("default_app text null").Exec(ctx); err != nil {
-		log.Info(err)
-		panic(err)
-	}
-	if _, err := db.GetDB().NewAddColumn().Model((*model.UserAllocate)(nil)).IfNotExists().ColumnExpr("oa_id text not null").Exec(ctx); err != nil {
-		log.Info(err)
-		panic(err)
-	}
 }
 
 func IsValidUUID(uuid string) bool {

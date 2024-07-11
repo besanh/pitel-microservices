@@ -223,7 +223,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		OaId:           request.OaId,
 		ConversationId: request.ConversationId,
 	}
-	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filterUserAllocate, 1, 0)
+	_, userAllocate, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filterUserAllocate, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
@@ -252,11 +252,11 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		} else if len(*manageQueueUser) > 0 {
 			if request.Action == "create" || request.Action == "update" {
 				if len(subscribers) > 0 {
-					go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_add_labels"], (*manageQueueUser)[0].ManageId, subscribers, true, conversationConverted)
+					go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_add_labels"], (*manageQueueUser)[0].UserId, subscribers, true, conversationConverted)
 				}
 			} else if request.Action == "delete" {
 				if len(subscribers) > 0 {
-					go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_remove_labels"], (*manageQueueUser)[0].ManageId, subscribers, true, conversationConverted)
+					go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_remove_labels"], (*manageQueueUser)[0].UserId, subscribers, true, conversationConverted)
 				}
 			}
 		}
@@ -519,9 +519,9 @@ func (s *Conversation) publishConversationEventToManagerAndAdmin(authUser *model
 
 	if manageQueueUser != nil {
 		// Event to manager
-		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-		if isExist && len(manageQueueUser.ManageId) > 0 {
-			go PublishConversationToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+		isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
+		if isExist && len(manageQueueUser.UserId) > 0 {
+			go PublishConversationToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.UserId, subscribers, true, conversationConverted)
 		}
 	}
 
