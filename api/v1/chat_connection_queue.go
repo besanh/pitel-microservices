@@ -25,10 +25,6 @@ func NewChatConnectionQueue(engine *gin.Engine, chatConnectionQueueService servi
 
 func (handler *ChatConnectionQueue) GetChatConnectionQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {

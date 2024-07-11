@@ -26,10 +26,6 @@ func NewProfile(engine *gin.Engine, profileService service.IProfile) {
 
 func (handler *Profile) GetUpdateProfile(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	request := model.ProfileRequest{
 		AppId:          c.Query("app_id"),

@@ -30,10 +30,6 @@ func NewChatQueue(engine *gin.Engine, chatQueueService service.IChatQueue) {
 
 func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	var data model.ChatQueueRequest
 	if err := c.ShouldBind(&data); err != nil {
@@ -62,10 +58,7 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 
 func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
+
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth-url"),
@@ -97,10 +90,6 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 
 func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
@@ -120,10 +109,6 @@ func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 
 func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
@@ -150,10 +135,6 @@ func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 
 func (handler *ChatQueue) DeleteChatQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {

@@ -33,10 +33,6 @@ func NewChatRouting(engine *gin.Engine, chatRoutingService service.IChatRouting)
 
 func (handler *ChatRouting) InsertChatRouting(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	var data model.ChatRoutingRequest
 	if err := c.ShouldBind(&data); err != nil {
@@ -65,10 +61,6 @@ func (handler *ChatRouting) InsertChatRouting(c *gin.Context) {
 
 func (handler *ChatRouting) GetChatRoutings(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
@@ -98,10 +90,6 @@ func (handler *ChatRouting) GetChatRoutings(c *gin.Context) {
 
 func (handler *ChatRouting) GetChatRoutingById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
@@ -123,10 +111,6 @@ func (handler *ChatRouting) GetChatRoutingById(c *gin.Context) {
 
 func (handler *ChatRouting) UpdateChatRoutingById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
@@ -154,10 +138,6 @@ func (handler *ChatRouting) UpdateChatRoutingById(c *gin.Context) {
 
 func (handler *ChatRouting) DeleteChatRoutingById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {

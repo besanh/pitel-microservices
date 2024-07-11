@@ -162,10 +162,6 @@ func (h *ShareInfo) GetImageShareInfo(c *gin.Context) {
 
 func (h *ShareInfo) GetShareInfos(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	limit, offset := util.ParseLimit(c.Query("limit")), util.ParseOffset(c.Query("offset"))
 	filter := model.ShareInfoFormFilter{
@@ -184,10 +180,7 @@ func (h *ShareInfo) GetShareInfos(c *gin.Context) {
 
 func (h *ShareInfo) GetShareInfoById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
+
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -203,10 +196,7 @@ func (h *ShareInfo) GetShareInfoById(c *gin.Context) {
 
 func (h *ShareInfo) PutShareInfoById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
+
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -235,10 +225,7 @@ func (h *ShareInfo) PutShareInfoById(c *gin.Context) {
 
 func (h *ShareInfo) DeleteShareInfoById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
+
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))

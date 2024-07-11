@@ -29,7 +29,6 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.GET("manager", handler.GetConversationsByManager)
 		Group.PUT(":app_id/:oa_id/:id", handler.UpdateConversation)
 		Group.POST("status", handler.UpdateStatusConversation)
-		Group.PATCH(":id/reassign", handler.ReassignConversation)
 		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
 		Group.PUT("label/:label_type", handler.PutLabelToConversation)
 		Group.PUT("preference", handler.UpdateUserPreferenceConversation)
@@ -38,10 +37,6 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 
 func (handler *Conversation) GetConversations(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
@@ -79,10 +74,6 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 
 func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	limit := util.ParseLimit(c.Query("limit"))
 	scrollId := c.Query("scroll_id")
@@ -120,10 +111,6 @@ func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 
 func (handler *Conversation) UpdateConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
@@ -155,10 +142,6 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 
 func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	jsonBody := make(map[string]any, 0)
 	if err := c.ShouldBindJSON(&jsonBody); err != nil {
@@ -186,10 +169,6 @@ func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
 
 func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
@@ -224,27 +203,8 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 	c.JSON(code, result)
 }
 
-func (hanlder *Conversation) ReassignConversation(c *gin.Context) {
-	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
-
-	id := c.Param("id")
-	if len(id) < 1 {
-		c.JSON(response.BadRequestMsg("id is required"))
-		return
-	}
-
-}
-
 func (handler *Conversation) GetConversationById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
@@ -270,10 +230,6 @@ func (handler *Conversation) GetConversationById(c *gin.Context) {
 
 func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	labelType := c.Param("label_type")
 	if len(labelType) < 1 {
@@ -309,10 +265,6 @@ func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 
 func (handler *Conversation) UpdateUserPreferenceConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	preferenceRequest := model.ConversationPreferenceRequest{}
 	if err := c.ShouldBindJSON(&preferenceRequest); err != nil {
