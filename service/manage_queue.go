@@ -83,19 +83,56 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 		log.Error("queue not found")
 		return errors.New("queue " + data.QueueId + " not found")
 	}
-	queueExist.ManageQueueId = manageQueueExist.GetId()
 
-	manageQueueExist.ConnectionId = data.ConnectionId
-	manageQueueExist.QueueId = data.QueueId
-	manageQueueExist.ManageId = data.ManageId
-	manageQueueExist.UpdatedAt = time.Now()
-	if err = repository.ManageQueueRepo.Update(ctx, dbCon, *manageQueueExist); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err := repository.ChatQueueRepo.Update(ctx, dbCon, *queueExist); err != nil {
-		log.Error(err)
-		return err
+	if data.IsNew {
+		// TODO: check exist data
+		// TODO: move to transaction
+		// Remove old connection queue
+		filter := model.ConnectionQueueFilter{
+			ConnectionId: data.ConnectionId,
+			QueueId:      queueExist.Id,
+		}
+		_, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, dbCon, filter, -1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+
+		if len(*connectionQueues) > 0 {
+			for _, item := range *connectionQueues {
+				if err := repository.ConnectionQueueRepo.Delete(ctx, dbCon, item.Id); err != nil {
+					log.Error(err)
+					return err
+				}
+			}
+		}
+
+		manageQueueNew := model.ChatManageQueueUser{
+			Base:         model.InitBase(),
+			TenantId:     authUser.TenantId,
+			ConnectionId: data.ConnectionId,
+			QueueId:      data.QueueId,
+			ManageId:     data.ManageId,
+		}
+		if err = repository.ManageQueueRepo.Insert(ctx, dbCon, manageQueueNew); err != nil {
+			log.Error(err)
+			return err
+		}
+	} else {
+		// TODO: move to transaction
+		manageQueueExist.QueueId = data.QueueId
+		manageQueueExist.ManageId = data.ManageId
+		manageQueueExist.UpdatedAt = time.Now()
+		if err = repository.ManageQueueRepo.Update(ctx, dbCon, *manageQueueExist); err != nil {
+			log.Error(err)
+			return err
+		}
+
+		queueExist.ManageQueueId = manageQueueExist.GetId()
+		if err := repository.ChatQueueRepo.Update(ctx, dbCon, *queueExist); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
 
 	return

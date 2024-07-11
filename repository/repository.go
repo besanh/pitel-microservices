@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
@@ -31,6 +32,11 @@ func InitRepositories() {
 	ConnectionQueueRepo = NewConnectionQueue()
 	ShareInfoRepo = NewShareInfo()
 	ManageQueueRepo = NewManageQueue()
+	ChatMsgSampleRepo = NewChatMsgSample()
+	ChatScriptRepo = NewChatScript()
+	ChatLabelRepo = NewChatLabel()
+	ChatAutoScriptRepo = NewChatAutoScript()
+	ChatPolicySettingRepo = NewChatPolicySetting()
 }
 
 func InitRepositoriesES() {
@@ -76,6 +82,30 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatManageQueueUser)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatEmail)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatMsgSample)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatScript)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatAutoScriptToChatScript)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatAutoScriptToChatLabel)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatAutoScript)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatLabel)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatPolicySetting)(nil)); err != nil {
+		log.Error(err)
+	}
 	log.Println("TABLES WERE CREATED")
 }
 
@@ -88,4 +118,9 @@ func InitColumn(ctx context.Context, db sqlclient.ISqlClientConn) {
 		log.Info(err)
 		panic(err)
 	}
+}
+
+func IsValidUUID(uuid string) bool {
+	r := regexp.MustCompile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$")
+	return r.MatchString(uuid)
 }

@@ -18,6 +18,7 @@ type OttMessage struct {
 	QuoteMsgId     string            `json:"quote_msg_id"`
 	ReactIcon      string            `json:"react_icon"`
 	Attachments    *[]OttAttachments `json:"attachments"`
+	IsEcho         bool              `json:"is_echo"`
 }
 
 type OttAttachments struct {
@@ -36,6 +37,11 @@ type OttPayloadMedia struct {
 	UrlOttBk    string `json:"url_ott_bk"`
 	Id          string `json:"id"`
 	Title       string `json:"title"`
+
+	Checksum string `json:"checksum"`
+	Name     string `json:"name"`
+	Size     string `json:"size"`
+	Type     string `json:"type"`
 }
 
 type OttPayloadFile struct {
@@ -113,5 +119,14 @@ type OttShareInfo struct {
 }
 
 type OttUploadResponse struct {
-	Data []string `json:"data"`
+	Code    string                  `json:"code"`
+	Data    []OttDataUploadResponse `json:"data"`
+	Message string                  `json:"message"`
+}
+
+type OttDataUploadResponse struct {
+	Url         string `json:"url"`
+	Name        string `json:"name"`
+	ContentType string `json:"content_type"`
+	Type        string `json:"type"`
 }

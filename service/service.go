@@ -28,38 +28,68 @@ var (
 	ES_INDEX_CONVERSATION = "" // = "pitel_bss_conversation"
 
 	// Redis
-	CONVERSATION             = "conversation"
-	CONVERSATION_EXPIRE      = 30 * time.Minute
-	CHAT_QUEUE               = "chat_queue"
-	CHAT_QUEUE_EXPIRE        = 30 * time.Minute
-	CHAT_ROUTING             = "chat_routing"
-	CHAT_ROUTING_EXPIRE      = 1 * time.Hour
-	CHAT_QUEUE_USER          = "chat_queue_user"
-	CHAT_QUEUE_USER_EXPIRE   = 10 * time.Minute
-	CHAT_APP                 = "chat_app"
-	CHAT_APP_EXPIRE          = 6 * time.Hour
-	USER_ALLOCATE            = "user_allocate"
-	USER_ALLOCATE_EXPIRE     = 1 * time.Hour
-	MANAGE_QUEUE_USER        = "manage_queue_user"
-	MANAGE_QUEUE_USER_EXPIRE = 1 * time.Hour
-	CHAT_CONNECTION          = "chat_connection"
-	CHAT_CONNECTION_EXPIRE   = 5 * time.Minute
+	CONVERSATION               = "conversation"
+	CONVERSATION_EXPIRE        = 30 * time.Minute
+	CHAT_QUEUE                 = "chat_queue"
+	CHAT_QUEUE_EXPIRE          = 30 * time.Minute
+	CHAT_ROUTING               = "chat_routing"
+	CHAT_ROUTING_EXPIRE        = 1 * time.Hour
+	CHAT_QUEUE_USER            = "chat_queue_user"
+	CHAT_QUEUE_USER_EXPIRE     = 10 * time.Minute
+	CHAT_APP                   = "chat_app"
+	CHAT_APP_EXPIRE            = 6 * time.Hour
+	USER_ALLOCATE              = "user_allocate"
+	USER_ALLOCATE_EXPIRE       = 1 * time.Hour
+	MANAGE_QUEUE_USER          = "manage_queue_user"
+	MANAGE_QUEUE_USER_EXPIRE   = 1 * time.Hour
+	CHAT_CONNECTION            = "chat_connection"
+	CHAT_CONNECTION_EXPIRE     = 5 * time.Minute
+	CHAT_AUTO_SCRIPT           = "chat_auto_script"
+	CHAT_AUTO_SCRIPT_EXPIRE    = 30 * time.Minute
+	CHAT_POLICY_SETTING        = "chat_policy_setting"
+	CHAT_POLICY_SETTING_EXPIRE = 24 * time.Hour // a day since policies are rarely changed
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
-	OTT_URL              string = ""
-	OTT_VERSION          string = ""
-	API_SHARE_INFO_HOST  string = ""
-	API_DOC              string = ""
-	API_CRM              string = ""
-	ENABLE_PUBLISH_ADMIN bool   = false
-	AAA_HOST             string = ""
+	OTT_URL                       string = ""
+	OTT_VERSION                   string = ""
+	API_SHARE_INFO_HOST           string = ""
+	API_DOC                       string = ""
+	ENABLE_PUBLISH_ADMIN          bool   = false
+	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool   = false
+	AAA_HOST                      string = ""
 
 	// Storage
 	S3_ENDPOINT    string = ""
 	S3_BUCKET_NAME string = ""
 	S3_ACCESS_KEY  string = ""
 	S3_SECRET_KEY  string = ""
+
+	// Zalo
+	ZALO_SHARE_INFO_SUBTITLE string = ""
+	ZALO_POLICY_CHAT_WINDOW  int    = 0
+
+	// Facebook
+	FACEBOOK_GRAPH_API_VERSION  string = ""
+	FACEBOOK_POLICY_CHAT_WINDOW int    = 0
+
+	// DB PG
+	DB_HOST     string = ""
+	DB_DATABASE string = ""
+	DB_USERNAME string = ""
+	DB_PASSWORD string = ""
+	DB_PORT     int    = 0
+
+	// Email default
+	SMTP_SERVER         string = ""
+	SMTP_USERNAME       string = ""
+	SMTP_PASSWORD       string = ""
+	SMTP_MAILPORT       int    = 0
+	SMTP_INFORM         bool   = false
+	ENABLE_NOTIFY_EMAIL bool   = false
+
+	// Queue
+	BSS_CHAT_QUEUE_NAME string = "bss_chat_request_queue"
 )
 
 type (

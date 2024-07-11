@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -14,7 +16,7 @@ import (
 func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	filter.TenantId = authUser.TenantId
 	if authUser.Source == "authen" {
-		var queueUuids string
+		var queueId []string
 		if authUser.Level == "manager" {
 			filterManageQueue := model.ChatManageQueueUserFilter{
 				ManageId: authUser.UserId,
@@ -25,13 +27,58 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 			if totalManageQueue > 0 {
-				queueUuids = (*manageQueues)[0].QueueId
+				for _, item := range *manageQueues {
+					queueId = append(queueId, item.QueueId)
+				}
 			}
 		}
-		total, conversations, err := getConversationByFilter(ctx, queueUuids, filter, limit, offset)
+		total, conversations, err := s.getConversationByFilter(ctx, queueId, filter, limit, offset)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
+		}
+
+		if len(*conversations) > 0 {
+			for k, item := range *conversations {
+				if !reflect.DeepEqual(item.Label, "") {
+					var labels []map[string]string
+					if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
+						log.Error(err)
+						return response.ServiceUnavailableMsg(err.Error())
+					}
+					chatLabelIds := []string{}
+					if len(labels) > 0 {
+						for _, item := range labels {
+							chatLabelIds = append(chatLabelIds, item["label_id"])
+						}
+						if len(chatLabelIds) > 0 {
+							_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+								LabelIds: chatLabelIds,
+							}, -1, 0)
+							if err != nil {
+								log.Error(err)
+								return response.ServiceUnavailableMsg(err.Error())
+							}
+							if len(*chatLabelExist) > 0 {
+								tmp, err := json.Marshal(*chatLabelExist)
+								if err != nil {
+									log.Error(err)
+									return response.ServiceUnavailableMsg(err.Error())
+								}
+								(*conversations)[k].Label = tmp
+							} else {
+								(*conversations)[k].Label = []byte("[]")
+							}
+						} else {
+							(*conversations)[k].Label = []byte("[]")
+						}
+					} else {
+						(*conversations)[k].Label = []byte("[]")
+					}
+				} else {
+					(*conversations)[k].Label = []byte("[]")
+				}
+			}
 		}
 
 		return response.Pagination(conversations, total, limit, offset)
@@ -40,11 +87,13 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 	}
 }
 
-func getConversationByFilter(ctx context.Context, queueUuids string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
+func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids []string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
 	conversationIds := []string{}
 	conversationFilter := model.UserAllocateFilter{
 		TenantId: filter.TenantId,
-		QueueId:  queueUuids,
+	}
+	if len(queueUuids) > 0 {
+		conversationFilter.QueueId = queueUuids
 	}
 	if filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"
@@ -62,15 +111,11 @@ func getConversationByFilter(ctx context.Context, queueUuids string, filter mode
 			conversationIds = append(conversationIds, item.ConversationId)
 		}
 	}
-	if len(conversationIds) < 1 {
-		log.Error("list conversation not found")
-		return total, nil, err
-	}
 	filter.ConversationId = conversationIds
 	total, conversations, err = repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return total, nil, err
+		return
 	}
 	if total > 0 {
 		for k, conv := range *conversations {
@@ -93,17 +138,18 @@ func getConversationByFilter(ctx context.Context, queueUuids string, filter mode
 			filterMessage := model.MessageFilter{
 				ConversationId: conv.ConversationId,
 			}
-			totalTmp, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
 			if err != nil {
 				log.Error(err)
 				break
 			}
-			if totalTmp > 0 {
+			if len(*message) > 0 {
 				if slices.Contains[[]string](variables.ATTACHMENT_TYPE, (*message)[0].EventName) {
 					conv.LatestMessageContent = (*message)[0].EventName
 				} else {
 					conv.LatestMessageContent = (*message)[0].Content
 				}
+				conv.LatestMessageDirection = (*message)[0].Direction
 			}
 
 			(*conversations)[k] = conv

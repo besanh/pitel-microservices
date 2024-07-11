@@ -8,6 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/internal/queue"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -28,12 +29,12 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	filter := model.ChatManageQueueUserFilter{
 		QueueId: queueId,
 	}
-	total, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
+	_, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	if total > 0 {
+	if len(*manageQueueUsers) > 0 {
 		manageQueueUser = &(*manageQueueUsers)[0]
 		if err = cache.RCache.Set(MANAGE_QUEUE_USER+"_"+queueId, manageQueueUser, MANAGE_QUEUE_USER_EXPIRE); err != nil {
 			log.Error(err)
@@ -157,13 +158,18 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 		return conversation, err
 	}
 	if connectionExist != nil {
-		if connectionExist.ConnectionType == "zalo" {
+		if connectionExist.ConnectionType == "zalo" && conversation.ConversationType == "zalo" {
 			conversation.OaName = connectionExist.OaInfo.Zalo[0].OaName
 			conversation.OaAvatar = connectionExist.OaInfo.Zalo[0].Avatar
-		} else if connectionExist.ConnectionType == "facebook" {
+		} else if connectionExist.ConnectionType == "facebook" && conversation.ConversationType == "facebook" {
 			conversation.OaName = connectionExist.OaInfo.Facebook[0].OaName
 			conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
 		}
+	}
+
+	if err := cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
+		log.Error(err)
+		return conversation, err
 	}
 	return conversation, nil
 }
@@ -203,7 +209,8 @@ func CheckConfigAppCache(ctx context.Context, appId string) (isExist bool, err e
 		isExist = true
 	} else {
 		filter := model.AppFilter{
-			AppId: appId,
+			AppId:  appId,
+			Status: "active",
 		}
 		total, chatApp, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
@@ -242,8 +249,8 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			return
 		}
 		if len(*connections) < 1 {
-			log.Errorf("connect for app_id: %s, oa_id: %s not found", appId, oaId)
-			err = fmt.Errorf("connect for app_id: %s, oa_id: %s not found", appId, oaId)
+			err = fmt.Errorf("connect for app_id: %s, oa_id: %s, connection_type: %s not found", appId, oaId, connectionType)
+			log.Error(err)
 			return
 		}
 
@@ -251,7 +258,21 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			log.Error(err)
 			return
 		}
+
 		connectionApp = (*connections)[0]
+	}
+	return
+}
+
+func PublishPutConversationToChatQueue(ctx context.Context, conversation model.Conversation) (err error) {
+	var b []byte
+	if b, err = json.Marshal(conversation); err != nil {
+		log.Error(err)
+		return
+	}
+	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_QUEUE_NAME, b); err != nil {
+		log.Error(err)
+		return
 	}
 	return
 }

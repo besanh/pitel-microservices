@@ -10,7 +10,7 @@ import (
 
 func PostOttAccount(ottDomain, ottVersion string, chatApp model.ChatApp, connectionApp model.ChatConnectionApp) error {
 	accountInfo := model.OttAccount{}
-	if chatApp.InfoApp.Facebook.Status == "active" {
+	if chatApp.InfoApp.Facebook != nil && chatApp.InfoApp.Facebook.Status == "active" && len(connectionApp.OaInfo.Facebook) > 0 {
 		accountInfo.Type = "face"
 		accountInfo.AppId = chatApp.InfoApp.Facebook.AppId
 		accountInfo.AppName = chatApp.InfoApp.Facebook.AppName
@@ -19,7 +19,7 @@ func PostOttAccount(ottDomain, ottVersion string, chatApp model.ChatApp, connect
 		accountInfo.OaName = connectionApp.OaInfo.Facebook[0].OaName
 		accountInfo.AccessToken = connectionApp.OaInfo.Facebook[0].AccessToken
 		accountInfo.Status = chatApp.InfoApp.Facebook.Status
-	} else if chatApp.InfoApp.Zalo.Status == "active" {
+	} else if chatApp.InfoApp.Zalo != nil && chatApp.InfoApp.Zalo.Status == "active" && len(connectionApp.OaInfo.Zalo) > 0 {
 		accountInfo.Type = "zalo"
 		accountInfo.AppId = chatApp.InfoApp.Zalo.AppId
 		accountInfo.AppName = chatApp.InfoApp.Zalo.AppName

@@ -27,7 +27,7 @@ func ParseLimit(limit any) int {
 		val = ParseInt(fmt.Sprintf("%d", limit))
 	}
 	if val < 0 {
-		val = 10
+		val = 0
 	} else if val > MAX_LIMIT {
 		val = MAX_LIMIT
 	}
@@ -160,4 +160,13 @@ func ParseQueryArray(slice []string) []string {
 		}
 	}
 	return result
+}
+
+func ContainKeywords(content string, keywords []string) bool {
+	for _, keyword := range keywords {
+		if strings.Contains(content, keyword) {
+			return true
+		}
+	}
+	return false
 }

@@ -2,32 +2,34 @@ package log
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 	"runtime"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/gookit/slog"
+	"github.com/gookit/slog/rotatefile"
 )
 
 func Info(msg ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Info(msg...)
 }
 
-func Warning(msg ...interface{}) {
+func Warn(msg ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
-	}).Warning(msg...)
+	}).Warn(msg...)
 }
 
 func Error(err ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Error(err...)
 }
@@ -35,7 +37,10 @@ func Error(err ...interface{}) {
 func Debug(value ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
+		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
+	}).Debug(value...)
+	slog.WithExtra(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Debug(value...)
 }
@@ -43,7 +48,7 @@ func Debug(value ...interface{}) {
 func Fatal(value ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Fatal(value...)
 }
@@ -51,7 +56,7 @@ func Fatal(value ...interface{}) {
 func Println(value ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Println(value...)
 }
@@ -59,7 +64,7 @@ func Println(value ...interface{}) {
 func Infof(format string, msg ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Infof(format, msg...)
 }
@@ -67,15 +72,15 @@ func Infof(format string, msg ...interface{}) {
 func Warningf(format string, msg ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
-	}).Warningf(format, msg...)
+	}).Warnf(format, msg...)
 }
 
 func Errorf(format string, err ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Errorf(format, err...)
 }
@@ -83,7 +88,7 @@ func Errorf(format string, err ...interface{}) {
 func Debugf(format string, value ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Debugf(format, value...)
 }
@@ -91,7 +96,31 @@ func Debugf(format string, value ...interface{}) {
 func Fatalf(format string, value ...interface{}) {
 	_, path, numLine, _ := runtime.Caller(1)
 	srcFile := filepath.Base(path)
-	log.WithFields(log.Fields{
+	slog.WithFields(slog.M{
 		"meta": fmt.Sprintf("%s:%d", srcFile, numLine),
 	}).Fatalf(format, value...)
+}
+
+func InitLogger(level string, logFile string) {
+	logLevel := slog.DebugLevel
+	switch level {
+	case "debug":
+		logLevel = slog.DebugLevel
+	case "info":
+		logLevel = slog.InfoLevel
+	case "error":
+		logLevel = slog.ErrorLevel
+	case "warn":
+		logLevel = slog.WarnLevel
+	}
+	slog.SetLogLevel(logLevel)
+	logTemplate := "[{{level}}] [{{datetime}}] [{{meta}}] Message: {{message}} {{data}} \n"
+
+	slog.SetFormatter(slog.NewTextFormatter(logTemplate).WithEnableColor(true))
+	writer, err := rotatefile.NewConfig(logFile).Create()
+	if err != nil {
+		panic(err)
+	}
+
+	log.SetOutput(writer)
 }

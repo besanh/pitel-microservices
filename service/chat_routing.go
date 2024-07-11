@@ -42,7 +42,7 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 		return chatRouting.GetId(), err
 	}
 
-	total, _, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbConn, model.ChatRoutingFilter{
+	_, chatRountings, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbConn, model.ChatRoutingFilter{
 		TenantId:     authUser.TenantId,
 		RoutingAlias: data.RoutingAlias,
 		Status: sql.NullBool{
@@ -54,7 +54,7 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 		log.Error(err)
 		return chatRouting.GetId(), err
 	}
-	if total > 0 {
+	if len(*chatRountings) > 0 {
 		log.Error("chat routing already " + data.RoutingAlias + " exists")
 		err = errors.New("chat routing " + data.RoutingAlias + " already exists")
 		return chatRouting.GetId(), err

@@ -2,13 +2,13 @@ package rabbitmq
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
+	"github.com/tel4vn/fins-microservices/common/log"
 )
 
 type Config struct {
@@ -189,10 +189,10 @@ func (r *RabbitMQ) declareCreate(channel *amqp.Channel) error {
 	return nil
 }
 
-func (r *RabbitMQ) Publish(body interface{}) error {
+func (r *RabbitMQ) Publish(body any) error {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		log.Error("RabbitMqRepo - Publish : error : ", err)
+		log.Error("rabbitmq publish ~ error : ", err)
 		return errors.Wrap(err, "failed to marshal json")
 	}
 	channel, err := r.Channel()
@@ -203,9 +203,7 @@ func (r *RabbitMQ) Publish(body interface{}) error {
 	if err := channel.Confirm(false); err != nil {
 		return errors.Wrap(err, "failed to put channel in confirmation mode")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := channel.PublishWithContext(ctx,
+	if err := channel.Publish(
 		RabbitConnector.ExchangeName,
 		RabbitConnector.RoutingKey,
 		true,
@@ -225,8 +223,64 @@ func (r *RabbitMQ) Publish(body interface{}) error {
 	case <-channel.NotifyReturn(make(chan amqp.Return)):
 		return errors.New("failed to deliver message to exchange/queue")
 	case <-time.After(r.ChannelNotifyTimeout):
-		log.Println("message delivery confirmation to exchange/queue timed out")
+		log.Error("message delivery confirmation to exchange/queue timed out")
+	}
+	return nil
+}
+
+func (r *RabbitMQ) PublishBytes(body []byte) error {
+	channel, err := r.Channel()
+	if err != nil {
+		return errors.Wrap(err, "failed to open channel")
+	}
+	defer channel.Close()
+	if err := channel.Confirm(false); err != nil {
+		return errors.Wrap(err, "failed to put channel in confirmation mode")
+	}
+	if err := channel.Publish(
+		RabbitConnector.ExchangeName,
+		RabbitConnector.RoutingKey,
+		true,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        body,
+		},
+	); err != nil {
+		return errors.Wrap(err, "failed to publish message")
+	}
+	select {
+	case ntf := <-channel.NotifyPublish(make(chan amqp.Confirmation, 1)):
+		if !ntf.Ack {
+			return errors.New("failed to deliver message to exchange/queue")
+		}
+	case <-channel.NotifyReturn(make(chan amqp.Return)):
+		return errors.New("failed to deliver message to exchange/queue")
+	case <-time.After(r.ChannelNotifyTimeout):
+		log.Error("message delivery confirmation to exchange/queue timed out")
+	}
+	return nil
+}
+
+func (r *RabbitMQ) PublishWithRetry(body any, retryCount int) error {
+	var err error
+	attempts := 0
+	var retryInterval = 2 * time.Second
+	// Labeled loop for retry mechanism
+LOOP:
+	for {
+		attempts++
+		if err = r.Publish(body); err == nil {
+			return nil
+		}
+		if attempts >= retryCount {
+			log.Errorf("Failed to publish message after %d attempts: %v\n", retryCount, err)
+			break LOOP
+		}
+
+		log.Errorf("Failed to publish message: %v. Retrying in %v...\n", err, retryInterval)
+		time.Sleep(retryInterval)
 	}
 
-	return nil
+	return fmt.Errorf("failed to publish message after %d attempts: %w", retryCount, err)
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func UpSertConversation(ctx context.Context, connectionId string, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
+func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId string, data model.OttMessage) (conversation model.Conversation, isNew bool, err error) {
 	newConversationId := GenerateConversationId(data.AppId, data.OaId, data.ExternalUserId)
 	conversation = model.Conversation{
 		TenantId:         data.TenantId,
@@ -28,77 +28,55 @@ func UpSertConversation(ctx context.Context, connectionId string, data model.Ott
 		CreatedAt:        time.Now().Format(time.RFC3339),
 	}
 	shareInfo := data.ShareInfo
-
 	isExisted := false
-	// conversationCache := cache.RCache.Get(CONVERSATION + "_" + newConversationId)
-	// if conversationCache != nil {
-	// 	isExisted = true
-	// 	if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
-	// 		log.Error(err)
-	// 		return conversation, isNew, err
-	// 	}
-	// 	if err := UpdateESAndCache(ctx, data.TenantId, data.AppId, data.ExternalUserId, connectionId, *conversation.ShareInfo); err != nil {
-	// 		log.Error(err)
-	// 		return conversation, isNew, err
-	// 	}
-	// 	return conversation, isNew, nil
-	// } else {
-	filter := model.ConversationFilter{
-		ConversationId: []string{newConversationId},
-		AppId:          []string{data.AppId},
-	}
-	total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, 1, 0)
+
+	// TODO: improve by caching
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, data.TenantId, ES_INDEX_CONVERSATION, data.AppId, newConversationId)
 	if err != nil {
 		log.Error(err)
 		return conversation, isNew, err
 	}
-	if total > 0 {
-		conversation.TenantId = (*conversations)[0].TenantId
-		conversation.ConversationId = (*conversations)[0].ConversationId
-		conversation.ConversationType = (*conversations)[0].ConversationType
-		conversation.AppId = (*conversations)[0].AppId
-		conversation.OaId = (*conversations)[0].OaId
-		conversation.OaName = (*conversations)[0].OaName
-		conversation.OaAvatar = (*conversations)[0].OaAvatar
-		conversation.ExternalUserId = (*conversations)[0].ExternalUserId
-		conversation.Username = (*conversations)[0].Username
-		conversation.Username = (*conversations)[0].Username
-		conversation.Avatar = (*conversations)[0].Avatar
-		conversation.IsDone = (*conversations)[0].IsDone
-		conversation.IsDoneBy = (*conversations)[0].IsDoneBy
+	if len(conversationExist.ConversationId) > 0 {
+		conversation.TenantId = conversationExist.TenantId
+		conversation.ConversationId = conversationExist.ConversationId
+		conversation.ConversationType = conversationExist.ConversationType
+		conversation.AppId = conversationExist.AppId
+		conversation.OaId = conversationExist.OaId
+		conversation.OaName = conversationExist.OaName
+		conversation.OaAvatar = conversationExist.OaAvatar
+		conversation.ExternalUserId = conversationExist.ExternalUserId
+		conversation.Username = conversationExist.Username
+		conversation.Avatar = conversationExist.Avatar
+		conversation.Major = conversationExist.Major
+		conversation.Following = conversationExist.Following
+		conversation.Label = conversationExist.Label
+		conversation.IsDone = false
+		conversation.IsDoneBy = ""
+		isDoneAt, _ := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
+		conversation.IsDoneAt = isDoneAt
+		conversation.CreatedAt = conversationExist.CreatedAt
+		conversation.UpdatedAt = time.Now().Format(time.RFC3339)
 
 		conversation.ShareInfo = shareInfo
-		if len(connectionId) > 0 {
-			conversation, err = CacheConnection(ctx, connectionId, conversation)
-			if err != nil {
+		// if len(connectionId) > 0 {
+		// 	conversation, err = CacheConnection(ctx, connectionId, conversation)
+		// 	if err != nil {
+		// 		log.Error(err)
+		// 		return conversation, isNew, err
+		// 	}
+		// }
+
+		// TODO: update conversation => use queue consumer
+		if !data.IsEcho {
+			if err := PublishPutConversationToChatQueue(ctx, conversation); err != nil {
 				log.Error(err)
 				return conversation, isNew, err
 			}
 		}
 
-		tmpBytes, err := json.Marshal(conversation)
-		if err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		esDoc := map[string]any{}
-		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		newConversationId := GenerateConversationId(conversation.AppId, conversation.OaId, conversation.ExternalUserId)
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, newConversationId, esDoc); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
-		if err := cache.RCache.Set(CONVERSATION+"_"+newConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
-			log.Error(err)
-			return conversation, isNew, err
-		}
 		isExisted = true
 		return conversation, isNew, nil
 	}
-	// }
 
 	if !isExisted {
 		id, err := InsertConversation(ctx, conversation, connectionId)
@@ -173,7 +151,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 * Update ES and Cache
 * API get conversation can get from redis, and here can caching to descrese the number of api calls to ES
  */
-func UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
+func (s *OttMessage) UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId, connectionId string, shareInfo model.ShareInfo) error {
 	var isUpdate bool
 	newConversationId := GenerateConversationId(appId, oaId, conversationId)
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, tenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
@@ -231,7 +209,7 @@ func UpdateESAndCache(ctx context.Context, tenantId, appId, oaId, conversationId
 			return err
 		}
 	} else {
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
+		if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 			log.Error(err)
 			return err
 		}

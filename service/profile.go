@@ -48,6 +48,10 @@ func (s *Profile) GetUpdateProfileByUserId(ctx context.Context, authUser *model.
 				conversationExist.Username = res.Data.DisplayName
 				conversationExist.Avatar = res.Data.Avatar
 
+				// This is not update field updated_at, because it is not needed
+				// If update this field, it will affect to sort conversation
+				// conversationExist.UpdatedAt = time.Now().Format(time.RFC3339)
+
 				tmpBytes, err := json.Marshal(conversationExist)
 				if err != nil {
 					log.Error(err)
@@ -59,7 +63,7 @@ func (s *Profile) GetUpdateProfileByUserId(ctx context.Context, authUser *model.
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 
-				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversationExist.AppId, conversationExist.ConversationId, esDoc); err != nil {
+				if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}

@@ -25,11 +25,14 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 	Group := engine.Group("bss-message/v1/conversation")
 	{
 		Group.GET("", handler.GetConversations)
+		Group.GET("scroll", handler.GetConversationsWithScrollAPI)
 		Group.GET("manager", handler.GetConversationsByManager)
 		Group.PUT(":app_id/:oa_id/:id", handler.UpdateConversation)
 		Group.POST("status", handler.UpdateStatusConversation)
 		Group.PATCH(":id/reassign", handler.ReassignConversation)
 		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
+		Group.PUT("label/:label_type", handler.PutLabelToConversation)
+		Group.PUT("preference", handler.UpdateUserPreferenceConversation)
 	}
 }
 
@@ -48,6 +51,16 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
 	}
+	major := sql.NullBool{}
+	if len(c.Query("major")) > 0 {
+		major.Valid = true
+		major.Bool, _ = strconv.ParseBool(c.Query("major"))
+	}
+	following := sql.NullBool{}
+	if len(c.Query("following")) > 0 {
+		following.Valid = true
+		following.Bool, _ = strconv.ParseBool(c.Query("following"))
+	}
 
 	filter := model.ConversationFilter{
 		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
@@ -56,9 +69,52 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 		PhoneNumber:    c.Query("phone_number"),
 		Email:          c.Query("email"),
 		IsDone:         isDone,
+		Major:          major,
+		Following:      following,
 	}
 
 	code, result := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
+	c.JSON(code, result)
+}
+
+func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	limit := util.ParseLimit(c.Query("limit"))
+	scrollId := c.Query("scroll_id")
+
+	isDone := sql.NullBool{}
+	if len(c.Query("is_done")) > 0 {
+		isDone.Valid = true
+		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
+	}
+	major := sql.NullBool{}
+	if len(c.Query("major")) > 0 {
+		major.Valid = true
+		major.Bool, _ = strconv.ParseBool(c.Query("major"))
+	}
+	following := sql.NullBool{}
+	if len(c.Query("following")) > 0 {
+		following.Valid = true
+		following.Bool, _ = strconv.ParseBool(c.Query("following"))
+	}
+
+	filter := model.ConversationFilter{
+		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
+		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
+		Username:       c.Query("username"),
+		PhoneNumber:    c.Query("phone_number"),
+		Email:          c.Query("email"),
+		IsDone:         isDone,
+		Major:          major,
+		Following:      following,
+	}
+
+	code, result := handler.conversationService.GetConversationsWithScrollAPI(c, res.Data, filter, limit, scrollId)
 	c.JSON(code, result)
 }
 
@@ -142,6 +198,17 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(c.Query("is_done"))
 	}
+	major := sql.NullBool{}
+	if len(c.Query("major")) > 0 {
+		major.Valid = true
+		major.Bool, _ = strconv.ParseBool(c.Query("major"))
+	}
+	following := sql.NullBool{}
+	if len(c.Query("following")) > 0 {
+		following.Valid = true
+		following.Bool, _ = strconv.ParseBool(c.Query("following"))
+	}
+
 	filter := model.ConversationFilter{
 		AppId:          util.ParseQueryArray(c.QueryArray("app_id")),
 		ConversationId: util.ParseQueryArray(c.QueryArray("conversation_id")),
@@ -149,6 +216,8 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		PhoneNumber:    c.Query("phone_number"),
 		Email:          c.Query("email"),
 		IsDone:         isDone,
+		Major:          major,
+		Following:      following,
 	}
 
 	code, result := handler.conversationService.GetConversationsByManage(c, res.Data, filter, limit, offset)
@@ -197,4 +266,68 @@ func (handler *Conversation) GetConversationById(c *gin.Context) {
 
 	code, result := handler.conversationService.GetConversationById(c, res.Data, appId, conversationId)
 	c.JSON(code, result)
+}
+
+func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	labelType := c.Param("label_type")
+	if len(labelType) < 1 {
+		c.JSON(response.BadRequestMsg("label_type is required"))
+		return
+	}
+
+	request := model.ConversationLabelRequest{}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	log.Info("put label to conversation payload -> ", &request)
+
+	if err := request.Validate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	labelId, err := service.PutLabelToConversation(c, res.Data, labelType, request)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OK(map[string]any{
+		"id": labelId,
+	}))
+}
+
+func (handler *Conversation) UpdateUserPreferenceConversation(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		return
+	}
+
+	preferenceRequest := model.ConversationPreferenceRequest{}
+	if err := c.ShouldBindJSON(&preferenceRequest); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	if err := preferenceRequest.Validate(); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	err := handler.conversationService.UpdateUserPreferenceConversation(c, res.Data, preferenceRequest)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }

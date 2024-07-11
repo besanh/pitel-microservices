@@ -76,7 +76,7 @@ func TestParseLimit(t *testing.T) {
 		},
 		{
 			input:  -1,
-			output: 10,
+			output: 0,
 		},
 		{
 			input:  50001,

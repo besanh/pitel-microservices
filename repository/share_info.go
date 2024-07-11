@@ -31,7 +31,7 @@ func (s *ShareInfo) GetShareInfos(ctx context.Context, db sqlclient.ISqlClientCo
 		query.Where("tenant_id = ?", filter.TenantId)
 	}
 	if len(filter.OaId) > 0 {
-		query.Where("share_form->?::text->'oa_id' = ?", filter.ShareType, filter.OaId)
+		query.Where("share_form->?->>'oa_id' = ?", filter.ShareType, filter.OaId)
 	}
 	if len(filter.AppId) > 0 {
 		query.Where("share_form->?->>'app_id' = ?", filter.ShareType, filter.AppId)
@@ -46,7 +46,6 @@ func (s *ShareInfo) GetShareInfos(ctx context.Context, db sqlclient.ISqlClientCo
 		query.Limit(limit).Offset(offset)
 	}
 	query.Order("created_at DESC")
-
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil

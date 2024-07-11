@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/uptrace/bun"
 )
@@ -31,20 +32,15 @@ type Zalo struct {
 	AppId     string `json:"app_id"`
 	AppName   string `json:"app_name"`
 	AppSecret string `json:"app_secret"`
-	OaId      string `json:"oa_id"`
-	OaName    string `json:"oa_name"`
 	Status    string `json:"status"` //active/deactive
 	Active    bool   `json:"active"`
 }
 
 type Facebook struct {
-	AppId       string `json:"app_id"`
-	AppName     string `json:"app_name"`
-	AppSecret   string `json:"app_secret"`
-	OaId        string `json:"oa_id"`
-	OaName      string `json:"oa_name"`
-	AccessToken string `json:"access_token"`
-	Status      string `json:"status"`
+	AppId     string `json:"app_id"`
+	AppName   string `json:"app_name"`
+	AppSecret string `json:"app_secret"`
+	Status    string `json:"status"`
 }
 
 func (m *ChatAppRequest) Validate() error {
@@ -58,7 +54,7 @@ func (m *ChatAppRequest) Validate() error {
 
 	var countOk int
 
-	if m.InfoApp.Zalo.Status == "active" {
+	if m.InfoApp.Zalo != nil && m.InfoApp.Zalo.Status == "active" {
 		if len(m.InfoApp.Zalo.AppId) < 1 {
 			return errors.New("app id is required")
 		}
@@ -68,19 +64,16 @@ func (m *ChatAppRequest) Validate() error {
 		if len(m.InfoApp.Zalo.AppSecret) < 1 {
 			return errors.New("app secret is required")
 		}
-		if len(m.InfoApp.Zalo.OaId) < 1 {
-			return errors.New("oa id is required")
-		}
-		if len(m.InfoApp.Zalo.OaName) < 1 {
-			return errors.New("oa name is required")
-		}
 		if len(m.InfoApp.Zalo.Status) < 1 {
 			return errors.New("status is required")
+		}
+		if !slices.Contains([]string{"active", "deactive"}, m.InfoApp.Zalo.Status) {
+			return errors.New("status zalo " + m.InfoApp.Zalo.Status + " is not supported")
 		}
 		countOk += 1
 	}
 
-	if m.InfoApp.Facebook.Status == "active" {
+	if m.InfoApp.Facebook != nil && m.InfoApp.Facebook.Status == "active" {
 		if len(m.InfoApp.Facebook.AppId) < 1 {
 			return errors.New("app id is required")
 		}
@@ -90,16 +83,17 @@ func (m *ChatAppRequest) Validate() error {
 		if len(m.InfoApp.Facebook.AppSecret) < 1 {
 			return errors.New("app secret is required")
 		}
-		if len(m.InfoApp.Facebook.OaId) < 1 {
-			return errors.New("oa id is required")
-		}
-		if len(m.InfoApp.Facebook.OaName) < 1 {
-			return errors.New("oa name is required")
-		}
 		if len(m.InfoApp.Facebook.Status) < 1 {
 			return errors.New("status is required")
 		}
+		if !slices.Contains([]string{"active", "deactive"}, m.InfoApp.Facebook.Status) {
+			return errors.New("status facebook " + m.InfoApp.Facebook.Status + " is not supported")
+		}
 		countOk += 1
+	}
+
+	if !slices.Contains([]string{"active", "deactive"}, m.Status) {
+		return errors.New("status " + m.Status + " is not supported")
 	}
 
 	if countOk > 1 {

@@ -12,7 +12,7 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func (s *Message) UploadDoc(ctx context.Context, appId, oaId string, file *multipart.FileHeader) (fileUrl string, err error) {
+func UploadDoc(ctx context.Context, appId, oaId string, file *multipart.FileHeader) (fileUrl string, err error) {
 	fileContent, err := file.Open()
 	if err != nil {
 		log.Error(err)
@@ -42,7 +42,7 @@ func (s *Message) UploadDoc(ctx context.Context, appId, oaId string, file *multi
 			return "", err
 		}
 		if len(result.Data) > 0 {
-			return result.Data[0], nil
+			return result.Data[0].Url, nil
 		}
 		return "", nil
 	}

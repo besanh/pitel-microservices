@@ -30,6 +30,7 @@ func NewHTTPServer() *gin.Engine {
 			"time":    time.Now().Unix(),
 		})
 	})
+	engine.Static("bss-image", "./assets/images/")
 	return engine
 }
 

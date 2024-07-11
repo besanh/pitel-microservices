@@ -21,7 +21,9 @@ import (
 type (
 	IMessage interface {
 		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
+		// SendMessageToOTTAsync(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
 		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
+		GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (int, any)
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
 	}
@@ -47,12 +49,12 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		filter := model.ConversationFilter{
 			ConversationId: []string{data.ConversationId},
 		}
-		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
+		_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
-		if total > 0 {
+		if len(*conversations) > 0 {
 			if err := util.ParseAnyToAny((*conversations)[0], &conversation); err != nil {
 				log.Error(err)
 				return response.ServiceUnavailableMsg(err.Error())
@@ -64,6 +66,15 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		} else {
 			return response.BadRequestMsg("conversation: " + data.ConversationId + " not found")
 		}
+	}
+
+	// block messages sent outside of chat window
+	conversationTime := conversation.UpdatedAt
+	if len(conversationTime) < 1 {
+		conversationTime = conversation.CreatedAt
+	}
+	if err := CheckOutOfChatWindowTime(ctx, conversation.TenantId, conversation.ConversationType, conversationTime); err != nil {
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	timestampTmp := time.Now().UnixMilli()
@@ -79,12 +90,25 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	// Upload to Docs
 	if len(data.EventName) > 0 && data.EventName != "text" {
-		fileUrl, err := s.UploadDoc(ctx, data.AppId, data.OaId, file)
-		if err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+		var fileUrl string
+		if file == nil {
+			if len(data.Url) < 1 {
+				return response.BadRequestMsg("url or file is required")
+			}
+			// TODO: validate url
+			fileUrl = data.Url
+		} else {
+			fileUrlTmp, err := UploadDoc(ctx, data.AppId, data.OaId, file)
+			if err != nil {
+				log.Error(err)
+				return response.ServiceUnavailableMsg(err.Error())
+			}
+			fileUrl = fileUrlTmp
 		}
-		// var payload model.
+		if len(fileUrl) < 1 {
+			return response.BadRequestMsg("file url is required")
+		}
+
 		att := model.OttAttachments{
 			Payload: &model.OttPayloadMedia{
 				Url: fileUrl,
@@ -94,11 +118,11 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		attachments = append(attachments, &att)
 	}
 	content := data.Content
-	if eventName != "text" {
-		if file != nil {
-			content = file.Filename
-		}
-	}
+	// if eventName != "text" {
+	// 	if file != nil {
+	// 		content = file.Filename
+	// 	}
+	// }
 
 	// Send to OTT
 	ottMessage := model.SendMessageToOtt{
@@ -115,7 +139,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	log.Info("message to ott: ", ottMessage)
 
-	resOtt, err := s.sendMessageToOTT(ottMessage, attachments)
+	resOtt, err := sendMessageToOTT(ottMessage, attachments)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -138,7 +162,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		SupporterName:       authUser.Fullname,
 		SendTime:            time.Now(),
 		SendTimestamp:       timestampTmp,
-		Content:             data.Content,
+		Content:             content,
 		Attachments:         attachments,
 	}
 	log.Info("message to es: ", message)
@@ -161,7 +185,8 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, conversation.AppId, conversation.ConversationId, esDoc); err != nil {
+
+	if err = PublishPutConversationToChatQueue(ctx, conversation); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -174,27 +199,37 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		OaId:           message.OaId,
 		ConnectionType: conversation.ConversationType,
 	}
-	total, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
+	_, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if total < 1 {
+	if len(*connection) < 1 {
 		log.Errorf("connection %s not found", (*connection)[0].Id)
 		return response.ServiceUnavailableMsg("connection " + (*connection)[0].Id + " not found")
 	} else {
 		message.TenantId = (*connection)[0].TenantId
 	}
 
-	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-		QueueId: (*connection)[0].QueueId,
+	// TODO: find connection_queue
+	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connection)[0].ConnectionQueueId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	} else if connectionQueueExist == nil {
+		log.Errorf("connection queue not found")
+		return response.ServiceUnavailableMsg("connection queue not found")
 	}
-	totalManageQueueUser, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
+
+	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
+		QueueId: connectionQueueExist.QueueId,
+	}
+	_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	if totalManageQueueUser > 0 {
+	if len(*manageQueueUser) > 0 {
 		queueId = (*manageQueueUser)[0].QueueId
 	}
 
@@ -219,6 +254,22 @@ func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, fil
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	return response.Pagination(messages, total, limit, offset)
+}
+
+func (s *Message) GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (int, any) {
+	total, messages, respScrollId, err := repository.MessageESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX, filter, limit, scrollId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+	if messages == nil {
+		messages = make([]*model.Message, 0)
+	}
+	result := map[string]any{
+		"messages":  messages,
+		"scroll_id": respScrollId,
+	}
+	return response.Pagination(result, total, limit, 0)
 }
 
 func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any) {
@@ -266,7 +317,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 			for _, item := range *messages {
 				item.IsRead = "active"
 				item.ReadBy = append(item.ReadBy, authUser.UserId)
-				item.ReadTimestamp = time.Now().Unix()
+				item.ReadTimestamp = time.Now().UnixMilli()
 				item.UpdatedAt = time.Now()
 				item.ReadTime = time.Now()
 
@@ -284,6 +335,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 					result.TotalFail += 1
 					return response.ServiceUnavailableMsg(err.Error())
 				}
+				// TODO: add queue to update
 				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.AppId, item.Id, esDoc); err != nil {
 					log.Error(err)
 					result.TotalSuccess -= 1
@@ -312,7 +364,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 
 			message.IsRead = "active"
 			message.ReadBy = append(message.ReadBy, authUser.UserId)
-			message.ReadTimestamp = time.Now().Unix()
+			message.ReadTimestamp = time.Now().UnixMilli()
 			message.UpdatedAt = time.Now()
 			message.ReadTime = time.Now()
 

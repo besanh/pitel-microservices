@@ -21,13 +21,14 @@ type AppFilter struct {
 }
 
 type ChatConnectionAppFilter struct {
-	AppId          string
-	TenantId       string `json:"tenant_id"`
-	ConnectionName string
-	ConnectionType string
-	QueueId        string
-	Status         string
-	OaId           string
+	AppId             string `json:"app_id"`
+	TenantId          string `json:"tenant_id"`
+	ConnectionName    string `json:"connection_name"`
+	ConnectionType    string `json:"connection_type"`
+	QueueId           string `json:"queue_id"`
+	ConnectionQueueId string `json:"connection_queue_id"`
+	Status            string `json:"status"`
+	OaId              string `json:"oa_id"`
 }
 
 type QueueFilter struct {
@@ -60,6 +61,8 @@ type ConversationFilter struct {
 	Email          string       `json:"email"`
 	Insensitive    string       `json:"insensitive"`
 	IsDone         sql.NullBool `json:"is_done"`
+	Major          sql.NullBool `json:"major"`
+	Following      sql.NullBool `json:"following"`
 }
 
 type UserAllocateFilter struct {
@@ -68,7 +71,7 @@ type UserAllocateFilter struct {
 	OaId           string   `json:"oa_id"`
 	ConversationId string   `json:"conversation_id"`
 	UserId         []string `json:"user_id"`
-	QueueId        string   `json:"queue_id"`
+	QueueId        []string `json:"queue_id"`
 	AllocatedTime  int64    `json:"allocated_time"`
 	MainAllocate   string   `json:"main_allocate"`
 }
@@ -98,18 +101,20 @@ type MessageFilter struct {
 }
 
 type ConnectionQueueFilter struct {
-	TenantId     string `json:"tenant_id"`
-	ConnectionId string `json:"connection_id"`
-	QueueId      string `json:"queue_id"`
+	TenantId          string `json:"tenant_id"`
+	ConnectionId      string `json:"connection_id"`
+	QueueId           string `json:"queue_id"`
+	ConnectionQueueId string `json:"connection_queue_id"`
 }
 
 type ShareInfoFormFilter struct {
-	TenantId  string `json:"tenant_id"`
-	ShareType string `json:"share_type"`
-	AppId     string `json:"app_id"`
-	OaId      string `json:"oa_id"`
-	Title     string `json:"title"`
-	Subtitle  string `json:"subtitle"`
+	TenantId     string `json:"tenant_id"`
+	ShareType    string `json:"share_type"`
+	AppId        string `json:"app_id"`
+	OaId         string `json:"oa_id"`
+	Title        string `json:"title"`
+	Subtitle     string `json:"subtitle"`
+	ConnectionId string `json:"connection_id"`
 }
 
 type FacebookPageFilter struct {
@@ -118,6 +123,7 @@ type FacebookPageFilter struct {
 }
 
 type ChatManageQueueUserFilter struct {
+	TenantId     string `json:"tenant_id"`
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
 	ManageId     string `json:"manage_id"`
@@ -129,4 +135,53 @@ type UserInQueueFilter struct {
 	ConversationId   string `json:"conversation_id"`
 	ConversationType string `json:"conversation_type"`
 	Status           string `json:"status"`
+}
+
+type ChatEmailFilter struct {
+	TenantId string       `json:"tenant_id"`
+	OaId     string       `json:"oa_id"`
+	Status   sql.NullBool `json:"status"`
+}
+
+type ChatMsgSampleFilter struct {
+	TenantId     string `json:"tenant_id"`
+	ConnectionId string `json:"connection_id"`
+	OaId         string `json:"oa_id"`
+	Channel      string `json:"channel"`
+	Keyword      string `json:"keyword"`
+}
+
+type ChatScriptFilter struct {
+	TenantId   string       `json:"tenant_id"`
+	Channel    string       `json:"channel"`
+	Status     sql.NullBool `json:"status"`
+	ScriptName string       `json:"script_name"`
+}
+
+type ChatLabelFilter struct {
+	TenantId         string       `json:"tenant_id"`
+	AppId            string       `json:"app_id"`
+	OaId             string       `json:"oa_id"`
+	LabelName        string       `json:"label_name"`
+	LabelType        string       `json:"label_type"`
+	LabelColor       string       `json:"label_color"`
+	LabelStatus      sql.NullBool `json:"label_status"`
+	ExternalLabelId  string       `json:"external_label_id"`
+	IsSearchExactly  sql.NullBool `json:"is_search_exactly"`
+	IsSearchMultiple sql.NullBool `json:"is_search_multiple"`
+	LabelIds         []string     `json:"label_ids"`
+}
+
+type ChatAutoScriptFilter struct {
+	TenantId     string       `json:"tenant_id"`
+	Channel      string       `json:"channel"`
+	ScriptName   string       `json:"script_name"`
+	Status       sql.NullBool `json:"status"`
+	OaId         string       `json:"oa_id"`
+	TriggerEvent string       `json:"trigger_event"`
+}
+
+type ChatPolicyFilter struct {
+	TenantId       string `json:"tenant_id"`
+	ConnectionType string `json:"connection_type"`
 }

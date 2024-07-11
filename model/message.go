@@ -35,6 +35,7 @@ type Message struct {
 	CreatedAt           time.Time         `json:"created_at"`
 	UpdatedAt           time.Time         `json:"updated_at"`
 	ShareInfo           *ShareInfo        `json:"share_info"`
+	IsEcho              bool              `json:"is_echo"`
 }
 
 type AttachmentsDetails struct {
@@ -50,13 +51,16 @@ type MessageRequest struct {
 	ConversationId string                `json:"conversation_id"`
 	Content        string                `json:"content"`
 	Attachments    []*AttachmentsDetails `json:"attachments"`
+	Url            string                `json:"url"`
 }
 
 type MessageFormRequest struct {
 	EventName      string                `form:"event_name" binding:"required"`
 	AppId          string                `form:"app_id" binding:"required"`
+	OaId           string                `form:"oa_id" binding:"required"`
 	ConversationId string                `form:"conversation_id" binding:"required"`
-	File           *multipart.FileHeader `form:"file" binding:"required"`
+	File           *multipart.FileHeader `form:"file"`
+	Url            string                `form:"url"`
 }
 
 type MessageMarkRead struct {
@@ -70,13 +74,18 @@ type MessageMarkRead struct {
 }
 
 type OaInfoMessage struct {
-	ConnectionId string `json:"connection_id"`
-	Name         string `json:"name"`
-	Avatar       string `json:"avatar"`
-	Cover        string `json:"cover"`
-	CateName     string `json:"cate_name"`
-	Code         int64  `json:"code"`
-	Message      string `json:"message"`
+	ConnectionId        string  `json:"connection_id"`
+	Name                string  `json:"name"`
+	Avatar              string  `json:"avatar"`
+	Cover               string  `json:"cover"`
+	CateName            string  `json:"cate_name"`
+	Code                int64   `json:"code"`
+	Message             string  `json:"message"`
+	AccessToken         string  `json:"access_token"`
+	Expire              int64   `json:"expire"`
+	TokenCreatedAt      string  `json:"token_created_at"`
+	TokenExpiresIn      float64 `json:"token_expires_in"`
+	TokenTimeRemainning float64 `json:"token_time_remaining"`
 }
 
 type ShareInfo struct {
@@ -123,5 +132,25 @@ func (m *MessageMarkRead) ValidateMarkRead() error {
 		}
 	}
 
+	return nil
+}
+
+func (m *MessageFormRequest) ValidateMessageForm() error {
+	if len(m.EventName) < 1 {
+		return errors.New("event name is required")
+	}
+	if len(m.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(m.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+	if len(m.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
+
+	if len(m.Url) < 1 && m.File == nil {
+		return errors.New("url or file is required")
+	}
 	return nil
 }
