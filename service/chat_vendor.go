@@ -13,7 +13,10 @@ import (
 type (
 	IChatVendor interface {
 		GetChatVendors(ctx context.Context, authUser *model.AuthUser, filter model.ChatVendorFilter, limit, offset int) (total int, result *[]model.ChatVendor, err error)
+		GetChatVendorById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.ChatVendor, err error)
 		InsertChatVendor(ctx context.Context, authUser *model.AuthUser, data model.ChatVendorRequest) (id string, err error)
+		UpdateChatVendor(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatVendorRequest) (err error)
+		DeleteChatVendor(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 
 		// TODO: write api insert use form
 		PostChatVendorUpload(ctx context.Context, authUser *model.AuthUser, data model.ChatVendorRequest, file *multipart.FileHeader) (id string, err error)
@@ -37,6 +40,19 @@ func (s *ChatVendor) GetChatVendors(ctx context.Context, authUser *model.AuthUse
 	return
 }
 
+func (s *ChatVendor) GetChatVendorById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.ChatVendor, err error) {
+	result, err = repository.VendorRepo.GetById(ctx, repository.DBConn, id)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	} else if result == nil {
+		log.Error("vendor does not exist")
+		return nil, errors.New("vendor does not exist")
+	}
+
+	return result, nil
+}
+
 func (s *ChatVendor) InsertChatVendor(ctx context.Context, authUser *model.AuthUser, data model.ChatVendorRequest) (id string, err error) {
 	vendor := model.ChatVendor{
 		Base:       model.InitBase(),
@@ -52,6 +68,45 @@ func (s *ChatVendor) InsertChatVendor(ctx context.Context, authUser *model.AuthU
 	}
 
 	id = vendor.Base.GetId()
+	return
+}
+
+func (s *ChatVendor) UpdateChatVendor(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatVendorRequest) (err error) {
+	vendorExist, err := repository.VendorRepo.GetById(ctx, repository.DBConn, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if vendorExist == nil {
+		log.Error("vendor does not exist")
+		return errors.New("vendor does not exist")
+	}
+	vendorExist.VendorName = data.VendorName
+	vendorExist.VendorType = data.VendorType
+	vendorExist.Status = data.Status
+
+	if err = repository.VendorRepo.Update(ctx, repository.DBConn, *vendorExist); err != nil {
+		log.Error(err)
+		return
+	}
+
+	return
+}
+
+func (s *ChatVendor) DeleteChatVendor(ctx context.Context, authUser *model.AuthUser, id string) (err error) {
+	vendorExist, err := repository.VendorRepo.GetById(ctx, repository.DBConn, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if vendorExist == nil {
+		log.Error("vendor does not exist")
+		return errors.New("vendor does not exist")
+	}
+
+	if err = repository.VendorRepo.Delete(ctx, repository.DBConn, id); err != nil {
+		log.Error(err)
+		return
+	}
+
 	return
 }
 
