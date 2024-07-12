@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package proto.chatUser;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message PostChatUserRequest {
+    string username = 1;
+    string password = 2;
+    string email = 3;
+    string level = 4;
+    bool status = 5;
+    string full_name = 6;
+    string role_id = 7;
+}
+
+message PostChatUserResponse {
+    string code = 1;
+    string message = 2;
+    string id = 3;
+}
+
+service ChatUserService {
+    rpc PostChatUser(PostChatUserRequest) returns (PostChatUserResponse) {
+        option (google.api.http) = {
+            post : "/bss-chat/v1/chat-user",
+            body : "*"
+        };
+    }
+}

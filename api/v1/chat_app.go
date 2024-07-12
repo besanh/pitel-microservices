@@ -30,10 +30,6 @@ func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp) {
 
 func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	var data model.ChatAppRequest
 	if err := c.ShouldBind(&data); err != nil {
@@ -62,34 +58,25 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 
 func (handler *ChatApp) GetChatApp(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
-	filter := model.AppFilter{
-		AppName:    c.Query("app_name"),
-		AppType:    c.Query("app_type"),
-		Status:     c.Query("status"),
-		DefaultApp: c.Query("default_app"),
+	filter := model.ChatAppFilter{
+		AppName: c.Query("app_name"),
+		AppType: c.Query("app_type"),
+		Status:  c.Query("status"),
 	}
-	limit := util.ParseLimit(c.Query("limit"))
-	offset := util.ParseOffset(c.Query("offset"))
+	limit, offset := util.ParseLimit(c.Query("limit")), util.ParseOffset(c.Query("offset"))
 
 	total, chatApps, err := handler.chatAppService.GetChatApp(c, res.Data, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
 	}
 	c.JSON(response.Pagination(chatApps, total, limit, offset))
 }
 
 func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
@@ -104,17 +91,11 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 		return
 	}
 
-	c.JSON(response.OK(map[string]any{
-		"id": chatApp.Id,
-	}))
+	c.JSON(response.OK(chatApp))
 }
 
 func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
@@ -131,6 +112,12 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 
 	log.Info("update chat app payload -> ", &data)
 
+	if err := data.Validate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
 	err := handler.chatAppService.UpdateChatAppById(c, res.Data, id, data)
 	if err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -141,10 +128,6 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 
 func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {

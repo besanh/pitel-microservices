@@ -14,14 +14,22 @@ import (
 )
 
 func InitServices() {
+	ChatAuthService = NewChatAuth()
 	ExampleService = NewExample()
+	ChatRoleService = NewChatRole()
+	ChatUserService = NewChatUser()
+	ChatVendorService = NewChatVendor()
+	ChatTenantService = NewChatTenant()
+	ChatIntegrateSystemService = NewChatIntegrateSystem()
+	ChatAppService = NewChatApp()
 }
 
 // MAP TENANT_ID SQL_CONN
 var (
-	MapDBConn        map[string]sqlclient.ISqlClientConn
-	ERR_EMPTY_CONN   = errors.New("empty_conn")
-	ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
+	SECRET_KEY_SUPERADMIN string = ""
+	MapDBConn             map[string]sqlclient.ISqlClientConn
+	ERR_EMPTY_CONN        = errors.New("empty_conn")
+	ERR_DB_CONN_FAIL      = errors.New("db_conn_fail")
 
 	// ES
 	ES_INDEX              = "" //             = "pitel_bss_chat"
@@ -116,6 +124,7 @@ type (
 		Source             string      `json:"source"`
 		QueueId            string      `json:"queue_id"`      //use for allocate manager
 		ConnectionId       string      `json:"connection_id"` // use for allocate
+		RoleId             string      `json:"role_id"`
 	}
 
 	Subscribers struct {
@@ -165,21 +174,21 @@ func NewDBConn(tenantId string, config DBConfig) (dbConn sqlclient.ISqlClientCon
 }
 
 func GetDBConnOfUser(user model.AuthUser) (dbConn sqlclient.ISqlClientConn, err error) {
-	if len(user.DatabaseHost) < 1 {
-		err = ERR_EMPTY_CONN
-		return
-	}
-	dbConn, ok := MapDBConn[user.TenantId]
-	if !ok {
-		dbConn, err = NewDBConn(user.TenantId, DBConfig{
-			Host:     user.DatabaseHost,
-			Port:     user.DatabasePort,
-			Database: user.DatabaseName,
-			Username: user.DatabaseUser,
-			Password: user.DatabasePassword,
-		})
-		return
-	}
+	// if len(user.DatabaseHost) < 1 {
+	// 	err = ERR_EMPTY_CONN
+	// 	return
+	// }
+	// dbConn, ok := MapDBConn[user.TenantId]
+	// if !ok {
+	// 	dbConn, err = NewDBConn(user.TenantId, DBConfig{
+	// 		Host:     user.DatabaseHost,
+	// 		Port:     user.DatabasePort,
+	// 		Database: user.DatabaseName,
+	// 		Username: user.DatabaseUser,
+	// 		Password: user.DatabasePassword,
+	// 	})
+	// 	return
+	// }
 	return
 }
 
@@ -188,14 +197,11 @@ func HandleGetDBConSource(authUser *model.AuthUser) (sqlclient.ISqlClientConn, e
 	if authUser == nil {
 		return nil, errors.New("authUser is nil")
 	}
-	if len(authUser.Source) < 1 || authUser.Source == "authen" {
-		dbCon = repository.DBConn
-	} else {
-		dbConTmp, err := GetDBConnOfUser(*authUser)
-		if err != nil {
-			return dbCon, err
-		}
-		dbCon = dbConTmp
-	}
+	dbCon = repository.DBConn
+	// dbConTmp, err := GetDBConnOfUser(*authUser)
+	// if err != nil {
+	// 	return dbCon, err
+	// }
+	// dbCon = dbConTmp
 	return dbCon, nil
 }

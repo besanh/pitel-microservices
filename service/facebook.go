@@ -32,9 +32,8 @@ func (s *Facebook) InsertFacebookPage(ctx context.Context, authUser *model.AuthU
 		return facebook.GetId(), err
 	}
 
-	filter := model.AppFilter{
-		AppType:    "facebook",
-		DefaultApp: "active",
+	filter := model.ChatAppFilter{
+		AppType: "facebook",
 	}
 
 	_, appInfos, err := repository.ChatAppRepo.GetChatApp(ctx, dbConn, filter, 1, 0)
@@ -78,9 +77,8 @@ func (s *Facebook) BulkInsertFacebookPage(ctx context.Context, authUser *model.A
 		return err
 	}
 
-	filter := model.AppFilter{
-		AppType:    "facebook",
-		DefaultApp: "active",
+	filter := model.ChatAppFilter{
+		AppType: "facebook",
 	}
 
 	total, appInfos, err := repository.ChatAppRepo.GetChatApp(ctx, dbConn, filter, 1, 0)

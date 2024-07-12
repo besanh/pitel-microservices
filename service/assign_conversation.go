@@ -106,7 +106,7 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 				result = append(result, model.ChatQueueUserView{
 					TenantId: (*chatManageQueueUsers)[0].TenantId,
 					QueueId:  (*chatManageQueueUsers)[0].QueueId,
-					UserId:   (*chatManageQueueUsers)[0].ManageId,
+					UserId:   (*chatManageQueueUsers)[0].UserId,
 				})
 			}
 		}
@@ -135,7 +135,7 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 		ConversationId: (*conversations)[0].ConversationId,
 		MainAllocate:   status,
 	}
-	_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	_, userAllocates, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 
 	if err != nil {
 		log.Error(err)
@@ -205,14 +205,14 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		ConversationId: (*conversations)[0].ConversationId,
 		MainAllocate:   data.Status,
 	}
-	_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, allocateFilter, -1, 0)
+	_, userAllocates, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	if len(*userAllocates) < 1 {
-		userAllocate := model.UserAllocate{
+		userAllocate := model.AllocateUser{
 			Base:               model.InitBase(),
 			TenantId:           (*conversations)[0].TenantId,
 			AppId:              (*conversations)[0].AppId,
@@ -290,7 +290,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		if s.TenantId == manageQueueUser.TenantId && s.Level == "admin" {
 			userUuids = append(userUuids, s.Id)
 		}
-		if s.TenantId == manageQueueUser.TenantId && manageQueueUser.ManageId == s.Id && s.Level == "manager" && s.Id != authUser.UserId {
+		if s.TenantId == manageQueueUser.TenantId && manageQueueUser.UserId == s.Id && s.Level == "manager" && s.Id != authUser.UserId {
 			userUuids = append(userUuids, s.Id)
 		}
 		if s.TenantId == manageQueueUser.TenantId && s.Id == data.UserId {

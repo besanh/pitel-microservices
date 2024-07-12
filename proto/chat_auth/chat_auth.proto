@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package proto.chatAuth;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+// import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message LoginRequest {
+  string username = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 80
+  ];
+  string password = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 80
+  ];
+}
+
+message LoginResponse {
+  string code = 1;
+  string message = 2;
+  LoginResponseData data = 3;
+  oneof error_code {
+    string error = 4;
+    google.protobuf.Struct errors = 5;
+  }
+}
+
+message LoginResponseData {
+  string business_unit_id = 1;
+  string business_unit_name = 2;
+  int32 expired_in = 3;
+  string fullname = 4;
+  string refresh_token = 5;
+  string token = 6;
+  string username = 7;
+  repeated string services = 8;
+  string tenant_id = 9;
+  string tenant_name = 10;
+  string tenant_logo = 11;
+  string user_id = 12;
+  string level = 13;
+  string group_id = 14;
+  string group_name = 15;
+  string role_id = 16;
+}
+
+message ForgotPasswordRequest {
+  string state = 1 [
+    (buf.validate.field).string.in = "request",
+    (buf.validate.field).string.in = "verify_token",
+    (buf.validate.field).string.in = "verify_code",
+    (buf.validate.field).string.in = "submit"
+  ];
+  string email = 2 [
+    (buf.validate.field).ignore_empty = true,
+    (buf.validate.field).string.email = true
+  ];
+  string token = 3;
+  string code = 4;
+  string password = 5;
+}
+
+message ForgotPasswordResponse {
+  string code = 1;
+  string message = 2;
+  google.protobuf.Struct data = 3;
+  oneof error_code {
+    string error = 4;
+    google.protobuf.Struct errors = 5;
+  }
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {
+  string code = 1;
+  string message = 2;
+  oneof error_code {
+    string error = 4;
+    google.protobuf.Struct errors = 5;
+  }
+}
+
+service ChatAuthService {
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/login"
+      body : "*"
+    };
+  };
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/logout"
+      body : "*"
+    };
+  };
+  rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/password/forgot"
+      body : "*"
+    };
+  };
+}

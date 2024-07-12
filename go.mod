@@ -106,6 +106,8 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/rabbitmq/rabbitmq-stream-go-client v1.4.6
+	github.com/shaj13/go-guardian/v2 v2.11.5
+	github.com/shaj13/libcache v1.2.1
 	github.com/spf13/cobra v1.8.1
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

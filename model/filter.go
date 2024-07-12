@@ -11,13 +11,12 @@ type AuthSourceFilter struct {
 	Status   sql.NullBool
 }
 
-type AppFilter struct {
-	AppId      string `json:"app_id"`
-	AppName    string `json:"app_name"`
-	OaId       string `json:"oa_id"`
-	AppType    string `json:"app_type"`
-	Status     string `json:"status"`
-	DefaultApp string `json:"default_app"`
+type ChatAppFilter struct {
+	AppId   string `json:"app_id"`
+	AppName string `json:"app_name"`
+	OaId    string `json:"oa_id"`
+	AppType string `json:"app_type"`
+	Status  string `json:"status"`
 }
 
 type ChatConnectionAppFilter struct {
@@ -126,7 +125,7 @@ type ChatManageQueueUserFilter struct {
 	TenantId     string `json:"tenant_id"`
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
-	ManageId     string `json:"manage_id"`
+	UserId       string `json:"user_id"`
 }
 
 type UserInQueueFilter struct {
@@ -184,4 +183,34 @@ type ChatAutoScriptFilter struct {
 type ChatPolicyFilter struct {
 	TenantId       string `json:"tenant_id"`
 	ConnectionType string `json:"connection_type"`
+}
+
+type ChatIntegrateSystemFilter struct {
+	SystemName string       `json:"system_name"`
+	VendorName string       `json:"vendor_name"`
+	Status     sql.NullBool `json:"status"`
+}
+
+type ChatVendorFilter struct {
+	VendorName string       `json:"vendor_name"`
+	VendorType string       `json:"vendor_type"`
+	Status     sql.NullBool `json:"status"`
+}
+
+type ChatRoleFilter struct {
+	RoleName string       `json:"role_name"`
+	Status   sql.NullBool `json:"status"`
+}
+
+type ChatUserFilter struct {
+	Username string       `json:"username"`
+	Level    string       `json:"level"`
+	Status   sql.NullBool `json:"status"`
+	Fullname string       `json:"fullname"`
+	RoleId   string       `json:"role_id"`
+}
+
+type ChatTenantFilter struct {
+	TenantName string       `json:"tenant_name"`
+	Status     sql.NullBool `json:"status"`
 }

@@ -249,14 +249,14 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 			ConversationId: conversation.ConversationId,
 			MainAllocate:   "active",
 		}
-		_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+		_, userAllocates, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
 		if len(*userAllocates) < 1 {
 			if len(conversation.ConversationId) > 0 {
-				_, conversationDeactiveExist, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, model.UserAllocateFilter{
+				_, conversationDeactiveExist, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, model.UserAllocateFilter{
 					AppId:          conversation.AppId,
 					ConversationId: conversation.ConversationId,
 				}, -1, 0)
@@ -265,19 +265,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 				if len(*conversationDeactiveExist) > 0 {
-					if err := repository.UserAllocateRepo.DeleteUserAllocates(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
+					if err := repository.UserAllocateRepo.DeleteAllocateUsers(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
 						log.Error(err)
 						return response.ServiceUnavailableMsg(err.Error())
 					}
 				}
 			}
-			userAllocation := model.UserAllocate{
+			userAllocation := model.AllocateUser{
 				Base:               model.InitBase(),
 				TenantId:           conversation.TenantId,
 				ConversationId:     conversation.ConversationId,
 				AppId:              message.AppId,
 				OaId:               message.OaId,
-				UserId:             manageQueueUser.ManageId,
+				UserId:             manageQueueUser.UserId,
 				ConnectionQueueId:  connectionCache.ConnectionQueueId,
 				QueueId:            manageQueueUser.QueueId,
 				AllocatedTimestamp: time.Now().UnixMilli(),
@@ -295,19 +295,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		}
 
 		// TODO: publish message to manager
-		isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
+		isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
 		if isExist {
-			if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.ManageId) || (user.AuthUser == nil && len(manageQueueUser.ManageId) > 0) {
+			if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.UserId) || (user.AuthUser == nil && len(manageQueueUser.UserId) > 0) {
 				if user.IsReassignSame {
-					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, &conversation)
-					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.UserId, subscribers, true, &conversation)
+					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.UserId, subscribers, &message)
 				} else if user.IsReassignNew {
-					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], manageQueueUser.ManageId, subscribers, true, &conversation)
-					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
-					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], manageQueueUser.UserId, subscribers, true, &conversation)
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.UserId, subscribers, isNew, &conversation)
+					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.UserId, subscribers, &message)
 				} else {
-					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.ManageId, subscribers, isNew, &conversation)
-					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+					PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], manageQueueUser.UserId, subscribers, isNew, &conversation)
+					PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.UserId, subscribers, &message)
 				}
 			}
 		}

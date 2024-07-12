@@ -8,6 +8,6 @@ type ChatSetting struct {
 	Message             Message
 	ConnectionApp       ChatConnectionApp
 	ConnectionQueue     ConnectionQueue
-	PreviousAssign      UserAllocate
+	PreviousAssign      AllocateUser
 	ConnectionQueueUser []ChatQueueUser
 }

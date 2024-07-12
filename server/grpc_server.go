@@ -16,12 +16,13 @@ import (
 	v1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
-	pbAuthSource "github.com/tel4vn/fins-microservices/gen/proto/auth_source"
-	pbApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
-	pbChatQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
-	pbChatQueuAgent "github.com/tel4vn/fins-microservices/gen/proto/chat_queue_agent"
-	pbChatRouting "github.com/tel4vn/fins-microservices/gen/proto/chat_routing"
-	pbConnection "github.com/tel4vn/fins-microservices/gen/proto/connection_app"
+	pbChatApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
+	pbChatAuth "github.com/tel4vn/fins-microservices/gen/proto/chat_auth"
+	pbChatIntegrateSystem "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
+	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
+	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
+	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
+	pbChatVendor "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
@@ -56,16 +57,19 @@ func NewGRPCServer(port string) {
 	// Setup gRPC
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
-			grpcMiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
+			grpcMiddleware.ChainUnaryServer(authMiddleware.GRPCAuthInterceptor, grpcauth.UnaryServerInterceptor(authMiddleware.GRPCAuthMiddleware)),
 		),
 	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
-	pbAuthSource.RegisterAuthSourceServiceServer(grpcServer, grpcService.NewGRPCAuthSoure())
-	pbApp.RegisterAppServer(grpcServer, grpcService.NewGRPCApp())
-	pbConnection.RegisterConnectionAppServer(grpcServer, grpcService.NewGRPCChatConnectionApp())
-	pbChatRouting.RegisterChatRoutingServer(grpcServer, grpcService.NewGRPCChatRouting())
-	pbChatQueue.RegisterChatQueueServiceServer(grpcServer, grpcService.NewGRPCChatQueue())
-	pbChatQueuAgent.RegisterQueueAgentServiceServer(grpcServer, grpcService.NewGRPCChatQueueAgent())
+	pbChatIntegrateSystem.RegisterChatIntegrateSystemServer(grpcServer, grpcService.NewGRPCChatIntegrateSystem())
+	pbChatRole.RegisterChatRoleServiceServer(grpcServer, grpcService.NewChatRole())
+	pbChatUser.RegisterChatUserServiceServer(grpcServer, grpcService.NewGRPCChatUser())
+	pbChatAuth.RegisterChatAuthServiceServer(grpcServer, grpcService.NewGRPCChatAuth())
+	pbChatAuth.RegisterChatTokenServiceServer(grpcServer, grpcService.NewGRPCChatToken())
+	pbChatTenant.RegisterChatTenantServiceServer(grpcServer, grpcService.NewGRPCChatTenant())
+	pbChatVendor.RegisterChatVendorServiceServer(grpcServer, grpcService.NewGRPCChatVendor())
+	pbChatApp.RegisterChatAppServiceServer(grpcServer, grpcService.NewGRPCChatApp())
+
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -77,7 +81,7 @@ func NewGRPCServer(port string) {
 			Marshaler: &runtime.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
 					UseProtoNames:   true,
-					EmitUnpopulated: false,
+					EmitUnpopulated: true,
 				},
 				UnmarshalOptions: protojson.UnmarshalOptions{
 					DiscardUnknown: true,
@@ -90,27 +94,48 @@ func NewGRPCServer(port string) {
 	if err := pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbAuthSource.RegisterAuthSourceServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err := pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbApp.RegisterAppHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err := pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbConnection.RegisterConnectionAppHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err := pbChatRole.RegisterChatRoleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatRouting.RegisterChatRoutingHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err := pbChatUser.RegisterChatUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatQueue.RegisterChatQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err := pbChatAuth.RegisterChatAuthServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatQueuAgent.RegisterQueueAgentServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err := pbChatAuth.RegisterChatTokenServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbChatVendor.RegisterChatVendorServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbChatTenant.RegisterChatTenantServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbChatApp.RegisterChatAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", gin.WrapH(mux))
+	v1.APIChatVendorHandler = v1.NewChatVendor()
+	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", func(c *gin.Context) {
+		switch {
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload") && c.Request.Method == "POST":
+			v1.APIChatVendorHandler.HandlePostChatVendorLogoUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload/") && c.Request.Method == "PUT":
+			v1.APIChatVendorHandler.HandlePutChatVendorLogoUpload(c)
+		default:
+			gin.WrapH(mux)(c)
+		}
+	})
+
 	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(), service.NewConversation())
 	v1.NewMessage(httpServer, service.NewMessage())
 	v1.NewWebSocket(httpServer, service.NewSubscriberService())
@@ -173,15 +198,13 @@ func handleMatchHeaders(key string) (string, bool) {
 func handleMetadata(ctx context.Context, r *http.Request) metadata.MD {
 	md := make(map[string]string)
 	md["tenant_id"] = r.Header.Get("X-Tenant-Id")
-	md["business_unit_id"] = r.Header.Get("X-Business-Unit-Id")
 	md["user_id"] = r.Header.Get("X-User-Id")
 	md["username"] = r.Header.Get("X-Username")
-	md["services"] = strings.Join(r.Header["X-Services"], ",")
-	md["database_name"] = r.Header.Get("X-Database-Name")
-	md["database_host"] = r.Header.Get("X-Database-Host")
-	md["database_port"] = r.Header.Get("X-Database-Port")
-	md["database_user"] = r.Header.Get("X-Database-User")
-	md["database_password"] = r.Header.Get("X-Database-Password")
+	md["level"] = r.Header.Get("X-User-Level")
+	md["role_id"] = r.Header.Get("X-Role-Id")
+	md["secret_key"] = r.Header.Get("secret-key")
+	md["system_id"] = r.Header.Get("system-key")
+
 	return metadata.New(md)
 }
 

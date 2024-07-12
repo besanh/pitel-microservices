@@ -82,7 +82,7 @@ func SendEventToManage(ctx context.Context, authUser *model.AuthUser, message mo
 		}
 	}
 
-	go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &message)
+	go PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.UserId, subscribers, &message)
 
 	// TODO: publish to admin
 	if ENABLE_PUBLISH_ADMIN {

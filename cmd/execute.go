@@ -9,6 +9,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
+	"github.com/tel4vn/fins-microservices/internal/goauth"
 	"github.com/tel4vn/fins-microservices/internal/queue"
 	"github.com/tel4vn/fins-microservices/internal/rabbitmq"
 	"github.com/tel4vn/fins-microservices/internal/redis"
@@ -116,9 +117,9 @@ func init() {
 	// }
 	// queuetask.NewQueueTaskClient(queueTaskConfig)
 
-	// goauth.GoAuthClient = goauth.NewGoAuth(cache.RCache.GetClient())
-	// authMdw.SetupGoGuardian()
-	authMdw.AuthMdw = authMdw.NewGatewayAuthMiddleware(env.GetStringENV("ENV", "dev"))
+	goauth.GoAuthClient = goauth.NewGoAuth(redis.Redis.GetClient())
+	authMdw.SetupGoGuardian()
+	authMdw.AuthMdw = authMdw.NewLocalAuthMiddleware()
 
 	config = cfg
 }

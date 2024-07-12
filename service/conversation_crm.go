@@ -19,7 +19,7 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 		var queueId []string
 		if authUser.Level == "manager" {
 			filterManageQueue := model.ChatManageQueueUserFilter{
-				ManageId: authUser.UserId,
+				UserId: authUser.UserId,
 			}
 			totalManageQueue, manageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterManageQueue, -1, 0)
 			if err != nil {
@@ -101,7 +101,7 @@ func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids [
 		conversationFilter.MainAllocate = "active"
 	}
 
-	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return total, nil, err

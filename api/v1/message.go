@@ -33,10 +33,6 @@ func NewMessage(engine *gin.Engine, messageService service.IMessage) {
 
 func (h *Message) SendMessage(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	message := model.MessageRequest{}
 	var file *multipart.FileHeader
@@ -90,10 +86,7 @@ func (h *Message) SendMessage(c *gin.Context) {
 
 func (h *Message) GetMessages(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
+
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
@@ -108,10 +101,6 @@ func (h *Message) GetMessages(c *gin.Context) {
 
 func (h *Message) MarkReadMessages(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	markReadMessages := model.MessageMarkRead{}
 	if err := c.ShouldBindJSON(&markReadMessages); err != nil {
@@ -132,10 +121,6 @@ func (h *Message) MarkReadMessages(c *gin.Context) {
 
 func (h *Message) ShareInfo(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	shareInfo := model.ShareInfo{}
 	if err := c.ShouldBindJSON(&shareInfo); err != nil {
@@ -151,10 +136,7 @@ func (h *Message) ShareInfo(c *gin.Context) {
 
 func (h *Message) GetMessagesWithScrollAPI(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
+
 	limit := util.ParseLimit(c.Query("limit"))
 	scrollId := c.Query("scroll_id")
 

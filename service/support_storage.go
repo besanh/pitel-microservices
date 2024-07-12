@@ -2,12 +2,11 @@ package service
 
 import (
 	"context"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/storage"
 	"io"
 	"mime/multipart"
-	"net/url"
-	"path"
+
+	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/internal/storage"
 )
 
 func uploadImageToStorageShareInfo(c context.Context, file *multipart.FileHeader) (url string, err error) {
@@ -38,24 +37,4 @@ func uploadImageToStorageShareInfo(c context.Context, file *multipart.FileHeader
 	url = API_DOC + "/bss-message/v1/share-info/image/" + input.Path
 
 	return
-}
-
-func removeFileFromStorageShareInfo(c context.Context, fileUrl string) error {
-	fileName, err := splitFileNameFromUrl(fileUrl)
-	if err != nil {
-		return err
-	}
-
-	input := storage.NewRetrieveInput(fileName)
-	return storage.Instance.RemoveFile(c, *input)
-}
-
-func splitFileNameFromUrl(fileUrl string) (string, error) {
-	// Parse the URL
-	parsedURL, err := url.Parse(fileUrl)
-	if err != nil {
-		return "", err
-	}
-	fileName := path.Base(parsedURL.Path)
-	return fileName, nil
 }

@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package proto.chatApp;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+// import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+// Post to create chat app
+message PostChatAppRequest {
+    string app_name = 1;
+    string status = 2;
+    PostChatInfoApp info_app = 3;
+}
+
+message PostChatInfoApp {
+    PostChatAppZalo zalo = 1;
+    PostChatAppFacebook facebook = 2;
+}
+
+message PostChatAppZalo {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message PostChatAppFacebook {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message PostChatAppResponse {
+    string code = 1;
+    string message = 2;
+    string id = 3;
+}
+
+// Get chat apps
+message GetChatAppRequest {
+    string app_id = 1;
+	string app_name = 2;
+	string oa_id = 3;
+	string app_type = 4;
+	string status = 5;
+    int32 limit = 6;
+    int32 offset = 7;
+}
+
+message GetChatAppResponse {
+    string code = 1;
+    string message = 2;
+    repeated GetChatAppData data = 3;
+    int32 total = 4;
+}
+
+message GetChatAppData {
+    string id = 1;
+    string app_name = 2;
+    string status = 3;
+    PostChatInfoApp info_app = 4;
+}
+
+service ChatAppService {
+    rpc PostChatApp(PostChatAppRequest) returns (PostChatAppResponse) {
+        option (google.api.http) = {
+            post : "/bss-chat/v1/chat-app"
+            body : "*"
+        };
+    };
+    rpc GetChatApps (GetChatAppRequest) returns (GetChatAppResponse) {
+        option (google.api.http) = {
+            get : "/bss-chat/v1/chat-app"
+        };
+    };
+}

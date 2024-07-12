@@ -45,12 +45,13 @@ func RunMainService() {
 	repository.InitColumn(ctx, repository.DBConn)
 
 	// Init services
+	service.SECRET_KEY_SUPERADMIN = env.GetStringENV("SECRET_KEY_SUPERADMIN", "RnXyO4178f2gvXV8bbSgVf3ipcO7PR5y6jLATrfvHcmEbVWjgwgm2dl8GE3EPEG7KFqHzOznCNBbe3aiNWykfT32lw0RM8ThRTCD")
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
 	service.ES_INDEX = env.GetStringENV("ES_INDEX", "pitel_bss_chat")
 	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
 	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
 	service.OTT_VERSION = env.GetStringENV("OTT_VERSION", "v1")
-	service.API_SHARE_INFO_HOST = env.GetStringENV("API_SHARE_INFO_HOST", "https://api.dev.fins.vn")
+	service.API_SHARE_INFO_HOST = env.GetStringENV("API_SHARE_INFO_HOST", "")
 	service.API_DOC = env.GetStringENV("API_DOC", "")
 	service.ENABLE_PUBLISH_ADMIN = env.GetBoolENV("ENABLE_PUBLISH_ADMIN", false)
 	service.ENABLE_CHAT_AUTO_SCRIPT_REPLY = env.GetBoolENV("ENABLE_CHAT_AUTO_SCRIPT_REPLY", false)

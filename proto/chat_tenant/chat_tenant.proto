@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package proto.chatRole;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message PostChatTenantRequest {
+    string tenant_name = 1;
+    bool status = 2;
+}
+
+message PostChatTenantResponse {
+    string code = 1;
+    string message = 2;
+    string id = 3;
+}
+
+service ChatTenantService {
+    rpc PostChatTenant(PostChatTenantRequest) returns (PostChatTenantResponse) {
+        option (google.api.http) = {
+            post : "/bss-chat/v1/chat-tenant"
+            body : "*"
+        };
+    }
+}

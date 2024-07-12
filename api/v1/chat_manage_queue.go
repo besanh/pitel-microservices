@@ -28,10 +28,7 @@ func NewManageQueue(engine *gin.Engine, manageQueue service.IManageQueue) {
 
 func (handler *ManageQueue) PostManageQueue(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
+
 	data := model.ChatManageQueueUserRequest{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		log.Error(err)
@@ -58,10 +55,6 @@ func (handler *ManageQueue) PostManageQueue(c *gin.Context) {
 
 func (handler *ManageQueue) UpdateManageQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
@@ -94,10 +87,6 @@ func (handler *ManageQueue) UpdateManageQueueById(c *gin.Context) {
 
 func (handler *ManageQueue) DeleteManageQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
-		return
-	}
 
 	id := c.Param("id")
 	if len(id) < 1 {
