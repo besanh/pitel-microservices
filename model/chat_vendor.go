@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"mime/multipart"
 	"slices"
 
 	"github.com/tel4vn/fins-microservices/common/variables"
@@ -18,10 +19,11 @@ type ChatVendor struct {
 }
 
 type ChatVendorRequest struct {
-	VendorName string `json:"vendor_name"`
-	VendorType string `json:"vendor_type"`
-	Logo       string `json:"logo"`
-	Status     bool   `json:"status"`
+	VendorName string                `json:"vendor_name" form:"vendor_name""`
+	VendorType string                `json:"vendor_type" form:"vendor_type"`
+	Logo       string                `json:"logo"`
+	Status     bool                  `json:"status" form:"status"`
+	File       *multipart.FileHeader `json:"file" form:"file"`
 }
 
 func (m *ChatVendorRequest) Validate() error {

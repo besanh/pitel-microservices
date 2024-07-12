@@ -9,6 +9,16 @@ import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 import "buf/validate/validate.proto";
 
+message ChatVendorConfiguration {
+    string id = 1;
+    string vendor_name = 2;
+    string vendor_type = 3;
+    string logo = 4;
+    bool status = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+}
+
 message PostChatVendorRequest {
     string vendor_name = 1;
     string vendor_type = 2;
@@ -21,6 +31,50 @@ message PostChatVendorResponse {
     string id = 3;
 }
 
+message GetChatVendorsRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+    string vendor_name = 3;
+    string vendor_type = 4;
+    bool status = 5;
+}
+
+message GetChatVendorsResponse {
+    string code = 1;
+    string message = 2;
+    int32 total = 3;
+    repeated ChatVendorConfiguration data = 4;
+}
+
+message GetChatVendorRequest {
+    string id = 1;
+}
+
+message GetChatVendorResponse {
+    string code = 1;
+    string message = 2;
+    ChatVendorConfiguration data = 3;
+}
+
+message UpdateChatVendorRequest {
+    string id = 1;
+    ChatVendorConfiguration request = 2;
+}
+
+message UpdateChatVendorResponse {
+    string code = 1;
+    string message = 2;
+}
+
+message DeleteChatVendorRequest {
+    string id = 1;
+}
+
+message DeleteChatVendorResponse {
+    string code = 1;
+    string message = 2;
+}
+
 service ChatVendorService {
     rpc PostChatVendor (PostChatVendorRequest) returns (PostChatVendorResponse) {
         option (google.api.http) = {
@@ -28,4 +82,29 @@ service ChatVendorService {
             body : "*"
         };
     };
+
+    rpc GetChatVendors (GetChatVendorsRequest) returns (GetChatVendorsResponse) {
+        option (google.api.http) = {
+            get: "/bss-chat/v1/chat-vendor"
+        };
+    }
+
+    rpc GetChatVendorById (GetChatVendorRequest) returns (GetChatVendorResponse) {
+        option (google.api.http) = {
+            get: "/bss-chat/v1/chat-vendor/{id}"
+        };
+    }
+
+    rpc UpdateChatVendorById (UpdateChatVendorRequest) returns (UpdateChatVendorResponse) {
+        option (google.api.http) = {
+            put: "/bss-chat/v1/chat-vendor/{id}"
+            body: "*"
+        };
+    }
+
+    rpc DeleteChatVendorById (DeleteChatVendorRequest) returns (DeleteChatVendorResponse) {
+        option (google.api.http) = {
+            delete: "/bss-chat/v1/chat-vendor/{id}"
+        };
+    }
 }
