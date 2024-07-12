@@ -22,6 +22,9 @@ type ChatIntegrateSystem struct {
 	Vendor          *ChatVendor `json:"vendor" bun:"rel:belongs-to,join:vendor_id=id"`
 	Status          bool        `json:"status" bun:"status,type:boolean,notnull"`
 	InfoSystem      *InfoSystem `json:"info_system" bun:"info_system,type:jsonb,notnull"`
+
+	// relations
+	ChatApps []*ChatApp `json:"chat_apps" bun:"m2m:chat_app_integrate_system,join:ChatIntegrateSystem=ChatApp"`
 }
 
 type InfoSystem struct {

@@ -17,12 +17,16 @@ type ChatApp struct {
 	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
 	Status        string   `json:"status" bun:"status,notnull"`
 	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
+
+	// relations
+	Systems []*ChatIntegrateSystem `json:"integrate_systems" bun:"m2m:chat_app_integrate_system,join:ChatApp=ChatIntegrateSystem"`
 }
 
 type ChatAppRequest struct {
-	AppName string   `json:"app_name"`
-	Status  string   `json:"status"` //active/deactive
-	InfoApp *InfoApp `json:"info_app"`
+	AppName   string   `json:"app_name"`
+	Status    string   `json:"status"` //active/deactive
+	InfoApp   *InfoApp `json:"info_app"`
+	SystemIds []string `json:"system_ids"`
 }
 
 type InfoApp struct {
@@ -45,6 +49,9 @@ type Facebook struct {
 func (m *ChatAppRequest) Validate() error {
 	if len(m.AppName) < 1 {
 		return errors.New("app name is required")
+	}
+	if len(m.SystemIds) < 1 {
+		return errors.New("system id is required")
 	}
 
 	var countOk int

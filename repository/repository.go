@@ -57,6 +57,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.AuthSource)(nil)); err != nil {
 		log.Error(err)
 	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatAppIntegrateSystem)(nil)); err != nil {
+		log.Error(err)
+	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatApp)(nil)); err != nil {
 		log.Error(err)
 	}
