@@ -1,20 +1,17 @@
-package api
+package auth
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/fins-microservices/repository"
 	"github.com/tel4vn/fins-microservices/service"
-	"nhooyr.io/websocket"
 )
 
 const (
@@ -22,92 +19,58 @@ const (
 	USER_INFO    = "user_info"
 )
 
-func AuthMiddleware(c *gin.Context) *model.ChatResponse {
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth-url"),
-		Source:  c.Query("source"),
-	}
-
-	if len(c.GetHeader("validator-header")) > 0 {
-		bssAuthRequest = model.BssAuthRequest{
-			Token:   c.GetHeader("token"),
-			AuthUrl: c.GetHeader("auth-url"),
-			Source:  c.GetHeader("source"),
-		}
-	}
-
-	res := AAAMiddleware(c, bssAuthRequest)
-	if res == nil {
-		c.JSON(http.StatusUnauthorized, map[string]any{
-			"error": http.StatusText(http.StatusUnauthorized),
-		})
-		c.Abort()
-		return nil
-	}
-
-	return res
-}
-
-func MoveTokenToHeader() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		token := ctx.Query("token")
-		if len(token) < 10 {
-			ctx.JSON(http.StatusUnauthorized, map[string]any{
-				"error": http.StatusText(http.StatusUnauthorized),
-			})
-			ctx.Abort()
+func ChatMiddleware(ctx context.Context, token, systemId string) (result *model.ChatResponse) {
+	var integrateType string
+	chatIntegrateSystem := &model.ChatIntegrateSystem{}
+	chatIScache := cache.RCache.Get(service.CHAT_INTEGRATE_SYSTEM + "_" + systemId)
+	if chatIScache != nil {
+		if err := json.Unmarshal([]byte(chatIScache.(string)), chatIntegrateSystem); err != nil {
+			log.Error(err)
 			return
 		}
-		ctx.Request.Header.Set("Authorization", "Bearer "+token)
-		ctx.Next()
-	}
-}
+	} else {
+		_, chatIntegrateSystems, errTmp := repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, model.ChatIntegrateSystemFilter{
+			SystemId: systemId}, 1, 0)
+		if errTmp != nil {
+			log.Error(errTmp)
+			return
+		} else if len(*chatIntegrateSystems) < 1 {
+			log.Error("invalid system id " + systemId)
+			return
+		}
 
-func AAAMiddleware(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse) {
-	if len(bssAuthRequest.Token) < 10 {
-		return nil
+		chatIntegrateSystem = &(*chatIntegrateSystems)[0]
+
+		if err := cache.RCache.Set(service.CHAT_INTEGRATE_SYSTEM+"_"+systemId, chatIntegrateSystem, service.CHAT_INTEGRATE_SYSTEM_EXPIRE); err != nil {
+			log.Error(err)
+			return
+		}
 	}
-	if bssAuthRequest.Source == "authen" {
-		result, err := RequestAuthen(ctx, bssAuthRequest)
+	integrateType = chatIntegrateSystem.InfoSystem.AuthType
+
+	bssAuthRequest := model.BssAuthRequest{
+		AuthUrl:       chatIntegrateSystem.InfoSystem.ApiAuthUrl,
+		Token:         token,
+		UserDetailUrl: chatIntegrateSystem.InfoSystem.ApiGetUserDetailUrl,
+	}
+
+	switch integrateType {
+	case "pitel_crm":
+		result, err := CrmMiddleware(ctx, token, systemId, bssAuthRequest)
 		if err != nil {
 			return nil
 		}
 		return result
-	} else if bssAuthRequest.Source == "aaa" {
-		result, err := RequestAAA(ctx, bssAuthRequest)
-		if err != nil {
-			return nil
-		}
-		return result
+	default:
+		return
 	}
-	return
 }
 
-func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse, err error) {
-	body := map[string]string{
-		"token": bssAuthRequest.Token,
-	}
-	// https://api.dev.fins.vn/aaa/v1/token/verify
-	client := resty.New()
-	res, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
-		SetBody(body).
-		SetResult(result).
-		Post(service.OTT_URL + "/aaa")
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode() != 200 {
-		return nil, err
-	}
-	return result, nil
-}
+func CrmMiddleware(ctx context.Context, token, systemId string, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse, err error) {
 
-func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse, err error) {
+	// Get Info user
 	clientInfo := resty.New()
-	urlInfo := bssAuthRequest.AuthUrl + "/v1/crm/auth/auth-info"
+	urlInfo := bssAuthRequest.AuthUrl
 	res, err := clientInfo.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
@@ -137,7 +100,7 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 			return result, err
 		}
 	} else {
-		url := bssAuthRequest.AuthUrl + "/v1/crm/user-crm/" + userUuid
+		url := bssAuthRequest.UserDetailUrl + "/" + userUuid
 		res, err := clientInfo.R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Authorization", "Bearer "+bssAuthRequest.Token).
@@ -188,15 +151,4 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 	}
 
 	return result, nil
-}
-
-func WriteTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg []byte) error {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	err := c.Write(ctx, websocket.MessageText, msg)
-	if err != nil {
-		return fmt.Errorf("failed to write message: %w", err)
-	}
-	return nil
 }

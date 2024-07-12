@@ -43,6 +43,7 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 		SystemName: request.GetSystemName(),
 		VendorName: request.GetVendorName(),
 		Status:     status,
+		SystemId:   request.GetSystemId(),
 	}
 
 	total, chatIntegrateSystems, err := service.ChatIntegrateSystemService.GetChatIntegrateSystems(ctx, authUser, filter, limit, offset)

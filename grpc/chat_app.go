@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"slices"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -27,7 +28,7 @@ func (g *GRPCChatApp) PostChatApp(ctx context.Context, req *pb.PostChatAppReques
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
-	if (user.GetLevel() != "superadmin") && len(user.SecretKey) < 1 {
+	if !slices.Contains([]string{"superadmin", "admin"}, user.GetLevel()) {
 		return nil, status.Errorf(codes.PermissionDenied, response.ERR_PERMISSION_DENIED)
 	}
 

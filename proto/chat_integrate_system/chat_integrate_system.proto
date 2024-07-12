@@ -15,6 +15,7 @@ message GetChatIntegrateSystemRequest {
     string system_name = 3;
     string vendor_name = 4;
     string status = 5;
+    string system_id = 6;
 }
 
 message GetChatIntegrateSystemResponse {
