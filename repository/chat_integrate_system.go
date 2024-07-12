@@ -12,7 +12,7 @@ import (
 type (
 	IChatIntegrateSystem interface {
 		IRepo[model.ChatIntegrateSystem]
-		GetIntegrateSystem(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error)
+		GetIntegrateSystems(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error)
 	}
 	ChatIntegrateSystem struct {
 		Repo[model.ChatIntegrateSystem]
@@ -25,7 +25,7 @@ func NewChatIntegrateSystem() IChatIntegrateSystem {
 	return &ChatIntegrateSystem{}
 }
 
-func (repo *ChatIntegrateSystem) GetIntegrateSystem(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error) {
+func (repo *ChatIntegrateSystem) GetIntegrateSystems(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error) {
 	result = new([]model.ChatIntegrateSystem)
 	query := db.GetDB().NewSelect().Model(result).
 		Relation("Vendor", func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -39,6 +39,9 @@ func (repo *ChatIntegrateSystem) GetIntegrateSystem(ctx context.Context, db sqlc
 	}
 	if filter.Status.Valid {
 		query.Where("status = ?", filter.Status)
+	}
+	if len(filter.SystemId) > 0 {
+		query.Where("system_id = ?", filter.SystemId)
 	}
 	query.Order("created_at DESC")
 

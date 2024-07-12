@@ -86,7 +86,7 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 }
 
 func (s *ChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, authUser *model.AuthUser, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error) {
-	total, result, err = repository.ChatIntegrateSystemRepo.GetIntegrateSystem(ctx, repository.DBConn, filter, limit, offset)
+	total, result, err = repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return

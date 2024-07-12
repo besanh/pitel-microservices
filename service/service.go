@@ -59,13 +59,15 @@ var (
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
-	OTT_URL                       string = ""
-	OTT_VERSION                   string = ""
-	API_SHARE_INFO_HOST           string = ""
-	API_DOC                       string = ""
-	ENABLE_PUBLISH_ADMIN          bool   = false
-	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool   = false
-	AAA_HOST                      string = ""
+	OTT_URL                       string        = ""
+	OTT_VERSION                   string        = ""
+	API_SHARE_INFO_HOST           string        = ""
+	API_DOC                       string        = ""
+	ENABLE_PUBLISH_ADMIN          bool          = false
+	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool          = false
+	AAA_HOST                      string        = ""
+	CHAT_INTEGRATE_SYSTEM         string        = "chat_integrate_system"
+	CHAT_INTEGRATE_SYSTEM_EXPIRE  time.Duration = 1 * time.Hour
 
 	// Storage
 	S3_ENDPOINT    string = ""
