@@ -16,9 +16,11 @@ import (
 	v1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
+	pbChatApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
 	pbChatAuth "github.com/tel4vn/fins-microservices/gen/proto/chat_auth"
 	pbChatIntegrateSystem "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
 	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
+	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
 	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
 	pbChatVendor "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
@@ -64,7 +66,9 @@ func NewGRPCServer(port string) {
 	pbChatUser.RegisterChatUserServiceServer(grpcServer, grpcService.NewGRPCChatUser())
 	pbChatAuth.RegisterChatAuthServiceServer(grpcServer, grpcService.NewGRPCChatAuth())
 	pbChatAuth.RegisterChatTokenServiceServer(grpcServer, grpcService.NewGRPCChatToken())
+	pbChatTenant.RegisterChatTenantServiceServer(grpcServer, grpcService.NewGRPCChatTenant())
 	pbChatVendor.RegisterChatVendorServiceServer(grpcServer, grpcService.NewGRPCChatVendor())
+	pbChatApp.RegisterChatAppServiceServer(grpcServer, grpcService.NewGRPCChatApp())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -111,6 +115,12 @@ func NewGRPCServer(port string) {
 	if err := pbChatVendor.RegisterChatVendorServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbChatTenant.RegisterChatTenantServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbChatApp.RegisterChatAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
@@ -122,9 +132,10 @@ func NewGRPCServer(port string) {
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload/") && c.Request.Method == "PUT":
 			v1.APIChatVendorHandler.HandlePutChatVendorLogoUpload(c)
 		default:
-			gin.WrapH(mux)
+			gin.WrapH(mux)(c)
 		}
 	})
+
 	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(), service.NewConversation())
 	v1.NewMessage(httpServer, service.NewMessage())
 	v1.NewWebSocket(httpServer, service.NewSubscriberService())
@@ -192,6 +203,7 @@ func handleMetadata(ctx context.Context, r *http.Request) metadata.MD {
 	md["level"] = r.Header.Get("X-User-Level")
 	md["role_id"] = r.Header.Get("X-Role-Id")
 	md["secret_key"] = r.Header.Get("secret-key")
+	md["system_id"] = r.Header.Get("system-key")
 
 	return metadata.New(md)
 }

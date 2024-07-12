@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	ChatIntegrateSystem_GetChatIntegrateSystems_FullMethodName = "/proto.chatIntegrateSystem.ChatIntegrateSystem/GetChatIntegrateSystems"
+	ChatIntegrateSystem_PostChatIntegrateSystem_FullMethodName = "/proto.chatIntegrateSystem.ChatIntegrateSystem/PostChatIntegrateSystem"
 )
 
 // ChatIntegrateSystemClient is the client API for ChatIntegrateSystem service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatIntegrateSystemClient interface {
 	GetChatIntegrateSystems(ctx context.Context, in *GetChatIntegrateSystemRequest, opts ...grpc.CallOption) (*GetChatIntegrateSystemResponse, error)
+	PostChatIntegrateSystem(ctx context.Context, in *PostChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error)
 }
 
 type chatIntegrateSystemClient struct {
@@ -46,11 +48,21 @@ func (c *chatIntegrateSystemClient) GetChatIntegrateSystems(ctx context.Context,
 	return out, nil
 }
 
+func (c *chatIntegrateSystemClient) PostChatIntegrateSystem(ctx context.Context, in *PostChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error) {
+	out := new(PostChatIntegrateSystemResponse)
+	err := c.cc.Invoke(ctx, ChatIntegrateSystem_PostChatIntegrateSystem_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatIntegrateSystemServer is the server API for ChatIntegrateSystem service.
 // All implementations should embed UnimplementedChatIntegrateSystemServer
 // for forward compatibility
 type ChatIntegrateSystemServer interface {
 	GetChatIntegrateSystems(context.Context, *GetChatIntegrateSystemRequest) (*GetChatIntegrateSystemResponse, error)
+	PostChatIntegrateSystem(context.Context, *PostChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error)
 }
 
 // UnimplementedChatIntegrateSystemServer should be embedded to have forward compatible implementations.
@@ -59,6 +71,9 @@ type UnimplementedChatIntegrateSystemServer struct {
 
 func (UnimplementedChatIntegrateSystemServer) GetChatIntegrateSystems(context.Context, *GetChatIntegrateSystemRequest) (*GetChatIntegrateSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChatIntegrateSystems not implemented")
+}
+func (UnimplementedChatIntegrateSystemServer) PostChatIntegrateSystem(context.Context, *PostChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostChatIntegrateSystem not implemented")
 }
 
 // UnsafeChatIntegrateSystemServer may be embedded to opt out of forward compatibility for this service.
@@ -90,6 +105,24 @@ func _ChatIntegrateSystem_GetChatIntegrateSystems_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatIntegrateSystem_PostChatIntegrateSystem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PostChatIntegrateSystemRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatIntegrateSystemServer).PostChatIntegrateSystem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatIntegrateSystem_PostChatIntegrateSystem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatIntegrateSystemServer).PostChatIntegrateSystem(ctx, req.(*PostChatIntegrateSystemRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatIntegrateSystem_ServiceDesc is the grpc.ServiceDesc for ChatIntegrateSystem service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +133,10 @@ var ChatIntegrateSystem_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetChatIntegrateSystems",
 			Handler:    _ChatIntegrateSystem_GetChatIntegrateSystems_Handler,
+		},
+		{
+			MethodName: "PostChatIntegrateSystem",
+			Handler:    _ChatIntegrateSystem_PostChatIntegrateSystem_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -72,11 +72,52 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 	}
 
 	result = &pb.GetChatIntegrateSystemResponse{
-		Code:    response.MAP_ERR_RESPONSE[response.SUCCESS].Code,
-		Message: response.MAP_ERR_RESPONSE[response.SUCCESS].Message,
+		Code:    "OK",
+		Message: "ok",
 		Total:   int32(total),
 		Data:    data,
 	}
 
+	return
+}
+
+func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, req *pb.PostChatIntegrateSystemRequest) (result *pb.PostChatIntegrateSystemResponse, err error) {
+	authUser, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	payload := model.ChatIntegrateSystemRequest{
+		SystemName:    req.GetSystemName(),
+		VendorId:      req.GetVendorId(),
+		Status:        req.GetStatus(),
+		AuthType:      req.GetAuthType(),
+		Username:      req.GetUsername(),
+		Password:      req.GetPassword(),
+		Token:         req.GetToken(),
+		WebsocketUrl:  req.GetWebsocketUrl(),
+		ApiUrl:        req.GetApiUrl(),
+		ApiGetUserUrl: req.GetApiGetUserUrl(),
+	}
+
+	if err := payload.Validate(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	id, systemId, err := service.ChatIntegrateSystemService.InsertChatIntegrateSystem(ctx, authUser, &payload)
+	if err != nil {
+		result = &pb.PostChatIntegrateSystemResponse{
+			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
+			Message: err.Error(),
+		}
+		return result, nil
+	}
+
+	result = &pb.PostChatIntegrateSystemResponse{
+		Code:     "OK",
+		Message:  "ok",
+		Id:       id,
+		SystemId: systemId,
+	}
 	return
 }

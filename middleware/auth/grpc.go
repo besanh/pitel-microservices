@@ -42,6 +42,7 @@ func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
 			ctx = context.WithValue(ctx, AUTHENTICATED, true)
 			ctx = context.WithValue(ctx, USER, user)
 		} else {
+			// if
 			token, err := grpc_auth.AuthFromMD(ctx, "Bearer")
 			if err != nil {
 				return nil, err
@@ -90,6 +91,7 @@ func ParseHeaderToUser(ctx context.Context) *model.AuthUser {
 		SecretKey: GetFirstOfSlices(md["secret_key"]),
 		Level:     GetFirstOfSlices(md["level"]),
 		RoleId:    GetFirstOfSlices(md["role_id"]),
+		SystemId:  GetFirstOfSlices(md["system_id"]),
 	}
 }
 

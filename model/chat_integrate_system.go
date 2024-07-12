@@ -2,25 +2,32 @@ package model
 
 import (
 	"errors"
+	"slices"
 
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
 )
 
+/**
+* system_id is the key for crm or other system connect with chat
+ */
 type ChatIntegrateSystem struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_integrate_system,alias:cis"`
-	SystemName    string      `json:"system_name" bun:"system_name,type:text,notnull"`
-	VendorId      string      `json:"vendor_id" bun:"vendor_id,type:uuid,nullzero,default:null"`
-	Vendor        *ChatVendor `json:"vendor" bun:"rel:belongs-to,join:vendor_id=id"`
-	Status        bool        `json:"status" bun:"status,type:boolean,notnull"`
-	InfoSystem    *InfoSystem `json:"info_system" bun:"info_system,type:jsonb,notnull"`
+	bun.BaseModel   `bun:"table:chat_integrate_system,alias:cis"`
+	SystemName      string      `json:"system_name" bun:"system_name,type:text,notnull"`
+	Salt            string      `json:"salt" bun:"salt,type:text,notnull"`
+	SystemId        string      `json:"system_id" bun:"system_id,type:text,notnull"` // use for client connect header
+	TenantDefaultId string      `json:"tenant_default_id" bun:"tenant_default_id,type:uuid,notnull"`
+	VendorId        string      `json:"vendor_id" bun:"vendor_id,type:uuid,nullzero,default:null"`
+	Vendor          *ChatVendor `json:"vendor" bun:"rel:belongs-to,join:vendor_id=id"`
+	Status          bool        `json:"status" bun:"status,type:boolean,notnull"`
+	InfoSystem      *InfoSystem `json:"info_system" bun:"info_system,type:jsonb,notnull"`
 }
 
 type InfoSystem struct {
-	Authorization string `json:"authorization"`
+	AuthType      string `json:"auth_type"`
 	Username      string `json:"username"`
 	Password      string `json:"password"`
-	ApiKey        string `json:"api_key"`
 	Token         string `json:"token"`
 	WebsocketUrl  string `json:"websocket_url"`
 	ApiUrl        string `json:"api_url"`
@@ -28,10 +35,23 @@ type InfoSystem struct {
 }
 
 type ChatIntegrateSystemRequest struct {
-	SystemName string      `json:"system_name"`
-	VendorId   string      `json:"vendor_id"`
-	Status     bool        `json:"status"`
-	InfoSystem *InfoSystem `json:"info_system"`
+	SystemName      string `json:"system_name"`
+	TenantDefaultId string `json:"tenant_default_id"`
+	VendorId        string `json:"vendor_id"`
+	Status          bool   `json:"status"`
+	AuthType        string `json:"auth_type"`
+	Username        string `json:"username"`
+	Password        string `json:"password"`
+	Token           string `json:"token"`
+	WebsocketUrl    string `json:"websocket_url"`
+	ApiUrl          string `json:"api_url"`
+	ApiGetUserUrl   string `json:"api_get_user_url"`
+}
+
+type AuthTypeJwtToken struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	AddTo string `json:"add_to"`
 }
 
 func (m *ChatIntegrateSystemRequest) Validate() error {
@@ -41,34 +61,38 @@ func (m *ChatIntegrateSystemRequest) Validate() error {
 	if len(m.VendorId) < 1 {
 		return errors.New("vendor id is required")
 	}
-	if m.InfoSystem == nil {
-		return errors.New("info system is required")
+	if len(m.AuthType) < 1 {
+		return errors.New("authorization is required")
 	}
-	if m.InfoSystem != nil {
-		if len(m.InfoSystem.Authorization) < 1 {
-			return errors.New("authorization is required")
-		}
-		if len(m.InfoSystem.Username) < 1 {
+	if !slices.Contains(variables.AUTH, m.AuthType) {
+		return errors.New("authorization " + m.AuthType + " is not supported")
+	}
+	switch m.AuthType {
+	case "no_auth":
+	case "basic_auth":
+		if len(m.Username) < 1 {
 			return errors.New("username is required")
 		}
-		if len(m.InfoSystem.Password) < 1 {
+		if len(m.Password) < 1 {
 			return errors.New("password is required")
 		}
-		if len(m.InfoSystem.ApiKey) < 1 {
-			return errors.New("api key is required")
-		}
-		if len(m.InfoSystem.Token) < 1 {
+	case "bearer_token":
+		if len(m.Token) < 1 {
 			return errors.New("token is required")
 		}
-		if len(m.InfoSystem.WebsocketUrl) < 1 {
-			return errors.New("websocket url is required")
+	case "jwt_token":
+		if len(m.Token) < 1 {
+			return errors.New("token is required")
 		}
-		if len(m.InfoSystem.ApiUrl) < 1 {
-			return errors.New("api url is required")
-		}
-		if len(m.InfoSystem.ApiGetUserUrl) < 1 {
-			return errors.New("api get user url is required")
-		}
+	case "pitel_crm":
+	default:
+	}
+
+	if len(m.ApiUrl) < 1 {
+		return errors.New("api url is required")
+	}
+	if len(m.ApiGetUserUrl) < 1 {
+		return errors.New("api get user url is required")
 	}
 	return nil
 }

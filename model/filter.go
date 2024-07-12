@@ -209,3 +209,8 @@ type ChatUserFilter struct {
 	Fullname string       `json:"fullname"`
 	RoleId   string       `json:"role_id"`
 }
+
+type ChatTenantFilter struct {
+	TenantName string       `json:"tenant_name"`
+	Status     sql.NullBool `json:"status"`
+}

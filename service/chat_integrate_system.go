@@ -2,15 +2,18 @@ package service
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
 
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
 type (
 	IChatIntegrateSystem interface {
-		InsertChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, data *model.ChatIntegrateSystemRequest) (string, error)
+		InsertChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, data *model.ChatIntegrateSystemRequest) (id, systemId string, err error)
 		GetChatIntegrateSystems(ctx context.Context, authUser *model.AuthUser, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error)
 		GetChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.ChatIntegrateSystem, err error)
 		UpdateChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, id string, data *model.ChatIntegrateSystemRequest) error
@@ -21,30 +24,65 @@ type (
 
 var ChatIntegrateSystemService IChatIntegrateSystem
 
-func NewChatTenantIntegrateSystem() IChatIntegrateSystem {
+func NewChatIntegrateSystem() IChatIntegrateSystem {
 	return &ChatIntegrateSystem{}
 }
 
-func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, data *model.ChatIntegrateSystemRequest) (string, error) {
+func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, data *model.ChatIntegrateSystemRequest) (id, systemId string, err error) {
 	chatIntegrateSystem := model.ChatIntegrateSystem{
 		Base: model.InitBase(),
 	}
 
-	_, err := repository.VendorRepo.GetById(ctx, repository.DBConn, data.VendorId)
+	if len(data.TenantDefaultId) < 1 {
+		chatTenant := model.ChatTenant{
+			Base:              model.InitBase(),
+			TenantName:        data.SystemName,
+			IntegrateSystemId: chatIntegrateSystem.Base.GetId(),
+			Status:            true,
+		}
+		if err = repository.ChatTenantRepo.Insert(ctx, repository.DBConn, chatTenant); err != nil {
+			log.Error(err)
+			return
+		}
+
+		chatIntegrateSystem.TenantDefaultId = chatTenant.Base.GetId()
+	}
+
+	_, err = repository.VendorRepo.GetById(ctx, repository.DBConn, data.VendorId)
 	if err != nil {
 		log.Error(err)
-		return chatIntegrateSystem.Base.GetId(), err
+		return
 	}
+
+	chatIntegrateSystem.Salt = util.GenerateRandomString(50)
+	systemIdByte := []byte(chatIntegrateSystem.Salt + chatIntegrateSystem.Id)
+	chatIntegrateSystem.SystemId = fmt.Sprintf("%x", md5.Sum(systemIdByte))
+	systemId = chatIntegrateSystem.SystemId
 
 	chatIntegrateSystem.SystemName = data.SystemName
 	chatIntegrateSystem.VendorId = data.VendorId
 	chatIntegrateSystem.Status = data.Status
-	chatIntegrateSystem.InfoSystem = data.InfoSystem
-
-	if err := repository.ChatIntegrateSystemRepo.Insert(ctx, repository.DBConn, chatIntegrateSystem); err != nil {
-		return chatIntegrateSystem.Base.GetId(), err
+	chatIntegrateSystem.InfoSystem = &model.InfoSystem{
+		AuthType:      data.AuthType,
+		Username:      data.Username,
+		Password:      data.Password,
+		Token:         data.Token,
+		WebsocketUrl:  data.WebsocketUrl,
+		ApiUrl:        data.ApiUrl,
+		ApiGetUserUrl: data.ApiGetUserUrl,
 	}
-	return chatIntegrateSystem.Base.GetId(), nil
+
+	if err = repository.ChatIntegrateSystemRepo.Insert(ctx, repository.DBConn, chatIntegrateSystem); err != nil {
+		log.Error(err)
+		if err = repository.ChatTenantRepo.Delete(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); err != nil {
+			log.Error(err)
+			return
+		}
+		return
+	}
+
+	id = chatIntegrateSystem.Base.GetId()
+	return
 }
 
 func (s *ChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, authUser *model.AuthUser, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error) {
@@ -80,7 +118,15 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystem(ctx context.Context, aut
 	chatIntegrateSystemExist.SystemName = data.SystemName
 	chatIntegrateSystemExist.VendorId = data.VendorId
 	chatIntegrateSystemExist.Status = data.Status
-	chatIntegrateSystemExist.InfoSystem = data.InfoSystem
+	chatIntegrateSystemExist.InfoSystem = &model.InfoSystem{
+		AuthType:      data.AuthType,
+		Username:      data.Username,
+		Password:      data.Password,
+		Token:         data.Token,
+		WebsocketUrl:  data.WebsocketUrl,
+		ApiUrl:        data.ApiUrl,
+		ApiGetUserUrl: data.ApiGetUserUrl,
+	}
 	err = repository.ChatIntegrateSystemRepo.Update(ctx, repository.DBConn, *chatIntegrateSystemExist)
 	if err != nil {
 		log.Error(err)

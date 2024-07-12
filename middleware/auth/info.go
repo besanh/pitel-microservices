@@ -39,6 +39,7 @@ func HandleMetadata(ctx context.Context, r *http.Request) metadata.MD {
 	md["token"] = parseTokenFromAuthorization(r.Header.Get("token"))
 	md["role_id"] = r.Header.Get("role-id")
 	md["secret_key"] = r.Header.Get("secret-key")
+	md["system_id"] = r.Header.Get("system-key")
 
 	return metadata.New(md)
 }

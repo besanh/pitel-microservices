@@ -16,10 +16,12 @@ import (
 func InitServices() {
 	ChatAuthService = NewChatAuth()
 	ExampleService = NewExample()
-	ChatIntegrateSystemService = NewChatTenantIntegrateSystem()
 	ChatRoleService = NewChatRole()
 	ChatUserService = NewChatUser()
 	ChatVendorService = NewChatVendor()
+	ChatTenantService = NewChatTenant()
+	ChatIntegrateSystemService = NewChatIntegrateSystem()
+	ChatAppService = NewChatApp()
 }
 
 // MAP TENANT_ID SQL_CONN
@@ -195,14 +197,11 @@ func HandleGetDBConSource(authUser *model.AuthUser) (sqlclient.ISqlClientConn, e
 	if authUser == nil {
 		return nil, errors.New("authUser is nil")
 	}
-	if len(authUser.Source) < 1 || authUser.Source == "authen" {
-		dbCon = repository.DBConn
-	} else {
-		// dbConTmp, err := GetDBConnOfUser(*authUser)
-		// if err != nil {
-		// 	return dbCon, err
-		// }
-		// dbCon = dbConTmp
-	}
+	dbCon = repository.DBConn
+	// dbConTmp, err := GetDBConnOfUser(*authUser)
+	// if err != nil {
+	// 	return dbCon, err
+	// }
+	// dbCon = dbConTmp
 	return dbCon, nil
 }

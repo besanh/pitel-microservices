@@ -21,6 +21,8 @@ type (
 	}
 )
 
+var ChatAppService IChatApp
+
 func NewChatApp() IChatApp {
 	return &ChatApp{}
 }

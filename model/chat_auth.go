@@ -15,6 +15,7 @@ type AuthUser struct {
 	IntegrateSystemId string          `json:"integrate_system_id"`
 	Extensions        auth.Extensions `json:"extensions"`
 	Groups            []string        `json:"groups"`
+	SystemId          string          `json:"system_id"`
 }
 
 type LoginRequest struct {
@@ -36,6 +37,7 @@ type LoginResponse struct {
 	TenantName   string `json:"tenant_name"`
 	RoleId       string `json:"role_id"`
 	Level        string `json:"level"`
+	SystemId     string `json:"system_id"`
 }
 
 type RefreshTokenRequest struct {
@@ -44,16 +46,16 @@ type RefreshTokenRequest struct {
 }
 
 type TokenData struct {
-	TenantId          string `json:"tenant_id"`
-	UserId            string `json:"user_id"`
-	Username          string `json:"username"`
-	Level             string `json:"level"`
-	Source            string `json:"source"`
-	Token             string `json:"token"`
-	Fullname          string `json:"fullname"`
-	SecretKey         string `json:"secret_key"`
-	RoleId            string `json:"role_id"`
-	IntegrateSystemId string `json:"integrate_system_id"`
+	TenantId  string `json:"tenant_id"`
+	UserId    string `json:"user_id"`
+	Username  string `json:"username"`
+	Level     string `json:"level"`
+	Source    string `json:"source"`
+	Token     string `json:"token"`
+	Fullname  string `json:"fullname"`
+	SecretKey string `json:"secret_key"`
+	RoleId    string `json:"role_id"`
+	SystemId  string `json:"system_id"`
 }
 
 type RefreshTokenResponse struct {

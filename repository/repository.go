@@ -41,6 +41,7 @@ func InitRepositories() {
 	ChatIntegrateSystemRepo = NewChatIntegrateSystem()
 	ChatRoleRepo = NewChatRole()
 	ChatUserRepo = NewChatUser()
+	ChatTenantRepo = NewChatTenant()
 }
 
 func InitRepositoriesES() {
@@ -116,13 +117,13 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 	if err := CreateTable(ctx, dbConn, (*model.ChatIntegrateSystem)(nil)); err != nil {
 		log.Error(err)
 	}
-	if err := CreateTable(ctx, dbConn, (*model.ChatTenantIntegrateSystem)(nil)); err != nil {
-		log.Error(err)
-	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatRole)(nil)); err != nil {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.ChatUser)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatTenant)(nil)); err != nil {
 		log.Error(err)
 	}
 	log.Println("TABLES WERE CREATED")
