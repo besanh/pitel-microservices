@@ -105,7 +105,7 @@ func (s *ChatVendor) PutChatVendorUpload(ctx context.Context, authUser *model.Au
 	vendorExist.VendorType = data.VendorType
 	vendorExist.Status = data.Status
 	vendorExist.Logo = fileUrl
-	if err = repository.VendorRepo.Insert(ctx, repository.DBConn, *vendorExist); err != nil {
+	if err = repository.VendorRepo.Update(ctx, repository.DBConn, *vendorExist); err != nil {
 		log.Error(err)
 		return
 	}
