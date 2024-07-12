@@ -16,8 +16,8 @@ type (
 		InsertChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, data *model.ChatIntegrateSystemRequest) (id, systemId string, err error)
 		GetChatIntegrateSystems(ctx context.Context, authUser *model.AuthUser, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error)
 		GetChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.ChatIntegrateSystem, err error)
-		UpdateChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, id string, data *model.ChatIntegrateSystemRequest) error
-		DeleteChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, id string) error
+		UpdateChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string, data *model.ChatIntegrateSystemRequest) error
+		DeleteChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 	ChatIntegrateSystem struct{}
 )
@@ -106,7 +106,7 @@ func (s *ChatIntegrateSystem) GetChatIntegrateSystemById(ctx context.Context, au
 	return
 }
 
-func (s *ChatIntegrateSystem) UpdateChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, id string, data *model.ChatIntegrateSystemRequest) error {
+func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string, data *model.ChatIntegrateSystemRequest) error {
 	chatIntegrateSystemExist, err := repository.ChatIntegrateSystemRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
@@ -135,7 +135,7 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystem(ctx context.Context, aut
 	return nil
 }
 
-func (s *ChatIntegrateSystem) DeleteChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser, id string) error {
+func (s *ChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string) error {
 	_, err := repository.ChatIntegrateSystemRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
