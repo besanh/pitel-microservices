@@ -19,8 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ChatIntegrateSystem_GetChatIntegrateSystems_FullMethodName = "/proto.chatIntegrateSystem.ChatIntegrateSystem/GetChatIntegrateSystems"
-	ChatIntegrateSystem_PostChatIntegrateSystem_FullMethodName = "/proto.chatIntegrateSystem.ChatIntegrateSystem/PostChatIntegrateSystem"
+	ChatIntegrateSystem_GetChatIntegrateSystems_FullMethodName       = "/proto.chatIntegrateSystem.ChatIntegrateSystem/GetChatIntegrateSystems"
+	ChatIntegrateSystem_PostChatIntegrateSystem_FullMethodName       = "/proto.chatIntegrateSystem.ChatIntegrateSystem/PostChatIntegrateSystem"
+	ChatIntegrateSystem_GetChatIntegrateSystemById_FullMethodName    = "/proto.chatIntegrateSystem.ChatIntegrateSystem/GetChatIntegrateSystemById"
+	ChatIntegrateSystem_UpdateChatIntegrateSystemById_FullMethodName = "/proto.chatIntegrateSystem.ChatIntegrateSystem/UpdateChatIntegrateSystemById"
+	ChatIntegrateSystem_DeleteChatIntegrateSystemById_FullMethodName = "/proto.chatIntegrateSystem.ChatIntegrateSystem/DeleteChatIntegrateSystemById"
 )
 
 // ChatIntegrateSystemClient is the client API for ChatIntegrateSystem service.
@@ -29,6 +32,9 @@ const (
 type ChatIntegrateSystemClient interface {
 	GetChatIntegrateSystems(ctx context.Context, in *GetChatIntegrateSystemRequest, opts ...grpc.CallOption) (*GetChatIntegrateSystemResponse, error)
 	PostChatIntegrateSystem(ctx context.Context, in *PostChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error)
+	GetChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*GetChatIntegrateSystemByIdResponse, error)
+	UpdateChatIntegrateSystemById(ctx context.Context, in *PutChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error)
+	DeleteChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error)
 }
 
 type chatIntegrateSystemClient struct {
@@ -57,12 +63,42 @@ func (c *chatIntegrateSystemClient) PostChatIntegrateSystem(ctx context.Context,
 	return out, nil
 }
 
+func (c *chatIntegrateSystemClient) GetChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*GetChatIntegrateSystemByIdResponse, error) {
+	out := new(GetChatIntegrateSystemByIdResponse)
+	err := c.cc.Invoke(ctx, ChatIntegrateSystem_GetChatIntegrateSystemById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatIntegrateSystemClient) UpdateChatIntegrateSystemById(ctx context.Context, in *PutChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error) {
+	out := new(PostChatIntegrateSystemResponse)
+	err := c.cc.Invoke(ctx, ChatIntegrateSystem_UpdateChatIntegrateSystemById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatIntegrateSystemClient) DeleteChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error) {
+	out := new(PostChatIntegrateSystemResponse)
+	err := c.cc.Invoke(ctx, ChatIntegrateSystem_DeleteChatIntegrateSystemById_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatIntegrateSystemServer is the server API for ChatIntegrateSystem service.
 // All implementations should embed UnimplementedChatIntegrateSystemServer
 // for forward compatibility
 type ChatIntegrateSystemServer interface {
 	GetChatIntegrateSystems(context.Context, *GetChatIntegrateSystemRequest) (*GetChatIntegrateSystemResponse, error)
 	PostChatIntegrateSystem(context.Context, *PostChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error)
+	GetChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*GetChatIntegrateSystemByIdResponse, error)
+	UpdateChatIntegrateSystemById(context.Context, *PutChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error)
+	DeleteChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*PostChatIntegrateSystemResponse, error)
 }
 
 // UnimplementedChatIntegrateSystemServer should be embedded to have forward compatible implementations.
@@ -74,6 +110,15 @@ func (UnimplementedChatIntegrateSystemServer) GetChatIntegrateSystems(context.Co
 }
 func (UnimplementedChatIntegrateSystemServer) PostChatIntegrateSystem(context.Context, *PostChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostChatIntegrateSystem not implemented")
+}
+func (UnimplementedChatIntegrateSystemServer) GetChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*GetChatIntegrateSystemByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChatIntegrateSystemById not implemented")
+}
+func (UnimplementedChatIntegrateSystemServer) UpdateChatIntegrateSystemById(context.Context, *PutChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateChatIntegrateSystemById not implemented")
+}
+func (UnimplementedChatIntegrateSystemServer) DeleteChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*PostChatIntegrateSystemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteChatIntegrateSystemById not implemented")
 }
 
 // UnsafeChatIntegrateSystemServer may be embedded to opt out of forward compatibility for this service.
@@ -123,6 +168,60 @@ func _ChatIntegrateSystem_PostChatIntegrateSystem_Handler(srv interface{}, ctx c
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatIntegrateSystem_GetChatIntegrateSystemById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChatIntegrateSystemByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatIntegrateSystemServer).GetChatIntegrateSystemById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatIntegrateSystem_GetChatIntegrateSystemById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatIntegrateSystemServer).GetChatIntegrateSystemById(ctx, req.(*GetChatIntegrateSystemByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatIntegrateSystem_UpdateChatIntegrateSystemById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutChatIntegrateSystemRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatIntegrateSystemServer).UpdateChatIntegrateSystemById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatIntegrateSystem_UpdateChatIntegrateSystemById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatIntegrateSystemServer).UpdateChatIntegrateSystemById(ctx, req.(*PutChatIntegrateSystemRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatIntegrateSystem_DeleteChatIntegrateSystemById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChatIntegrateSystemByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatIntegrateSystemServer).DeleteChatIntegrateSystemById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatIntegrateSystem_DeleteChatIntegrateSystemById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatIntegrateSystemServer).DeleteChatIntegrateSystemById(ctx, req.(*GetChatIntegrateSystemByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatIntegrateSystem_ServiceDesc is the grpc.ServiceDesc for ChatIntegrateSystem service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -137,6 +236,18 @@ var ChatIntegrateSystem_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "PostChatIntegrateSystem",
 			Handler:    _ChatIntegrateSystem_PostChatIntegrateSystem_Handler,
+		},
+		{
+			MethodName: "GetChatIntegrateSystemById",
+			Handler:    _ChatIntegrateSystem_GetChatIntegrateSystemById_Handler,
+		},
+		{
+			MethodName: "UpdateChatIntegrateSystemById",
+			Handler:    _ChatIntegrateSystem_UpdateChatIntegrateSystemById_Handler,
+		},
+		{
+			MethodName: "DeleteChatIntegrateSystemById",
+			Handler:    _ChatIntegrateSystem_DeleteChatIntegrateSystemById_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
