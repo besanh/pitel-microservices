@@ -48,13 +48,14 @@ type GoAuthInfo interface {
 	auth.Info
 }
 
-func NewGoAuthUser(userId, username, tenantId, roleId string, level string) GoAuthInfo {
+func NewGoAuthUser(userId, username, tenantId, roleId, level, systemId string) GoAuthInfo {
 	user := &model.AuthUser{
 		TenantId: tenantId,
 		UserId:   userId,
 		Username: username,
 		RoleId:   roleId,
 		Level:    level,
+		SystemId: systemId,
 	}
 	return user
 }

@@ -79,7 +79,7 @@ func validateToken(ctx context.Context, tokenString string) (authInfo auth.Info,
 		log.Error(err)
 		return nil, time.Time{}, err
 	}
-	authInfo = NewGoAuthUser(data.UserId, data.Username, data.TenantId, data.RoleId, data.Level)
+	authInfo = NewGoAuthUser(data.UserId, data.Username, data.TenantId, data.RoleId, data.Level, data.SystemId)
 	return authInfo, time.Now(), nil
 }
 

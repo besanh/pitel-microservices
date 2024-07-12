@@ -8,6 +8,7 @@ import (
 	"time"
 
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/sirupsen/logrus"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -20,18 +21,24 @@ import (
 )
 
 const (
-	AUTHENTICATED        = "authenticated"
-	USER                 = "user"
-	ERR_TOKEN_IS_EMPTY   = "token is empty"
-	ERR_TOKEN_IS_INVALID = "token is invalid"
-	ERR_TOKEN_IS_EXPIRED = "token is expired"
+	AUTHENTICATED                      = "authenticated"
+	USER                               = "user"
+	ERR_TOKEN_IS_EMPTY                 = "token is empty"
+	ERR_TOKEN_IS_INVALID               = "token is invalid"
+	ERR_TOKEN_IS_EXPIRED               = "token is expired"
+	ERR_TOKEN_OR_SYSTEM_KEY_IS_INVALID = "token or system key is invalid"
 )
 
 // AuthFunc is a middleware (interceptor) that extracts token from header
 func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
 	isAuthenticaed, ok := ctx.Value(AUTHENTICATED).(bool)
 	if !ok || !isAuthenticaed {
+		var authInfo auth.Info
 		var user *model.AuthUser = ParseHeaderToUser(ctx)
+		// authInfo, _, err = validateToken(ctx, token)
+		// if err != nil {
+		// 	return nil, status.Errorf(codes.Unauthenticated, err.Error())
+		// }
 		if len(user.SecretKey) > 0 {
 			encryptPassword := []byte(service.SECRET_KEY_SUPERADMIN)
 			password := fmt.Sprintf("%x", md5.Sum(encryptPassword))
@@ -39,21 +46,22 @@ func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
 				log.Error("invalid secret key")
 				return nil, status.Errorf(codes.Unauthenticated, "invalid secret key")
 			}
-			ctx = context.WithValue(ctx, AUTHENTICATED, true)
-			ctx = context.WithValue(ctx, USER, user)
-		} else {
-			// if
+			authInfo = NewGoAuthUser(user.UserId, user.Username, user.TenantId, user.RoleId, user.Level, user.SystemId)
+		} else if len(user.SystemId) > 0 && len(user.Token) > 0 {
 			token, err := grpc_auth.AuthFromMD(ctx, "Bearer")
-			if err != nil {
-				return nil, err
-			}
-			authUser, _, err := validateToken(ctx, token)
 			if err != nil {
 				return nil, status.Errorf(codes.Unauthenticated, err.Error())
 			}
-			ctx = context.WithValue(ctx, AUTHENTICATED, true)
-			ctx = context.WithValue(ctx, USER, authUser)
+			userTmp := ChatMiddleware(ctx, token, user.SystemId)
+			if userTmp == nil {
+				return nil, status.Errorf(codes.Unauthenticated, ERR_TOKEN_IS_INVALID)
+			}
+			authInfo = NewGoAuthUser(userTmp.Data.UserId, userTmp.Data.Username, userTmp.Data.TenantId, userTmp.Data.RoleId, userTmp.Data.Level, user.SystemId)
+		} else {
+			return nil, status.Errorf(codes.Unauthenticated, ERR_TOKEN_IS_EMPTY)
 		}
+		ctx = context.WithValue(ctx, AUTHENTICATED, true)
+		ctx = context.WithValue(ctx, USER, authInfo)
 	}
 	return ctx, nil
 }
