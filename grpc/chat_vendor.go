@@ -53,7 +53,7 @@ func (g *GRPCChatVendor) PostChatVendor(ctx context.Context, req *pb.PostChatVen
 	}, nil
 }
 
-func (g *GRPCChatVendor) ListChatVendors(ctx context.Context, req *pb.ListChatVendorRequest) (*pb.ListChatVendorResponse, error) {
+func (g *GRPCChatVendor) GetChatVendors(ctx context.Context, req *pb.GetChatVendorsRequest) (*pb.GetChatVendorsResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -82,7 +82,7 @@ func (g *GRPCChatVendor) ListChatVendors(ctx context.Context, req *pb.ListChatVe
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &pb.ListChatVendorResponse{
+	return &pb.GetChatVendorsResponse{
 		Code:    "OK",
 		Message: "ok",
 		Total:   int32(total),
@@ -90,7 +90,7 @@ func (g *GRPCChatVendor) ListChatVendors(ctx context.Context, req *pb.ListChatVe
 	}, nil
 }
 
-func (g *GRPCChatVendor) GetChatVendor(ctx context.Context, req *pb.GetChatVendorRequest) (*pb.GetChatVendorResponse, error) {
+func (g *GRPCChatVendor) GetChatVendorById(ctx context.Context, req *pb.GetChatVendorRequest) (*pb.GetChatVendorResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -116,7 +116,7 @@ func (g *GRPCChatVendor) GetChatVendor(ctx context.Context, req *pb.GetChatVendo
 	}, nil
 }
 
-func (g *GRPCChatVendor) UpdateChatVendor(ctx context.Context, req *pb.UpdateChatVendorRequest) (*pb.UpdateChatVendorResponse, error) {
+func (g *GRPCChatVendor) UpdateChatVendorById(ctx context.Context, req *pb.UpdateChatVendorRequest) (*pb.UpdateChatVendorResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -146,7 +146,7 @@ func (g *GRPCChatVendor) UpdateChatVendor(ctx context.Context, req *pb.UpdateCha
 	}, nil
 }
 
-func (g *GRPCChatVendor) DeleteChatVendor(ctx context.Context, req *pb.DeleteChatVendorRequest) (*pb.DeleteChatVendorResponse, error) {
+func (g *GRPCChatVendor) DeleteChatVendorById(ctx context.Context, req *pb.DeleteChatVendorRequest) (*pb.DeleteChatVendorResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)

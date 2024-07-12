@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ChatVendorService_PostChatVendor_FullMethodName   = "/proto.chatVendor.ChatVendorService/PostChatVendor"
-	ChatVendorService_ListChatVendors_FullMethodName  = "/proto.chatVendor.ChatVendorService/ListChatVendors"
-	ChatVendorService_GetChatVendor_FullMethodName    = "/proto.chatVendor.ChatVendorService/GetChatVendor"
-	ChatVendorService_UpdateChatVendor_FullMethodName = "/proto.chatVendor.ChatVendorService/UpdateChatVendor"
-	ChatVendorService_DeleteChatVendor_FullMethodName = "/proto.chatVendor.ChatVendorService/DeleteChatVendor"
+	ChatVendorService_PostChatVendor_FullMethodName       = "/proto.chatVendor.ChatVendorService/PostChatVendor"
+	ChatVendorService_GetChatVendors_FullMethodName       = "/proto.chatVendor.ChatVendorService/GetChatVendors"
+	ChatVendorService_GetChatVendorById_FullMethodName    = "/proto.chatVendor.ChatVendorService/GetChatVendorById"
+	ChatVendorService_UpdateChatVendorById_FullMethodName = "/proto.chatVendor.ChatVendorService/UpdateChatVendorById"
+	ChatVendorService_DeleteChatVendorById_FullMethodName = "/proto.chatVendor.ChatVendorService/DeleteChatVendorById"
 )
 
 // ChatVendorServiceClient is the client API for ChatVendorService service.
@@ -31,10 +31,10 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatVendorServiceClient interface {
 	PostChatVendor(ctx context.Context, in *PostChatVendorRequest, opts ...grpc.CallOption) (*PostChatVendorResponse, error)
-	ListChatVendors(ctx context.Context, in *ListChatVendorRequest, opts ...grpc.CallOption) (*ListChatVendorResponse, error)
-	GetChatVendor(ctx context.Context, in *GetChatVendorRequest, opts ...grpc.CallOption) (*GetChatVendorResponse, error)
-	UpdateChatVendor(ctx context.Context, in *UpdateChatVendorRequest, opts ...grpc.CallOption) (*UpdateChatVendorResponse, error)
-	DeleteChatVendor(ctx context.Context, in *DeleteChatVendorRequest, opts ...grpc.CallOption) (*DeleteChatVendorResponse, error)
+	GetChatVendors(ctx context.Context, in *GetChatVendorsRequest, opts ...grpc.CallOption) (*GetChatVendorsResponse, error)
+	GetChatVendorById(ctx context.Context, in *GetChatVendorRequest, opts ...grpc.CallOption) (*GetChatVendorResponse, error)
+	UpdateChatVendorById(ctx context.Context, in *UpdateChatVendorRequest, opts ...grpc.CallOption) (*UpdateChatVendorResponse, error)
+	DeleteChatVendorById(ctx context.Context, in *DeleteChatVendorRequest, opts ...grpc.CallOption) (*DeleteChatVendorResponse, error)
 }
 
 type chatVendorServiceClient struct {
@@ -55,40 +55,40 @@ func (c *chatVendorServiceClient) PostChatVendor(ctx context.Context, in *PostCh
 	return out, nil
 }
 
-func (c *chatVendorServiceClient) ListChatVendors(ctx context.Context, in *ListChatVendorRequest, opts ...grpc.CallOption) (*ListChatVendorResponse, error) {
+func (c *chatVendorServiceClient) GetChatVendors(ctx context.Context, in *GetChatVendorsRequest, opts ...grpc.CallOption) (*GetChatVendorsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListChatVendorResponse)
-	err := c.cc.Invoke(ctx, ChatVendorService_ListChatVendors_FullMethodName, in, out, cOpts...)
+	out := new(GetChatVendorsResponse)
+	err := c.cc.Invoke(ctx, ChatVendorService_GetChatVendors_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *chatVendorServiceClient) GetChatVendor(ctx context.Context, in *GetChatVendorRequest, opts ...grpc.CallOption) (*GetChatVendorResponse, error) {
+func (c *chatVendorServiceClient) GetChatVendorById(ctx context.Context, in *GetChatVendorRequest, opts ...grpc.CallOption) (*GetChatVendorResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetChatVendorResponse)
-	err := c.cc.Invoke(ctx, ChatVendorService_GetChatVendor_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ChatVendorService_GetChatVendorById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *chatVendorServiceClient) UpdateChatVendor(ctx context.Context, in *UpdateChatVendorRequest, opts ...grpc.CallOption) (*UpdateChatVendorResponse, error) {
+func (c *chatVendorServiceClient) UpdateChatVendorById(ctx context.Context, in *UpdateChatVendorRequest, opts ...grpc.CallOption) (*UpdateChatVendorResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdateChatVendorResponse)
-	err := c.cc.Invoke(ctx, ChatVendorService_UpdateChatVendor_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ChatVendorService_UpdateChatVendorById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *chatVendorServiceClient) DeleteChatVendor(ctx context.Context, in *DeleteChatVendorRequest, opts ...grpc.CallOption) (*DeleteChatVendorResponse, error) {
+func (c *chatVendorServiceClient) DeleteChatVendorById(ctx context.Context, in *DeleteChatVendorRequest, opts ...grpc.CallOption) (*DeleteChatVendorResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteChatVendorResponse)
-	err := c.cc.Invoke(ctx, ChatVendorService_DeleteChatVendor_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ChatVendorService_DeleteChatVendorById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +100,10 @@ func (c *chatVendorServiceClient) DeleteChatVendor(ctx context.Context, in *Dele
 // for forward compatibility
 type ChatVendorServiceServer interface {
 	PostChatVendor(context.Context, *PostChatVendorRequest) (*PostChatVendorResponse, error)
-	ListChatVendors(context.Context, *ListChatVendorRequest) (*ListChatVendorResponse, error)
-	GetChatVendor(context.Context, *GetChatVendorRequest) (*GetChatVendorResponse, error)
-	UpdateChatVendor(context.Context, *UpdateChatVendorRequest) (*UpdateChatVendorResponse, error)
-	DeleteChatVendor(context.Context, *DeleteChatVendorRequest) (*DeleteChatVendorResponse, error)
+	GetChatVendors(context.Context, *GetChatVendorsRequest) (*GetChatVendorsResponse, error)
+	GetChatVendorById(context.Context, *GetChatVendorRequest) (*GetChatVendorResponse, error)
+	UpdateChatVendorById(context.Context, *UpdateChatVendorRequest) (*UpdateChatVendorResponse, error)
+	DeleteChatVendorById(context.Context, *DeleteChatVendorRequest) (*DeleteChatVendorResponse, error)
 }
 
 // UnimplementedChatVendorServiceServer should be embedded to have forward compatible implementations.
@@ -113,17 +113,17 @@ type UnimplementedChatVendorServiceServer struct {
 func (UnimplementedChatVendorServiceServer) PostChatVendor(context.Context, *PostChatVendorRequest) (*PostChatVendorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostChatVendor not implemented")
 }
-func (UnimplementedChatVendorServiceServer) ListChatVendors(context.Context, *ListChatVendorRequest) (*ListChatVendorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListChatVendors not implemented")
+func (UnimplementedChatVendorServiceServer) GetChatVendors(context.Context, *GetChatVendorsRequest) (*GetChatVendorsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChatVendors not implemented")
 }
-func (UnimplementedChatVendorServiceServer) GetChatVendor(context.Context, *GetChatVendorRequest) (*GetChatVendorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetChatVendor not implemented")
+func (UnimplementedChatVendorServiceServer) GetChatVendorById(context.Context, *GetChatVendorRequest) (*GetChatVendorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChatVendorById not implemented")
 }
-func (UnimplementedChatVendorServiceServer) UpdateChatVendor(context.Context, *UpdateChatVendorRequest) (*UpdateChatVendorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateChatVendor not implemented")
+func (UnimplementedChatVendorServiceServer) UpdateChatVendorById(context.Context, *UpdateChatVendorRequest) (*UpdateChatVendorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateChatVendorById not implemented")
 }
-func (UnimplementedChatVendorServiceServer) DeleteChatVendor(context.Context, *DeleteChatVendorRequest) (*DeleteChatVendorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteChatVendor not implemented")
+func (UnimplementedChatVendorServiceServer) DeleteChatVendorById(context.Context, *DeleteChatVendorRequest) (*DeleteChatVendorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteChatVendorById not implemented")
 }
 
 // UnsafeChatVendorServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -155,74 +155,74 @@ func _ChatVendorService_PostChatVendor_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatVendorService_ListChatVendors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListChatVendorRequest)
+func _ChatVendorService_GetChatVendors_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChatVendorsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatVendorServiceServer).ListChatVendors(ctx, in)
+		return srv.(ChatVendorServiceServer).GetChatVendors(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ChatVendorService_ListChatVendors_FullMethodName,
+		FullMethod: ChatVendorService_GetChatVendors_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatVendorServiceServer).ListChatVendors(ctx, req.(*ListChatVendorRequest))
+		return srv.(ChatVendorServiceServer).GetChatVendors(ctx, req.(*GetChatVendorsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatVendorService_GetChatVendor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChatVendorService_GetChatVendorById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetChatVendorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatVendorServiceServer).GetChatVendor(ctx, in)
+		return srv.(ChatVendorServiceServer).GetChatVendorById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ChatVendorService_GetChatVendor_FullMethodName,
+		FullMethod: ChatVendorService_GetChatVendorById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatVendorServiceServer).GetChatVendor(ctx, req.(*GetChatVendorRequest))
+		return srv.(ChatVendorServiceServer).GetChatVendorById(ctx, req.(*GetChatVendorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatVendorService_UpdateChatVendor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChatVendorService_UpdateChatVendorById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateChatVendorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatVendorServiceServer).UpdateChatVendor(ctx, in)
+		return srv.(ChatVendorServiceServer).UpdateChatVendorById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ChatVendorService_UpdateChatVendor_FullMethodName,
+		FullMethod: ChatVendorService_UpdateChatVendorById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatVendorServiceServer).UpdateChatVendor(ctx, req.(*UpdateChatVendorRequest))
+		return srv.(ChatVendorServiceServer).UpdateChatVendorById(ctx, req.(*UpdateChatVendorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatVendorService_DeleteChatVendor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ChatVendorService_DeleteChatVendorById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteChatVendorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatVendorServiceServer).DeleteChatVendor(ctx, in)
+		return srv.(ChatVendorServiceServer).DeleteChatVendorById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ChatVendorService_DeleteChatVendor_FullMethodName,
+		FullMethod: ChatVendorService_DeleteChatVendorById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatVendorServiceServer).DeleteChatVendor(ctx, req.(*DeleteChatVendorRequest))
+		return srv.(ChatVendorServiceServer).DeleteChatVendorById(ctx, req.(*DeleteChatVendorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -239,20 +239,20 @@ var ChatVendorService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ChatVendorService_PostChatVendor_Handler,
 		},
 		{
-			MethodName: "ListChatVendors",
-			Handler:    _ChatVendorService_ListChatVendors_Handler,
+			MethodName: "GetChatVendors",
+			Handler:    _ChatVendorService_GetChatVendors_Handler,
 		},
 		{
-			MethodName: "GetChatVendor",
-			Handler:    _ChatVendorService_GetChatVendor_Handler,
+			MethodName: "GetChatVendorById",
+			Handler:    _ChatVendorService_GetChatVendorById_Handler,
 		},
 		{
-			MethodName: "UpdateChatVendor",
-			Handler:    _ChatVendorService_UpdateChatVendor_Handler,
+			MethodName: "UpdateChatVendorById",
+			Handler:    _ChatVendorService_UpdateChatVendorById_Handler,
 		},
 		{
-			MethodName: "DeleteChatVendor",
-			Handler:    _ChatVendorService_DeleteChatVendor_Handler,
+			MethodName: "DeleteChatVendorById",
+			Handler:    _ChatVendorService_DeleteChatVendorById_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

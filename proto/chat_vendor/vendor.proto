@@ -31,7 +31,7 @@ message PostChatVendorResponse {
     string id = 3;
 }
 
-message ListChatVendorRequest {
+message GetChatVendorsRequest {
     int32 limit = 1;
     int32 offset = 2;
     string vendor_name = 3;
@@ -39,7 +39,7 @@ message ListChatVendorRequest {
     bool status = 5;
 }
 
-message ListChatVendorResponse {
+message GetChatVendorsResponse {
     string code = 1;
     string message = 2;
     int32 total = 3;
@@ -83,26 +83,26 @@ service ChatVendorService {
         };
     };
 
-    rpc ListChatVendors (ListChatVendorRequest) returns (ListChatVendorResponse) {
+    rpc GetChatVendors (GetChatVendorsRequest) returns (GetChatVendorsResponse) {
         option (google.api.http) = {
             get: "/bss-chat/v1/chat-vendor"
         };
     }
 
-    rpc GetChatVendor (GetChatVendorRequest) returns (GetChatVendorResponse) {
+    rpc GetChatVendorById (GetChatVendorRequest) returns (GetChatVendorResponse) {
         option (google.api.http) = {
             get: "/bss-chat/v1/chat-vendor/{id}"
         };
     }
 
-    rpc UpdateChatVendor (UpdateChatVendorRequest) returns (UpdateChatVendorResponse) {
+    rpc UpdateChatVendorById (UpdateChatVendorRequest) returns (UpdateChatVendorResponse) {
         option (google.api.http) = {
             put: "/bss-chat/v1/chat-vendor/{id}"
             body: "*"
         };
     }
 
-    rpc DeleteChatVendor (DeleteChatVendorRequest) returns (DeleteChatVendorResponse) {
+    rpc DeleteChatVendorById (DeleteChatVendorRequest) returns (DeleteChatVendorResponse) {
         option (google.api.http) = {
             delete: "/bss-chat/v1/chat-vendor/{id}"
         };
