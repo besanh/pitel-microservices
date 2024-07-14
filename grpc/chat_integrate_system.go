@@ -99,6 +99,7 @@ func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, r
 		WebsocketUrl:  req.GetWebsocketUrl(),
 		ApiUrl:        req.GetApiUrl(),
 		ApiGetUserUrl: req.GetApiGetUserUrl(),
+		ChatApps:      req.GetChatApps(),
 	}
 
 	if err := payload.Validate(); err != nil {
@@ -119,6 +120,89 @@ func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, r
 		Message:  "ok",
 		Id:       id,
 		SystemId: systemId,
+	}
+	return
+}
+
+func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystemById(ctx context.Context, request *pb.GetChatIntegrateSystemByIdRequest) (result *pb.GetChatIntegrateSystemByIdResponse, err error) {
+	authUser, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	system, err := service.ChatIntegrateSystemService.GetChatIntegrateSystemById(ctx, authUser, request.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	data, err := util.ToStructPb(system)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result = &pb.GetChatIntegrateSystemByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+		Data:    data,
+	}
+	return
+}
+func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, request *pb.UpdateChatIntegrateSystemByIdRequest) (result *pb.UpdateChatIntegrateSystemByIdResponse, err error) {
+	authUser, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	payload := model.ChatIntegrateSystemRequest{
+		SystemName:    request.GetData().GetSystemName(),
+		VendorId:      request.GetData().GetVendorId(),
+		Status:        request.GetData().GetStatus(),
+		AuthType:      request.GetData().GetAuthType(),
+		Username:      request.GetData().GetUsername(),
+		Password:      request.GetData().GetPassword(),
+		Token:         request.GetData().GetToken(),
+		WebsocketUrl:  request.GetData().GetWebsocketUrl(),
+		ApiUrl:        request.GetData().GetApiUrl(),
+		ApiGetUserUrl: request.GetData().GetApiGetUserUrl(),
+		ChatApps:      request.GetData().GetChatApps(),
+	}
+
+	if err := payload.Validate(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	err = service.ChatIntegrateSystemService.UpdateChatIntegrateSystem(ctx, authUser, request.GetId(), &payload)
+	if err != nil {
+		result = &pb.UpdateChatIntegrateSystemByIdResponse{
+			Code:    response.MAP_ERR_RESPONSE[response.ERR_PUT_FAILED].Code,
+			Message: err.Error(),
+		}
+		return result, nil
+	}
+
+	result = &pb.UpdateChatIntegrateSystemByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+	}
+	return
+}
+func (g *GRPCChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Context, request *pb.DeleteChatIntegrateSystemByIdRequest) (result *pb.DeleteChatIntegrateSystemByIdResponse, err error) {
+	authUser, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	err = service.ChatIntegrateSystemService.DeleteChatIntegrateSystem(ctx, authUser, request.GetId())
+	if err != nil {
+		result = &pb.DeleteChatIntegrateSystemByIdResponse{
+			Code:    response.MAP_ERR_RESPONSE[response.ERR_DELETE_FAILED].Code,
+			Message: err.Error(),
+		}
+		return result, nil
+	}
+
+	result = &pb.DeleteChatIntegrateSystemByIdResponse{
+		Code:    "OK",
+		Message: "ok",
 	}
 	return
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -71,8 +72,16 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 		ApiUrl:        data.ApiUrl,
 		ApiGetUserUrl: data.ApiGetUserUrl,
 	}
+	chatApps := make([]model.ChatAppIntegrateSystem, 0)
+	for _, chatAppId := range data.ChatApps {
+		chatApps = append(chatApps, model.ChatAppIntegrateSystem{
+			ChatAppId:             chatAppId,
+			ChatIntegrateSystemId: systemId,
+			CreatedAt:             time.Now(),
+		})
+	}
 
-	if err = repository.ChatIntegrateSystemRepo.Insert(ctx, repository.DBConn, chatIntegrateSystem); err != nil {
+	if err = repository.ChatIntegrateSystemRepo.InsertIntegrateSystem(ctx, repository.DBConn, chatIntegrateSystem, chatApps); err != nil {
 		log.Error(err)
 		if err = repository.ChatTenantRepo.Delete(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); err != nil {
 			log.Error(err)
@@ -95,7 +104,7 @@ func (s *ChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, authU
 }
 
 func (s *ChatIntegrateSystem) GetChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.ChatIntegrateSystem, err error) {
-	result, err = repository.ChatIntegrateSystemRepo.GetById(ctx, repository.DBConn, id)
+	result, err = repository.ChatIntegrateSystemRepo.GetIntegrateSystemById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
 		return
@@ -127,7 +136,15 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystem(ctx context.Context, aut
 		ApiUrl:        data.ApiUrl,
 		ApiGetUserUrl: data.ApiGetUserUrl,
 	}
-	err = repository.ChatIntegrateSystemRepo.Update(ctx, repository.DBConn, *chatIntegrateSystemExist)
+	chatApps := make([]model.ChatAppIntegrateSystem, 0)
+	for _, chatAppId := range data.ChatApps {
+		chatApps = append(chatApps, model.ChatAppIntegrateSystem{
+			ChatAppId:             chatAppId,
+			ChatIntegrateSystemId: chatIntegrateSystemExist.SystemId,
+			CreatedAt:             time.Now(),
+		})
+	}
+	err = repository.ChatIntegrateSystemRepo.UpdateIntegrateSystemById(ctx, repository.DBConn, *chatIntegrateSystemExist, chatApps)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -141,7 +158,7 @@ func (s *ChatIntegrateSystem) DeleteChatIntegrateSystem(ctx context.Context, aut
 		log.Error(err)
 		return err
 	}
-	err = repository.ChatIntegrateSystemRepo.Delete(ctx, repository.DBConn, id)
+	err = repository.ChatIntegrateSystemRepo.DeleteIntegrateSystemById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
 		return err

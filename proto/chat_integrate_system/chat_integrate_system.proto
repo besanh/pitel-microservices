@@ -36,6 +36,7 @@ message PostChatIntegrateSystemRequest {
     string websocket_url = 8;
     string api_url = 9;
     string api_get_user_url = 10;
+    repeated string chat_apps = 11;
 }
 
 message InfoSystem {
@@ -55,6 +56,34 @@ message PostChatIntegrateSystemResponse {
     string system_id = 4;
 }
 
+// Get chat integrate system by id
+message GetChatIntegrateSystemByIdRequest { string id = 1; }
+
+message GetChatIntegrateSystemByIdResponse {
+    string code = 1;
+    string message = 2;
+    google.protobuf.Struct data = 3;
+}
+
+// Update chat integrate system by id
+message UpdateChatIntegrateSystemByIdRequest {
+    string id = 1;
+    PostChatIntegrateSystemRequest data = 2;
+}
+
+message UpdateChatIntegrateSystemByIdResponse {
+    string code = 1;
+    string message = 2;
+}
+
+// Delete chat integrate system by id
+message DeleteChatIntegrateSystemByIdRequest { string id = 1; }
+
+message DeleteChatIntegrateSystemByIdResponse {
+    string code = 1;
+    string message = 2;
+}
+
 service ChatIntegrateSystem {
     rpc GetChatIntegrateSystems(GetChatIntegrateSystemRequest) returns (GetChatIntegrateSystemResponse) {
         option (google.api.http) = {
@@ -68,4 +97,23 @@ service ChatIntegrateSystem {
             body : "*"
         };
     }
+
+    rpc GetChatIntegrateSystemById(GetChatIntegrateSystemByIdRequest) returns (GetChatIntegrateSystemByIdResponse) {
+        option (google.api.http) = {
+            get : "/bss-chat/v1/chat-integrate-system/{id}"
+        };
+    };
+
+    rpc UpdateChatIntegrateSystemById(UpdateChatIntegrateSystemByIdRequest) returns (UpdateChatIntegrateSystemByIdResponse) {
+        option (google.api.http) = {
+            put : "/bss-chat/v1/chat-integrate-system/{id}"
+            body : "*"
+        };
+    };
+
+    rpc DeleteChatIntegrateSystemById(DeleteChatIntegrateSystemByIdRequest) returns (DeleteChatIntegrateSystemByIdResponse) {
+        option (google.api.http) = {
+            delete : "/bss-chat/v1/chat-integrate-system/{id}"
+        };
+    };
 }

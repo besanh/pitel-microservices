@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
@@ -85,6 +86,7 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, db sqlclient.ISqlClientConn
 		return err
 	}
 	defer tx.Rollback()
+	data.SetCreatedAt(time.Now())
 	if _, err = tx.NewInsert().Model(&data).Exec(ctx); err != nil {
 		return err
 	}
@@ -103,20 +105,21 @@ func (s *ChatApp) UpdateChatAppById(ctx context.Context, db sqlclient.ISqlClient
 	}
 	defer tx.Rollback()
 
+	data.SetUpdatedAt(time.Now())
 	_, err = tx.NewUpdate().Model(&data).
 		Where("id = ?", data.GetId()).
 		Exec(ctx)
 	if err != nil {
 		return err
 	}
-	_, err = tx.NewDelete().Model((*model.ChatAppIntegrateSystem)(nil)).
-		Where("chat_app_id = ?", data.GetId()).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
 
 	if len(systems) > 0 {
+		_, err = tx.NewDelete().Model((*model.ChatAppIntegrateSystem)(nil)).
+			Where("chat_app_id = ?", data.GetId()).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 		if _, err = tx.NewInsert().Model(&systems).Exec(ctx); err != nil {
 			return err
 		}

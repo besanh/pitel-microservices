@@ -50,9 +50,6 @@ func (m *ChatAppRequest) Validate() error {
 	if len(m.AppName) < 1 {
 		return errors.New("app name is required")
 	}
-	if len(m.SystemIds) < 1 {
-		return errors.New("system id is required")
-	}
 
 	var countOk int
 
