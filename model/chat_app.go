@@ -17,9 +17,6 @@ type ChatApp struct {
 	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
 	Status        string   `json:"status" bun:"status,notnull"`
 	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
-
-	// relations
-	Systems []*ChatIntegrateSystem `json:"integrate_systems" bun:"m2m:chat_app_integrate_system,join:ChatApp=ChatIntegrateSystem"`
 }
 
 type ChatAppRequest struct {

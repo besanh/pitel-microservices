@@ -39,11 +39,13 @@ func (g *GRPCChatTenant) PostChatTenant(ctx context.Context, req *pb.PostChatTen
 	}
 
 	if err := payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	id, err := service.ChatTenantService.InsertChatTenant(ctx, &payload)
 	if err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 

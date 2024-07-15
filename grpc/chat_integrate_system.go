@@ -14,6 +14,7 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GRPCChatIntegrateSystem struct {
@@ -54,10 +55,26 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 		}
 		return result, nil
 	}
-	data := make([]*pb.ChatIntegrateSystemData, 0)
-	if err = util.ParseAnyToAny(chatIntegrateSystems, &data); err != nil {
-		log.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+	var data []*pb.ChatIntegrateSystemData
+	if len(*chatIntegrateSystems) > 0 {
+		for _, item := range *chatIntegrateSystems {
+			var tmp pb.ChatIntegrateSystemData
+			tmp.CreatedAt = &timestamppb.Timestamp{
+				Seconds: item.CreatedAt.Unix(),
+			}
+			tmp.UpdatedAt = &timestamppb.Timestamp{
+				Seconds: item.UpdatedAt.Unix(),
+			}
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				result = &pb.GetChatIntegrateSystemResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return result, nil
+			}
+
+			data = append(data, &tmp)
+		}
 	}
 
 	result = &pb.GetChatIntegrateSystemResponse{
@@ -76,18 +93,37 @@ func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, r
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
+	chatApps := []model.ChatAppRequest{}
+	if len(req.GetChatApps()) > 0 {
+		for _, item := range req.GetChatApps() {
+			infoApp := model.InfoApp{}
+			if err := util.ParseAnyToAny(item.GetInfoApp(), &infoApp); err != nil {
+				log.Error(err)
+				return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			}
+			chatApps = append(chatApps, model.ChatAppRequest{
+				AppName: item.GetAppName(),
+				Status:  item.GetStatus(),
+				InfoApp: &infoApp,
+			})
+		}
+	}
 	payload := model.ChatIntegrateSystemRequest{
-		SystemName:    req.GetSystemName(),
-		VendorId:      req.GetVendorId(),
-		Status:        req.GetStatus(),
-		AuthType:      req.GetAuthType(),
-		Username:      req.GetUsername(),
-		Password:      req.GetPassword(),
-		Token:         req.GetToken(),
-		WebsocketUrl:  req.GetWebsocketUrl(),
-		ApiUrl:        req.GetApiUrl(),
-		ApiGetUserUrl: req.GetApiGetUserUrl(),
-		ChatApps:      req.GetChatApps(),
+		SystemName:          req.GetSystemName(),
+		VendorId:            req.GetVendorId(),
+		Status:              req.GetStatus(),
+		AuthType:            req.GetAuthType(),
+		Username:            req.GetUsername(),
+		Password:            req.GetPassword(),
+		Token:               req.GetToken(),
+		WebsocketUrl:        req.GetWebsocketUrl(),
+		ApiUrl:              req.GetApiUrl(),
+		ApiAuthUrl:          req.GetApiAuthUrl(),
+		ApiGetUserUrl:       req.GetApiGetUserUrl(),
+		ApiGetUserDetailUrl: req.GetApiGetUserDetailUrl(),
+		ChatAppIds:          req.GetChatAppIds(),
+		ChatApps:            chatApps,
+		TenantDefaultId:     req.GetTenantDefaultId(),
 	}
 
 	if err := payload.Validate(); err != nil {
@@ -148,19 +184,21 @@ func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Cont
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
-
 	payload := model.ChatIntegrateSystemRequest{
-		SystemName:    req.GetSystemName(),
-		VendorId:      req.GetVendorId(),
-		Status:        req.GetStatus(),
-		AuthType:      req.GetAuthType(),
-		Username:      req.GetUsername(),
-		Password:      req.GetPassword(),
-		Token:         req.GetToken(),
-		WebsocketUrl:  req.GetWebsocketUrl(),
-		ApiUrl:        req.GetApiUrl(),
-		ApiGetUserUrl: req.GetApiGetUserUrl(),
-		ChatApps:      req.GetChatApps(),
+		SystemName:          req.GetSystemName(),
+		VendorId:            req.GetVendorId(),
+		Status:              req.GetStatus(),
+		AuthType:            req.GetAuthType(),
+		Username:            req.GetUsername(),
+		Password:            req.GetPassword(),
+		Token:               req.GetToken(),
+		WebsocketUrl:        req.GetWebsocketUrl(),
+		ApiUrl:              req.GetApiUrl(),
+		ApiAuthUrl:          req.GetApiAuthUrl(),
+		ApiGetUserUrl:       req.GetApiGetUserUrl(),
+		ApiGetUserDetailUrl: req.GetApiGetUserDetailUrl(),
+		TenantDefaultId:     req.GetTenantDefaultId(),
+		ChatAppIds:          req.GetChatAppIds(),
 	}
 
 	if err := payload.Validate(); err != nil {

@@ -28,6 +28,10 @@ func (g *GRPCChatApp) PostChatApp(ctx context.Context, req *pb.PostChatAppReques
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
+	if (user.GetLevel() != "superadmin") && len(user.SecretKey) < 1 {
+		return nil, status.Errorf(codes.PermissionDenied, response.ERR_PERMISSION_DENIED)
+	}
+
 	payload := model.ChatAppRequest{}
 	if err := util.ParseAnyToAny(req, &payload); err != nil {
 		log.Error(err)
@@ -112,6 +116,10 @@ func (g *GRPCChatApp) UpdateChatAppById(ctx context.Context, req *pb.UpdateChatA
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	if (user.GetLevel() != "superadmin") && len(user.SecretKey) < 1 {
+		return nil, status.Errorf(codes.PermissionDenied, response.ERR_PERMISSION_DENIED)
 	}
 
 	payload := model.ChatAppRequest{}
