@@ -20,6 +20,7 @@ import (
 	pbChatApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
 	pbChatAuth "github.com/tel4vn/fins-microservices/gen/proto/chat_auth"
 	pbChatIntegrateSystem "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
+	pbChatMessageSample "github.com/tel4vn/fins-microservices/gen/proto/chat_message_sample"
 	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
 	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
 	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
@@ -71,6 +72,7 @@ func NewGRPCServer(port string) {
 	pbChatVendor.RegisterChatVendorServiceServer(grpcServer, grpcService.NewGRPCChatVendor())
 	pbChatApp.RegisterChatAppServiceServer(grpcServer, grpcService.NewGRPCChatApp())
 	pbAssignConversation.RegisterAssignConversationServiceServer(grpcServer, grpcService.NewGRPCAssignConversation())
+	pbChatMessageSample.RegisterMessageSampleServiceServer(grpcServer, grpcService.NewGRPCChatMessageSample())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -130,12 +132,17 @@ func NewGRPCServer(port string) {
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
 	v1.APIChatVendorHandler = v1.NewChatVendor()
+	v1.APIChatMessageSampleHandler = v1.NewChatMessageSample()
 	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", func(c *gin.Context) {
 		switch {
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload") && c.Request.Method == "POST":
 			v1.APIChatVendorHandler.HandlePostChatVendorLogoUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload/") && c.Request.Method == "PUT":
 			v1.APIChatVendorHandler.HandlePutChatVendorLogoUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload") && c.Request.Method == "POST":
+			v1.APIChatMessageSampleHandler.InsertChatMsgSample(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload/") && c.Request.Method == "PUT":
+			v1.APIChatMessageSampleHandler.HandlePutChatMessageSampleUpload(c)
 		default:
 			gin.WrapH(mux)(c)
 		}

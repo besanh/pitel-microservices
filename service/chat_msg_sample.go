@@ -24,6 +24,8 @@ type (
 	ChatMsgSample struct{}
 )
 
+var ChatMessageSampleService IChatMsgSample
+
 func NewChatMsgSample() IChatMsgSample {
 	return &ChatMsgSample{}
 }

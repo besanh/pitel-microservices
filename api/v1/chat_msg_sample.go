@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -10,8 +12,21 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type ChatMsgSample struct {
-	chatMsgSampleService service.IChatMsgSample
+type (
+	IAPIChatMessageSample interface {
+		InsertChatMsgSample(c *gin.Context)
+		HandlePutChatMessageSampleUpload(c *gin.Context)
+	}
+
+	ChatMsgSample struct {
+		chatMsgSampleService service.IChatMsgSample
+	}
+)
+
+var APIChatMessageSampleHandler IAPIChatMessageSample
+
+func NewChatMessageSample() IAPIChatMessageSample {
+	return &ChatMsgSample{}
 }
 
 func NewChatMsgSample(engine *gin.Engine, chatMsgSampleService service.IChatMsgSample) {
@@ -159,5 +174,38 @@ func (handler *ChatMsgSample) DeleteChatMsgSampleById(c *gin.Context) {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
+	c.JSON(response.OKResponse())
+}
+
+func (handler *ChatMsgSample) HandlePutChatMessageSampleUpload(c *gin.Context) {
+	res := api.AuthMiddleware(c)
+	if res == nil {
+		return
+	}
+	id := strings.TrimPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload/")
+	if id == "" {
+		c.JSON(response.BadRequestMsg("id is empty"))
+		return
+	}
+
+	var chatMsgSampleRequest model.ChatMsgSampleRequest
+	err := c.ShouldBind(&chatMsgSampleRequest)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	if err := chatMsgSampleRequest.Validate(); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	err = handler.chatMsgSampleService.UpdateChatMsgSampleById(c, res.Data, id, chatMsgSampleRequest, chatMsgSampleRequest.File)
+	if err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
 	c.JSON(response.OKResponse())
 }
