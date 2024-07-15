@@ -22,7 +22,7 @@ func NewGRPCAssignConversation() *GRPCAssignConversation {
 	return &GRPCAssignConversation{}
 }
 
-func (g *GRPCChatApp) InsertUserInQueue(ctx context.Context, request *pb.InsertUserInQueueRequest) (*pb.InsertUserInQueueResponse, error) {
+func (g *GRPCChatApp) InsertUserInQueue(ctx context.Context, request *pb.InsertUserInQueueRequest) (*pb.AnyResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -39,20 +39,21 @@ func (g *GRPCChatApp) InsertUserInQueue(ctx context.Context, request *pb.InsertU
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	_, data := service.AssignConversationService.AllocateConversation(ctx, user, &payload)
+	code, data := service.AssignConversationService.AllocateConversation(ctx, user, &payload)
 	tmp, err := util.ToStructPb(data)
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.InsertUserInQueueResponse{
+	result := &pb.AnyResponse{
 		Data: tmp,
+		Code: int32(code),
 	}
 	return result, nil
 }
 
-func (g *GRPCChatApp) GetUserAssigned(ctx context.Context, request *pb.GetUserAssignedRequest) (*pb.GetUserAssignedResponse, error) {
+func (g *GRPCChatApp) GetUserAssigned(ctx context.Context, request *pb.GetUserAssignedRequest) (*pb.AnyResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -60,20 +61,21 @@ func (g *GRPCChatApp) GetUserAssigned(ctx context.Context, request *pb.GetUserAs
 
 	conversationId := request.GetId()
 	statusTmp := request.GetStatus()
-	_, data := service.AssignConversationService.GetUserAssigned(ctx, user, conversationId, statusTmp)
+	code, data := service.AssignConversationService.GetUserAssigned(ctx, user, conversationId, statusTmp)
 	tmp, err := util.ToStructPb(data)
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.GetUserAssignedResponse{
+	result := &pb.AnyResponse{
 		Data: tmp,
+		Code: int32(code),
 	}
 	return result, nil
 }
 
-func (g *GRPCChatApp) GetUserInQueue(ctx context.Context, request *pb.GetUserInQueueRequest) (*pb.GetUserInQueueResponse, error) {
+func (g *GRPCChatApp) GetUserInQueue(ctx context.Context, request *pb.GetUserInQueueRequest) (*pb.AnyResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -86,15 +88,16 @@ func (g *GRPCChatApp) GetUserInQueue(ctx context.Context, request *pb.GetUserInQ
 		ConversationType: request.GetConversationType(),
 		Status:           request.GetStatus(),
 	}
-	_, data := service.AssignConversationService.GetUserInQueue(ctx, user, filter)
+	code, data := service.AssignConversationService.GetUserInQueue(ctx, user, filter)
 	tmp, err := util.ToStructPb(data)
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.GetUserInQueueResponse{
+	result := &pb.AnyResponse{
 		Data: tmp,
+		Code: int32(code),
 	}
 	return result, nil
 }

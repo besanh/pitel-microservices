@@ -17,8 +17,9 @@ message InsertUserInQueueRequest {
   string queue_id = 4;
 }
 
-message InsertUserInQueueResponse {
+message AnyResponse {
   google.protobuf.Struct data = 1;
+  int32 code = 2;
 }
 
 // Get user in queue
@@ -30,34 +31,26 @@ message GetUserInQueueRequest {
   string status = 5;
 }
 
-message GetUserInQueueResponse {
-  google.protobuf.Struct data = 1;
-}
-
 // Get user assigned
 message GetUserAssignedRequest {
   string id = 1;
   string status = 2;
 }
 
-message GetUserAssignedResponse {
-  google.protobuf.Struct data = 1;
-}
-
 service AssignConversationService {
-  rpc GetUserAssigned (GetUserAssignedRequest) returns (GetUserAssignedResponse) {
+  rpc GetUserAssigned (GetUserAssignedRequest) returns (AnyResponse) {
     option (google.api.http) = {
       get : "/bss-chat/v1/assign-conversation/user-assigned/{id}"
     };
   };
 
-  rpc GetUserInQueue (GetUserInQueueRequest) returns (GetUserInQueueResponse) {
+  rpc GetUserInQueue (GetUserInQueueRequest) returns (AnyResponse) {
     option (google.api.http) = {
       get : "/bss-chat/v1/assign-conversation/user-in-queue"
     };
   };
 
-  rpc InsertUserInQueue (InsertUserInQueueRequest) returns (InsertUserInQueueResponse) {
+  rpc InsertUserInQueue (InsertUserInQueueRequest) returns (AnyResponse) {
     option (google.api.http) = {
       post : "/bss-chat/v1/assign-conversation/user-in-queue"
       body : "*"

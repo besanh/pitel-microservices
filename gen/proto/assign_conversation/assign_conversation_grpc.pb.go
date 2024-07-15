@@ -28,9 +28,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AssignConversationServiceClient interface {
-	GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*GetUserAssignedResponse, error)
-	GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*GetUserInQueueResponse, error)
-	InsertUserInQueue(ctx context.Context, in *InsertUserInQueueRequest, opts ...grpc.CallOption) (*InsertUserInQueueResponse, error)
+	GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*AnyResponse, error)
+	GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error)
+	InsertUserInQueue(ctx context.Context, in *InsertUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error)
 }
 
 type assignConversationServiceClient struct {
@@ -41,9 +41,9 @@ func NewAssignConversationServiceClient(cc grpc.ClientConnInterface) AssignConve
 	return &assignConversationServiceClient{cc}
 }
 
-func (c *assignConversationServiceClient) GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*GetUserAssignedResponse, error) {
+func (c *assignConversationServiceClient) GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*AnyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserAssignedResponse)
+	out := new(AnyResponse)
 	err := c.cc.Invoke(ctx, AssignConversationService_GetUserAssigned_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -51,9 +51,9 @@ func (c *assignConversationServiceClient) GetUserAssigned(ctx context.Context, i
 	return out, nil
 }
 
-func (c *assignConversationServiceClient) GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*GetUserInQueueResponse, error) {
+func (c *assignConversationServiceClient) GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserInQueueResponse)
+	out := new(AnyResponse)
 	err := c.cc.Invoke(ctx, AssignConversationService_GetUserInQueue_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -61,9 +61,9 @@ func (c *assignConversationServiceClient) GetUserInQueue(ctx context.Context, in
 	return out, nil
 }
 
-func (c *assignConversationServiceClient) InsertUserInQueue(ctx context.Context, in *InsertUserInQueueRequest, opts ...grpc.CallOption) (*InsertUserInQueueResponse, error) {
+func (c *assignConversationServiceClient) InsertUserInQueue(ctx context.Context, in *InsertUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InsertUserInQueueResponse)
+	out := new(AnyResponse)
 	err := c.cc.Invoke(ctx, AssignConversationService_InsertUserInQueue_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -75,22 +75,22 @@ func (c *assignConversationServiceClient) InsertUserInQueue(ctx context.Context,
 // All implementations should embed UnimplementedAssignConversationServiceServer
 // for forward compatibility
 type AssignConversationServiceServer interface {
-	GetUserAssigned(context.Context, *GetUserAssignedRequest) (*GetUserAssignedResponse, error)
-	GetUserInQueue(context.Context, *GetUserInQueueRequest) (*GetUserInQueueResponse, error)
-	InsertUserInQueue(context.Context, *InsertUserInQueueRequest) (*InsertUserInQueueResponse, error)
+	GetUserAssigned(context.Context, *GetUserAssignedRequest) (*AnyResponse, error)
+	GetUserInQueue(context.Context, *GetUserInQueueRequest) (*AnyResponse, error)
+	InsertUserInQueue(context.Context, *InsertUserInQueueRequest) (*AnyResponse, error)
 }
 
 // UnimplementedAssignConversationServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedAssignConversationServiceServer struct {
 }
 
-func (UnimplementedAssignConversationServiceServer) GetUserAssigned(context.Context, *GetUserAssignedRequest) (*GetUserAssignedResponse, error) {
+func (UnimplementedAssignConversationServiceServer) GetUserAssigned(context.Context, *GetUserAssignedRequest) (*AnyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserAssigned not implemented")
 }
-func (UnimplementedAssignConversationServiceServer) GetUserInQueue(context.Context, *GetUserInQueueRequest) (*GetUserInQueueResponse, error) {
+func (UnimplementedAssignConversationServiceServer) GetUserInQueue(context.Context, *GetUserInQueueRequest) (*AnyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserInQueue not implemented")
 }
-func (UnimplementedAssignConversationServiceServer) InsertUserInQueue(context.Context, *InsertUserInQueueRequest) (*InsertUserInQueueResponse, error) {
+func (UnimplementedAssignConversationServiceServer) InsertUserInQueue(context.Context, *InsertUserInQueueRequest) (*AnyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InsertUserInQueue not implemented")
 }
 
