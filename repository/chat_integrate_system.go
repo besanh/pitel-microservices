@@ -109,13 +109,13 @@ func (repo *ChatIntegrateSystem) UpdateIntegrateSystemById(ctx context.Context, 
 		return err
 	}
 
+	_, err = tx.NewDelete().Model((*model.ChatAppIntegrateSystem)(nil)).
+		Where("chat_integrate_system_id = ?", data.GetId()).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
 	if len(chatApps) > 0 {
-		_, err = tx.NewDelete().Model((*model.ChatAppIntegrateSystem)(nil)).
-			Where("chat_integrate_system_id = ?", data.GetId()).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
 		if _, err = tx.NewInsert().Model(&chatApps).Exec(ctx); err != nil {
 			return err
 		}

@@ -113,13 +113,13 @@ func (s *ChatApp) UpdateChatAppById(ctx context.Context, db sqlclient.ISqlClient
 		return err
 	}
 
+	_, err = tx.NewDelete().Model((*model.ChatAppIntegrateSystem)(nil)).
+		Where("chat_app_id = ?", data.GetId()).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
 	if len(systems) > 0 {
-		_, err = tx.NewDelete().Model((*model.ChatAppIntegrateSystem)(nil)).
-			Where("chat_app_id = ?", data.GetId()).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
 		if _, err = tx.NewInsert().Model(&systems).Exec(ctx); err != nil {
 			return err
 		}
