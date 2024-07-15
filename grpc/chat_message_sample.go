@@ -80,6 +80,8 @@ func (g *GRPCChatMessageSample) GetChatMessageSamples(ctx context.Context, reque
 		Message: "ok",
 		Data:    tmp,
 		Total:   int32(total),
+		Limit:   limit,
+		Offset:  offset,
 	}
 	return result, nil
 }
