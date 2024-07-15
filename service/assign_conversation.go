@@ -30,7 +30,7 @@ func NewAssignConversation() IAssignConversation {
 	return &AssignConversation{}
 }
 
-func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (int, []model.ChatQueueUserView, error) {
+func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (total int, result []model.ChatQueueUserView, err error) {
 	filter := model.ChatConnectionAppFilter{
 		AppId:          data.AppId,
 		OaId:           data.OaId,
@@ -39,21 +39,23 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, err
+		return
 	}
 	if len(*connections) < 1 {
 		log.Errorf("connection not found")
-		return 0, nil, errors.New("connection not found")
+		err = errors.New("connection not found")
+		return
 	}
 
 	// TODO: find connection_queue
 	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connections)[0].ConnectionQueueId)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, err
+		return
 	} else if connectionQueueExist == nil {
 		log.Errorf("connection queue not found")
-		return 0, nil, errors.New("connection queue not found")
+		err = errors.New("connection queue not found")
+		return
 	}
 
 	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
@@ -63,7 +65,7 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	_, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, err
+		return
 	}
 
 	var queueIds []string
@@ -81,10 +83,10 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	_, userInQueues, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterUserInQueue, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, err
+		return
 	}
 
-	result := []model.ChatQueueUserView{}
+	result = []model.ChatQueueUserView{}
 	if len(*userInQueues) > 0 {
 		for _, item := range *userInQueues {
 			result = append(result, model.ChatQueueUserView{
@@ -118,7 +120,7 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	return len(result), result, nil
 }
 
-func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (*model.AllocateUser, error) {
+func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (result *model.AllocateUser, err error) {
 	filter := model.ConversationFilter{
 		ConversationId: []string{conversationId},
 		TenantId:       authUser.TenantId,
@@ -126,12 +128,13 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return nil, err
+		return
 	}
 
 	if len(*conversations) < 1 {
 		log.Errorf("conversation %s not found", conversationId)
-		return nil, fmt.Errorf("conversation %s not found", conversationId)
+		err = fmt.Errorf("conversation %s not found", conversationId)
+		return
 	}
 
 	conversationFilter := model.UserAllocateFilter{
@@ -142,7 +145,7 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 
 	if err != nil {
 		log.Error(err)
-		return nil, err
+		return
 	}
 
 	if len(*userAllocates) < 1 {
