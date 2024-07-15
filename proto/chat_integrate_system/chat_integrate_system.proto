@@ -34,9 +34,74 @@ message ChatIntegrateSystemData {
     string tenant_default_id = 4;
     string vendor_id = 5;
     bool status = 6;
-    string info_system = 7;
+    InfoSystem info_system = 7;
     google.protobuf.Timestamp created_at = 8;
     google.protobuf.Timestamp updated_at = 9;
+    repeated ChatAppIntegrateSystem chat_app_integrate_systems = 10;
+}
+
+message InfoSystem {
+    string token = 1;
+    string api_url = 2;
+    string password = 3;
+    string username = 4;
+    string auth_type = 5;
+    string api_auth_url = 6;
+    string websocket_url = 7;
+    string api_get_user_url = 8;
+    string api_get_user_detail_url = 9;
+}
+
+message ChatAppIntegrateSystem {
+    string id = 1;
+    string chat_app_id = 2;
+    string chat_integrate_system_id = 3;
+    ChatApp chat_app = 4;
+}
+
+message ChatApp {
+    string id = 1;
+    string app_name = 2;
+    string status = 3;
+    ChatInfoApp info_app = 4;
+}
+
+message ChatInfoApp {
+    ChatAppZalo zalo = 1;
+    ChatAppFacebook facebook = 2;
+}
+
+message ChatAppZalo {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message ChatAppFacebook {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message PostInfoSystem {
+    string auth_type = 1;
+    string username = 2;
+    string password = 3;
+    string token = 4;
+    string websocket_url = 5;
+    string api_url = 6;
+    string api_auth_url = 7;
+    string api_get_user_url = 8;
+    string api_get_user_detail_url = 9;
+    repeated string chat_app_ids = 10;
+    repeated PostChatAppRequest chat_apps = 11;
+}
+
+message PostChatAppRequest {
+    string app_name = 1;
+    string status = 2;
+    PostChatInfoApp info_app = 3;
+    repeated string system_ids = 4;
 }
 
 // Request post chat integrate system
@@ -53,7 +118,33 @@ message PostChatIntegrateSystemRequest {
     string api_auth_url = 10;
     string api_get_user_url = 11;
     string api_get_user_detail_url = 12;
-    repeated string chat_apps = 13;
+    repeated string chat_app_ids = 13;
+    repeated ChatAppRequest chat_apps = 14;
+    string tenant_default_id = 15;
+}
+
+message ChatAppRequest {
+    string app_name = 1;
+    string status = 2;
+    PostChatInfoApp info_app = 3;
+    repeated string system_ids = 4;
+}
+
+message PostChatInfoApp {
+    PostChatAppZalo zalo = 1;
+    PostChatAppFacebook facebook = 2;
+}
+
+message PostChatAppZalo {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message PostChatAppFacebook {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
 }
 
 // Response post chat integrate system
@@ -90,7 +181,8 @@ message PutChatIntegrateSystemRequest {
     string api_auth_url = 11;
     string api_get_user_url = 12;
     string api_get_user_detail_url = 13;
-    repeated string chat_apps = 14;
+    repeated string chat_app_ids = 14;
+    string tenant_default_id = 15;
 }
 
 service ChatIntegrateSystem {

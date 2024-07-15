@@ -35,10 +35,6 @@ func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
 	if !ok || !isAuthenticaed {
 		var authInfo auth.Info
 		var user *model.AuthUser = ParseHeaderToUser(ctx)
-		// authInfo, _, err = validateToken(ctx, token)
-		// if err != nil {
-		// 	return nil, status.Errorf(codes.Unauthenticated, err.Error())
-		// }
 		if len(user.SecretKey) > 0 {
 			encryptPassword := []byte(service.SECRET_KEY_SUPERADMIN)
 			password := fmt.Sprintf("%x", md5.Sum(encryptPassword))
@@ -46,7 +42,7 @@ func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
 				log.Error("invalid secret key")
 				return nil, status.Errorf(codes.Unauthenticated, "invalid secret key")
 			}
-			authInfo = NewGoAuthUser(user.UserId, user.Username, user.TenantId, user.RoleId, user.Level, user.SystemId)
+			authInfo = NewGoAuthUser(user.UserId, user.Username, user.TenantId, user.RoleId, user.Level, user.SystemId, user.SecretKey)
 		} else if len(user.SystemId) > 0 && len(user.Token) > 0 {
 			token, err := grpc_auth.AuthFromMD(ctx, "Bearer")
 			if err != nil {
@@ -56,9 +52,9 @@ func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
 			if userTmp == nil {
 				return nil, status.Errorf(codes.Unauthenticated, ERR_TOKEN_IS_INVALID)
 			}
-			authInfo = NewGoAuthUser(userTmp.Data.UserId, userTmp.Data.Username, userTmp.Data.TenantId, userTmp.Data.RoleId, userTmp.Data.Level, user.SystemId)
+			authInfo = NewGoAuthUser(userTmp.Data.UserId, userTmp.Data.Username, userTmp.Data.TenantId, userTmp.Data.RoleId, userTmp.Data.Level, user.SystemId, user.SecretKey)
 		} else {
-			return nil, status.Errorf(codes.Unauthenticated, ERR_TOKEN_IS_EMPTY)
+			return nil, status.Errorf(codes.Unauthenticated, ERR_TOKEN_OR_SYSTEM_KEY_IS_INVALID)
 		}
 		ctx = context.WithValue(ctx, AUTHENTICATED, true)
 		ctx = context.WithValue(ctx, USER, authInfo)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
 	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
@@ -79,6 +80,7 @@ func (g *GRPCChatVendor) GetChatVendors(ctx context.Context, req *pb.GetChatVend
 	}
 	data := make([]*pb.ChatVendorConfiguration, 0)
 	if err = util.ParseAnyToAny(result, &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -102,10 +104,12 @@ func (g *GRPCChatVendor) GetChatVendorById(ctx context.Context, req *pb.GetChatV
 
 	result, err := service.ChatVendorService.GetChatVendorById(ctx, user, req.GetId())
 	if err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	var data *pb.ChatVendorConfiguration
 	if err = util.ParseAnyToAny(result, &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -132,6 +136,7 @@ func (g *GRPCChatVendor) UpdateChatVendorById(ctx context.Context, req *pb.Updat
 		Status:     req.GetRequest().GetStatus(),
 	}
 	if err := payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
@@ -16,8 +15,8 @@ type (
 		IRepo[model.ChatIntegrateSystem]
 		GetIntegrateSystems(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatIntegrateSystemFilter, limit, offset int) (total int, result *[]model.ChatIntegrateSystem, err error)
 		GetIntegrateSystemById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (*model.ChatIntegrateSystem, error)
-		InsertIntegrateSystem(ctx context.Context, db sqlclient.ISqlClientConn, data model.ChatIntegrateSystem, chatApps []model.ChatAppIntegrateSystem) error
-		UpdateIntegrateSystemById(ctx context.Context, db sqlclient.ISqlClientConn, data model.ChatIntegrateSystem, chatApps []model.ChatAppIntegrateSystem) error
+		InsertIntegrateSystemTransaction(ctx context.Context, db sqlclient.ISqlClientConn, chatApps []model.ChatApp, chatIntegrateSystem model.ChatIntegrateSystem, chatAppIntegrateSystem []model.ChatAppIntegrateSystem) error
+		UpdateIntegrateSystemTransaction(ctx context.Context, db sqlclient.ISqlClientConn, chatIntegrateSystem model.ChatIntegrateSystem, chatAppIntegrateSystem []model.ChatAppIntegrateSystem) error
 		DeleteIntegrateSystemById(ctx context.Context, db sqlclient.ISqlClientConn, id string) error
 	}
 	ChatIntegrateSystem struct {
@@ -40,7 +39,9 @@ func (repo *ChatIntegrateSystem) GetIntegrateSystems(ctx context.Context, db sql
 			}
 			return q
 		}).
-		Relation("ChatApps")
+		Relation("ChatAppIntegrateSystems", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Relation("ChatApp").Order("created_at DESC")
+		})
 	if len(filter.SystemName) > 0 {
 		query.Where("system_name = ?", filter.SystemName)
 	}
@@ -50,8 +51,10 @@ func (repo *ChatIntegrateSystem) GetIntegrateSystems(ctx context.Context, db sql
 	if len(filter.SystemId) > 0 {
 		query.Where("system_id = ?", filter.SystemId)
 	}
+	if len(filter.TenantDefaultId) > 0 {
+		query.Where("tenant_default_id = ?", filter.TenantDefaultId)
+	}
 	query.Order("created_at DESC")
-
 	total, err = query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil
@@ -76,15 +79,19 @@ func (repo *ChatIntegrateSystem) GetIntegrateSystemById(ctx context.Context, db 
 	return result, nil
 }
 
-func (repo *ChatIntegrateSystem) InsertIntegrateSystem(ctx context.Context, db sqlclient.ISqlClientConn, data model.ChatIntegrateSystem, chatApps []model.ChatAppIntegrateSystem) error {
+func (repo *ChatIntegrateSystem) InsertIntegrateSystemTransaction(ctx context.Context, db sqlclient.ISqlClientConn, chatApps []model.ChatApp, chatIntegrateSystem model.ChatIntegrateSystem, chatAppIntegrateSystem []model.ChatAppIntegrateSystem) error {
 	tx, err := db.GetDB().BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	data.SetCreatedAt(time.Now())
-	if _, err = tx.NewInsert().Model(&data).Exec(ctx); err != nil {
+	if _, err = tx.NewInsert().Model(&chatIntegrateSystem).Exec(ctx); err != nil {
 		return err
+	}
+	if len(chatAppIntegrateSystem) > 0 {
+		if _, err = tx.NewInsert().Model(&chatAppIntegrateSystem).Exec(ctx); err != nil {
+			return err
+		}
 	}
 	if len(chatApps) > 0 {
 		if _, err = tx.NewInsert().Model(&chatApps).Exec(ctx); err != nil {
@@ -94,29 +101,27 @@ func (repo *ChatIntegrateSystem) InsertIntegrateSystem(ctx context.Context, db s
 	return tx.Commit()
 }
 
-func (repo *ChatIntegrateSystem) UpdateIntegrateSystemById(ctx context.Context, db sqlclient.ISqlClientConn, data model.ChatIntegrateSystem, chatApps []model.ChatAppIntegrateSystem) error {
+func (repo *ChatIntegrateSystem) UpdateIntegrateSystemTransaction(ctx context.Context, db sqlclient.ISqlClientConn, chatIntegrateSystem model.ChatIntegrateSystem, chatAppIntegrateSystem []model.ChatAppIntegrateSystem) error {
 	tx, err := db.GetDB().BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-
-	data.SetUpdatedAt(time.Now())
-	_, err = tx.NewUpdate().Model(&data).
-		Where("id = ?", data.GetId()).
+	_, err = tx.NewUpdate().Model(&chatIntegrateSystem).
+		WherePK().
 		Exec(ctx)
 	if err != nil {
 		return err
 	}
 
 	_, err = tx.NewDelete().Model((*model.ChatAppIntegrateSystem)(nil)).
-		Where("chat_integrate_system_id = ?", data.GetId()).
+		Where("chat_integrate_system_id = ?", chatIntegrateSystem.GetId()).
 		Exec(ctx)
 	if err != nil {
 		return err
 	}
-	if len(chatApps) > 0 {
-		if _, err = tx.NewInsert().Model(&chatApps).Exec(ctx); err != nil {
+	if len(chatAppIntegrateSystem) > 0 {
+		if _, err = tx.NewInsert().Model(&chatAppIntegrateSystem).Exec(ctx); err != nil {
 			return err
 		}
 	}
@@ -137,7 +142,7 @@ func (repo *ChatIntegrateSystem) DeleteIntegrateSystemById(ctx context.Context, 
 		return err
 	}
 	_, err = tx.NewDelete().Model((*model.ChatIntegrateSystem)(nil)).
-		Where("id = ?", id).
+		WherePK().
 		Exec(ctx)
 	if err != nil {
 		return err
