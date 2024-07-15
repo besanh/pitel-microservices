@@ -35,6 +35,7 @@ func (g *GRPCChatApp) PostChatApp(ctx context.Context, req *pb.PostChatAppReques
 	}
 
 	if err := payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
@@ -70,6 +71,7 @@ func (g *GRPCChatApp) GetChatApps(ctx context.Context, req *pb.GetChatAppRequest
 	}
 	data := make([]*pb.GetChatAppData, 0)
 	if err = util.ParseAnyToAny(chatApps, &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -94,6 +96,7 @@ func (g *GRPCChatApp) GetChatAppById(ctx context.Context, req *pb.GetChatAppById
 	}
 	data := &pb.GetChatAppData{}
 	if err = util.ParseAnyToAny(chatApp, &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -118,6 +121,7 @@ func (g *GRPCChatApp) UpdateChatAppById(ctx context.Context, req *pb.UpdateChatA
 	}
 
 	if err = payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 

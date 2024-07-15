@@ -56,6 +56,7 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 	}
 	data := make([]*pb.ChatIntegrateSystemData, 0)
 	if err = util.ParseAnyToAny(chatIntegrateSystems, &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -90,6 +91,7 @@ func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, r
 	}
 
 	if err := payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
@@ -129,6 +131,7 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystemById(ctx context.Context
 
 	data := &pb.ChatIntegrateSystemData{}
 	if err = util.ParseAnyToAny(integrateSystem, data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
@@ -161,6 +164,7 @@ func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Cont
 	}
 
 	if err := payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
