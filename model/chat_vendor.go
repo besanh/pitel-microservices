@@ -19,7 +19,7 @@ type ChatVendor struct {
 }
 
 type ChatVendorRequest struct {
-	VendorName string                `json:"vendor_name" form:"vendor_name""`
+	VendorName string                `json:"vendor_name" form:"vendor_name"`
 	VendorType string                `json:"vendor_type" form:"vendor_type"`
 	Logo       string                `json:"logo"`
 	Status     bool                  `json:"status" form:"status"`
