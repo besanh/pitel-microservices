@@ -18,8 +18,8 @@ message InsertUserInQueueRequest {
 }
 
 message AnyResponse {
-  google.protobuf.Struct data = 1;
-  int32 code = 2;
+  int32 code = 1;
+  google.protobuf.Struct data = 2;
 }
 
 // Get user in queue
