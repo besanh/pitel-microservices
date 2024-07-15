@@ -22,6 +22,9 @@ type ChatIntegrateSystem struct {
 	Vendor          *ChatVendor `json:"vendor" bun:"rel:belongs-to,join:vendor_id=id"`
 	Status          bool        `json:"status" bun:"status,type:boolean,notnull"`
 	InfoSystem      *InfoSystem `json:"info_system" bun:"info_system,type:jsonb,notnull"`
+
+	// relations
+	ChatApps []*ChatApp `json:"chat_apps" bun:"m2m:chat_app_integrate_system,join:ChatIntegrateSystem=ChatApp"`
 }
 
 type ChatIntegrateSystemView struct {
@@ -50,19 +53,20 @@ type InfoSystem struct {
 }
 
 type ChatIntegrateSystemRequest struct {
-	SystemName          string `json:"system_name"`
-	TenantDefaultId     string `json:"tenant_default_id"`
-	VendorId            string `json:"vendor_id"`
-	Status              bool   `json:"status"`
-	AuthType            string `json:"auth_type"`
-	Username            string `json:"username"`
-	Password            string `json:"password"`
-	Token               string `json:"token"`
-	WebsocketUrl        string `json:"websocket_url"`
-	ApiUrl              string `json:"api_url"`
-	ApiAuthUrl          string `json:"api_auth_url"`
-	ApiGetUserDetailUrl string `json:"api_get_user_detail_url"`
-	ApiGetUserUrl       string `json:"api_get_user_url"`
+	SystemName          string   `json:"system_name"`
+	TenantDefaultId     string   `json:"tenant_default_id"`
+	VendorId            string   `json:"vendor_id"`
+	Status              bool     `json:"status"`
+	AuthType            string   `json:"auth_type"`
+	Username            string   `json:"username"`
+	Password            string   `json:"password"`
+	Token               string   `json:"token"`
+	WebsocketUrl        string   `json:"websocket_url"`
+	ApiUrl              string   `json:"api_url"`
+	ApiAuthUrl          string   `json:"api_auth_url"`
+	ApiGetUserDetailUrl string   `json:"api_get_user_detail_url"`
+	ApiGetUserUrl       string   `json:"api_get_user_url"`
+	ChatApps            []string `json:"chat_apps"`
 }
 
 type AuthTypeJwtToken struct {

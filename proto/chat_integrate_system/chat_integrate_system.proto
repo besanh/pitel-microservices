@@ -53,6 +53,7 @@ message PostChatIntegrateSystemRequest {
     string api_auth_url = 10;
     string api_get_user_url = 11;
     string api_get_user_detail_url = 12;
+    repeated string chat_apps = 13;
 }
 
 // Response post chat integrate system
@@ -89,6 +90,7 @@ message PutChatIntegrateSystemRequest {
     string api_auth_url = 11;
     string api_get_user_url = 12;
     string api_get_user_detail_url = 13;
+    repeated string chat_apps = 14;
 }
 
 service ChatIntegrateSystem {
