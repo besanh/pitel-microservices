@@ -177,7 +177,7 @@ func RegisterAssignConversationServiceHandlerServer(ctx context.Context, mux *ru
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserAssigned", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserAssigned", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/user-assigned/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -202,7 +202,7 @@ func RegisterAssignConversationServiceHandlerServer(ctx context.Context, mux *ru
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/user-in-queue"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -227,7 +227,7 @@ func RegisterAssignConversationServiceHandlerServer(ctx context.Context, mux *ru
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/InsertUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/InsertUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/user-in-queue"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -291,7 +291,7 @@ func RegisterAssignConversationServiceHandlerClient(ctx context.Context, mux *ru
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserAssigned", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserAssigned", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/user-assigned/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -313,7 +313,7 @@ func RegisterAssignConversationServiceHandlerClient(ctx context.Context, mux *ru
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/GetUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/user-in-queue"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -335,7 +335,7 @@ func RegisterAssignConversationServiceHandlerClient(ctx context.Context, mux *ru
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/InsertUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.assignConversation.AssignConversationService/InsertUserInQueue", runtime.WithHTTPPathPattern("/bss-chat/v1/assign-conversation/user-in-queue"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -355,11 +355,11 @@ func RegisterAssignConversationServiceHandlerClient(ctx context.Context, mux *ru
 }
 
 var (
-	pattern_AssignConversationService_GetUserAssigned_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"bss-chat", "v1", "assign-conversation", "id"}, ""))
+	pattern_AssignConversationService_GetUserAssigned_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"bss-chat", "v1", "assign-conversation", "user-assigned", "id"}, ""))
 
-	pattern_AssignConversationService_GetUserInQueue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "assign-conversation"}, ""))
+	pattern_AssignConversationService_GetUserInQueue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss-chat", "v1", "assign-conversation", "user-in-queue"}, ""))
 
-	pattern_AssignConversationService_InsertUserInQueue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "assign-conversation"}, ""))
+	pattern_AssignConversationService_InsertUserInQueue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss-chat", "v1", "assign-conversation", "user-in-queue"}, ""))
 )
 
 var (

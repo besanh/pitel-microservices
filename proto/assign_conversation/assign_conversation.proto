@@ -47,19 +47,19 @@ message GetUserAssignedResponse {
 service AssignConversationService {
   rpc GetUserAssigned (GetUserAssignedRequest) returns (GetUserAssignedResponse) {
     option (google.api.http) = {
-      get : "/bss-chat/v1/assign-conversation/{id}"
+      get : "/bss-chat/v1/assign-conversation/user-assigned/{id}"
     };
   };
 
   rpc GetUserInQueue (GetUserInQueueRequest) returns (GetUserInQueueResponse) {
     option (google.api.http) = {
-      get : "/bss-chat/v1/assign-conversation"
+      get : "/bss-chat/v1/assign-conversation/user-in-queue"
     };
   };
 
   rpc InsertUserInQueue (InsertUserInQueueRequest) returns (InsertUserInQueueResponse) {
     option (google.api.http) = {
-      post : "/bss-chat/v1/assign-conversation"
+      post : "/bss-chat/v1/assign-conversation/user-in-queue"
       body : "*"
     };
   };
