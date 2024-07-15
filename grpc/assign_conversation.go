@@ -12,6 +12,7 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type GRPCAssignConversation struct {
@@ -39,18 +40,12 @@ func (g *GRPCChatApp) InsertUserInQueue(ctx context.Context, request *pb.PostUse
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	code, data := service.AssignConversationService.AllocateConversation(ctx, user, &payload)
-	if code < 200 || code >= 300 {
-		return nil, status.Errorf(codes.Internal, "assign conversation failed, code: %d", code)
-	}
-	tmp, err := util.ToStructPb(data)
+	err := service.AssignConversationService.AllocateConversation(ctx, user, &payload)
 	if err != nil {
-		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	result := &pb.PostUserInQueueResponse{
-		Data:    tmp,
 		Code:    "OK",
 		Message: "ok",
 	}
@@ -65,20 +60,24 @@ func (g *GRPCChatApp) GetUserAssigned(ctx context.Context, request *pb.GetUserAs
 
 	conversationId := request.GetId()
 	statusTmp := request.GetStatus()
-	code, data := service.AssignConversationService.GetUserAssigned(ctx, user, conversationId, statusTmp)
-	if code < 200 || code >= 300 {
-		return nil, status.Errorf(codes.Internal, "assign conversation failed, code: %d", code)
-	}
-	tmp, err := util.ToStructPb(data)
+	data, err := service.AssignConversationService.GetUserAssigned(ctx, user, conversationId, statusTmp)
 	if err != nil {
-		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-
 	result := &pb.GetUserAssignedResponse{
-		Data:    tmp,
 		Code:    "OK",
 		Message: "ok",
+	}
+	if data == nil {
+		result.DataDetail = &pb.GetUserAssignedResponse_NoData{NoData: &emptypb.Empty{}}
+	} else {
+		var tmp pb.AllocateUserData
+		err = util.ParseAnyToAny(data, &tmp)
+		if err != nil {
+			log.Error(err)
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+		result.DataDetail = &pb.GetUserAssignedResponse_Data{Data: &tmp}
 	}
 	return result, nil
 }
@@ -96,20 +95,22 @@ func (g *GRPCChatApp) GetUserInQueue(ctx context.Context, request *pb.GetUserInQ
 		ConversationType: request.GetConversationType(),
 		Status:           request.GetStatus(),
 	}
-	code, data := service.AssignConversationService.GetUserInQueue(ctx, user, filter)
-	if code < 200 || code >= 300 {
-		return nil, status.Errorf(codes.Internal, "assign conversation failed, code: %d", code)
+	total, data, err := service.AssignConversationService.GetUserInQueue(ctx, user, filter)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	tmp, err := util.ToStructPb(data)
+	var tmp []*pb.ChatQueueUserData
+	err = util.ParseAnyToAny(data, &tmp)
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	result := &pb.GetUserInQueueResponse{
-		Data:    tmp,
 		Code:    "OK",
 		Message: "ok",
+		Total:   int32(total),
+		Data:    tmp,
 	}
 	return result, nil
 }

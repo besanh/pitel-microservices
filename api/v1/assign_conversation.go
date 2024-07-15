@@ -36,8 +36,12 @@ func (handler *AssignConversation) GetUserInQueue(c *gin.Context) {
 		Status:           c.Query("status"),
 	}
 
-	code, result := handler.assignConversation.GetUserInQueue(c, res.Data, filter)
-	c.JSON(code, result)
+	total, result, err := handler.assignConversation.GetUserInQueue(c, res.Data, filter)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(result, total, -1, 0))
 }
 
 func (handler *AssignConversation) GetUserAssigned(c *gin.Context) {
@@ -46,8 +50,12 @@ func (handler *AssignConversation) GetUserAssigned(c *gin.Context) {
 	conversationId := c.Param("id")
 	status := c.Query("status")
 
-	code, result := handler.assignConversation.GetUserAssigned(c, res.Data, conversationId, status)
-	c.JSON(code, result)
+	result, err := handler.assignConversation.GetUserAssigned(c, res.Data, conversationId, status)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OK(result))
 }
 
 func (handler *AssignConversation) InsertUserInQueue(c *gin.Context) {
@@ -66,7 +74,11 @@ func (handler *AssignConversation) InsertUserInQueue(c *gin.Context) {
 		return
 	}
 
-	code, result := handler.assignConversation.AllocateConversation(c, res.Data, &data)
+	err := handler.assignConversation.AllocateConversation(c, res.Data, &data)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
 
-	c.JSON(code, result)
+	c.JSON(response.OKResponse())
 }

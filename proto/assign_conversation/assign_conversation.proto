@@ -7,6 +7,7 @@ option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
 import "buf/validate/validate.proto";
 
 // Post to InsertUserInQueue
@@ -20,7 +21,6 @@ message PostUserInQueueRequest {
 message PostUserInQueueResponse {
   string code = 1;
   string message = 2;
-  google.protobuf.Struct data = 3;
 }
 
 // Get user in queue
@@ -35,7 +35,17 @@ message GetUserInQueueRequest {
 message GetUserInQueueResponse {
   string code = 1;
   string message = 2;
-  google.protobuf.Struct data = 3;
+  int32 total = 3;
+  repeated ChatQueueUserData data = 4;
+}
+
+message ChatQueueUserData {
+  string id = 1;
+  string created_at = 2;
+  string updated_at = 3;
+  string tenant_id = 4;
+  string queue_id = 5;
+  string user_id = 6;
 }
 
 // Get user assigned
@@ -47,7 +57,27 @@ message GetUserAssignedRequest {
 message GetUserAssignedResponse {
   string code = 1;
   string message = 2;
-  google.protobuf.Struct data = 3;
+  oneof data_detail {
+    AllocateUserData data = 3;
+    google.protobuf.Empty no_data = 4;
+  }
+}
+
+message AllocateUserData {
+  string id = 1;
+  string created_at = 2;
+  string updated_at = 3;
+  string tenant_id = 4;
+  string app_id = 5;
+  string oa_id = 6;
+  string conversation_id = 7;
+  string user_id = 8;
+  string queue_id = 9;
+  int64 allocated_timestamp = 10;
+  string main_allocate = 11;
+  string connection_id = 12;
+  string connection_queue_id = 13;
+  string username = 14;
 }
 
 service AssignConversationService {
