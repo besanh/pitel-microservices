@@ -146,7 +146,7 @@ func local_request_ChatIntegrateSystem_GetChatIntegrateSystemById_0(ctx context.
 }
 
 func request_ChatIntegrateSystem_UpdateChatIntegrateSystemById_0(ctx context.Context, marshaler runtime.Marshaler, client ChatIntegrateSystemClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateChatIntegrateSystemByIdRequest
+	var protoReq PutChatIntegrateSystemRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -176,7 +176,7 @@ func request_ChatIntegrateSystem_UpdateChatIntegrateSystemById_0(ctx context.Con
 }
 
 func local_request_ChatIntegrateSystem_UpdateChatIntegrateSystemById_0(ctx context.Context, marshaler runtime.Marshaler, server ChatIntegrateSystemServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateChatIntegrateSystemByIdRequest
+	var protoReq PutChatIntegrateSystemRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -206,7 +206,7 @@ func local_request_ChatIntegrateSystem_UpdateChatIntegrateSystemById_0(ctx conte
 }
 
 func request_ChatIntegrateSystem_DeleteChatIntegrateSystemById_0(ctx context.Context, marshaler runtime.Marshaler, client ChatIntegrateSystemClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteChatIntegrateSystemByIdRequest
+	var protoReq GetChatIntegrateSystemByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -232,7 +232,7 @@ func request_ChatIntegrateSystem_DeleteChatIntegrateSystemById_0(ctx context.Con
 }
 
 func local_request_ChatIntegrateSystem_DeleteChatIntegrateSystemById_0(ctx context.Context, marshaler runtime.Marshaler, server ChatIntegrateSystemServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq DeleteChatIntegrateSystemByIdRequest
+	var protoReq GetChatIntegrateSystemByIdRequest
 	var metadata runtime.ServerMetadata
 
 	var (
