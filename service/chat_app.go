@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
@@ -51,8 +52,16 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 	app.AppName = data.AppName
 	app.InfoApp = data.InfoApp
 	app.Status = data.Status
+	systems := make([]model.ChatAppIntegrateSystem, 0)
+	for _, id := range data.SystemIds {
+		systems = append(systems, model.ChatAppIntegrateSystem{
+			ChatAppId:             app.GetId(),
+			ChatIntegrateSystemId: id,
+			CreatedAt:             time.Now(),
+		})
+	}
 
-	if err := repository.ChatAppRepo.Insert(ctx, dbCon, app); err != nil {
+	if err := repository.ChatAppRepo.InsertChatApp(ctx, dbCon, app, systems); err != nil {
 		log.Error(err)
 		return app.Base.GetId(), err
 	}
@@ -83,7 +92,7 @@ func (s *ChatApp) GetChatAppById(ctx context.Context, authUser *model.AuthUser, 
 		return app, err
 	}
 
-	chatApp, err := repository.ChatAppRepo.GetById(ctx, dbCon, id)
+	chatApp, err := repository.ChatAppRepo.GetChatAppById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return app, err
@@ -119,7 +128,16 @@ func (s *ChatApp) UpdateChatAppById(ctx context.Context, authUser *model.AuthUse
 	chatAppExist.AppName = data.AppName
 	chatAppExist.InfoApp = data.InfoApp
 	chatAppExist.Status = data.Status
-	err = repository.ChatAppRepo.Update(ctx, dbCon, *chatAppExist)
+	systems := make([]model.ChatAppIntegrateSystem, 0)
+	for _, systemId := range data.SystemIds {
+		systems = append(systems, model.ChatAppIntegrateSystem{
+			ChatAppId:             chatAppExist.GetId(),
+			ChatIntegrateSystemId: systemId,
+			CreatedAt:             time.Now(),
+		})
+	}
+
+	err = repository.ChatAppRepo.UpdateChatAppById(ctx, dbCon, *chatAppExist, systems)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -140,7 +158,7 @@ func (s *ChatApp) DeleteChatAppById(ctx context.Context, authUser *model.AuthUse
 		log.Error(err)
 		return err
 	}
-	err = repository.ChatAppRepo.Delete(ctx, dbCon, id)
+	err = repository.ChatAppRepo.DeleteChatAppById(ctx, dbCon, id)
 	if err != nil {
 		log.Error(err)
 		return err
