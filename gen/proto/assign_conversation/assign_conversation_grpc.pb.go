@@ -28,9 +28,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AssignConversationServiceClient interface {
-	GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*AnyResponse, error)
-	GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error)
-	InsertUserInQueue(ctx context.Context, in *InsertUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error)
+	GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*GetUserAssignedResponse, error)
+	GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*GetUserInQueueResponse, error)
+	InsertUserInQueue(ctx context.Context, in *PostUserInQueueRequest, opts ...grpc.CallOption) (*PostUserInQueueResponse, error)
 }
 
 type assignConversationServiceClient struct {
@@ -41,9 +41,9 @@ func NewAssignConversationServiceClient(cc grpc.ClientConnInterface) AssignConve
 	return &assignConversationServiceClient{cc}
 }
 
-func (c *assignConversationServiceClient) GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*AnyResponse, error) {
+func (c *assignConversationServiceClient) GetUserAssigned(ctx context.Context, in *GetUserAssignedRequest, opts ...grpc.CallOption) (*GetUserAssignedResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AnyResponse)
+	out := new(GetUserAssignedResponse)
 	err := c.cc.Invoke(ctx, AssignConversationService_GetUserAssigned_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -51,9 +51,9 @@ func (c *assignConversationServiceClient) GetUserAssigned(ctx context.Context, i
 	return out, nil
 }
 
-func (c *assignConversationServiceClient) GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error) {
+func (c *assignConversationServiceClient) GetUserInQueue(ctx context.Context, in *GetUserInQueueRequest, opts ...grpc.CallOption) (*GetUserInQueueResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AnyResponse)
+	out := new(GetUserInQueueResponse)
 	err := c.cc.Invoke(ctx, AssignConversationService_GetUserInQueue_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -61,9 +61,9 @@ func (c *assignConversationServiceClient) GetUserInQueue(ctx context.Context, in
 	return out, nil
 }
 
-func (c *assignConversationServiceClient) InsertUserInQueue(ctx context.Context, in *InsertUserInQueueRequest, opts ...grpc.CallOption) (*AnyResponse, error) {
+func (c *assignConversationServiceClient) InsertUserInQueue(ctx context.Context, in *PostUserInQueueRequest, opts ...grpc.CallOption) (*PostUserInQueueResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AnyResponse)
+	out := new(PostUserInQueueResponse)
 	err := c.cc.Invoke(ctx, AssignConversationService_InsertUserInQueue_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -75,22 +75,22 @@ func (c *assignConversationServiceClient) InsertUserInQueue(ctx context.Context,
 // All implementations should embed UnimplementedAssignConversationServiceServer
 // for forward compatibility
 type AssignConversationServiceServer interface {
-	GetUserAssigned(context.Context, *GetUserAssignedRequest) (*AnyResponse, error)
-	GetUserInQueue(context.Context, *GetUserInQueueRequest) (*AnyResponse, error)
-	InsertUserInQueue(context.Context, *InsertUserInQueueRequest) (*AnyResponse, error)
+	GetUserAssigned(context.Context, *GetUserAssignedRequest) (*GetUserAssignedResponse, error)
+	GetUserInQueue(context.Context, *GetUserInQueueRequest) (*GetUserInQueueResponse, error)
+	InsertUserInQueue(context.Context, *PostUserInQueueRequest) (*PostUserInQueueResponse, error)
 }
 
 // UnimplementedAssignConversationServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedAssignConversationServiceServer struct {
 }
 
-func (UnimplementedAssignConversationServiceServer) GetUserAssigned(context.Context, *GetUserAssignedRequest) (*AnyResponse, error) {
+func (UnimplementedAssignConversationServiceServer) GetUserAssigned(context.Context, *GetUserAssignedRequest) (*GetUserAssignedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserAssigned not implemented")
 }
-func (UnimplementedAssignConversationServiceServer) GetUserInQueue(context.Context, *GetUserInQueueRequest) (*AnyResponse, error) {
+func (UnimplementedAssignConversationServiceServer) GetUserInQueue(context.Context, *GetUserInQueueRequest) (*GetUserInQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserInQueue not implemented")
 }
-func (UnimplementedAssignConversationServiceServer) InsertUserInQueue(context.Context, *InsertUserInQueueRequest) (*AnyResponse, error) {
+func (UnimplementedAssignConversationServiceServer) InsertUserInQueue(context.Context, *PostUserInQueueRequest) (*PostUserInQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InsertUserInQueue not implemented")
 }
 
@@ -142,7 +142,7 @@ func _AssignConversationService_GetUserInQueue_Handler(srv interface{}, ctx cont
 }
 
 func _AssignConversationService_InsertUserInQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InsertUserInQueueRequest)
+	in := new(PostUserInQueueRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func _AssignConversationService_InsertUserInQueue_Handler(srv interface{}, ctx c
 		FullMethod: AssignConversationService_InsertUserInQueue_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AssignConversationServiceServer).InsertUserInQueue(ctx, req.(*InsertUserInQueueRequest))
+		return srv.(AssignConversationServiceServer).InsertUserInQueue(ctx, req.(*PostUserInQueueRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

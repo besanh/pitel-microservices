@@ -138,7 +138,7 @@ func local_request_AssignConversationService_GetUserInQueue_0(ctx context.Contex
 }
 
 func request_AssignConversationService_InsertUserInQueue_0(ctx context.Context, marshaler runtime.Marshaler, client AssignConversationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq InsertUserInQueueRequest
+	var protoReq PostUserInQueueRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -151,7 +151,7 @@ func request_AssignConversationService_InsertUserInQueue_0(ctx context.Context, 
 }
 
 func local_request_AssignConversationService_InsertUserInQueue_0(ctx context.Context, marshaler runtime.Marshaler, server AssignConversationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq InsertUserInQueueRequest
+	var protoReq PostUserInQueueRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
