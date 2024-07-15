@@ -23,6 +23,7 @@ func InitServices() {
 	ChatIntegrateSystemService = NewChatIntegrateSystem()
 	ChatAppService = NewChatApp()
 	AssignConversationService = NewAssignConversation()
+	ChatMessageSampleService = NewChatMsgSample()
 }
 
 // MAP TENANT_ID SQL_CONN
