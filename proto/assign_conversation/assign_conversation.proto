@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package proto.assignConversation;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+// Post to InsertUserInQueue
+message InsertUserInQueueRequest {
+  string conversation_id = 1;
+  string status = 2;
+  string user_id = 3;
+  string queue_id = 4;
+}
+
+message InsertUserInQueueResponse {
+  google.protobuf.Struct data = 1;
+}
+
+// Get user in queue
+message GetUserInQueueRequest {
+  string app_id = 1;
+  string oa_id = 2;
+  string conversation_id = 3;
+  string conversation_type = 4;
+  string status = 5;
+}
+
+message GetUserInQueueResponse {
+  google.protobuf.Struct data = 1;
+}
+
+// Get user assigned
+message GetUserAssignedRequest {
+  string id = 1;
+  string status = 2;
+}
+
+message GetUserAssignedResponse {
+  google.protobuf.Struct data = 1;
+}
+
+service AssignConversationService {
+  rpc GetUserAssigned (GetUserAssignedRequest) returns (GetUserAssignedResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/assign-conversation/{id}"
+    };
+  };
+
+  rpc GetUserInQueue (GetUserInQueueRequest) returns (GetUserInQueueResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/assign-conversation"
+    };
+  };
+
+  rpc InsertUserInQueue (InsertUserInQueueRequest) returns (InsertUserInQueueResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/assign-conversation"
+      body : "*"
+    };
+  };
+}

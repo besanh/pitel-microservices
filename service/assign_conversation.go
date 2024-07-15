@@ -23,6 +23,8 @@ type (
 	AssignConversation struct{}
 )
 
+var AssignConversationService IAssignConversation
+
 func NewAssignConversation() IAssignConversation {
 	return &AssignConversation{}
 }
