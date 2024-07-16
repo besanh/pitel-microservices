@@ -68,13 +68,15 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		}
 	}
 
-	// block messages sent outside of chat window
-	conversationTime := conversation.UpdatedAt
-	if len(conversationTime) < 1 {
-		conversationTime = conversation.CreatedAt
-	}
-	if err := CheckOutOfChatWindowTime(ctx, conversation.TenantId, conversation.ConversationType, conversationTime); err != nil {
-		return response.ServiceUnavailableMsg(err.Error())
+	if ENABLE_CHAT_POLICY_SETTINGS {
+		// block messages sent outside of chat window
+		conversationTime := conversation.UpdatedAt
+		if len(conversationTime) < 1 {
+			conversationTime = conversation.CreatedAt
+		}
+		if err := CheckOutOfChatWindowTime(ctx, conversation.TenantId, conversation.ConversationType, conversationTime); err != nil {
+			return response.ServiceUnavailableMsg(err.Error())
+		}
 	}
 
 	timestampTmp := time.Now().UnixMilli()
