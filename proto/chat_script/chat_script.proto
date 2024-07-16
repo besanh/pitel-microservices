@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+package proto.chatScript;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatScriptData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string script_name = 5;
+  string status = 6;
+  string script_type = 7;
+  string file_url = 8;
+  string channel = 9;
+  string content = 10;
+  string created_by = 11;
+  string updated_by = 12;
+  string other_script_id = 13;
+  string connection_id = 14;
+  ChatConnectionAppData connection_app = 15;
+}
+
+message ChatConnectionAppData {
+  string id = 1;
+  string tenant_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string connection_name = 5;
+  string connection_type = 6;
+  string app_id = 7;
+  string status = 8;
+  string connection_queue_id = 9;
+  OaInfo oa_info = 10;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string avatar = 5;
+  string cover = 6;
+  string cate_name = 7;
+  string status = 8;
+  string access_token = 9;
+  int64 expire = 10;
+  string token_created_at = 11;
+  int64 token_expires_in = 12;
+  int64 token_time_remaining = 13;
+  int64 created_timestamp = 14;
+  int64 updated_timestamp = 15;
+  bool is_notify = 16;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string avatar = 5;
+  string cover = 6;
+  string access_token = 7;
+  int64 expire = 8;
+  string token_created_at = 9;
+  int64 token_expires_in = 10;
+  int64 token_time_remaining = 11;
+  string status = 12;
+  int64 created_timestamp = 13;
+  int64 updated_timestamp = 14;
+  bool is_notify = 15;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+// get chat scripts
+message GetChatScriptsRequest {
+  string status = 1;
+  string script_name = 2;
+  string channel = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+}
+
+message GetChatScriptsResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatScriptData data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get script by id
+message GetScriptByIdRequest { string id = 1; }
+
+message GetScriptByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatScriptData data = 3;
+}
+
+// create script
+message PostChatScriptRequest {
+  string script_name = 1;
+  string status = 2;
+  string script_type = 3;
+  string channel = 4;
+  string content = 5;
+  string other_script_id = 6;
+}
+
+message PostChatScriptResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update script by id
+message PutChatScriptRequest {
+  string id = 1;
+  string script_name = 2;
+  string status = 3;
+  string script_type = 4;
+  string channel = 5;
+  string content = 6;
+  string other_script_id = 7;
+}
+
+message PutChatScriptResponse {
+  string code = 1;
+  string message = 2;
+}
+
+//update script status by id
+message PutChatScriptStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+// delete script by id
+message DeleteChatScriptRequest { string id = 1; }
+
+message DeleteChatScriptResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatScriptService {
+  rpc GetChatScripts(GetChatScriptsRequest) returns (GetChatScriptsResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-script"
+    };
+  };
+
+  rpc GetChatScriptById(GetScriptByIdRequest) returns (GetScriptByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-script/{id}"
+    };
+  };
+
+  rpc InsertChatScript(PostChatScriptRequest) returns (PostChatScriptResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-script"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatScriptById(PutChatScriptRequest) returns (PutChatScriptResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-script/{id}"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatScriptStatusById(PutChatScriptStatusRequest) returns (PutChatScriptResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-script/status/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatScriptById(DeleteChatScriptRequest) returns (DeleteChatScriptResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-script/{id}"
+    };
+  };
+}

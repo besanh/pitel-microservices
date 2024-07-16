@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+
 	"github.com/pkg/errors"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
@@ -30,6 +31,7 @@ func NewChatScript() IChatScript {
 func (repo *ChatScript) GetChatScripts(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatScriptFilter, limit, offset int) (int, *[]model.ChatScriptView, error) {
 	result := new([]model.ChatScriptView)
 	query := db.GetDB().NewSelect().Model(result).
+		Relation("ConnectionApp").
 		Column("cst.*")
 	if len(filter.ScriptName) > 0 {
 		query.Where("? ILIKE ?", bun.Ident("cst.script_name"), "%"+filter.ScriptName+"%")
@@ -62,6 +64,7 @@ func (repo *ChatScript) GetChatScriptById(ctx context.Context, db sqlclient.ISql
 	result := new(model.ChatScriptView)
 	err := db.GetDB().NewSelect().
 		Model(result).
+		Relation("ConnectionApp").
 		Where("cst.id = ?", id).
 		Limit(1).
 		Scan(ctx)
