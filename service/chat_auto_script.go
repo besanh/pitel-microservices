@@ -28,6 +28,8 @@ type (
 	ChatAutoScript struct{}
 )
 
+var ChatAutoScriptService IChatAutoScript
+
 func NewChatAutoScript() IChatAutoScript {
 	return &ChatAutoScript{}
 }
