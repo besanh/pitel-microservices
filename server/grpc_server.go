@@ -22,6 +22,7 @@ import (
 	pbChatIntegrateSystem "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
 	pbChatMessageSample "github.com/tel4vn/fins-microservices/gen/proto/chat_message_sample"
 	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
+	pbChatScript "github.com/tel4vn/fins-microservices/gen/proto/chat_script"
 	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
 	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
 	pbChatVendor "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
@@ -73,6 +74,7 @@ func NewGRPCServer(port string) {
 	pbChatApp.RegisterChatAppServiceServer(grpcServer, grpcService.NewGRPCChatApp())
 	pbAssignConversation.RegisterAssignConversationServiceServer(grpcServer, grpcService.NewGRPCAssignConversation())
 	pbChatMessageSample.RegisterMessageSampleServiceServer(grpcServer, grpcService.NewGRPCChatMessageSample())
+	pbChatScript.RegisterChatScriptServiceServer(grpcServer, grpcService.NewGRPCChatScript())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -133,6 +135,7 @@ func NewGRPCServer(port string) {
 	httpServer := NewHTTPServer()
 	v1.APIChatVendorHandler = v1.NewChatVendor()
 	v1.APIChatMessageSampleHandler = v1.NewChatMessageSample()
+	v1.APIChatScript = v1.NewAPIChatScript()
 	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", func(c *gin.Context) {
 		switch {
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload") && c.Request.Method == "POST":
@@ -143,6 +146,10 @@ func NewGRPCServer(port string) {
 			v1.APIChatMessageSampleHandler.InsertChatMsgSample(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload/") && c.Request.Method == "PUT":
 			v1.APIChatMessageSampleHandler.HandlePutChatMessageSampleUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload") && c.Request.Method == "POST":
+			v1.APIChatScript.InsertChatScript(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/") && c.Request.Method == "PUT":
+			v1.APIChatScript.HandlePutChatScriptUpload(c)
 		default:
 			gin.WrapH(mux)(c)
 		}
