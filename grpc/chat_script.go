@@ -14,6 +14,7 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GRPCChatScript struct{}
@@ -77,16 +78,31 @@ func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChat
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	tmp := make([]*pb.ChatScriptData, 0)
-	if err = util.ParseAnyToAny(data, &tmp); err != nil {
-		log.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+	resultData := make([]*pb.ChatScriptData, 0)
+	if len(*data) > 0 {
+		for _, item := range *data {
+			var tmp pb.ChatScriptData
+			tmp.CreatedAt = &timestamppb.Timestamp{
+				Seconds: item.CreatedAt.Unix(),
+			}
+			tmp.UpdatedAt = &timestamppb.Timestamp{
+				Seconds: item.UpdatedAt.Unix(),
+			}
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				log.Error(err)
+				result := &pb.GetChatScriptsResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return result, nil
+			}
+		}
 	}
 
 	result := &pb.GetChatScriptsResponse{
 		Code:    "OK",
 		Message: "ok",
-		Data:    tmp,
+		Data:    resultData,
 		Total:   int32(total),
 		Limit:   limit,
 		Offset:  offset,
@@ -105,6 +121,12 @@ func (g *GRPCChatScript) GetChatScriptById(ctx context.Context, request *pb.GetS
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	tmp := &pb.ChatScriptData{}
+	tmp.CreatedAt = &timestamppb.Timestamp{
+		Seconds: data.CreatedAt.Unix(),
+	}
+	tmp.UpdatedAt = &timestamppb.Timestamp{
+		Seconds: data.UpdatedAt.Unix(),
+	}
 	if err = util.ParseAnyToAny(data, tmp); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
