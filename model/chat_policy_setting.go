@@ -2,7 +2,9 @@ package model
 
 import (
 	"errors"
+	"slices"
 
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
 )
 
@@ -27,6 +29,9 @@ func (c *ChatPolicyConfigRequest) Validate() error {
 	}
 	if c.ChatWindowTime < 0 {
 		return errors.New("chat_window_time must be greater than zero")
+	}
+	if !slices.Contains[[]string](variables.CONNECTION_TYPE, c.ConnectionType) {
+		return errors.New("connection type " + c.ConnectionType + " is not supported")
 	}
 	return nil
 }
