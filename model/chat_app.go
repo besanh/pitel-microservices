@@ -13,10 +13,11 @@ import (
  */
 type ChatApp struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_app,alias:ca"`
-	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
-	Status        string   `json:"status" bun:"status,notnull"`
-	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
+	bun.BaseModel           `bun:"table:chat_app,alias:ca"`
+	AppName                 string                    `json:"app_name" bun:"app_name,type:text,notnull"`
+	Status                  string                    `json:"status" bun:"status,notnull"`
+	InfoApp                 *InfoApp                  `json:"info_app" bun:"info_app,type:jsonb,notnull"`
+	ChatAppIntegrateSystems []*ChatAppIntegrateSystem `json:"chat_app_integrate_systems" bun:"rel:has-many,join:id=chat_app_id"`
 }
 
 type ChatAppRequest struct {

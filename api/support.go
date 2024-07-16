@@ -12,6 +12,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/middleware/auth"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 	"nhooyr.io/websocket"
@@ -199,4 +200,23 @@ func WriteTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn,
 		return fmt.Errorf("failed to write message: %w", err)
 	}
 	return nil
+}
+
+func AuthMiddlewareNew(c *gin.Context) (result *model.ChatResponse) {
+	if len(c.Query("token")) < 1 || len(c.Query("system-key")) < 1 {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	result = auth.ChatMiddleware(c, c.Query("token"), c.Query("system-key"))
+	if result == nil {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	return
 }

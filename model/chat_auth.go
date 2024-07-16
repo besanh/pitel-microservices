@@ -16,6 +16,8 @@ type AuthUser struct {
 	Extensions        auth.Extensions `json:"extensions"`
 	Groups            []string        `json:"groups"`
 	SystemId          string          `json:"system_id"`
+	ApiUrl            string          `json:"api_url"`
+	Server            string          `json:"server"`
 }
 
 type LoginRequest struct {

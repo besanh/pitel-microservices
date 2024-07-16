@@ -39,6 +39,7 @@ func InitRepositories() {
 	ChatPolicySettingRepo = NewChatPolicySetting()
 	VendorRepo = NewVendor()
 	ChatIntegrateSystemRepo = NewChatIntegrateSystem()
+	ChatAppIntegrateSystemRepo = NewChatAppIntegrateSystem()
 	ChatRoleRepo = NewChatRole()
 	ChatUserRepo = NewChatUser()
 	ChatTenantRepo = NewChatTenant()

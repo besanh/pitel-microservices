@@ -49,9 +49,11 @@ func ChatMiddleware(ctx context.Context, token, systemId string) (result *model.
 	integrateType = chatIntegrateSystem.InfoSystem.AuthType
 
 	bssAuthRequest := model.BssAuthRequest{
+		ApiUrl:        chatIntegrateSystem.InfoSystem.ApiUrl,
 		AuthUrl:       chatIntegrateSystem.InfoSystem.ApiAuthUrl,
 		Token:         token,
 		UserDetailUrl: chatIntegrateSystem.InfoSystem.ApiGetUserDetailUrl,
+		ServerName:    chatIntegrateSystem.InfoSystem.ServerName,
 	}
 
 	switch integrateType {
@@ -142,6 +144,9 @@ func CrmMiddleware(ctx context.Context, token, systemId string, bssAuthRequest m
 				Source:   bssAuthRequest.Source,
 				Token:    bssAuthRequest.Token,
 				Fullname: userInfo.FirstName + " " + userInfo.MiddleName + " " + userInfo.LastName,
+				ApiUrl:   bssAuthRequest.ApiUrl,
+				SystemId: systemId,
+				Server:   bssAuthRequest.ServerName,
 			},
 		}
 	} else {

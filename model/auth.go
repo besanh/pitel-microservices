@@ -8,8 +8,10 @@ type ChatResponse struct {
 
 type BssAuthRequest struct {
 	Token         string `json:"token"`
+	ApiUrl        string `json:"api_url"`
 	AuthUrl       string `json:"auth_url"`
 	UserDetailUrl string `json:"user_detail_url"`
 	Source        string `json:"source"`
 	UserId        string `json:"user_id"`
+	ServerName    string `json:"server_name"`
 }

@@ -63,16 +63,18 @@ var (
 
 	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
 
-	OTT_URL                       string        = ""
-	OTT_VERSION                   string        = ""
-	API_SHARE_INFO_HOST           string        = ""
-	API_DOC                       string        = ""
-	ENABLE_PUBLISH_ADMIN          bool          = false
-	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool          = false
-	ENABLE_CHAT_POLICY_SETTINGS   bool          = false
-	AAA_HOST                      string        = ""
-	CHAT_INTEGRATE_SYSTEM         string        = "chat_integrate_system"
-	CHAT_INTEGRATE_SYSTEM_EXPIRE  time.Duration = 1 * time.Hour
+	OTT_URL                          string        = ""
+	OTT_VERSION                      string        = ""
+	API_SHARE_INFO_HOST              string        = ""
+	API_DOC                          string        = ""
+	ENABLE_PUBLISH_ADMIN             bool          = false
+	ENABLE_CHAT_AUTO_SCRIPT_REPLY    bool          = false
+	ENABLE_CHAT_POLICY_SETTINGS      bool          = false
+	AAA_HOST                         string        = ""
+	CHAT_INTEGRATE_SYSTEM            string        = "chat_integrate_system"
+	CHAT_INTEGRATE_SYSTEM_EXPIRE     time.Duration = 1 * time.Hour
+	CHAT_APP_INTEGRATE_SYSTEM        string        = "chat_app_integrate_system"
+	CHAT_APP_INTEGRATE_SYSTEM_EXPIRE time.Duration = 1 * time.Hour
 
 	// Storage
 	S3_ENDPOINT    string = ""
@@ -132,6 +134,7 @@ type (
 		QueueId            string      `json:"queue_id"`      //use for allocate manager
 		ConnectionId       string      `json:"connection_id"` // use for allocate
 		RoleId             string      `json:"role_id"`
+		ApiUrl             string      `json:"api_url"`
 	}
 
 	Subscribers struct {

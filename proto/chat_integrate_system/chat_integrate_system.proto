@@ -17,6 +17,10 @@ message GetChatIntegrateSystemRequest {
     string vendor_name = 4;
     string status = 5;
     string system_id = 6;
+    string tenant_default_id = 7;
+    string chat_app_id = 8;
+    string server_name = 9;
+    string ip = 10;
 }
 
 // Response get chat integrate system
@@ -50,6 +54,8 @@ message InfoSystem {
     string websocket_url = 7;
     string api_get_user_url = 8;
     string api_get_user_detail_url = 9;
+    string server_name = 10;
+    string ip = 11;
 }
 
 message ChatAppIntegrateSystem {
@@ -95,6 +101,8 @@ message PostInfoSystem {
     string api_get_user_detail_url = 9;
     repeated string chat_app_ids = 10;
     repeated PostChatAppRequest chat_apps = 11;
+    string server_name = 12;
+    string ip = 13;
 }
 
 message PostChatAppRequest {
@@ -121,6 +129,8 @@ message PostChatIntegrateSystemRequest {
     repeated string chat_app_ids = 13;
     repeated ChatAppRequest chat_apps = 14;
     string tenant_default_id = 15;
+    string server_name = 16;
+    string ip = 17;
 }
 
 message ChatAppRequest {
@@ -183,6 +193,8 @@ message PutChatIntegrateSystemRequest {
     string api_get_user_detail_url = 13;
     repeated string chat_app_ids = 14;
     string tenant_default_id = 15;
+    string server_name = 16;
+    string ip = 17;
 }
 
 service ChatIntegrateSystem {
