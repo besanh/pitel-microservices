@@ -16,8 +16,8 @@ type Model interface {
 
 type Base struct {
 	Id        string    `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	CreatedAt time.Time `json:"created_at" bun:"created_at,notnull"`
-	UpdatedAt time.Time `json:"updated_at" bun:"updated_at,notnull"`
+	CreatedAt time.Time `bun:"created_at,notnull"`
+	UpdatedAt time.Time `bun:"updated_at,notnull"`
 }
 
 func (b *Base) GetId() string {

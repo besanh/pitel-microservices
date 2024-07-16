@@ -96,6 +96,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 							user.ConnectionQueueId = userAllocate.ConnectionQueueId
 
 							log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", conversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
+							userChan <- []model.User{user}
 						} else {
 							authInfo.TenantId = userAllocate.TenantId
 							authInfo.UserId = userAllocate.UserId
@@ -121,11 +122,11 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 							}
 
 							user.IsOk = true
-							log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
+							log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", conversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
 							userChan <- []model.User{user}
 						}
 					} else {
-						user, err := s.CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, false, nil, chatApp)
+						user, err := s.CheckAllSetting(ctx, conversationId, message, false, nil, chatApp)
 						if err != nil {
 							log.Error(err)
 							errChan <- err
@@ -133,7 +134,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 						}
 
 						filter := model.UserAllocateFilter{
-							ConversationId: GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId),
+							ConversationId: conversationId,
 							MainAllocate:   "deactive",
 						}
 						_, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
@@ -151,7 +152,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 							}
 						}
 
-						log.Infof("conversation %s allocated to username %s, id: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId)
+						log.Infof("conversation %s allocated to username %s, id: %s", conversationId, user.AuthUser.Fullname, user.AuthUser.UserId)
 						userChan <- []model.User{user}
 
 						// Set to cache
@@ -161,7 +162,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 							errChan <- err
 							return
 						}
-						if err = cache.RCache.HSetRaw(ctx, USER_ALLOCATE+"_"+item+"_"+conversationId, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), string(jsonByte)); err != nil {
+						if err = cache.RCache.HSetRaw(ctx, USER_ALLOCATE+"_"+item+"_"+conversationId, conversationId, string(jsonByte)); err != nil {
 							log.Error(err)
 							errChan <- err
 							return
@@ -169,7 +170,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 					}
 				}
 			} else {
-				user, err := s.CheckAllSetting(ctx, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, false, nil, chatApp)
+				user, err := s.CheckAllSetting(ctx, conversationId, message, false, nil, chatApp)
 				if err != nil {
 					log.Error(err)
 					errChan <- err
@@ -177,7 +178,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 				}
 
 				filter := model.UserAllocateFilter{
-					ConversationId: GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId),
+					ConversationId: conversationId,
 					MainAllocate:   "deactive",
 				}
 				_, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
@@ -195,14 +196,12 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 					}
 				}
 
-				log.Infof("conversation %s allocated to username %s, id: %s", GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), user.AuthUser.Fullname, user.AuthUser.UserId)
+				log.Infof("conversation %s allocated to username %s, id: %s", conversationId, user.AuthUser.Fullname, user.AuthUser.UserId)
 				userChan <- []model.User{user}
 				return
 			}
 		}
 	}
-
-	return
 }
 
 /**
