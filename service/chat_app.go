@@ -16,6 +16,7 @@ type (
 		GetChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (app model.ChatApp, err error)
 		UpdateChatAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatAppRequest) (err error)
 		DeleteChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
+		GetChatAppAssign(ctx context.Context, authUser *model.AuthUser) (result []*model.ChatApp, err error)
 	}
 	ChatApp struct {
 	}
@@ -147,4 +148,26 @@ func (s *ChatApp) DeleteChatAppById(ctx context.Context, authUser *model.AuthUse
 		return err
 	}
 	return nil
+}
+
+func (s *ChatApp) GetChatAppAssign(ctx context.Context, authUser *model.AuthUser) (result []*model.ChatApp, err error) {
+	filter := model.ChatIntegrateSystemFilter{
+		SystemId: authUser.SystemId,
+	}
+	_, chatIntegrateSystem, err := repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, filter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	if len(*chatIntegrateSystem) > 0 {
+		for _, item := range *chatIntegrateSystem {
+			if len(item.ChatAppIntegrateSystems) > 0 {
+				for _, item2 := range item.ChatAppIntegrateSystems {
+					result = append(result, item2.ChatApp)
+				}
+			}
+		}
+	}
+	return
 }

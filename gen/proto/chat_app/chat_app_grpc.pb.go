@@ -24,6 +24,7 @@ const (
 	ChatAppService_GetChatApps_FullMethodName       = "/proto.chatApp.ChatAppService/GetChatApps"
 	ChatAppService_UpdateChatAppById_FullMethodName = "/proto.chatApp.ChatAppService/UpdateChatAppById"
 	ChatAppService_DeleteChatAppById_FullMethodName = "/proto.chatApp.ChatAppService/DeleteChatAppById"
+	ChatAppService_GetChatAppAssign_FullMethodName  = "/proto.chatApp.ChatAppService/GetChatAppAssign"
 )
 
 // ChatAppServiceClient is the client API for ChatAppService service.
@@ -35,6 +36,7 @@ type ChatAppServiceClient interface {
 	GetChatApps(ctx context.Context, in *GetChatAppRequest, opts ...grpc.CallOption) (*GetChatAppResponse, error)
 	UpdateChatAppById(ctx context.Context, in *UpdateChatAppByIdRequest, opts ...grpc.CallOption) (*UpdateChatAppByIdResponse, error)
 	DeleteChatAppById(ctx context.Context, in *DeleteChatAppByIdRequest, opts ...grpc.CallOption) (*DeleteChatAppByIdResponse, error)
+	GetChatAppAssign(ctx context.Context, in *GetChatAppAssignRequest, opts ...grpc.CallOption) (*GetChatAppAssignResponse, error)
 }
 
 type chatAppServiceClient struct {
@@ -90,6 +92,15 @@ func (c *chatAppServiceClient) DeleteChatAppById(ctx context.Context, in *Delete
 	return out, nil
 }
 
+func (c *chatAppServiceClient) GetChatAppAssign(ctx context.Context, in *GetChatAppAssignRequest, opts ...grpc.CallOption) (*GetChatAppAssignResponse, error) {
+	out := new(GetChatAppAssignResponse)
+	err := c.cc.Invoke(ctx, ChatAppService_GetChatAppAssign_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatAppServiceServer is the server API for ChatAppService service.
 // All implementations should embed UnimplementedChatAppServiceServer
 // for forward compatibility
@@ -99,6 +110,7 @@ type ChatAppServiceServer interface {
 	GetChatApps(context.Context, *GetChatAppRequest) (*GetChatAppResponse, error)
 	UpdateChatAppById(context.Context, *UpdateChatAppByIdRequest) (*UpdateChatAppByIdResponse, error)
 	DeleteChatAppById(context.Context, *DeleteChatAppByIdRequest) (*DeleteChatAppByIdResponse, error)
+	GetChatAppAssign(context.Context, *GetChatAppAssignRequest) (*GetChatAppAssignResponse, error)
 }
 
 // UnimplementedChatAppServiceServer should be embedded to have forward compatible implementations.
@@ -119,6 +131,9 @@ func (UnimplementedChatAppServiceServer) UpdateChatAppById(context.Context, *Upd
 }
 func (UnimplementedChatAppServiceServer) DeleteChatAppById(context.Context, *DeleteChatAppByIdRequest) (*DeleteChatAppByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteChatAppById not implemented")
+}
+func (UnimplementedChatAppServiceServer) GetChatAppAssign(context.Context, *GetChatAppAssignRequest) (*GetChatAppAssignResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChatAppAssign not implemented")
 }
 
 // UnsafeChatAppServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -222,6 +237,24 @@ func _ChatAppService_DeleteChatAppById_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatAppService_GetChatAppAssign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChatAppAssignRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatAppServiceServer).GetChatAppAssign(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatAppService_GetChatAppAssign_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatAppServiceServer).GetChatAppAssign(ctx, req.(*GetChatAppAssignRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatAppService_ServiceDesc is the grpc.ServiceDesc for ChatAppService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -248,6 +281,10 @@ var ChatAppService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteChatAppById",
 			Handler:    _ChatAppService_DeleteChatAppById_Handler,
+		},
+		{
+			MethodName: "GetChatAppAssign",
+			Handler:    _ChatAppService_GetChatAppAssign_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -12,6 +12,7 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GRPCChatApp struct {
@@ -159,6 +160,45 @@ func (g *GRPCChatApp) DeleteChatAppById(ctx context.Context, req *pb.DeleteChatA
 	result = &pb.DeleteChatAppByIdResponse{
 		Code:    "OK",
 		Message: "ok",
+	}
+	return
+}
+
+func (g *GRPCChatApp) GetChatAppAssign(ctx context.Context, req *pb.GetChatAppAssignRequest) (result *pb.GetChatAppAssignResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	chatApps, err := service.ChatAppService.GetChatAppAssign(ctx, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	data := make([]*pb.ChatAppAssignData, 0)
+	if len(chatApps) > 0 {
+		for _, item := range chatApps {
+			var tmp pb.ChatAppAssignData
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				result = &pb.GetChatAppAssignResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return result, nil
+			}
+			tmp.CreatedAt = &timestamppb.Timestamp{
+				Seconds: item.CreatedAt.Unix(),
+			}
+			tmp.UpdatedAt = &timestamppb.Timestamp{
+				Seconds: item.UpdatedAt.Unix(),
+			}
+			data = append(data, &tmp)
+		}
+	}
+
+	result = &pb.GetChatAppAssignResponse{
+		Code:    "OK",
+		Message: "ok",
+		Data:    data,
 	}
 	return
 }

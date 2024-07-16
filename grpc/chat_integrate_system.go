@@ -61,12 +61,6 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 	if len(*chatIntegrateSystems) > 0 {
 		for _, item := range *chatIntegrateSystems {
 			var tmp pb.ChatIntegrateSystemData
-			tmp.CreatedAt = &timestamppb.Timestamp{
-				Seconds: item.CreatedAt.Unix(),
-			}
-			tmp.UpdatedAt = &timestamppb.Timestamp{
-				Seconds: item.UpdatedAt.Unix(),
-			}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				result = &pb.GetChatIntegrateSystemResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
@@ -74,7 +68,12 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 				}
 				return result, nil
 			}
-
+			tmp.CreatedAt = &timestamppb.Timestamp{
+				Seconds: item.CreatedAt.Unix(),
+			}
+			tmp.UpdatedAt = &timestamppb.Timestamp{
+				Seconds: item.UpdatedAt.Unix(),
+			}
 			data = append(data, &tmp)
 		}
 	}

@@ -118,8 +118,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	var user model.User
 	userChan := make(chan []model.User)
 	errChan := make(chan error)
-	done := make(chan struct{})
-	defer close(errChan)
+	done := make(chan bool)
+	// defer close(errChan)
 	go func(userChan <-chan []model.User) {
 		for _, item := range <-userChan {
 			user = item
@@ -321,6 +321,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					go handlePublishEvent(true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
 				}
 			}
+			done <- true
 
 			if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
 				if err = ExecutePlannedAutoScript(ctx, user, message, &conversation); err != nil {
@@ -329,7 +330,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					return
 				}
 			}
-			done <- struct{}{}
 		}
 	}(userChan)
 
