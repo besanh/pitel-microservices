@@ -118,6 +118,7 @@ func (s *ChatPolicySetting) UpdateChatPolicySettingById(ctx context.Context, aut
 	filter := model.ChatPolicyFilter{
 		TenantId:       authUser.TenantId,
 		ConnectionType: request.ConnectionType,
+		ExcludedIds:    []string{id},
 	}
 	total, _, err := repository.ChatPolicySettingRepo.GetChatPolicySettings(ctx, dbCon, filter, 1, 0)
 	if err != nil {
@@ -134,6 +135,7 @@ func (s *ChatPolicySetting) UpdateChatPolicySettingById(ctx context.Context, aut
 		log.Error(err)
 		return err
 	}
+	policySetting.ChatWindowTime = request.ChatWindowTime
 	policySetting.ConnectionType = request.ConnectionType
 	policySetting.UpdatedBy = authUser.UserId
 	if err = repository.ChatPolicySettingRepo.Update(ctx, dbCon, *policySetting); err != nil {

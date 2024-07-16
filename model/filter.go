@@ -181,8 +181,9 @@ type ChatAutoScriptFilter struct {
 }
 
 type ChatPolicyFilter struct {
-	TenantId       string `json:"tenant_id"`
-	ConnectionType string `json:"connection_type"`
+	TenantId       string   `json:"tenant_id"`
+	ConnectionType string   `json:"connection_type"`
+	ExcludedIds    []string `json:"excluded_id"`
 }
 
 type ChatIntegrateSystemFilter struct {
