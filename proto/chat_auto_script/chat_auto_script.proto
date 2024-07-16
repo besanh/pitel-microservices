@@ -46,7 +46,16 @@ message ChatLabelData {
   string id = 1;
   google.protobuf.Timestamp created_at = 2;
   google.protobuf.Timestamp updated_at = 3;
-
+  string tenant_id = 4;
+  string app_id = 5;
+  string oa_id = 6;
+  string label_name = 7;
+  string label_type = 8;
+  string external_label_id = 9;
+  string label_color = 10;
+  bool label_status = 11;
+  string created_by = 12;
+  string updated_by = 13;
 }
 
 message ChatLabelLinkDataType {
