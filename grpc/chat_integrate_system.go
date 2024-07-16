@@ -41,10 +41,12 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 		statusIntegrate.Bool = statusTmp
 	}
 	filter := model.ChatIntegrateSystemFilter{
-		SystemName: request.GetSystemName(),
-		VendorName: request.GetVendorName(),
-		Status:     statusIntegrate,
-		SystemId:   request.GetSystemId(),
+		SystemName:      request.GetSystemName(),
+		VendorName:      request.GetVendorName(),
+		Status:          statusIntegrate,
+		SystemId:        request.GetSystemId(),
+		ServerName:      request.GetServerName(),
+		TenantDefaultId: request.GetTenantDefaultId(),
 	}
 
 	total, chatIntegrateSystems, err := service.ChatIntegrateSystemService.GetChatIntegrateSystems(ctx, authUser, filter, limit, offset)
@@ -124,6 +126,7 @@ func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, r
 		ChatAppIds:          req.GetChatAppIds(),
 		ChatApps:            chatApps,
 		TenantDefaultId:     req.GetTenantDefaultId(),
+		ServerName:          req.GetServerName(),
 	}
 
 	if err := payload.Validate(); err != nil {
@@ -199,6 +202,7 @@ func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Cont
 		ApiGetUserDetailUrl: req.GetApiGetUserDetailUrl(),
 		TenantDefaultId:     req.GetTenantDefaultId(),
 		ChatAppIds:          req.GetChatAppIds(),
+		ServerName:          req.GetServerName(),
 	}
 
 	if err := payload.Validate(); err != nil {

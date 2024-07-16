@@ -54,6 +54,9 @@ func (repo *ChatIntegrateSystem) GetIntegrateSystems(ctx context.Context, db sql
 	if len(filter.TenantDefaultId) > 0 {
 		query.Where("tenant_default_id = ?", filter.TenantDefaultId)
 	}
+	if len(filter.ServerName) > 0 {
+		query.Where("info_system :: jsonb ->> 'server_name' = '?'", filter.ServerName)
+	}
 	query.Order("created_at DESC")
 	total, err = query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {

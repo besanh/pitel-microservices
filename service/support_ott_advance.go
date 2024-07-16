@@ -203,25 +203,28 @@ func GetProfile(ctx context.Context, appId, oaId, userId string) (result *model.
 	return
 }
 
-func CheckConfigAppCache(ctx context.Context, appId string) (isExist bool, err error) {
+func CheckConfigAppCache(ctx context.Context, appId string) (chatApp *model.ChatApp, err error) {
 	chatAppCache := cache.RCache.Get(CHAT_APP + "_" + appId)
 	if chatAppCache != nil {
-		isExist = true
+		if err := json.Unmarshal([]byte(chatAppCache.(string)), &chatApp); err != nil {
+			log.Error(err)
+			return chatApp, err
+		}
 	} else {
 		filter := model.ChatAppFilter{
 			AppId:  appId,
 			Status: "active",
 		}
-		total, chatApp, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
+		total, chatApps, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
-			return isExist, err
+			return chatApp, err
 		} else if total > 0 {
-			isExist = true
+			chatApp = &(*chatApps)[0]
 			if err = cache.RCache.Set(CHAT_APP+"_"+appId, chatApp, CHAT_APP_EXPIRE); err != nil {
-				return isExist, err
+				return chatApp, err
 			}
 		} else {
-			return isExist, fmt.Errorf("app %s not found", appId)
+			return chatApp, fmt.Errorf("app %s not found", appId)
 		}
 	}
 	return
