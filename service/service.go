@@ -68,6 +68,7 @@ var (
 	API_DOC                       string        = ""
 	ENABLE_PUBLISH_ADMIN          bool          = false
 	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool          = false
+	ENABLE_CHAT_POLICY_SETTINGS   bool          = false
 	AAA_HOST                      string        = ""
 	CHAT_INTEGRATE_SYSTEM         string        = "chat_integrate_system"
 	CHAT_INTEGRATE_SYSTEM_EXPIRE  time.Duration = 1 * time.Hour
