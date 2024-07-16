@@ -117,6 +117,7 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	chatScript.ScriptName = chatScriptRequest.ScriptName
 	chatScript.CreatedBy = authUser.UserId
 	chatScript.Channel = chatScriptRequest.Channel
+	chatScript.ChatAppId = chatScriptRequest.ChatAppId
 	chatScript.CreatedAt = time.Now()
 
 	err = repository.ChatScriptRepo.Insert(ctx, dbCon, chatScript)
@@ -199,6 +200,7 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 	}
 	chatScript.ScriptType = chatScriptRequest.ScriptType
 	chatScript.Channel = chatScriptRequest.Channel
+	chatScript.ChatAppId = chatScriptRequest.ChatAppId
 	chatScript.UpdatedBy = authUser.UserId
 	chatScript.UpdatedAt = time.Now()
 	err = repository.ChatScriptRepo.Update(ctx, dbCon, *chatScript)
