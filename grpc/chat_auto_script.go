@@ -8,7 +8,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
-	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_script"
+	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_auto_script"
 	"github.com/tel4vn/fins-microservices/middleware/auth"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
@@ -17,19 +17,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type GRPCChatScript struct{}
+type GRPCChatAutoScript struct{}
 
-func NewGRPCChatScript() pb.ChatScriptServiceServer {
-	return &GRPCChatScript{}
+func NewGRPCChatAutoScript() pb.ChatAutoScriptServiceServer {
+	return &GRPCChatAutoScript{}
 }
 
-func (g *GRPCChatScript) InsertChatScript(ctx context.Context, request *pb.PostChatScriptRequest) (*pb.PostChatScriptResponse, error) {
+func (g *GRPCChatAutoScript) InsertChatAutoScript(ctx context.Context, request *pb.PostChatAutoScriptRequest) (*pb.PostChatAutoScriptResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.ChatScriptRequest{}
+	payload := model.ChatAutoScriptRequest{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -40,12 +40,12 @@ func (g *GRPCChatScript) InsertChatScript(ctx context.Context, request *pb.PostC
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	id, err := service.ChatScriptService.InsertChatScript(ctx, user, payload, nil)
+	id, err := service.ChatAutoScriptService.InsertChatAutoScript(ctx, user, payload)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.PostChatScriptResponse{
+	result := &pb.PostChatAutoScriptResponse{
 		Code:    "OK",
 		Message: "ok",
 		Id:      id,
@@ -53,13 +53,13 @@ func (g *GRPCChatScript) InsertChatScript(ctx context.Context, request *pb.PostC
 	return result, nil
 }
 
-func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChatScriptsRequest) (*pb.GetChatScriptsResponse, error) {
+func (g *GRPCChatAutoScript) GetChatAutoScripts(ctx context.Context, request *pb.GetChatAutoScriptsRequest) (*pb.GetChatAutoScriptsResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.ChatScriptFilter{}
+	payload := model.ChatAutoScriptFilter{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -74,14 +74,14 @@ func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChat
 	}
 	payload.Status = scriptStatus
 
-	total, data, err := service.ChatScriptService.GetChatScripts(ctx, user, payload, int(limit), int(offset))
+	total, data, err := service.ChatAutoScriptService.GetChatAutoScripts(ctx, user, payload, int(limit), int(offset))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	resultData := make([]*pb.ChatScriptData, 0)
+	resultData := make([]*pb.ChatAutoScriptData, 0)
 	if len(*data) > 0 {
 		for _, item := range *data {
-			var tmp pb.ChatScriptData
+			var tmp pb.ChatAutoScriptData
 			tmp.CreatedAt = &timestamppb.Timestamp{
 				Seconds: item.CreatedAt.Unix(),
 			}
@@ -90,7 +90,7 @@ func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChat
 			}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
-				result := &pb.GetChatScriptsResponse{
+				result := &pb.GetChatAutoScriptsResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 					Message: err.Error(),
 				}
@@ -100,7 +100,7 @@ func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChat
 		}
 	}
 
-	result := &pb.GetChatScriptsResponse{
+	result := &pb.GetChatAutoScriptsResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    resultData,
@@ -111,17 +111,17 @@ func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChat
 	return result, nil
 }
 
-func (g *GRPCChatScript) GetChatScriptById(ctx context.Context, request *pb.GetScriptByIdRequest) (*pb.GetScriptByIdResponse, error) {
+func (g *GRPCChatAutoScript) GetChatAutoScriptById(ctx context.Context, request *pb.GetAutoScriptByIdRequest) (*pb.GetAutoScriptByIdResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	data, err := service.ChatScriptService.GetChatScriptById(ctx, user, request.GetId())
+	data, err := service.ChatAutoScriptService.GetChatAutoScriptById(ctx, user, request.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	tmp := &pb.ChatScriptData{}
+	tmp := &pb.ChatAutoScriptData{}
 	tmp.CreatedAt = &timestamppb.Timestamp{
 		Seconds: data.CreatedAt.Unix(),
 	}
@@ -133,7 +133,7 @@ func (g *GRPCChatScript) GetChatScriptById(ctx context.Context, request *pb.GetS
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.GetScriptByIdResponse{
+	result := &pb.GetAutoScriptByIdResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    tmp,
@@ -141,13 +141,13 @@ func (g *GRPCChatScript) GetChatScriptById(ctx context.Context, request *pb.GetS
 	return result, nil
 }
 
-func (g *GRPCChatScript) UpdateChatScriptById(ctx context.Context, request *pb.PutChatScriptRequest) (*pb.PutChatScriptResponse, error) {
+func (g *GRPCChatAutoScript) UpdateChatAutoScriptById(ctx context.Context, request *pb.PutChatAutoScriptRequest) (*pb.PutChatAutoScriptResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.ChatScriptRequest{}
+	payload := model.ChatAutoScriptRequest{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -158,19 +158,19 @@ func (g *GRPCChatScript) UpdateChatScriptById(ctx context.Context, request *pb.P
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	err := service.ChatScriptService.UpdateChatScriptById(ctx, user, request.GetId(), payload, nil)
+	err := service.ChatAutoScriptService.UpdateChatAutoScriptById(ctx, user, request.GetId(), payload)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.PutChatScriptResponse{
+	result := &pb.PutChatAutoScriptResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
 	return result, nil
 }
 
-func (g *GRPCChatScript) UpdateChatScriptStatusById(ctx context.Context, request *pb.PutChatScriptStatusRequest) (*pb.PutChatScriptResponse, error) {
+func (g *GRPCChatAutoScript) UpdateChatAutoScriptStatusById(ctx context.Context, request *pb.PutChatAutoScriptStatusRequest) (*pb.PutChatAutoScriptResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -183,30 +183,30 @@ func (g *GRPCChatScript) UpdateChatScriptStatusById(ctx context.Context, request
 		scriptStatus.Valid = true
 		scriptStatus.Bool = tmp
 	}
-	err := service.ChatScriptService.UpdateChatScriptStatusById(ctx, user, request.GetId(), scriptStatus)
+	err := service.ChatAutoScriptService.UpdateChatAutoScriptStatusById(ctx, user, request.GetId(), scriptStatus)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.PutChatScriptResponse{
+	result := &pb.PutChatAutoScriptResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
 	return result, nil
 }
 
-func (g *GRPCChatScript) DeleteChatScriptById(ctx context.Context, request *pb.DeleteChatScriptRequest) (*pb.DeleteChatScriptResponse, error) {
+func (g *GRPCChatAutoScript) DeleteChatAutoScriptById(ctx context.Context, request *pb.DeleteChatAutoScriptRequest) (*pb.DeleteChatAutoScriptResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	err := service.ChatScriptService.DeleteChatScriptById(ctx, user, request.GetId())
+	err := service.ChatAutoScriptService.DeleteChatAutoScriptById(ctx, user, request.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.DeleteChatScriptResponse{
+	result := &pb.DeleteChatAutoScriptResponse{
 		Code:    "OK",
 		Message: "ok",
 	}

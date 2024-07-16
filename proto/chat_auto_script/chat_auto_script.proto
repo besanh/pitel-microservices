@@ -1,0 +1,264 @@
+syntax = "proto3";
+
+package proto.chatAutoScript;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatAutoScriptData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string script_name = 5;
+  string status = 6;
+  string connection_id = 7;
+  ChatConnectionAppData connection_app = 8;
+  string channel = 9;
+  string created_by = 11;
+  string updated_by = 12;
+  string trigger_event = 13;
+  TriggerKeywordsDataType trigger_keywords = 14;
+  repeated ChatScriptLinkDataType chat_script_link = 15;
+  SendMessageDataType send_message_actions = 16;
+  repeated ChatLabelLinkDataType chat_label_link = 17;
+  AutoScriptMergedActions action_script = 18;
+}
+
+message AutoScriptMergedActions {
+  repeated ActionScriptActionType actions = 1;
+}
+
+message ActionScriptActionType {
+  string type = 1;
+  string chat_script_id = 2;
+  string content = 3;
+  int32 order = 4;
+  repeated string add_labels = 5;
+  repeated string remove_labels = 6;
+}
+
+message ChatLabelData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string app_id = 5;
+  string oa_id = 6;
+  string label_name = 7;
+  string label_type = 8;
+  string external_label_id = 9;
+  string label_color = 10;
+  bool label_status = 11;
+  string created_by = 12;
+  string updated_by = 13;
+}
+
+message ChatLabelLinkDataType {
+  string chat_auto_script_id = 1;
+  string chat_label_id = 2;
+  string action_type = 3;
+  int32 order = 4;
+  ChatAutoScriptData chat_auto_script = 5;
+  ChatLabelData chat_label = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message AutoScriptSendMessageType {
+  string content = 1;
+  int32 order = 2;
+}
+
+message SendMessageDataType {
+    repeated AutoScriptSendMessageType actions = 1;
+}
+
+message ChatScriptData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string script_name = 5;
+  string status = 6;
+  string script_type = 7;
+  string file_url = 8;
+  string channel = 9;
+  string content = 10;
+  string created_by = 11;
+  string updated_by = 12;
+  string other_script_id = 13;
+  string connection_id = 14;
+  ChatConnectionAppData connection_app = 15;
+}
+
+message ChatScriptLinkDataType {
+  string chat_auto_script_id = 1;
+  string chat_script_id = 2;
+  int32 order = 3;
+  ChatAutoScriptData chat_auto_script = 4;
+  ChatScriptData chat_script = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message TriggerKeywordsDataType {
+  repeated string keywords = 1;
+}
+
+message ChatConnectionAppData {
+  string id = 1;
+  string tenant_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string connection_name = 5;
+  string connection_type = 6;
+  string app_id = 7;
+  string status = 8;
+  string connection_queue_id = 9;
+  OaInfo oa_info = 10;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string status = 4;
+  int64 created_timestamp = 5;
+  int64 updated_timestamp = 6;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string status = 4;
+  int64 created_timestamp = 5;
+  int64 updated_timestamp = 6;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+// get chat auto scripts
+message GetChatAutoScriptsRequest {
+  string status = 1;
+  string script_name = 2;
+  string channel = 3;
+  string oa_id = 4;
+  string trigger_event = 5;
+  int32 limit = 6;
+  int32 offset = 7;
+}
+
+message GetChatAutoScriptsResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatAutoScriptData data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get auto script by id
+message GetAutoScriptByIdRequest { string id = 1; }
+
+message GetAutoScriptByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatAutoScriptData data = 3;
+}
+
+// create auto script
+message PostChatAutoScriptRequest {
+  string script_name = 1;
+  string channel = 4;
+  string connection_id = 3;
+  string status = 2;
+  string trigger_event = 5;
+  TriggerKeywordsDataType trigger_keywords = 6;
+  AutoScriptMergedActions action_script = 7;
+}
+
+message PostChatAutoScriptResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update script by id
+message PutChatAutoScriptRequest {
+  string id = 1;
+  string script_name = 2;
+  string status = 3;
+  string connection_id = 4;
+  string channel = 5;
+  string trigger_event = 6;
+  TriggerKeywordsDataType trigger_keywords = 7;
+  AutoScriptMergedActions action_script = 8;
+}
+
+message PutChatAutoScriptResponse {
+  string code = 1;
+  string message = 2;
+}
+
+//update script status by id
+message PutChatAutoScriptStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+// delete script by id
+message DeleteChatAutoScriptRequest { string id = 1; }
+
+message DeleteChatAutoScriptResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatAutoScriptService {
+  rpc GetChatAutoScripts(GetChatAutoScriptsRequest) returns (GetChatAutoScriptsResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-auto-script"
+    };
+  };
+
+  rpc GetChatAutoScriptById(GetAutoScriptByIdRequest) returns (GetAutoScriptByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-auto-script/{id}"
+    };
+  };
+
+  rpc InsertChatAutoScript(PostChatAutoScriptRequest) returns (PostChatAutoScriptResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-auto-script"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatAutoScriptById(PutChatAutoScriptRequest) returns (PutChatAutoScriptResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-auto-script/{id}"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatAutoScriptStatusById(PutChatAutoScriptStatusRequest) returns (PutChatAutoScriptResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-auto-script/status/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatAutoScriptById(DeleteChatAutoScriptRequest) returns (DeleteChatAutoScriptResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-auto-script/{id}"
+    };
+  };
+}
