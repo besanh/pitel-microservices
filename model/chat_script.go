@@ -12,18 +12,18 @@ import (
 type ChatScript struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_script,alias:cst"`
-	TenantId      string   `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	ScriptName    string   `json:"script_name" bun:"script_name,type:text,notnull"`
-	Channel       string   `json:"channel" bun:"channel,type:text,notnull"`
-	CreatedBy     string   `json:"created_by" bun:"created_by,type:uuid,notnull"`
-	UpdatedBy     string   `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
-	Status        bool     `json:"status" bun:"status,type:boolean,notnull"`
-	ScriptType    string   `json:"script_type" bun:"script_type,type:text,notnull"`
-	Content       string   `json:"content" bun:"content,type:text"`   // text script
-	FileUrl       string   `json:"file_url" bun:"file_url,type:text"` // file script
-	OtherScriptId string   `json:"other_script_id" bun:"other_script_id,type:text"`
-	ChatAppId     string   `json:"chat_app_id" bun:"chat_app_id,type:uuid,notnull"`
-	ChatApp       *ChatApp `json:"chat_app" bun:"rel:belongs-to,join:chat_app_id=id"`
+	TenantId      string             `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
+	ScriptName    string             `json:"script_name" bun:"script_name,type:text,notnull"`
+	Channel       string             `json:"channel" bun:"channel,type:text,notnull"`
+	CreatedBy     string             `json:"created_by" bun:"created_by,type:uuid,notnull"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by,type:uuid,default:null"`
+	Status        bool               `json:"status" bun:"status,type:boolean,notnull"`
+	ScriptType    string             `json:"script_type" bun:"script_type,type:text,notnull"`
+	Content       string             `json:"content" bun:"content,type:text"`   // text script
+	FileUrl       string             `json:"file_url" bun:"file_url,type:text"` // file script
+	OtherScriptId string             `json:"other_script_id" bun:"other_script_id,type:text"`
+	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
 }
 
 type ChatScriptRequest struct {
@@ -34,7 +34,7 @@ type ChatScriptRequest struct {
 	Content       string                `form:"content"`
 	File          *multipart.FileHeader `form:"file"`
 	OtherScriptId string                `form:"other_script_id"`
-	ChatAppId     string                `json:"chat_app_id" form:"chat_app_id" binding:"required"`
+	ConnectionId  string                `json:"chat_app_id" form:"chat_app_id" binding:"required"`
 }
 
 type ChatScriptStatusRequest struct {
@@ -44,18 +44,18 @@ type ChatScriptStatusRequest struct {
 type ChatScriptView struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_script,alias:cst"`
-	TenantId      string   `json:"tenant_id" bun:"tenant_id"`
-	ScriptName    string   `json:"script_name" bun:"script_name"`
-	Channel       string   `json:"channel" bun:"channel"`
-	CreatedBy     string   `json:"created_by" bun:"created_by"`
-	UpdatedBy     string   `json:"updated_by" bun:"updated_by"`
-	Status        bool     `json:"status" bun:"status"`
-	ScriptType    string   `json:"script_type" bun:"script_type"`
-	Content       string   `json:"content" bun:"content"`   // text script
-	FileUrl       string   `json:"file_url" bun:"file_url"` // file script
-	OtherScriptId string   `json:"other_script_id" bun:"other_script_id"`
-	ChatAppId     string   `json:"chat_app_id" bun:"chat_app_id,type:uuid,notnull"`
-	ChatApp       *ChatApp `json:"chat_app" bun:"rel:belongs-to,join:chat_app_id=id"`
+	TenantId      string             `json:"tenant_id" bun:"tenant_id"`
+	ScriptName    string             `json:"script_name" bun:"script_name"`
+	Channel       string             `json:"channel" bun:"channel"`
+	CreatedBy     string             `json:"created_by" bun:"created_by"`
+	UpdatedBy     string             `json:"updated_by" bun:"updated_by"`
+	Status        bool               `json:"status" bun:"status"`
+	ScriptType    string             `json:"script_type" bun:"script_type"`
+	Content       string             `json:"content" bun:"content"`   // text script
+	FileUrl       string             `json:"file_url" bun:"file_url"` // file script
+	OtherScriptId string             `json:"other_script_id" bun:"other_script_id"`
+	ConnectionId  string             `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	ConnectionApp *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
 }
 
 func (r *ChatScriptRequest) Validate() error {
@@ -71,7 +71,7 @@ func (r *ChatScriptRequest) Validate() error {
 	if !slices.Contains[[]string](variables.CHAT_SCRIPT_TYPE, r.ScriptType) {
 		return errors.New("script type " + r.ScriptType + " is not supported")
 	}
-	if len(r.ChatAppId) < 1 {
+	if len(r.ConnectionId) < 1 {
 		return errors.New("connection id is required")
 	}
 
