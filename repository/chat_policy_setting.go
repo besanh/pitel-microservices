@@ -7,6 +7,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type (
@@ -35,6 +36,9 @@ func (c ChatPolicySetting) GetChatPolicySettings(ctx context.Context, db sqlclie
 	}
 	if len(filter.ConnectionType) > 0 {
 		query.Where("cps.connection_type = ?", filter.ConnectionType)
+	}
+	if len(filter.ExcludedIds) > 0 {
+		query.Where("cps.id NOT IN (?)", bun.In(filter.ExcludedIds))
 	}
 
 	if limit > 0 {
