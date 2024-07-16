@@ -20,6 +20,7 @@ import (
 	pbChatApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
 	pbChatAuth "github.com/tel4vn/fins-microservices/gen/proto/chat_auth"
 	pbChatAutoScript "github.com/tel4vn/fins-microservices/gen/proto/chat_auto_script"
+	pbChatEmail "github.com/tel4vn/fins-microservices/gen/proto/chat_email"
 	pbChatIntegrateSystem "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
 	pbChatMessageSample "github.com/tel4vn/fins-microservices/gen/proto/chat_message_sample"
 	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
@@ -77,6 +78,7 @@ func NewGRPCServer(port string) {
 	pbChatMessageSample.RegisterMessageSampleServiceServer(grpcServer, grpcService.NewGRPCChatMessageSample())
 	pbChatScript.RegisterChatScriptServiceServer(grpcServer, grpcService.NewGRPCChatScript())
 	pbChatAutoScript.RegisterChatAutoScriptServiceServer(grpcServer, grpcService.NewGRPCChatAutoScript())
+	pbChatEmail.RegisterChatEmailServiceServer(grpcServer, grpcService.NewGRPCChatEmail())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -136,6 +138,9 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err := pbChatAutoScript.RegisterChatAutoScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbChatEmail.RegisterChatEmailServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 
