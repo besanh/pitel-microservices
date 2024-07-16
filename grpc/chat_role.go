@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
 	"github.com/tel4vn/fins-microservices/middleware/auth"
@@ -43,6 +44,7 @@ func (g *GRPCChatRole) PostChatRole(ctx context.Context, request *pb.PostChatRol
 	}
 
 	if err := payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 

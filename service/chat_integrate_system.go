@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
-	"time"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -47,6 +47,22 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 		}
 
 		chatIntegrateSystem.TenantDefaultId = chatTenant.Base.GetId()
+	} else {
+		// Check tenant exist in system
+		filter := model.ChatIntegrateSystemFilter{
+			TenantDefaultId: data.TenantDefaultId,
+		}
+		_, chatIntegrateSystems, errTmp := repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, filter, 1, 0)
+		if errTmp != nil {
+			err = errTmp
+			log.Error(err)
+			return
+		} else if len(*chatIntegrateSystems) > 0 {
+			log.Error("tenant " + data.TenantDefaultId + " already exist in system")
+			err = errors.New("tenant " + data.TenantDefaultId + " already exist in system")
+			return
+		}
+		chatIntegrateSystem.TenantDefaultId = data.TenantDefaultId
 	}
 
 	_, err = repository.VendorRepo.GetById(ctx, repository.DBConn, data.VendorId)
@@ -64,24 +80,50 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 	chatIntegrateSystem.VendorId = data.VendorId
 	chatIntegrateSystem.Status = data.Status
 	chatIntegrateSystem.InfoSystem = &model.InfoSystem{
-		AuthType:      data.AuthType,
-		Username:      data.Username,
-		Password:      data.Password,
-		Token:         data.Token,
-		WebsocketUrl:  data.WebsocketUrl,
-		ApiUrl:        data.ApiUrl,
-		ApiGetUserUrl: data.ApiGetUserUrl,
-	}
-	chatApps := make([]model.ChatAppIntegrateSystem, 0)
-	for _, chatAppId := range data.ChatApps {
-		chatApps = append(chatApps, model.ChatAppIntegrateSystem{
-			ChatAppId:             chatAppId,
-			ChatIntegrateSystemId: systemId,
-			CreatedAt:             time.Now(),
-		})
+		AuthType:            data.AuthType,
+		Username:            data.Username,
+		Password:            data.Password,
+		Token:               data.Token,
+		WebsocketUrl:        data.WebsocketUrl,
+		ApiUrl:              data.ApiUrl,
+		ApiGetUserUrl:       data.ApiGetUserUrl,
+		ApiAuthUrl:          data.ApiAuthUrl,
+		ApiGetUserDetailUrl: data.ApiGetUserDetailUrl,
 	}
 
-	if err = repository.ChatIntegrateSystemRepo.InsertIntegrateSystem(ctx, repository.DBConn, chatIntegrateSystem, chatApps); err != nil {
+	chatAppIntegrateSystems := make([]model.ChatAppIntegrateSystem, 0)
+	chatApps := []model.ChatApp{}
+	if len(data.ChatAppIds) > 0 {
+		for _, item := range data.ChatAppIds {
+			chatAppExist, err := repository.ChatAppRepo.GetById(ctx, repository.DBConn, item)
+			if err != nil {
+				log.Error(err)
+				continue
+			} else if chatAppExist != nil {
+				chatAppIntegrateSystems = append(chatAppIntegrateSystems, model.ChatAppIntegrateSystem{
+					Base:                  model.InitBase(),
+					ChatAppId:             item,
+					ChatIntegrateSystemId: systemId,
+				})
+			}
+		}
+	} else if len(data.ChatApps) > 0 {
+		for _, item := range data.ChatApps {
+			chatApp := model.ChatApp{
+				Base:    model.InitBase(),
+				Status:  "active",
+				AppName: item.AppName,
+				InfoApp: item.InfoApp,
+			}
+			chatApps = append(chatApps, chatApp)
+			chatAppIntegrateSystems = append(chatAppIntegrateSystems, model.ChatAppIntegrateSystem{
+				ChatAppId:             chatApp.GetId(),
+				ChatIntegrateSystemId: systemId,
+			})
+		}
+	}
+
+	if err = repository.ChatIntegrateSystemRepo.InsertIntegrateSystemTransaction(ctx, repository.DBConn, chatApps, chatIntegrateSystem, chatAppIntegrateSystems); err != nil {
 		log.Error(err)
 		if err = repository.ChatTenantRepo.Delete(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); err != nil {
 			log.Error(err)
@@ -115,40 +157,68 @@ func (s *ChatIntegrateSystem) GetChatIntegrateSystemById(ctx context.Context, au
 	return
 }
 
-func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string, data *model.ChatIntegrateSystemRequest) error {
+func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, authUser *model.AuthUser, id string, data *model.ChatIntegrateSystemRequest) (err error) {
 	chatIntegrateSystemExist, err := repository.ChatIntegrateSystemRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	} else if chatIntegrateSystemExist == nil {
 		log.Error(err)
-		return err
+		return
 	}
+
+	// Check tenant exist in system
+	filter := model.ChatIntegrateSystemFilter{
+		TenantDefaultId: data.TenantDefaultId,
+	}
+	_, chatIntegrateSystems, err := repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	} else if len(*chatIntegrateSystems) > 1 {
+		log.Error("tenant " + data.TenantDefaultId + " already exist in system")
+		err = errors.New("tenant " + data.TenantDefaultId + " already exist in system")
+		return
+	}
+
+	chatIntegrateSystemExist.TenantDefaultId = data.TenantDefaultId
 	chatIntegrateSystemExist.SystemName = data.SystemName
 	chatIntegrateSystemExist.VendorId = data.VendorId
 	chatIntegrateSystemExist.Status = data.Status
 	chatIntegrateSystemExist.InfoSystem = &model.InfoSystem{
-		AuthType:      data.AuthType,
-		Username:      data.Username,
-		Password:      data.Password,
-		Token:         data.Token,
-		WebsocketUrl:  data.WebsocketUrl,
-		ApiUrl:        data.ApiUrl,
-		ApiGetUserUrl: data.ApiGetUserUrl,
+		AuthType:            data.AuthType,
+		Username:            data.Username,
+		Password:            data.Password,
+		Token:               data.Token,
+		WebsocketUrl:        data.WebsocketUrl,
+		ApiUrl:              data.ApiUrl,
+		ApiAuthUrl:          data.ApiAuthUrl,
+		ApiGetUserUrl:       data.ApiGetUserUrl,
+		ApiGetUserDetailUrl: data.ApiGetUserDetailUrl,
 	}
-	chatApps := make([]model.ChatAppIntegrateSystem, 0)
-	for _, chatAppId := range data.ChatApps {
-		chatApps = append(chatApps, model.ChatAppIntegrateSystem{
-			ChatAppId:             chatAppId,
-			ChatIntegrateSystemId: chatIntegrateSystemExist.SystemId,
-			CreatedAt:             time.Now(),
-		})
+	chatAppIntegrateSystems := make([]model.ChatAppIntegrateSystem, 0)
+	if len(data.ChatAppIds) > 0 {
+		for _, item := range data.ChatAppIds {
+			chatAppExist, err := repository.ChatAppRepo.GetById(ctx, repository.DBConn, item)
+			if err != nil {
+				log.Error(err)
+				continue
+			} else if chatAppExist != nil {
+				chatAppIntegrateSystems = append(chatAppIntegrateSystems, model.ChatAppIntegrateSystem{
+					Base:                  model.InitBase(),
+					ChatAppId:             item,
+					ChatIntegrateSystemId: chatIntegrateSystemExist.GetId(),
+				})
+			}
+		}
 	}
-	err = repository.ChatIntegrateSystemRepo.UpdateIntegrateSystemById(ctx, repository.DBConn, *chatIntegrateSystemExist, chatApps)
+
+	err = repository.ChatIntegrateSystemRepo.UpdateIntegrateSystemTransaction(ctx, repository.DBConn, *chatIntegrateSystemExist, chatAppIntegrateSystems)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	}
+
 	return nil
 }
 

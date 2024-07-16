@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
 	"github.com/tel4vn/fins-microservices/middleware/auth"
@@ -27,6 +28,7 @@ func (g *GRPCChatUser) PostChatUser(ctx context.Context, request *pb.PostChatUse
 	}
 
 	if (user.GetLevel() != "admin" || user.GetLevel() != "superadmin") && len(user.SecretKey) < 1 {
+		log.Error("user level ", user.GetLevel(), " is not admin or superadmin")
 		return nil, status.Errorf(codes.PermissionDenied, response.ERR_PERMISSION_DENIED)
 	}
 
@@ -40,6 +42,7 @@ func (g *GRPCChatUser) PostChatUser(ctx context.Context, request *pb.PostChatUse
 		Status:   request.GetStatus(),
 	}
 	if err := payload.Validate(); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 

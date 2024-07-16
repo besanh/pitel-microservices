@@ -67,7 +67,6 @@ func ChatMiddleware(ctx context.Context, token, systemId string) (result *model.
 }
 
 func CrmMiddleware(ctx context.Context, token, systemId string, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse, err error) {
-
 	// Get Info user
 	clientInfo := resty.New()
 	urlInfo := bssAuthRequest.AuthUrl
