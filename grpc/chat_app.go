@@ -124,7 +124,7 @@ func (g *GRPCChatApp) UpdateChatAppById(ctx context.Context, req *pb.UpdateChatA
 	}
 
 	payload := model.ChatAppRequest{}
-	if err = util.ParseAnyToAny(req.Data, &payload); err != nil {
+	if err := util.ParseAnyToAny(req, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}

@@ -50,7 +50,7 @@ func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
 			}
 			userTmp := ChatMiddleware(ctx, token, user.SystemId)
 			if userTmp == nil {
-				return nil, status.Errorf(codes.Unauthenticated, ERR_TOKEN_IS_INVALID)
+				return nil, status.Errorf(codes.Unauthenticated, ERR_TOKEN_OR_SYSTEM_KEY_IS_INVALID)
 			}
 			authInfo = NewGoAuthUser(userTmp.Data.UserId, userTmp.Data.Username, userTmp.Data.TenantId, userTmp.Data.RoleId, userTmp.Data.Level, user.SystemId, user.SecretKey)
 		} else if len(user.Token) > 0 {
