@@ -2,22 +2,21 @@ package model
 
 import (
 	"errors"
-	"strconv"
 )
 
 type AttachConnectionQueueToConnectionAppRequest struct {
-	IsAttachingApp      string                             `json:"is_attaching_app"`
-	ConnectionId        string                             `json:"connection_id"`
-	ConnectionQueueId   string                             `json:"connection_queue_id"` // for selecting an existed queue
-	ChatQueue           PipelineChatQueueRequest           `json:"chat_queue"`
-	ChatQueueUser       PipelineChatQueueUserRequest       `json:"chat_queue_user"`
-	ChatManageQueueUser PipelineChatManageQueueUserRequest `json:"chat_manage_queue_user"`
+	IsAttachingAppString string                             `json:"is_attaching_app"`
+	IsAttachingApp       bool                               `json:"-"`
+	ConnectionId         string                             `json:"connection_id"`
+	ConnectionQueueId    string                             `json:"connection_queue_id"` // for selecting an existed queue
+	ChatQueue            PipelineChatQueueRequest           `json:"chat_queue"`
+	ChatQueueUser        PipelineChatQueueUserRequest       `json:"chat_queue_user"`
+	ChatManageQueueUser  PipelineChatManageQueueUserRequest `json:"chat_manage_queue_user"`
 }
 
 type PipelineChatManageQueueUserRequest struct {
-	ConnectionId string `json:"connection_id"`
-	UserId       string `json:"user_id"`
-	IsNew        bool   `json:"is_new"`
+	UserId string `json:"user_id"`
+	IsNew  bool   `json:"is_new"`
 }
 
 type PipelineChatQueueRequest struct {
@@ -33,8 +32,7 @@ type PipelineChatQueueUserRequest struct {
 }
 
 func (r *AttachConnectionQueueToConnectionAppRequest) Validate() error {
-	tmp, _ := strconv.ParseBool(r.IsAttachingApp)
-	if tmp && len(r.ConnectionId) < 1 {
+	if r.IsAttachingApp && len(r.ConnectionId) < 1 {
 		return errors.New("connection id is required")
 	}
 	if len(r.ConnectionQueueId) > 0 {

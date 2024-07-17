@@ -68,7 +68,7 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 	//} else if data.ConnectionType == "zalo" {
 	//	connectionApp.AppId = app.InfoApp.Zalo.AppId
 	//}
-	connectionApp.AppId = app.GetId()
+	connectionApp.ChatAppId = app.GetId()
 
 	tx, err := repository.ChatConnectionPipelineRepo.BeginTx(ctx, repository.DBConn, nil)
 	if err != nil {
@@ -162,13 +162,16 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 }
 
 func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context, authUser *model.AuthUser, data model.AttachConnectionQueueToConnectionAppRequest) (err error) {
-	chatConnectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, repository.DBConn, data.ConnectionId)
-	if err != nil {
-		log.Error(err)
-		return err
-	} else if chatConnectionAppExist == nil {
-		log.Error("connection app " + data.ConnectionId + " not found")
-		return errors.New("connection app " + data.ConnectionId + " not found")
+	var chatConnectionAppExist *model.ChatConnectionApp
+	if data.IsAttachingApp {
+		chatConnectionAppExist, err = repository.ChatConnectionAppRepo.GetById(ctx, repository.DBConn, data.ConnectionId)
+		if err != nil {
+			log.Error(err)
+			return err
+		} else if chatConnectionAppExist == nil {
+			log.Error("connection app " + data.ConnectionId + " not found")
+			return errors.New("connection app " + data.ConnectionId + " not found")
+		}
 	}
 
 	tx, err := repository.ChatConnectionPipelineRepo.BeginTx(ctx, repository.DBConn, nil)
@@ -179,7 +182,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 	defer tx.Rollback()
 
 	// select existed queue
-	if len(data.ConnectionQueueId) > 0 {
+	if data.IsAttachingApp && len(data.ConnectionQueueId) > 0 && chatConnectionAppExist != nil {
 		filterConnectionQueue := model.ConnectionQueueFilter{
 			TenantId:     authUser.TenantId,
 			ConnectionId: chatConnectionAppExist.Id,
@@ -221,7 +224,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 
 			chatConnectionAppExist.ConnectionQueueId = connectionQueue.Id
 		}
-	} else {
+	} else if len(data.ConnectionQueueId) < 1 {
 		// create new queue and update it to c.app
 		chatQueue := model.ChatQueue{
 			Base: model.InitBase(),
@@ -284,29 +287,23 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 		manageQueue.QueueId = chatQueue.GetId()
 		manageQueue.UserId = data.ChatManageQueueUser.UserId
 
-		queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, chatQueue.GetId())
-		if err != nil {
-			log.Error(err)
-			return err
-		} else if queueExist == nil {
-			log.Error("queue not found")
-			return errors.New("queue " + chatQueue.GetId() + " not found")
-		}
-		queueExist.ManageQueueId = manageQueue.GetId()
+		chatQueue.ManageQueueId = manageQueue.GetId()
 
 		if err = repository.ManageQueueRepo.TxInsert(ctx, tx, manageQueue); err != nil {
 			log.Error(err)
 			return err
 		}
-		if err = repository.ChatQueueRepo.TxUpdate(ctx, tx, *queueExist); err != nil {
+		if err = repository.ChatQueueRepo.TxUpdate(ctx, tx, chatQueue); err != nil {
 			log.Error(err)
 			return err
 		}
 
-		chatConnectionAppExist.ConnectionQueueId = connectionQueue.Id
+		if data.IsAttachingApp {
+			chatConnectionAppExist.ConnectionQueueId = connectionQueue.Id
+		}
 	}
 
-	if len(chatConnectionAppExist.ConnectionQueueId) > 0 {
+	if chatConnectionAppExist != nil && len(chatConnectionAppExist.ConnectionQueueId) > 0 {
 		if err = repository.ChatConnectionPipelineRepo.UpdateConnectionApp(ctx, tx, *chatConnectionAppExist); err != nil {
 			log.Error(err)
 			return err

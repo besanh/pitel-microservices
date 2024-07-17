@@ -85,10 +85,10 @@ message ChatConnectionPipelineQueueRequest {
 }
 
 message ChatManageQueueUserRequest {
-  string connection_id = 1;
+//  string connection_id = 1;
 //  string queue_id = 2;
-  string user_id = 2;
-  bool is_new = 3;
+  string user_id = 1;
+  bool is_new = 2;
 }
 
 message ChatQueueRequest {
@@ -102,7 +102,7 @@ message ChatQueueRequest {
 message ChatQueueUserRequest {
 //    string queue_id = 1;
   repeated string user_id = 1;
-  string source = 2; // auto set to the caller's id
+  string source = 2; // auto set to the caller' source
 }
 
 message ChatConnectionPipelineQueueResponse {

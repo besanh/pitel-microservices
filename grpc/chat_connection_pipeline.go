@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -61,6 +62,8 @@ func (g *GRPCChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Cont
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
+	payload.IsAttachingApp, _ = strconv.ParseBool(payload.IsAttachingAppString)
+	payload.ChatQueueUser.Source = user.Source
 
 	if err := payload.Validate(); err != nil {
 		log.Error(err)
