@@ -45,7 +45,6 @@ type ChatQueueUserFilter struct {
 }
 
 type ChatRoutingFilter struct {
-	TenantId     string       `json:"tenant_id"`
 	RoutingName  string       `json:"routing_name"`
 	RoutingAlias string       `json:"routing_alias"`
 	Status       sql.NullBool `json:"status"`
