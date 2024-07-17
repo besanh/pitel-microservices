@@ -142,13 +142,14 @@ func (g *GRPCChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context,
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
+	payload.Id = request.GetConnectionId()
 
 	if err := payload.Validate(); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	err := service.ChatConnectionAppService.UpdateChatConnectionAppById(ctx, user, request.GetPutId(), payload, false)
+	err := service.ChatConnectionAppService.UpdateChatConnectionAppById(ctx, user, request.GetId(), payload, false)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

@@ -35,45 +35,47 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 		Id:             id,
 		TenantId:       authUser.TenantId,
 		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
 		ConnectionName: data.ConnectionName,
 		ConnectionType: data.ConnectionType,
 		Status:         data.Status,
 	}
 
-	dbCon, err := HandleGetDBConSource(authUser)
-	if err != nil {
-		log.Error(err)
-		return connectionApp.Id, err
-	}
-
 	if len(data.QueueId) > 0 {
-		_, err = repository.ChatQueueUserRepo.GetById(ctx, dbCon, data.QueueId)
+		_, err := repository.ChatQueueUserRepo.GetById(ctx, repository.DBConn, data.QueueId)
 		if err != nil {
 			log.Error(err)
 			return connectionApp.Id, err
 		}
 	}
 
-	filter := model.ChatAppFilter{
-		AppType: data.ConnectionType,
-	}
-	_, app, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
+	apps, err := ChatAppService.GetChatAppAssign(ctx, authUser)
 	if err != nil {
 		log.Error(err)
 		return connectionApp.Id, err
 	}
-	if len(*app) > 0 {
-		if data.ConnectionType == "facebook" {
-			connectionApp.AppId = (*app)[0].InfoApp.Facebook.AppId
-		} else if data.ConnectionType == "zalo" {
-			connectionApp.AppId = (*app)[0].InfoApp.Zalo.AppId
+	var app *model.ChatApp
+	for _, item := range apps {
+		if data.ChatAppId == item.Id {
+			app = item
 		}
-	} else {
+	}
+	if app == nil {
 		log.Error("app with type " + data.ConnectionType + " not found")
 		return connectionApp.Id, errors.New("app not found")
 	}
+	//if data.ConnectionType == "facebook" {
+	//	connectionApp.AppId = app.InfoApp.Facebook.AppId
+	//} else if data.ConnectionType == "zalo" {
+	//	connectionApp.AppId = app.InfoApp.Zalo.AppId
+	//}
+	connectionApp.AppId = app.GetId()
 
+	tx, err := repository.ChatConnectionPipelineRepo.BeginTx(ctx, repository.DBConn, nil)
+	if err != nil {
+		log.Error(err)
+		return connectionApp.Id, err
+	}
+	defer tx.Rollback()
 	connectionQueue := model.ConnectionQueue{
 		Base:         model.InitBase(),
 		TenantId:     authUser.TenantId,
@@ -81,25 +83,14 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 		QueueId:      data.QueueId,
 	}
 	// TODO: init connection_queue and add to connection
-	if len(data.ConnectionQueueId) > 0 {
-		connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, dbCon, data.ConnectionQueueId)
-		if err != nil {
-			log.Error(err)
-			return connectionApp.Id, err
-		} else if connectionQueueExist == nil {
-			log.Error("connection queue " + data.ConnectionQueueId + " not found")
-			return connectionApp.Id, errors.New("connection queue " + data.ConnectionQueueId + " not found")
-		}
-		connectionQueue = *connectionQueueExist
-		connectionApp.ConnectionQueueId = connectionQueue.GetId()
-	} else if len(data.QueueId) > 0 {
+	if len(data.QueueId) > 0 {
 		// TODO: remove on duplicate connection_queue
-		if err := repository.ConnectionQueueRepo.DeleteConnectionQueue(ctx, dbCon, connectionApp.Id, ""); err != nil {
+		if err := repository.ChatConnectionPipelineRepo.DeleteConnectionQueue(ctx, tx, connectionApp.Id, ""); err != nil {
 			log.Error(err)
 			return connectionApp.Id, err
 		}
 
-		if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
+		if err = repository.ConnectionQueueRepo.TxInsert(ctx, tx, connectionQueue); err != nil {
 			log.Error(err)
 			return connectionApp.Id, err
 		}
@@ -112,22 +103,22 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 	}
 
 	if data.ConnectionType == "facebook" && len(connectionApp.OaInfo.Facebook) > 0 {
-		connectionApp.OaInfo.Facebook[0].AppId = (*app)[0].InfoApp.Facebook.AppId
+		connectionApp.OaInfo.Facebook[0].AppId = app.InfoApp.Facebook.AppId
 		connectionApp.OaInfo.Facebook[0].CreatedTimestamp = time.Now().Unix()
 	} else if data.ConnectionType == "zalo" && len(connectionApp.OaInfo.Zalo) > 0 {
-		connectionApp.OaInfo.Zalo[0].AppId = (*app)[0].InfoApp.Zalo.AppId
+		connectionApp.OaInfo.Zalo[0].AppId = app.InfoApp.Zalo.AppId
 		connectionApp.OaInfo.Zalo[0].CreatedTimestamp = time.Now().Unix()
 	}
 	connectionApp.Status = data.Status
 
-	if err := repository.ChatConnectionAppRepo.Insert(ctx, dbCon, connectionApp); err != nil {
+	if err := repository.ChatConnectionPipelineRepo.InsertConnectionApp(ctx, tx, connectionApp); err != nil {
 		log.Error(err)
 		return connectionApp.Id, err
 	}
 
 	// Step belows apply when app is available
 	// Call ott, if fail => roll back
-	if err := common.PostOttAccount(OTT_URL, OTT_VERSION, (*app)[0], connectionApp); err != nil {
+	if err := common.PostOttAccount(OTT_URL, OTT_VERSION, *app, connectionApp); err != nil {
 		log.Error(err)
 		return connectionApp.Id, err
 	}
@@ -148,7 +139,7 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 					Title     string "json:\"title\""
 					Subtitle  string "json:\"subtitle\""
 				}{
-					AppId:     (*app)[0].InfoApp.Zalo.AppId,
+					AppId:     app.InfoApp.Zalo.AppId,
 					OaId:      connectionApp.OaInfo.Zalo[0].OaId,
 					ImageName: "oa_zalo.png",
 					ImageUrl:  API_DOC + "/bss-image/oa_zalo.png",
@@ -157,23 +148,21 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 				},
 			},
 		}
-		if err = repository.ShareInfoRepo.Insert(ctx, dbCon, shareInfo); err != nil {
+		if err = repository.ShareInfoRepo.TxInsert(ctx, tx, shareInfo); err != nil {
 			log.Error(err)
 			return connectionApp.Id, err
 		}
+	}
+	if err = repository.ChatConnectionPipelineRepo.CommitTx(ctx, tx); err != nil {
+		log.Error(err)
+		return connectionApp.Id, err
 	}
 
 	return connectionApp.Id, nil
 }
 
 func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context, authUser *model.AuthUser, data model.AttachConnectionQueueToConnectionAppRequest) (err error) {
-	dbCon, err := HandleGetDBConSource(authUser)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	chatConnectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, data.ConnectionId)
+	chatConnectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, repository.DBConn, data.ConnectionId)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -182,6 +171,13 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 		return errors.New("connection app " + data.ConnectionId + " not found")
 	}
 
+	tx, err := repository.ChatConnectionPipelineRepo.BeginTx(ctx, repository.DBConn, nil)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	defer tx.Rollback()
+
 	// select existed queue
 	if len(data.ConnectionQueueId) > 0 {
 		filterConnectionQueue := model.ConnectionQueueFilter{
@@ -189,7 +185,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 			ConnectionId: chatConnectionAppExist.Id,
 			QueueId:      data.ConnectionQueueId,
 		}
-		_, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, dbCon, filterConnectionQueue, 1, 0)
+		_, connectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, filterConnectionQueue, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -206,7 +202,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 				return err
 			}
 			if len(*connectionQueueExists) > 0 {
-				if err = repository.ConnectionQueueRepo.BulkDeleteConnectionQueue(ctx, repository.DBConn, connectionQueueExists); err != nil {
+				if err = repository.ConnectionQueueRepo.TxBulkDelete(ctx, tx, *connectionQueueExists); err != nil {
 					log.Error(err)
 					return err
 				}
@@ -218,7 +214,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 				ConnectionId: chatConnectionAppExist.Id,
 				QueueId:      data.ConnectionQueueId,
 			}
-			if err = repository.ConnectionQueueRepo.Insert(ctx, repository.DBConn, connectionQueue); err != nil {
+			if err = repository.ConnectionQueueRepo.TxInsert(ctx, tx, connectionQueue); err != nil {
 				log.Error(err)
 				return err
 			}
@@ -231,7 +227,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 			Base: model.InitBase(),
 		}
 
-		routingExist, err := repository.ChatRoutingRepo.GetById(ctx, dbCon, data.ChatQueue.ChatRoutingId)
+		routingExist, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, data.ChatQueue.ChatRoutingId)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -246,7 +242,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 			ConnectionId: data.ConnectionId,
 			QueueId:      chatQueue.Base.GetId(),
 		}
-		if err = repository.ConnectionQueueRepo.Insert(ctx, dbCon, connectionQueue); err != nil {
+		if err = repository.ConnectionQueueRepo.TxInsert(ctx, tx, connectionQueue); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -256,7 +252,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 		chatQueue.Description = data.ChatQueue.Description
 		chatQueue.ChatRoutingId = data.ChatQueue.ChatRoutingId
 		chatQueue.Status = data.ChatQueue.Status
-		if err = repository.ChatQueueRepo.Insert(ctx, dbCon, chatQueue); err != nil {
+		if err = repository.ChatQueueRepo.TxInsert(ctx, tx, chatQueue); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -273,7 +269,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 			}
 			chatQueueUsers = append(chatQueueUsers, chatQueueUser)
 		}
-		err = repository.ChatQueueUserRepo.BulkInsert(ctx, dbCon, chatQueueUsers)
+		err = repository.ChatQueueUserRepo.TxBulkInsert(ctx, tx, chatQueueUsers)
 		if err != nil {
 			log.Error(err)
 			return err
@@ -288,7 +284,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 		manageQueue.QueueId = chatQueue.GetId()
 		manageQueue.UserId = data.ChatManageQueueUser.UserId
 
-		queueExist, err := repository.ChatQueueRepo.GetById(ctx, dbCon, chatQueue.GetId())
+		queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, chatQueue.GetId())
 		if err != nil {
 			log.Error(err)
 			return err
@@ -298,11 +294,11 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 		}
 		queueExist.ManageQueueId = manageQueue.GetId()
 
-		if err = repository.ManageQueueRepo.Insert(ctx, dbCon, manageQueue); err != nil {
+		if err = repository.ManageQueueRepo.TxInsert(ctx, tx, manageQueue); err != nil {
 			log.Error(err)
 			return err
 		}
-		if err = repository.ChatQueueRepo.Update(ctx, dbCon, *queueExist); err != nil {
+		if err = repository.ChatQueueRepo.TxUpdate(ctx, tx, *queueExist); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -311,10 +307,15 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 	}
 
 	if len(chatConnectionAppExist.ConnectionQueueId) > 0 {
-		if err = repository.ChatConnectionAppRepo.Update(ctx, repository.DBConn, *chatConnectionAppExist); err != nil {
+		if err = repository.ChatConnectionPipelineRepo.UpdateConnectionApp(ctx, tx, *chatConnectionAppExist); err != nil {
 			log.Error(err)
 			return err
 		}
+	}
+
+	if err = repository.ChatConnectionPipelineRepo.CommitTx(ctx, tx); err != nil {
+		log.Error(err)
+		return err
 	}
 
 	return

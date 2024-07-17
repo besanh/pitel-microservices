@@ -103,6 +103,7 @@ type ChatConnectionAppRequest struct {
 	TokenCreatedAt      string `json:"token_created_at"`
 	TokenExpiresIn      int64  `json:"token_expires_in"`
 	TokenTimeRemainning int64  `json:"token_time_remaining"`
+	ChatAppId           string `json:"chat_app_id"`
 }
 
 type AccessInfo struct {
