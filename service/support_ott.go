@@ -22,9 +22,9 @@ import (
 func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message, userChan chan<- []model.User, errChan chan<- error, chatApp model.ChatApp) {
 	var authInfo model.AuthUser
 	var user model.User
+	var err error
 	userAllocate := &model.AllocateUser{}
 	tenants := []string{}
-	var err error
 	chatIntegrateSystems := []model.ChatIntegrateSystem{}
 	chatAppIntegrateSystems := []model.ChatAppIntegrateSystem{}
 	conversationId := GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId)
