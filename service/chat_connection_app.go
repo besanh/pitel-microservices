@@ -66,13 +66,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		log.Error(err)
 		return connectionApp.Id, err
 	}
-	if len(*app) > 0 {
-		if data.ConnectionType == "facebook" {
-			connectionApp.AppId = (*app)[0].InfoApp.Facebook.AppId
-		} else if data.ConnectionType == "zalo" {
-			connectionApp.AppId = (*app)[0].InfoApp.Zalo.AppId
-		}
-	} else {
+	if len(*app) < 1 {
 		log.Error("app with type " + data.ConnectionType + " not found")
 		return connectionApp.Id, errors.New("app not found")
 	}

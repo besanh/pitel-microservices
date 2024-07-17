@@ -93,10 +93,16 @@ func (s *ChatMsgSample) InsertChatMsgSample(ctx context.Context, authUser *model
 	} else if connectionApp.ConnectionType == "facebook" && len(connectionApp.OaInfo.Facebook) > 0 {
 		oaId = connectionApp.OaInfo.Facebook[0].OaId
 	}
+	appId := ""
+	if connectionApp.ConnectionType == "zalo" {
+		appId = connectionApp.OaInfo.Zalo[0].AppId
+	} else if connectionApp.ConnectionType == "facebook" {
+		appId = connectionApp.OaInfo.Facebook[0].AppId
+	}
 
 	var imageUrl string
 	if file != nil && len(file.Filename) > 0 {
-		imageUrl, err = UploadDoc(ctx, connectionApp.AppId, oaId, file)
+		imageUrl, err = UploadDoc(ctx, appId, oaId, file)
 		if err != nil {
 			log.Error(err)
 			return chatMsgSample.Id, err
@@ -148,7 +154,13 @@ func (s *ChatMsgSample) UpdateChatMsgSampleById(ctx context.Context, authUser *m
 
 	var imageUrl string
 	if file != nil && len(file.Filename) > 0 {
-		imageUrl, err = UploadDoc(ctx, chatMsgSample.ConnectionApp.AppId, oaId, file)
+		appId := ""
+		if chatMsgSample.ConnectionApp.ConnectionType == "zalo" {
+			appId = chatMsgSample.ConnectionApp.OaInfo.Zalo[0].AppId
+		} else if chatMsgSample.ConnectionApp.ConnectionType == "facebook" {
+			appId = chatMsgSample.ConnectionApp.OaInfo.Facebook[0].AppId
+		}
+		imageUrl, err = UploadDoc(ctx, appId, oaId, file)
 		if err != nil {
 			log.Error(err)
 			return err

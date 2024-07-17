@@ -20,7 +20,7 @@ type ChatConnectionApp struct {
 	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`
 	ConnectionName    string           `json:"connection_name" bun:"connection_name,type:text,notnull"`
 	ConnectionType    string           `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId             string           `json:"app_id" bun:"app_id,type:text,notnull"`
+	ChatAppId         string           `json:"chat_app_id" bun:"chat_app_id,type:uuid,notnull"`
 	ConnectionQueueId string           `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,default:null"`
 	ConnectionQueue   *ConnectionQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
 	OaInfo            OaInfo           `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
@@ -35,7 +35,7 @@ type ChatConnectionAppView struct {
 	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`
 	ConnectionName    string           `json:"connection_name" bun:"connection_name,type:text,notnull"`
 	ConnectionType    string           `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId             string           `json:"app_id" bun:"app_id,type:text,notnull"`
+	ChatAppId         string           `json:"chat_app_id" bun:"chat_app_id,type:uuid,notnull"`
 	ConnectionQueueId string           `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,default:null"`
 	ConnectionQueue   *ConnectionQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
 	OaInfo            OaInfo           `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`

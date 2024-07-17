@@ -126,6 +126,7 @@ func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, r
 		ChatApps:            chatApps,
 		TenantDefaultId:     req.GetTenantDefaultId(),
 		ServerName:          req.GetServerName(),
+		IP:                  req.GetIp(),
 	}
 
 	if err := payload.Validate(); err != nil {
@@ -202,6 +203,7 @@ func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Cont
 		TenantDefaultId:     req.GetTenantDefaultId(),
 		ChatAppIds:          req.GetChatAppIds(),
 		ServerName:          req.GetServerName(),
+		IP:                  req.GetIp(),
 	}
 
 	if err := payload.Validate(); err != nil {

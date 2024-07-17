@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
@@ -34,19 +35,15 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 		Base: model.InitBase(),
 	}
 
+	chatTenant := model.ChatTenant{
+		Base: model.InitBase(),
+	}
 	if len(data.TenantDefaultId) < 1 {
-		chatTenant := model.ChatTenant{
-			Base:              model.InitBase(),
-			TenantName:        data.SystemName,
-			IntegrateSystemId: chatIntegrateSystem.Base.GetId(),
-			Status:            true,
-		}
-		if err = repository.ChatTenantRepo.Insert(ctx, repository.DBConn, chatTenant); err != nil {
-			log.Error(err)
-			return
-		}
+		chatTenant.TenantName = data.SystemName
+		chatTenant.IntegrateSystemId = chatIntegrateSystem.Base.GetId()
+		chatTenant.Status = true
 
-		chatIntegrateSystem.TenantDefaultId = chatTenant.Base.GetId()
+		chatIntegrateSystem.TenantDefaultId = uuid.NewString()
 	} else {
 		// Check tenant exist in system
 		filter := model.ChatIntegrateSystemFilter{
@@ -123,7 +120,7 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 		}
 	}
 
-	if err = repository.ChatIntegrateSystemRepo.InsertIntegrateSystemTransaction(ctx, repository.DBConn, chatApps, chatIntegrateSystem, chatAppIntegrateSystems); err != nil {
+	if err = repository.ChatIntegrateSystemRepo.InsertIntegrateSystemTransaction(ctx, repository.DBConn, chatApps, chatIntegrateSystem, chatAppIntegrateSystems, chatTenant); err != nil {
 		log.Error(err)
 		if err = repository.ChatTenantRepo.Delete(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); err != nil {
 			log.Error(err)
@@ -167,21 +164,37 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context,
 		return
 	}
 
-	// Check tenant exist in system
-	filter := model.ChatIntegrateSystemFilter{
-		TenantDefaultId: data.TenantDefaultId,
-	}
-	_, chatIntegrateSystems, err := repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, filter, 1, 0)
+	chatTenantExist, err := repository.ChatTenantRepo.GetById(ctx, repository.DBConn, chatIntegrateSystemExist.TenantDefaultId)
 	if err != nil {
 		log.Error(err)
 		return
-	} else if len(*chatIntegrateSystems) > 1 {
-		log.Error("tenant " + data.TenantDefaultId + " already exist in system")
-		err = errors.New("tenant " + data.TenantDefaultId + " already exist in system")
-		return
 	}
 
-	chatIntegrateSystemExist.TenantDefaultId = data.TenantDefaultId
+	chatTenant := &model.ChatTenant{}
+	// Check tenant exist in system
+	if len(data.TenantDefaultId) < 1 {
+		chatTenant.Base = model.InitBase()
+		chatTenant.TenantName = "default"
+		chatTenant.IntegrateSystemId = uuid.NewString()
+		chatTenant.Status = true
+	} else {
+		filter := model.ChatIntegrateSystemFilter{
+			TenantDefaultId: data.TenantDefaultId,
+		}
+		_, chatIntegrateSystems, errTmp := repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, filter, 1, 0)
+		if errTmp != nil {
+			log.Error(errTmp)
+			err = errTmp
+			return
+		} else if len(*chatIntegrateSystems) > 1 {
+			log.Error("tenant " + data.TenantDefaultId + " already exist in system")
+			err = errors.New("tenant " + data.TenantDefaultId + " already exist in system")
+			return
+		}
+		chatTenant = chatTenantExist
+	}
+
+	chatIntegrateSystemExist.TenantDefaultId = chatTenant.Id
 	chatIntegrateSystemExist.SystemName = data.SystemName
 	chatIntegrateSystemExist.VendorId = data.VendorId
 	chatIntegrateSystemExist.Status = data.Status
@@ -213,7 +226,7 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context,
 		}
 	}
 
-	err = repository.ChatIntegrateSystemRepo.UpdateIntegrateSystemTransaction(ctx, repository.DBConn, *chatIntegrateSystemExist, chatAppIntegrateSystems)
+	err = repository.ChatIntegrateSystemRepo.UpdateIntegrateSystemTransaction(ctx, repository.DBConn, *chatIntegrateSystemExist, chatAppIntegrateSystems, chatTenantExist, chatTenant)
 	if err != nil {
 		log.Error(err)
 		return
