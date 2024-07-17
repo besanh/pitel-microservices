@@ -4,7 +4,7 @@ package proto.chatApp;
 
 option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
 
-// import "google/protobuf/timestamp.proto";
+import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 import "buf/validate/validate.proto";
@@ -93,6 +93,24 @@ message DeleteChatAppByIdResponse {
     string message = 2;
 }
 
+message GetChatAppAssignRequest {
+
+}
+
+message GetChatAppAssignResponse {
+    string code = 1;
+    string message = 2;
+    repeated ChatAppAssignData data = 3;
+}
+
+message ChatAppAssignData {
+    string id = 1;
+    string app_name = 2;
+    string status = 3;
+    PostChatInfoApp info_app = 4;
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
+}
 
 service ChatAppService {
     rpc PostChatApp(PostChatAppRequest) returns (PostChatAppResponse) {
@@ -120,6 +138,11 @@ service ChatAppService {
     rpc DeleteChatAppById(DeleteChatAppByIdRequest) returns (DeleteChatAppByIdResponse) {
         option (google.api.http) = {
             delete : "/bss-chat/v1/chat-app/{id}"
+        };
+    };
+    rpc GetChatAppAssign(GetChatAppAssignRequest) returns (GetChatAppAssignResponse) {
+        option (google.api.http) = {
+            get : "/bss-chat/v1/chat-app/assign"
         };
     };
 }

@@ -39,6 +39,8 @@ type ChatIntegrateSystemView struct {
 }
 
 type InfoSystem struct {
+	ServerName          string `json:"server_name"`
+	IP                  string `json:"ip"`
 	AuthType            string `json:"auth_type"`
 	Username            string `json:"username"`
 	Password            string `json:"password"`
@@ -60,6 +62,8 @@ type ChatIntegrateSystemRequest struct {
 	Password            string           `json:"password"`
 	Token               string           `json:"token"`
 	WebsocketUrl        string           `json:"websocket_url"`
+	ServerName          string           `json:"server_name"`
+	IP                  string           `json:"ip"`
 	ApiUrl              string           `json:"api_url"`
 	ApiAuthUrl          string           `json:"api_auth_url"`
 	ApiGetUserDetailUrl string           `json:"api_get_user_detail_url"`
@@ -108,6 +112,12 @@ func (m *ChatIntegrateSystemRequest) Validate() error {
 	default:
 	}
 
+	if len(m.ServerName) < 1 {
+		return errors.New("server name is required")
+	}
+	if len(m.IP) < 1 {
+		return errors.New("ip is required")
+	}
 	if len(m.ApiUrl) < 1 {
 		return errors.New("api url is required")
 	}

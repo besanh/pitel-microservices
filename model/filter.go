@@ -192,6 +192,7 @@ type ChatIntegrateSystemFilter struct {
 	Status          sql.NullBool `json:"status"`
 	SystemId        string       `json:"system_id"`
 	TenantDefaultId string       `json:"tenant_default_id"`
+	ServerName      string       `json:"server_name"`
 }
 
 type ChatVendorFilter struct {
@@ -216,4 +217,9 @@ type ChatUserFilter struct {
 type ChatTenantFilter struct {
 	TenantName string       `json:"tenant_name"`
 	Status     sql.NullBool `json:"status"`
+}
+
+type ChatAppIntegrateSystemFilter struct {
+	ChatAppId             string `json:"chat_app_id"`
+	ChatIntegrateSystemId string `json:"chat_integrate_system_id"`
 }

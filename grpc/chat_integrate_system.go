@@ -41,10 +41,12 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 		statusIntegrate.Bool = statusTmp
 	}
 	filter := model.ChatIntegrateSystemFilter{
-		SystemName: request.GetSystemName(),
-		VendorName: request.GetVendorName(),
-		Status:     statusIntegrate,
-		SystemId:   request.GetSystemId(),
+		SystemName:      request.GetSystemName(),
+		VendorName:      request.GetVendorName(),
+		Status:          statusIntegrate,
+		SystemId:        request.GetSystemId(),
+		ServerName:      request.GetServerName(),
+		TenantDefaultId: request.GetTenantDefaultId(),
 	}
 
 	total, chatIntegrateSystems, err := service.ChatIntegrateSystemService.GetChatIntegrateSystems(ctx, authUser, filter, limit, offset)
@@ -59,12 +61,6 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 	if len(*chatIntegrateSystems) > 0 {
 		for _, item := range *chatIntegrateSystems {
 			var tmp pb.ChatIntegrateSystemData
-			tmp.CreatedAt = &timestamppb.Timestamp{
-				Seconds: item.CreatedAt.Unix(),
-			}
-			tmp.UpdatedAt = &timestamppb.Timestamp{
-				Seconds: item.UpdatedAt.Unix(),
-			}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				result = &pb.GetChatIntegrateSystemResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
@@ -72,7 +68,12 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystems(ctx context.Context, r
 				}
 				return result, nil
 			}
-
+			tmp.CreatedAt = &timestamppb.Timestamp{
+				Seconds: item.CreatedAt.Unix(),
+			}
+			tmp.UpdatedAt = &timestamppb.Timestamp{
+				Seconds: item.UpdatedAt.Unix(),
+			}
 			data = append(data, &tmp)
 		}
 	}
@@ -124,6 +125,7 @@ func (g *GRPCChatIntegrateSystem) PostChatIntegrateSystem(ctx context.Context, r
 		ChatAppIds:          req.GetChatAppIds(),
 		ChatApps:            chatApps,
 		TenantDefaultId:     req.GetTenantDefaultId(),
+		ServerName:          req.GetServerName(),
 	}
 
 	if err := payload.Validate(); err != nil {
@@ -199,6 +201,7 @@ func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Cont
 		ApiGetUserDetailUrl: req.GetApiGetUserDetailUrl(),
 		TenantDefaultId:     req.GetTenantDefaultId(),
 		ChatAppIds:          req.GetChatAppIds(),
+		ServerName:          req.GetServerName(),
 	}
 
 	if err := payload.Validate(); err != nil {
