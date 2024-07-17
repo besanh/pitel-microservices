@@ -349,10 +349,24 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 }
 
+func (s *OttMessage) RegisterUserChannel(key string, resultChan chan model.User) (err error) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
+	if _, ok := s.User[key]; !ok {
+		return errors.New("channel " + key + " not found")
+	}
+
+	s.User[key] = resultChan
+	return
+}
+
 func (s *OttMessage) UnregisterUserChannel(key string) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
+
 	close(s.User[key])
+	delete(s.User, key)
 }
 
 func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser *model.ChatManageQueueUser, subscriberAdmins []string, subscribers []*Subscriber, conversation model.ConversationView, message model.Message, isNew bool) {
