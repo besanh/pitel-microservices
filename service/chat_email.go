@@ -23,6 +23,8 @@ type (
 	ChatEmail struct{}
 )
 
+var ChatEmailService IChatEmail
+
 func NewChatEmail() IChatEmail {
 	repo := &ChatEmail{}
 	return repo
