@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package proto.chatConnectionPipeline;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatConnectionPipelineData {
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string avatar = 5;
+  string cover = 6;
+  string cate_name = 7;
+  string status = 8;
+  string access_token = 9;
+  int64 expire = 10;
+  string token_created_at = 11;
+  int64 token_expires_in = 12;
+  int64 token_time_remaining = 13;
+  int64 created_timestamp = 14;
+  int64 updated_timestamp = 15;
+  bool is_notify = 16;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string avatar = 5;
+  string cover = 6;
+  string access_token = 7;
+  int64 expire = 8;
+  string token_created_at = 9;
+  int64 token_expires_in = 10;
+  int64 token_time_remaining = 11;
+  string status = 12;
+  int64 created_timestamp = 13;
+  int64 updated_timestamp = 14;
+  bool is_notify = 15;
+}
+
+// create app
+message PostChatConnectionAppRequest {
+  string id = 1;
+  string connection_name = 2;
+  string connection_type = 3;
+  string queue_id = 4;
+  string connection_queue_id = 5;
+  OaInfo oa_info = 6;
+  string status = 7;
+  string oa_id = 8;
+  string app_id = 9;
+  string oa_name = 10;
+  string avatar = 11;
+  string cover = 12;
+  string cate_name = 13;
+  int64 code = 14;
+  string message = 15;
+  string token_created_at = 16;
+  int64 token_expires_in = 17;
+  int64 token_time_remaining = 18;
+}
+
+message PostChatConnectionAppResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// create queue & attach it to app
+message ChatConnectionPipelineQueueRequest {
+  // boolean text to check whether the caller wants to attach c.queue to c.app
+  string is_attaching_app = 1;
+  string connection_id = 2;
+
+  // for selecting existed queue
+  string connection_queue_id = 3;
+
+  // for creating new queue
+  // queue request
+  ChatQueueRequest chat_queue = 4;
+  // queue user request
+  ChatQueueUserRequest chat_queue_user = 5;
+  // manage queue user request
+  ChatManageQueueUserRequest chat_manage_queue_user = 6;
+}
+
+message ChatManageQueueUserRequest {
+  string connection_id = 1;
+//  string queue_id = 2;
+  string user_id = 2;
+  bool is_new = 3;
+}
+
+message ChatQueueRequest {
+  string queue_name = 1;
+  string description = 2;
+//  repeated string connection_id = 3;
+  string chat_routing_id = 3;
+  string status = 4;
+}
+
+message ChatQueueUserRequest {
+//    string queue_id = 1;
+  repeated string user_id = 1;
+  string source = 2; // auto set to the caller's id
+}
+
+message ChatConnectionPipelineQueueResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatConnectionPipelineService {
+  rpc InsertChatConnectionApp(PostChatConnectionAppRequest) returns (PostChatConnectionAppResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-connection-pipeline/app"
+      body : "*"
+    };
+  };
+  rpc AttachConnectionQueueToApp(ChatConnectionPipelineQueueRequest) returns (ChatConnectionPipelineQueueResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-connection-pipeline/queue"
+      body : "*"
+    };
+  };
+}

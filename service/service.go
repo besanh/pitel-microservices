@@ -27,6 +27,7 @@ func InitServices() {
 	ChatScriptService = NewChatScript()
 	ChatAutoScriptService = NewChatAutoScript()
 	ChatEmailService = NewChatEmail()
+	ChatConnectionPipelineService = NewChatConnectionPipeline()
 }
 
 // MAP TENANT_ID SQL_CONN
