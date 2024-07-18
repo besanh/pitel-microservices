@@ -63,11 +63,6 @@ func (s *ChatConnectionPipeline) InsertChatConnectionApp(ctx context.Context, au
 		log.Error("app with type " + data.ConnectionType + " not found")
 		return connectionApp.Id, errors.New("app not found")
 	}
-	//if data.ConnectionType == "facebook" {
-	//	connectionApp.AppId = app.InfoApp.Facebook.AppId
-	//} else if data.ConnectionType == "zalo" {
-	//	connectionApp.AppId = app.InfoApp.Zalo.AppId
-	//}
 	connectionApp.ChatAppId = app.GetId()
 
 	tx, err := repository.ChatConnectionPipelineRepo.BeginTx(ctx, repository.DBConn, nil)
