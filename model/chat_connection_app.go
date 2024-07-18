@@ -31,8 +31,8 @@ type ChatConnectionAppView struct {
 	bun.BaseModel     `bun:"table:chat_connection_app,alias:cca"`
 	Id                string           `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
 	TenantId          string           `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	CreatedAt         time.Time        `json:"created_at" bun:"created_at,notnull"`
-	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`
+	CreatedAt         time.Time        `bun:"created_at,notnull"`
+	UpdatedAt         time.Time        `bun:"updated_at,notnull"`
 	ConnectionName    string           `json:"connection_name" bun:"connection_name,type:text,notnull"`
 	ConnectionType    string           `json:"connection_type" bun:"connection_type,type:text,notnull"`
 	ChatAppId         string           `json:"chat_app_id" bun:"chat_app_id,type:uuid,notnull"`

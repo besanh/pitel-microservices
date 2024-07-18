@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -78,6 +79,16 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 			tmp.UpdatedAt = &timestamppb.Timestamp{
 				Seconds: item.UpdatedAt.Unix(),
 			}
+			shareInfoForm, err := json.Marshal(&item.ShareInfoForm)
+			if err != nil {
+				log.Error(err)
+				result := &pb.GetChatConnectionAppsResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return result, nil
+			}
+			tmp.ShareInfoFormRaw = string(shareInfoForm)
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
 				result := &pb.GetChatConnectionAppsResponse{
