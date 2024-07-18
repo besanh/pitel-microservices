@@ -50,7 +50,7 @@ func (g *GRPCChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Cont
 	return result, nil
 }
 
-func (g *GRPCChatConnectionPipeline) UpdateQueueInConnectionAppById(ctx context.Context, request *pb.UpdateQueueInConnectionAppByIdRequest) (*pb.UpdateQueueInConnectionAppByIdResponse, error) {
+func (g *GRPCChatConnectionPipeline) UpsertQueueInConnectionAppById(ctx context.Context, request *pb.UpsertQueueInConnectionAppByIdRequest) (*pb.UpsertQueueInConnectionAppByIdResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -67,12 +67,12 @@ func (g *GRPCChatConnectionPipeline) UpdateQueueInConnectionAppById(ctx context.
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	err := service.ChatConnectionPipelineService.UpdateConnectionQueueInApp(ctx, user, request.GetId(), payload)
+	err := service.ChatConnectionPipelineService.UpsertConnectionQueueInApp(ctx, user, request.GetId(), payload)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.UpdateQueueInConnectionAppByIdResponse{
+	result := &pb.UpsertQueueInConnectionAppByIdResponse{
 		Code:    "OK",
 		Message: "ok",
 	}

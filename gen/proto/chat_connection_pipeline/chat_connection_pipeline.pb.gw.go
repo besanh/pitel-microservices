@@ -57,8 +57,8 @@ func local_request_ChatConnectionPipelineService_AttachConnectionQueueToApp_0(ct
 
 }
 
-func request_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0(ctx context.Context, marshaler runtime.Marshaler, client ChatConnectionPipelineServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateQueueInConnectionAppByIdRequest
+func request_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0(ctx context.Context, marshaler runtime.Marshaler, client ChatConnectionPipelineServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq UpsertQueueInConnectionAppByIdRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -82,13 +82,13 @@ func request_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0(ctx 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.UpdateQueueInConnectionAppById(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.UpsertQueueInConnectionAppById(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0(ctx context.Context, marshaler runtime.Marshaler, server ChatConnectionPipelineServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq UpdateQueueInConnectionAppByIdRequest
+func local_request_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0(ctx context.Context, marshaler runtime.Marshaler, server ChatConnectionPipelineServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq UpsertQueueInConnectionAppByIdRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -112,7 +112,7 @@ func local_request_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.UpdateQueueInConnectionAppById(ctx, &protoReq)
+	msg, err := server.UpsertQueueInConnectionAppById(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -148,7 +148,7 @@ func RegisterChatConnectionPipelineServiceHandlerServer(ctx context.Context, mux
 
 	})
 
-	mux.Handle("PUT", pattern_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -156,12 +156,12 @@ func RegisterChatConnectionPipelineServiceHandlerServer(ctx context.Context, mux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/UpdateQueueInConnectionAppById", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/{id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/UpsertQueueInConnectionAppById", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/edit/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -169,7 +169,7 @@ func RegisterChatConnectionPipelineServiceHandlerServer(ctx context.Context, mux
 			return
 		}
 
-		forward_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -236,25 +236,25 @@ func RegisterChatConnectionPipelineServiceHandlerClient(ctx context.Context, mux
 
 	})
 
-	mux.Handle("PUT", pattern_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/UpdateQueueInConnectionAppById", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/{id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/UpsertQueueInConnectionAppById", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/edit/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -264,11 +264,11 @@ func RegisterChatConnectionPipelineServiceHandlerClient(ctx context.Context, mux
 var (
 	pattern_ChatConnectionPipelineService_AttachConnectionQueueToApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "chat-connection-pipeline"}, ""))
 
-	pattern_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"bss-chat", "v1", "chat-connection-pipeline", "id"}, ""))
+	pattern_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"bss-chat", "v1", "chat-connection-pipeline", "edit", "id"}, ""))
 )
 
 var (
 	forward_ChatConnectionPipelineService_AttachConnectionQueueToApp_0 = runtime.ForwardResponseMessage
 
-	forward_ChatConnectionPipelineService_UpdateQueueInConnectionAppById_0 = runtime.ForwardResponseMessage
+	forward_ChatConnectionPipelineService_UpsertQueueInConnectionAppById_0 = runtime.ForwardResponseMessage
 )

@@ -90,7 +90,7 @@ message ChatConnectionPipelineQueueResponse {
 }
 
 // edit queue in c.app
-message UpdateQueueInConnectionAppByIdRequest {
+message UpsertQueueInConnectionAppByIdRequest {
   string id = 1;
 
   // for selecting existed queue
@@ -105,7 +105,7 @@ message UpdateQueueInConnectionAppByIdRequest {
   ChatManageQueueUserRequest chat_manage_queue_user = 5;
 }
 
-message UpdateQueueInConnectionAppByIdResponse {
+message UpsertQueueInConnectionAppByIdResponse {
   string code = 1;
   string message = 2;
 }
@@ -118,9 +118,9 @@ service ChatConnectionPipelineService {
     };
   };
 
-  rpc UpdateQueueInConnectionAppById(UpdateQueueInConnectionAppByIdRequest) returns (UpdateQueueInConnectionAppByIdResponse) {
+  rpc UpsertQueueInConnectionAppById(UpsertQueueInConnectionAppByIdRequest) returns (UpsertQueueInConnectionAppByIdResponse) {
     option (google.api.http) = {
-      put : "/bss-chat/v1/chat-connection-pipeline/{id}"
+      post : "/bss-chat/v1/chat-connection-pipeline/edit/{id}"
       body : "*"
     };
   };

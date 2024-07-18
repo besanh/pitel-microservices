@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion8
 
 const (
 	ChatConnectionPipelineService_AttachConnectionQueueToApp_FullMethodName     = "/proto.chatConnectionPipeline.ChatConnectionPipelineService/AttachConnectionQueueToApp"
-	ChatConnectionPipelineService_UpdateQueueInConnectionAppById_FullMethodName = "/proto.chatConnectionPipeline.ChatConnectionPipelineService/UpdateQueueInConnectionAppById"
+	ChatConnectionPipelineService_UpsertQueueInConnectionAppById_FullMethodName = "/proto.chatConnectionPipeline.ChatConnectionPipelineService/UpsertQueueInConnectionAppById"
 )
 
 // ChatConnectionPipelineServiceClient is the client API for ChatConnectionPipelineService service.
@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatConnectionPipelineServiceClient interface {
 	AttachConnectionQueueToApp(ctx context.Context, in *ChatConnectionPipelineQueueRequest, opts ...grpc.CallOption) (*ChatConnectionPipelineQueueResponse, error)
-	UpdateQueueInConnectionAppById(ctx context.Context, in *UpdateQueueInConnectionAppByIdRequest, opts ...grpc.CallOption) (*UpdateQueueInConnectionAppByIdResponse, error)
+	UpsertQueueInConnectionAppById(ctx context.Context, in *UpsertQueueInConnectionAppByIdRequest, opts ...grpc.CallOption) (*UpsertQueueInConnectionAppByIdResponse, error)
 }
 
 type chatConnectionPipelineServiceClient struct {
@@ -49,10 +49,10 @@ func (c *chatConnectionPipelineServiceClient) AttachConnectionQueueToApp(ctx con
 	return out, nil
 }
 
-func (c *chatConnectionPipelineServiceClient) UpdateQueueInConnectionAppById(ctx context.Context, in *UpdateQueueInConnectionAppByIdRequest, opts ...grpc.CallOption) (*UpdateQueueInConnectionAppByIdResponse, error) {
+func (c *chatConnectionPipelineServiceClient) UpsertQueueInConnectionAppById(ctx context.Context, in *UpsertQueueInConnectionAppByIdRequest, opts ...grpc.CallOption) (*UpsertQueueInConnectionAppByIdResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateQueueInConnectionAppByIdResponse)
-	err := c.cc.Invoke(ctx, ChatConnectionPipelineService_UpdateQueueInConnectionAppById_FullMethodName, in, out, cOpts...)
+	out := new(UpsertQueueInConnectionAppByIdResponse)
+	err := c.cc.Invoke(ctx, ChatConnectionPipelineService_UpsertQueueInConnectionAppById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *chatConnectionPipelineServiceClient) UpdateQueueInConnectionAppById(ctx
 // for forward compatibility
 type ChatConnectionPipelineServiceServer interface {
 	AttachConnectionQueueToApp(context.Context, *ChatConnectionPipelineQueueRequest) (*ChatConnectionPipelineQueueResponse, error)
-	UpdateQueueInConnectionAppById(context.Context, *UpdateQueueInConnectionAppByIdRequest) (*UpdateQueueInConnectionAppByIdResponse, error)
+	UpsertQueueInConnectionAppById(context.Context, *UpsertQueueInConnectionAppByIdRequest) (*UpsertQueueInConnectionAppByIdResponse, error)
 }
 
 // UnimplementedChatConnectionPipelineServiceServer should be embedded to have forward compatible implementations.
@@ -74,8 +74,8 @@ type UnimplementedChatConnectionPipelineServiceServer struct {
 func (UnimplementedChatConnectionPipelineServiceServer) AttachConnectionQueueToApp(context.Context, *ChatConnectionPipelineQueueRequest) (*ChatConnectionPipelineQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AttachConnectionQueueToApp not implemented")
 }
-func (UnimplementedChatConnectionPipelineServiceServer) UpdateQueueInConnectionAppById(context.Context, *UpdateQueueInConnectionAppByIdRequest) (*UpdateQueueInConnectionAppByIdResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateQueueInConnectionAppById not implemented")
+func (UnimplementedChatConnectionPipelineServiceServer) UpsertQueueInConnectionAppById(context.Context, *UpsertQueueInConnectionAppByIdRequest) (*UpsertQueueInConnectionAppByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertQueueInConnectionAppById not implemented")
 }
 
 // UnsafeChatConnectionPipelineServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -107,20 +107,20 @@ func _ChatConnectionPipelineService_AttachConnectionQueueToApp_Handler(srv inter
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatConnectionPipelineService_UpdateQueueInConnectionAppById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateQueueInConnectionAppByIdRequest)
+func _ChatConnectionPipelineService_UpsertQueueInConnectionAppById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertQueueInConnectionAppByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatConnectionPipelineServiceServer).UpdateQueueInConnectionAppById(ctx, in)
+		return srv.(ChatConnectionPipelineServiceServer).UpsertQueueInConnectionAppById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ChatConnectionPipelineService_UpdateQueueInConnectionAppById_FullMethodName,
+		FullMethod: ChatConnectionPipelineService_UpsertQueueInConnectionAppById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatConnectionPipelineServiceServer).UpdateQueueInConnectionAppById(ctx, req.(*UpdateQueueInConnectionAppByIdRequest))
+		return srv.(ChatConnectionPipelineServiceServer).UpsertQueueInConnectionAppById(ctx, req.(*UpsertQueueInConnectionAppByIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -137,8 +137,8 @@ var ChatConnectionPipelineService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ChatConnectionPipelineService_AttachConnectionQueueToApp_Handler,
 		},
 		{
-			MethodName: "UpdateQueueInConnectionAppById",
-			Handler:    _ChatConnectionPipelineService_UpdateQueueInConnectionAppById_Handler,
+			MethodName: "UpsertQueueInConnectionAppById",
+			Handler:    _ChatConnectionPipelineService_UpsertQueueInConnectionAppById_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

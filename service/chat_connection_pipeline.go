@@ -15,7 +15,7 @@ import (
 type (
 	IChatConnectionPipeline interface {
 		AttachConnectionQueueToApp(ctx context.Context, authUser *model.AuthUser, data model.AttachConnectionQueueToConnectionAppRequest) (string, error)
-		UpdateConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) error
+		UpsertConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) error
 	}
 	ChatConnectionPipeline struct{}
 )
@@ -122,6 +122,16 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 
 	// select existed queue
 	if len(data.ConnectionQueueId) > 0 {
+		chatQueueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, data.ConnectionQueueId)
+		if err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		} else if chatQueueExist == nil {
+			err = errors.New("connection queue not exist")
+			log.Error(err)
+			return connectionApp.Id, err
+		}
+
 		filterConnectionQueue := model.ConnectionQueueFilter{
 			TenantId:     authUser.TenantId,
 			ConnectionId: connectionApp.Id,
@@ -255,7 +265,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 	return connectionApp.Id, err
 }
 
-func (s *ChatConnectionPipeline) UpdateConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) (err error) {
+func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) (err error) {
 	connectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
@@ -291,6 +301,16 @@ func (s *ChatConnectionPipeline) UpdateConnectionQueueInApp(ctx context.Context,
 
 	// select existed queue
 	if len(data.ConnectionQueueId) > 0 {
+		chatQueueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, data.ConnectionQueueId)
+		if err != nil {
+			log.Error(err)
+			return err
+		} else if chatQueueExist == nil {
+			err = errors.New("connection queue not exist")
+			log.Error(err)
+			return err
+		}
+
 		// insert connection queue
 		connectionQueue := model.ConnectionQueue{
 			Base:         model.InitBase(),
@@ -300,7 +320,7 @@ func (s *ChatConnectionPipeline) UpdateConnectionQueueInApp(ctx context.Context,
 		}
 		if err = repository.ConnectionQueueRepo.TxInsert(ctx, tx, connectionQueue); err != nil {
 			log.Error(err)
-			return
+			return err
 		}
 
 		connectionAppExist.ConnectionQueueId = connectionQueue.Id
