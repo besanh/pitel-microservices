@@ -19,8 +19,8 @@ type (
 		DeleteChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) error
 
 		//new version
-		InsertChatQueueV2(ctx context.Context, authUser *model.AuthUser, data model.AttachConnectionQueueToConnectionAppRequest) (string, error)
-		UpdateChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) error
+		InsertChatQueueV2(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequestV2) (string, error)
+		UpdateChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequestV2) error
 		DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 	ChatQueue struct{}
@@ -214,7 +214,7 @@ func (s *ChatQueue) DeleteChatQueueById(ctx context.Context, authUser *model.Aut
 	return nil
 }
 
-func (s *ChatQueue) InsertChatQueueV2(ctx context.Context, authUser *model.AuthUser, data model.AttachConnectionQueueToConnectionAppRequest) (string, error) {
+func (s *ChatQueue) InsertChatQueueV2(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequestV2) (string, error) {
 	chatQueue := model.ChatQueue{
 		Base: model.InitBase(),
 	}
@@ -293,7 +293,7 @@ func (s *ChatQueue) InsertChatQueueV2(ctx context.Context, authUser *model.AuthU
 	return chatQueue.Base.GetId(), nil
 }
 
-func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) error {
+func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequestV2) error {
 	queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)

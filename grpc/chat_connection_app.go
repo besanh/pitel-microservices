@@ -126,7 +126,7 @@ func (g *GRPCChatConnectionApp) GetChatConnectionAppById(ctx context.Context, re
 		ConnectionName:    data.ConnectionName,
 		ConnectionType:    data.ConnectionType,
 		ConnectionQueueId: data.ConnectionQueueId,
-		AppId:             data.ChatAppId,
+		ChatAppId:         data.ChatAppId,
 		Status:            data.Status,
 		CreatedAt:         timestamppb.New(data.CreatedAt),
 		UpdatedAt:         timestamppb.New(data.UpdatedAt),

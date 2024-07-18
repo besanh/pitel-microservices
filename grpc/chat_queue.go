@@ -27,7 +27,7 @@ func (g *GRPCChatQueue) InsertChatQueue(ctx context.Context, request *pb.PostCha
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.AttachConnectionQueueToConnectionAppRequest{}
+	payload := model.ChatQueueRequestV2{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -149,7 +149,7 @@ func (g *GRPCChatQueue) UpdateChatQueueById(ctx context.Context, request *pb.Put
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.AttachConnectionQueueToConnectionAppRequest{}
+	payload := model.ChatQueueRequestV2{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
