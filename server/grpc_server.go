@@ -156,9 +156,6 @@ func NewGRPCServer(port string) {
 
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	v1.APIChatVendorHandler = v1.NewChatVendor()
-	v1.APIChatMessageSampleHandler = v1.NewChatMessageSample()
-	v1.APIChatScript = v1.NewAPIChatScript()
 	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", func(c *gin.Context) {
 		switch {
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload") && c.Request.Method == "POST":
@@ -178,6 +175,9 @@ func NewGRPCServer(port string) {
 		}
 	})
 
+	v1.APIChatVendorHandler = v1.NewChatVendor()
+	v1.APIChatMessageSampleHandler = v1.NewChatMessageSample()
+	v1.APIChatScript = v1.NewAPIChatScript()
 	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(), service.NewConversation())
 	v1.NewMessage(httpServer, service.NewMessage())
 	v1.NewWebSocket(httpServer, service.NewSubscriberService())
@@ -217,7 +217,6 @@ func NewGRPCServer(port string) {
 	} else if err != nil {
 		panic(err)
 	}
-
 }
 
 func newHTTPandGRPC(httpHand http.Handler, grpcHandler http.Handler) http.Handler {

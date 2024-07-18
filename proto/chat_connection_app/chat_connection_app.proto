@@ -60,7 +60,20 @@ message ChatConnectionAppView {
   OaInfo oa_info = 10;
   string status = 11;
   string share_form_uuid = 12;
-  string share_info_form_raw = 13;
+  ShareInfoForm share_info_form = 13;
+}
+
+message ShareInfoForm {
+  ShareFormZalo zalo = 1;
+}
+
+message ShareFormZalo {
+  string app_id = 1;
+  string image_name = 2;
+  string image_url = 3;
+  string oa_id = 4;
+  string subtitle = 5;
+  string title = 6;
 }
 
 message OaInfo {
