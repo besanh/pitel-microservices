@@ -147,19 +147,24 @@ func (s *ChatVendor) PutChatVendorUpload(ctx context.Context, authUser *model.Au
 		return errors.New("vendor does not exist")
 	}
 
-	fileUrl, err := UploadDoc(ctx, "", "", file)
-	if err != nil {
-		log.Error(err)
-		return
-	} else if fileUrl == "" {
-		log.Error("file url is empty")
-		return
+	fileUrl := ""
+	if file != nil {
+		fileUrl, err = UploadDoc(ctx, "", "", file)
+		if err != nil {
+			log.Error(err)
+			return
+		} else if fileUrl == "" {
+			log.Error("file url is empty")
+			return
+		}
 	}
 
 	vendorExist.VendorName = data.VendorName
 	vendorExist.VendorType = data.VendorType
 	vendorExist.Status = data.Status
-	vendorExist.Logo = fileUrl
+	if len(fileUrl) > 0 {
+		vendorExist.Logo = fileUrl
+	}
 	if err = repository.VendorRepo.Update(ctx, repository.DBConn, *vendorExist); err != nil {
 		log.Error(err)
 		return

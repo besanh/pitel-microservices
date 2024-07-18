@@ -31,8 +31,8 @@ const (
 
 // AuthFunc is a middleware (interceptor) that extracts token from header
 func GRPCAuthMiddleware(ctx context.Context) (context.Context, error) {
-	isAuthenticaed, ok := ctx.Value(AUTHENTICATED).(bool)
-	if !ok || !isAuthenticaed {
+	isAuthenticated, ok := ctx.Value(AUTHENTICATED).(bool)
+	if !ok || !isAuthenticated {
 		var authInfo auth.Info
 		var user *model.AuthUser = ParseHeaderToUser(ctx)
 		if len(user.SecretKey) > 0 {

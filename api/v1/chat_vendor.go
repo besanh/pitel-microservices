@@ -61,10 +61,7 @@ func (handler *APIChatVendor) HandlePutChatVendorLogoUpload(c *gin.Context) {
 		c.JSON(response.BadRequestMsg(err.Error()))
 		return
 	}
-	if payload.File == nil {
-		c.JSON(response.BadRequestMsg("Import without file"))
-		return
-	}
+
 	if err := service.ChatVendorService.PutChatVendorUpload(c, res.Data, id, payload, payload.File); err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err))
 		return
