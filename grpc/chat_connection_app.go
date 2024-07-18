@@ -85,6 +85,7 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 					Message: err.Error(),
 				}
+				return
 			}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
