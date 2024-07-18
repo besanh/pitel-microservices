@@ -70,17 +70,19 @@ func (r *AttachConnectionQueueToConnectionAppRequest) Validate() error {
 	if len(r.ConnectionAppRequest.ChatAppId) < 1 {
 		return errors.New("chat app id is required")
 	}
-	if len(r.ChatQueue.QueueName) < 1 {
-		return errors.New("chat queue name is required")
-	}
-	if len(r.ChatQueue.ChatRoutingId) < 1 {
-		return errors.New("chat queue routing id is required")
-	}
-	if len(r.ChatQueueUser.UserId) < 1 {
-		return errors.New("chat queue user id is required")
-	}
-	if len(r.ChatManageQueueUser.UserId) < 1 {
-		return errors.New("chat queue user id is required")
+	if len(r.ConnectionQueueId) < 1 {
+		if len(r.ChatQueue.QueueName) < 1 {
+			return errors.New("chat queue name is required")
+		}
+		if len(r.ChatQueue.ChatRoutingId) < 1 {
+			return errors.New("chat queue routing id is required")
+		}
+		if len(r.ChatQueueUser.UserId) < 1 {
+			return errors.New("chat queue user id is required")
+		}
+		if len(r.ChatManageQueueUser.UserId) < 1 {
+			return errors.New("chat queue user id is required")
+		}
 	}
 
 	return nil
