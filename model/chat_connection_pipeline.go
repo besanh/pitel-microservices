@@ -2,6 +2,11 @@ package model
 
 import (
 	"errors"
+	"regexp"
+	"slices"
+
+	"github.com/tel4vn/fins-microservices/common/regex"
+	"github.com/tel4vn/fins-microservices/common/variables"
 )
 
 type AttachConnectionQueueToConnectionAppRequest struct {
@@ -30,6 +35,38 @@ type PipelineChatQueueUserRequest struct {
 }
 
 func (r *AttachConnectionQueueToConnectionAppRequest) Validate() error {
+	if len(r.ConnectionAppRequest.ConnectionName) < 1 {
+		return errors.New("connection name is required")
+	}
+	if len(r.ConnectionAppRequest.ConnectionType) < 1 {
+		return errors.New("connection type is required")
+	}
+
+	if !slices.Contains[[]string](variables.CONNECTION_TYPE, r.ConnectionAppRequest.ConnectionType) {
+		return errors.New("connection type " + r.ConnectionAppRequest.ConnectionType + " is not supported")
+	}
+
+	if r.ConnectionAppRequest.ConnectionType == "zalo" {
+		if len(r.ConnectionAppRequest.OaInfo.Zalo) < 1 {
+			return errors.New("oa info zalo is required for zalo connection type")
+		}
+
+		re := regexp.MustCompile(regex.REGEX_URL)
+		if !re.MatchString(r.ConnectionAppRequest.OaInfo.Zalo[0].UrlOa) {
+			return errors.New("url " + r.ConnectionAppRequest.OaInfo.Zalo[0].UrlOa + " is not valid")
+		}
+	}
+
+	if r.ConnectionAppRequest.ConnectionType == "facebook" {
+		if len(r.ConnectionAppRequest.OaInfo.Facebook) < 1 {
+			return errors.New("oa info facebook is required for facebook connection type")
+		}
+	}
+
+	if len(r.ConnectionAppRequest.Status) < 1 {
+		return errors.New("status is required")
+	}
+
 	if len(r.ConnectionQueueId) > 0 {
 		return nil
 	}
