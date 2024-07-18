@@ -341,7 +341,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		log.Debug("receive ott message done")
 		return response.OKResponse()
 	case err = <-errChan:
-		log.Errorf("receive ott message error: %s", err)
 		return response.ServiceUnavailableMsg(err.Error())
 	case <-ctx.Done():
 		log.Debug("context timeout")
