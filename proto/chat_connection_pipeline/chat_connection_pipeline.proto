@@ -30,6 +30,9 @@ message FacebookInfo {
   string oa_id = 2;
   string oa_name = 3;
   string url_oa = 4;
+  string access_token = 5;
+  string avatar = 6;
+  int64 expire = 7;
 }
 
 // create app
@@ -41,12 +44,7 @@ message PostChatConnectionAppRequest {
   string connection_queue_id = 5;
   OaInfo oa_info = 6;
   string status = 7;
-  string oa_id = 8;
-  string app_id = 9;
-  string oa_name = 10;
-  int64 code = 11;
-  string message = 12;
-  string chat_app_id = 13;
+  string chat_app_id = 8;
 }
 
 // create queue & attach it to app
