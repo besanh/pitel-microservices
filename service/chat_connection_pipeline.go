@@ -127,7 +127,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 			log.Error(err)
 			return connectionApp.Id, err
 		} else if chatQueueExist == nil {
-			err = errors.New("connection queue not exist")
+			err = errors.New("selected chat queue not found")
 			log.Error(err)
 			return connectionApp.Id, err
 		}
@@ -306,7 +306,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			log.Error(err)
 			return err
 		} else if chatQueueExist == nil {
-			err = errors.New("connection queue not exist")
+			err = errors.New("selected chat queue not found")
 			log.Error(err)
 			return err
 		}
