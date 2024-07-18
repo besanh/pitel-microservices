@@ -334,15 +334,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}(userChan)
 
 	// TODO: check queue setting
-	go s.CheckChatSetting(ctx, message, userChan, errChan, *chatApp)
+	go s.CheckChatSetting(ctx, message, *chatApp, userChan, errChan)
 
 	select {
 	case <-done:
 		log.Debug("receive ott message done")
 		return response.OKResponse()
-	case <-errChan:
-		log.Errorf("receive ott message error: %s", errChan)
-		return response.ServiceUnavailableMsg(errChan)
+	case err = <-errChan:
+		log.Errorf("receive ott message error: %s", err)
+		return response.ServiceUnavailableMsg(err.Error())
 	case <-ctx.Done():
 		log.Debug("context timeout")
 		return response.ServiceUnavailableMsg(errors.New("context timeout"))

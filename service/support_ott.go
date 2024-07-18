@@ -19,7 +19,7 @@ import (
 /**
 * Chia patch cho phan loop
  */
-func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message, userChan chan<- []model.User, errChan chan<- error, chatApp model.ChatApp) {
+func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error) {
 	var authInfo model.AuthUser
 	var user model.User
 	var err error
@@ -304,6 +304,7 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, newConversationId stri
 					RoutingAlias:        chatRouting.RoutingAlias,
 					Message:             message,
 					ConnectionQueueUser: *chatQueueUsers,
+					ManagerQueueUser:    (*chatQueueUsers)[0],
 				}
 
 				userTmp, err := s.GetAllocateUser(ctx, chatSetting, isConversationExist, currentUserAllocate)
@@ -379,8 +380,6 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 			return user, err
 		}
 
-		userLives = append(userLives, *userTmp)
-
 		// TODO: check user exist in queue
 		if len(chatSetting.ConnectionQueueUser) > 0 {
 			for _, item := range chatSetting.ConnectionQueueUser {
@@ -401,8 +400,8 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 	}
 
 	if !isUserAccept {
-		log.Error("user not available")
-		return user, errors.New("user not available")
+		userAllocate.UserId = chatSetting.ManagerQueueUser.Id
+		authInfo.UserId = chatSetting.ManagerQueueUser.Id
 	}
 
 	conversationId := GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId)
@@ -434,60 +433,55 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 
 		return user, nil
 	} else {
-		if len(userLives) > 0 {
-			if len(chatSetting.Message.ConversationId) > 0 {
-				total, conversationDeactiveExist, errConv := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, model.UserAllocateFilter{
-					AppId:          chatSetting.Message.AppId,
-					ConversationId: chatSetting.Message.ConversationId,
-				}, -1, 0)
-				if errConv != nil {
-					log.Error(errConv)
-					return user, errConv
-				}
-				if total > 0 {
-					if err := repository.UserAllocateRepo.DeleteAllocateUsers(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
-						log.Error(err)
-						return user, err
-					}
+		if len(chatSetting.Message.ConversationId) > 0 {
+			total, conversationDeactiveExist, errConv := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, model.UserAllocateFilter{
+				AppId:          chatSetting.Message.AppId,
+				ConversationId: chatSetting.Message.ConversationId,
+			}, -1, 0)
+			if errConv != nil {
+				log.Error(errConv)
+				return user, errConv
+			}
+			if total > 0 {
+				if err := repository.UserAllocateRepo.DeleteAllocateUsers(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
+					log.Error(err)
+					return user, err
 				}
 			}
-
-			userAllocate = model.AllocateUser{
-				Base:               model.InitBase(),
-				TenantId:           chatSetting.ConnectionApp.TenantId,
-				ConversationId:     conversationId,
-				AppId:              chatSetting.Message.AppId,
-				OaId:               chatSetting.Message.OaId,
-				UserId:             userAllocate.UserId,
-				QueueId:            chatSetting.ConnectionQueue.QueueId,
-				AllocatedTimestamp: time.Now().UnixMilli(),
-				MainAllocate:       "active",
-				ConnectionId:       chatSetting.ConnectionQueue.ConnectionId,
-				ConnectionQueueId:  chatSetting.ConnectionApp.ConnectionQueueId,
-				Username:           userAllocate.Username,
-			}
-
-			if err = repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocate); err != nil {
-				log.Error(err)
-				return
-			}
-
-			if err = cache.RCache.Set(USER_ALLOCATE+"_"+conversationId, userAllocate, USER_ALLOCATE_EXPIRE); err != nil {
-				log.Error(err)
-				return
-			}
-
-			user.IsOk = true
-			user.AuthUser = &authInfo
-			user.ConnectionId = chatSetting.ConnectionQueue.ConnectionId
-			user.QueueId = chatSetting.ConnectionQueue.QueueId
-			user.ConnectionQueueId = chatSetting.ConnectionApp.ConnectionQueueId
-
-			return user, nil
-		} else {
-			log.Error("user not available")
-			return user, errors.New("user not available")
 		}
+
+		userAllocate = model.AllocateUser{
+			Base:               model.InitBase(),
+			TenantId:           chatSetting.ConnectionApp.TenantId,
+			ConversationId:     conversationId,
+			AppId:              chatSetting.Message.AppId,
+			OaId:               chatSetting.Message.OaId,
+			UserId:             userAllocate.UserId,
+			QueueId:            chatSetting.ConnectionQueue.QueueId,
+			AllocatedTimestamp: time.Now().UnixMilli(),
+			MainAllocate:       "active",
+			ConnectionId:       chatSetting.ConnectionQueue.ConnectionId,
+			ConnectionQueueId:  chatSetting.ConnectionApp.ConnectionQueueId,
+			Username:           userAllocate.Username,
+		}
+
+		if err = repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocate); err != nil {
+			log.Error(err)
+			return
+		}
+
+		if err = cache.RCache.Set(USER_ALLOCATE+"_"+conversationId, userAllocate, USER_ALLOCATE_EXPIRE); err != nil {
+			log.Error(err)
+			return
+		}
+
+		user.IsOk = true
+		user.AuthUser = &authInfo
+		user.ConnectionId = chatSetting.ConnectionQueue.ConnectionId
+		user.QueueId = chatSetting.ConnectionQueue.QueueId
+		user.ConnectionQueueId = chatSetting.ConnectionApp.ConnectionQueueId
+
+		return user, nil
 	}
 }
 
