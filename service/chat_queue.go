@@ -398,17 +398,6 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 		return err
 	}
 
-	if len(attachedConnectionId) > 0 {
-		// clear cache
-		chatQueueUserCache := cache.RCache.Get(CHAT_QUEUE + "_" + id)
-		if chatQueueUserCache != nil {
-			if err = cache.RCache.Del([]string{CHAT_QUEUE + "_" + id}); err != nil {
-				log.Error(err)
-				return err
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -489,7 +478,7 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 			(*connectionApps)[i].UpdatedAt = currentTime
 		}
 		if len(*connectionApps) > 0 {
-			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id"); err != nil {
+			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id", "updated_at"); err != nil {
 				log.Error(err)
 				return err
 			}
