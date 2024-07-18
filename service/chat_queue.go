@@ -428,6 +428,23 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 	}
 	defer tx.Rollback()
 
+	// remove chat queue users
+	queueUserFilter := model.ChatQueueUserFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  []string{queueExist.GetId()},
+	}
+	_, oldQueueUser, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, queueUserFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*oldQueueUser) > 0 {
+		if err = repository.ChatQueueUserRepo.TxBulkDelete(ctx, tx, *oldQueueUser); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+
 	// remove old manage queue user
 	manageFilter := model.ChatManageQueueUserFilter{
 		TenantId: authUser.TenantId,
