@@ -33,6 +33,7 @@ message FacebookInfo {
   string access_token = 5;
   string avatar = 6;
   int64 expire = 7;
+  string status = 8;
 }
 
 // create app
