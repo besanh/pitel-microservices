@@ -153,6 +153,15 @@ func (r *Repo[T]) TxDelete(ctx context.Context, tx bun.Tx, entity T) (err error)
 func (r *Repo[T]) TxBulkDelete(ctx context.Context, tx bun.Tx, entities []T) (err error) {
 	_, err = tx.NewDelete().
 		Model(&entities).
+		Where("id IN (?)", bun.In(r.getIds(entities))).
 		Exec(ctx)
+	return
+}
+
+func (r *Repo[T]) getIds(entities []T) (result []string) {
+	result = make([]string, len(entities))
+	for i, entity := range entities {
+		result[i] = entity.GetId()
+	}
 	return
 }

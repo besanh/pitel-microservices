@@ -89,10 +89,38 @@ message ChatConnectionPipelineQueueResponse {
   string id = 3;
 }
 
+// edit queue in c.app
+message UpdateQueueInConnectionAppByIdRequest {
+  string id = 1;
+
+  // for selecting existed queue
+  string connection_queue_id = 2;
+
+  // for creating new queue
+  // queue request
+  ChatQueueRequest chat_queue = 3;
+  // queue user request
+  ChatQueueUserRequest chat_queue_user = 4;
+  // manage queue user request
+  ChatManageQueueUserRequest chat_manage_queue_user = 5;
+}
+
+message UpdateQueueInConnectionAppByIdResponse {
+  string code = 1;
+  string message = 2;
+}
+
 service ChatConnectionPipelineService {
   rpc AttachConnectionQueueToApp(ChatConnectionPipelineQueueRequest) returns (ChatConnectionPipelineQueueResponse) {
     option (google.api.http) = {
       post : "/bss-chat/v1/chat-connection-pipeline"
+      body : "*"
+    };
+  };
+
+  rpc UpdateQueueInConnectionAppById(UpdateQueueInConnectionAppByIdRequest) returns (UpdateQueueInConnectionAppByIdResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-connection-pipeline/{id}"
       body : "*"
     };
   };

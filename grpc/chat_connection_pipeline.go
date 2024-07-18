@@ -49,3 +49,32 @@ func (g *GRPCChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Cont
 	}
 	return result, nil
 }
+
+func (g *GRPCChatConnectionPipeline) UpdateQueueInConnectionAppById(ctx context.Context, request *pb.UpdateQueueInConnectionAppByIdRequest) (*pb.UpdateQueueInConnectionAppByIdResponse, error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	payload := model.AttachConnectionQueueToConnectionAppRequest{}
+	if err := util.ParseAnyToAny(request, &payload); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	if err := payload.Validate(); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	err := service.ChatConnectionPipelineService.UpdateConnectionQueueInApp(ctx, user, request.GetId(), payload)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result := &pb.UpdateQueueInConnectionAppByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+	}
+	return result, nil
+}
