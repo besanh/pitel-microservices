@@ -63,9 +63,10 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	limit, offset := request.GetLimit(), request.GetOffset()
 
-	total, data, err := service.ChatConnectionAppService.GetChatConnectionApp(ctx, user, payload, int(limit), int(offset))
+	limit, offset := util.ParseLimit(request.GetLimit()), util.ParseOffset(request.GetOffset())
+
+	total, data, err := service.ChatConnectionAppService.GetChatConnectionApp(ctx, user, payload, limit, offset)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -106,8 +107,8 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 		Message: "ok",
 		Data:    resultData,
 		Total:   int32(total),
-		Limit:   limit,
-		Offset:  offset,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
 	}
 	return result, nil
 }

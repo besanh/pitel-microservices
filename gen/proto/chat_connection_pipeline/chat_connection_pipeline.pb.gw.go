@@ -31,32 +31,6 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-func request_ChatConnectionPipelineService_InsertChatConnectionApp_0(ctx context.Context, marshaler runtime.Marshaler, client ChatConnectionPipelineServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq PostChatConnectionAppRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := client.InsertChatConnectionApp(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_ChatConnectionPipelineService_InsertChatConnectionApp_0(ctx context.Context, marshaler runtime.Marshaler, server ChatConnectionPipelineServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq PostChatConnectionAppRequest
-	var metadata runtime.ServerMetadata
-
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.InsertChatConnectionApp(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
 func request_ChatConnectionPipelineService_AttachConnectionQueueToApp_0(ctx context.Context, marshaler runtime.Marshaler, client ChatConnectionPipelineServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ChatConnectionPipelineQueueRequest
 	var metadata runtime.ServerMetadata
@@ -89,31 +63,6 @@ func local_request_ChatConnectionPipelineService_AttachConnectionQueueToApp_0(ct
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterChatConnectionPipelineServiceHandlerFromEndpoint instead.
 func RegisterChatConnectionPipelineServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ChatConnectionPipelineServiceServer) error {
 
-	mux.Handle("POST", pattern_ChatConnectionPipelineService_InsertChatConnectionApp_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		var stream runtime.ServerTransportStream
-		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/InsertChatConnectionApp", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/app"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_ChatConnectionPipelineService_InsertChatConnectionApp_0(annotatedContext, inboundMarshaler, server, req, pathParams)
-		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_ChatConnectionPipelineService_InsertChatConnectionApp_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
 	mux.Handle("POST", pattern_ChatConnectionPipelineService_AttachConnectionQueueToApp_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -122,7 +71,7 @@ func RegisterChatConnectionPipelineServiceHandlerServer(ctx context.Context, mux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/AttachConnectionQueueToApp", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/queue"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/AttachConnectionQueueToApp", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -180,35 +129,13 @@ func RegisterChatConnectionPipelineServiceHandler(ctx context.Context, mux *runt
 // "ChatConnectionPipelineServiceClient" to call the correct interceptors.
 func RegisterChatConnectionPipelineServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ChatConnectionPipelineServiceClient) error {
 
-	mux.Handle("POST", pattern_ChatConnectionPipelineService_InsertChatConnectionApp_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		var err error
-		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/InsertChatConnectionApp", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/app"))
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_ChatConnectionPipelineService_InsertChatConnectionApp_0(annotatedContext, inboundMarshaler, client, req, pathParams)
-		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
-		if err != nil {
-			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_ChatConnectionPipelineService_InsertChatConnectionApp_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
 	mux.Handle("POST", pattern_ChatConnectionPipelineService_AttachConnectionQueueToApp_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/AttachConnectionQueueToApp", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline/queue"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.chatConnectionPipeline.ChatConnectionPipelineService/AttachConnectionQueueToApp", runtime.WithHTTPPathPattern("/bss-chat/v1/chat-connection-pipeline"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -228,13 +155,9 @@ func RegisterChatConnectionPipelineServiceHandlerClient(ctx context.Context, mux
 }
 
 var (
-	pattern_ChatConnectionPipelineService_InsertChatConnectionApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss-chat", "v1", "chat-connection-pipeline", "app"}, ""))
-
-	pattern_ChatConnectionPipelineService_AttachConnectionQueueToApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss-chat", "v1", "chat-connection-pipeline", "queue"}, ""))
+	pattern_ChatConnectionPipelineService_AttachConnectionQueueToApp_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "chat-connection-pipeline"}, ""))
 )
 
 var (
-	forward_ChatConnectionPipelineService_InsertChatConnectionApp_0 = runtime.ForwardResponseMessage
-
 	forward_ChatConnectionPipelineService_AttachConnectionQueueToApp_0 = runtime.ForwardResponseMessage
 )

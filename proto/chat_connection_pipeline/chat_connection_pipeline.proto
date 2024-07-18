@@ -22,10 +22,7 @@ message ZaloInfo {
   string oa_id = 2;
   string oa_name = 3;
   string url_oa = 4;
-  string avatar = 5;
-  string cover = 6;
-  string cate_name = 7;
-  string status = 8;
+  string status = 5;
 }
 
 message FacebookInfo {
@@ -33,8 +30,6 @@ message FacebookInfo {
   string oa_id = 2;
   string oa_name = 3;
   string url_oa = 4;
-  string avatar = 5;
-  string cover = 6;
 }
 
 // create app
@@ -49,27 +44,14 @@ message PostChatConnectionAppRequest {
   string oa_id = 8;
   string app_id = 9;
   string oa_name = 10;
-  string avatar = 11;
-  string cover = 12;
-  string cate_name = 13;
-  int64 code = 14;
-  string message = 15;
-  string token_created_at = 16;
-  int64 token_expires_in = 17;
-  int64 token_time_remaining = 18;
-  string chat_app_id = 19;
-}
-
-message PostChatConnectionAppResponse {
-  string code = 1;
-  string message = 2;
-  string id = 3;
+  int64 code = 11;
+  string message = 12;
+  string chat_app_id = 13;
 }
 
 // create queue & attach it to app
 message ChatConnectionPipelineQueueRequest {
-  // boolean text to check whether the caller wants to attach c.queue to c.app
-  string is_attaching_app = 1;
+  PostChatConnectionAppRequest connection_app_request = 1;
   string connection_id = 2;
 
   // for selecting existed queue
@@ -108,18 +90,13 @@ message ChatQueueUserRequest {
 message ChatConnectionPipelineQueueResponse {
   string code = 1;
   string message = 2;
+  string id = 3;
 }
 
 service ChatConnectionPipelineService {
-  rpc InsertChatConnectionApp(PostChatConnectionAppRequest) returns (PostChatConnectionAppResponse) {
-    option (google.api.http) = {
-      post : "/bss-chat/v1/chat-connection-pipeline/app"
-      body : "*"
-    };
-  };
   rpc AttachConnectionQueueToApp(ChatConnectionPipelineQueueRequest) returns (ChatConnectionPipelineQueueResponse) {
     option (google.api.http) = {
-      post : "/bss-chat/v1/chat-connection-pipeline/queue"
+      post : "/bss-chat/v1/chat-connection-pipeline"
       body : "*"
     };
   };

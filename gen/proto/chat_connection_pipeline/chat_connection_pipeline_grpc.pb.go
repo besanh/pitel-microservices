@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ChatConnectionPipelineService_InsertChatConnectionApp_FullMethodName    = "/proto.chatConnectionPipeline.ChatConnectionPipelineService/InsertChatConnectionApp"
 	ChatConnectionPipelineService_AttachConnectionQueueToApp_FullMethodName = "/proto.chatConnectionPipeline.ChatConnectionPipelineService/AttachConnectionQueueToApp"
 )
 
@@ -27,7 +26,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChatConnectionPipelineServiceClient interface {
-	InsertChatConnectionApp(ctx context.Context, in *PostChatConnectionAppRequest, opts ...grpc.CallOption) (*PostChatConnectionAppResponse, error)
 	AttachConnectionQueueToApp(ctx context.Context, in *ChatConnectionPipelineQueueRequest, opts ...grpc.CallOption) (*ChatConnectionPipelineQueueResponse, error)
 }
 
@@ -37,16 +35,6 @@ type chatConnectionPipelineServiceClient struct {
 
 func NewChatConnectionPipelineServiceClient(cc grpc.ClientConnInterface) ChatConnectionPipelineServiceClient {
 	return &chatConnectionPipelineServiceClient{cc}
-}
-
-func (c *chatConnectionPipelineServiceClient) InsertChatConnectionApp(ctx context.Context, in *PostChatConnectionAppRequest, opts ...grpc.CallOption) (*PostChatConnectionAppResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostChatConnectionAppResponse)
-	err := c.cc.Invoke(ctx, ChatConnectionPipelineService_InsertChatConnectionApp_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *chatConnectionPipelineServiceClient) AttachConnectionQueueToApp(ctx context.Context, in *ChatConnectionPipelineQueueRequest, opts ...grpc.CallOption) (*ChatConnectionPipelineQueueResponse, error) {
@@ -63,7 +51,6 @@ func (c *chatConnectionPipelineServiceClient) AttachConnectionQueueToApp(ctx con
 // All implementations should embed UnimplementedChatConnectionPipelineServiceServer
 // for forward compatibility
 type ChatConnectionPipelineServiceServer interface {
-	InsertChatConnectionApp(context.Context, *PostChatConnectionAppRequest) (*PostChatConnectionAppResponse, error)
 	AttachConnectionQueueToApp(context.Context, *ChatConnectionPipelineQueueRequest) (*ChatConnectionPipelineQueueResponse, error)
 }
 
@@ -71,9 +58,6 @@ type ChatConnectionPipelineServiceServer interface {
 type UnimplementedChatConnectionPipelineServiceServer struct {
 }
 
-func (UnimplementedChatConnectionPipelineServiceServer) InsertChatConnectionApp(context.Context, *PostChatConnectionAppRequest) (*PostChatConnectionAppResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InsertChatConnectionApp not implemented")
-}
 func (UnimplementedChatConnectionPipelineServiceServer) AttachConnectionQueueToApp(context.Context, *ChatConnectionPipelineQueueRequest) (*ChatConnectionPipelineQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AttachConnectionQueueToApp not implemented")
 }
@@ -87,24 +71,6 @@ type UnsafeChatConnectionPipelineServiceServer interface {
 
 func RegisterChatConnectionPipelineServiceServer(s grpc.ServiceRegistrar, srv ChatConnectionPipelineServiceServer) {
 	s.RegisterService(&ChatConnectionPipelineService_ServiceDesc, srv)
-}
-
-func _ChatConnectionPipelineService_InsertChatConnectionApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PostChatConnectionAppRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChatConnectionPipelineServiceServer).InsertChatConnectionApp(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ChatConnectionPipelineService_InsertChatConnectionApp_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatConnectionPipelineServiceServer).InsertChatConnectionApp(ctx, req.(*PostChatConnectionAppRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _ChatConnectionPipelineService_AttachConnectionQueueToApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -132,10 +98,6 @@ var ChatConnectionPipelineService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.chatConnectionPipeline.ChatConnectionPipelineService",
 	HandlerType: (*ChatConnectionPipelineServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "InsertChatConnectionApp",
-			Handler:    _ChatConnectionPipelineService_InsertChatConnectionApp_Handler,
-		},
 		{
 			MethodName: "AttachConnectionQueueToApp",
 			Handler:    _ChatConnectionPipelineService_AttachConnectionQueueToApp_Handler,

@@ -5,8 +5,7 @@ import (
 )
 
 type AttachConnectionQueueToConnectionAppRequest struct {
-	IsAttachingAppString string                             `json:"is_attaching_app"`
-	IsAttachingApp       bool                               `json:"-"`
+	ConnectionAppRequest ChatConnectionAppRequest           `json:"connection_app_request"`
 	ConnectionId         string                             `json:"connection_id"`
 	ConnectionQueueId    string                             `json:"connection_queue_id"` // for selecting an existed queue
 	ChatQueue            PipelineChatQueueRequest           `json:"chat_queue"`
@@ -32,9 +31,6 @@ type PipelineChatQueueUserRequest struct {
 }
 
 func (r *AttachConnectionQueueToConnectionAppRequest) Validate() error {
-	if r.IsAttachingApp && len(r.ConnectionId) < 1 {
-		return errors.New("connection id is required")
-	}
 	if len(r.ConnectionQueueId) > 0 {
 		return nil
 	}

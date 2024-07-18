@@ -73,10 +73,7 @@ message ZaloInfo {
   string oa_id = 2;
   string oa_name = 3;
   string url_oa = 4;
-  string avatar = 5;
-  string cover = 6;
-  string cate_name = 7;
-  string status = 8;
+  string status = 5;
 }
 
 message FacebookInfo {
@@ -84,8 +81,6 @@ message FacebookInfo {
   string oa_id = 2;
   string oa_name = 3;
   string url_oa = 4;
-  string avatar = 5;
-  string cover = 6;
 }
 
 // get chat connection apps
@@ -132,14 +127,8 @@ message PostChatConnectionAppRequest {
   string oa_id = 8;
   string app_id = 9;
   string oa_name = 10;
-  string avatar = 11;
-  string cover = 12;
-  string cate_name = 13;
-  int64 code = 14;
-  string message = 15;
-  string token_created_at = 16;
-  int64 token_expires_in = 17;
-  int64 token_time_remaining = 18;
+  int64 code = 11;
+  string message = 12;
 }
 
 message PostChatConnectionAppResponse {
@@ -161,14 +150,8 @@ message PutChatConnectionAppRequest {
   string oa_id = 9;
   string app_id = 10;
   string oa_name = 11;
-  string avatar = 12;
-  string cover = 13;
-  string cate_name = 14;
-  int64 code = 15;
-  string message = 16;
-  string token_created_at = 17;
-  int64 token_expires_in = 18;
-  int64 token_time_remaining = 19;
+  int64 code = 12;
+  string message = 13;
 }
 
 message PutChatConnectionAppResponse {
