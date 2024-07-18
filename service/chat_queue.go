@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -13,13 +14,20 @@ import (
 type (
 	IChatQueue interface {
 		InsertChatQueue(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequest) (string, error)
-		GetChatQueues(ctx context.Context, authUser *model.AuthUser, bssAuthRequest model.BssAuthRequest, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error)
+		GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error)
 		GetChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatQueue, error)
 		UpdateChatQueueById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequest) error
 		DeleteChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) error
+
+		//new version
+		InsertChatQueueV2(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequestV2) (string, error)
+		UpdateChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequestV2) error
+		DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error
 	}
 	ChatQueue struct{}
 )
+
+var ChatQueueService IChatQueue
 
 func NewChatQueue() IChatQueue {
 	return &ChatQueue{}
@@ -76,7 +84,7 @@ func (s *ChatQueue) InsertChatQueue(ctx context.Context, authUser *model.AuthUse
 	return chatQueue.Base.GetId(), nil
 }
 
-func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser, bssAuthRequest model.BssAuthRequest, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
+func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
@@ -200,6 +208,297 @@ func (s *ChatQueue) DeleteChatQueueById(ctx context.Context, authUser *model.Aut
 
 	// Delete queue user
 	if err := repository.ChatQueueUserRepo.DeleteChatQueueUsers(ctx, dbCon, id); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *ChatQueue) InsertChatQueueV2(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequestV2) (string, error) {
+	chatQueue := model.ChatQueue{
+		Base: model.InitBase(),
+	}
+	routingExist, err := repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, data.ChatQueue.ChatRoutingId)
+	if err != nil {
+		log.Error(err)
+		return chatQueue.Base.GetId(), err
+	} else if routingExist == nil {
+		err = errors.New("chat routing not found")
+		return chatQueue.Base.GetId(), err
+	}
+
+	tx, err := repository.ChatQueueRepo.BeginTx(ctx, repository.DBConn, nil)
+	if err != nil {
+		log.Error(err)
+		return chatQueue.Base.GetId(), err
+	}
+	defer tx.Rollback()
+
+	chatQueue.TenantId = authUser.TenantId
+	chatQueue.QueueName = data.ChatQueue.QueueName
+	chatQueue.Description = data.ChatQueue.Description
+	chatQueue.ChatRoutingId = data.ChatQueue.ChatRoutingId
+	chatQueue.Status = data.ChatQueue.Status
+
+	if err = repository.ChatQueueRepo.TxInsert(ctx, tx, chatQueue); err != nil {
+		log.Error(err)
+		return chatQueue.Base.GetId(), err
+	}
+
+	// insert queue user
+	chatQueueUsers := make([]model.ChatQueueUser, 0)
+	for _, item := range data.ChatQueueUser.UserId {
+		chatQueueUser := model.ChatQueueUser{
+			Base:     model.InitBase(),
+			TenantId: authUser.TenantId,
+			QueueId:  chatQueue.GetId(),
+			UserId:   item,
+			Source:   authUser.Source,
+		}
+		chatQueueUsers = append(chatQueueUsers, chatQueueUser)
+	}
+	if len(chatQueueUsers) > 0 {
+		err = repository.ChatQueueUserRepo.TxBulkInsert(ctx, tx, chatQueueUsers)
+		if err != nil {
+			log.Error(err)
+			return chatQueue.Base.GetId(), err
+		}
+	}
+
+	// insert manage queue user
+	manageQueue := model.ChatManageQueueUser{
+		Base: model.InitBase(),
+	}
+	manageQueue.TenantId = authUser.TenantId
+	//manageQueue.ConnectionId = connectionAppExist.Id //no data
+	manageQueue.QueueId = chatQueue.GetId()
+	manageQueue.UserId = data.ChatManageQueueUser.UserId
+
+	chatQueue.ManageQueueId = manageQueue.GetId()
+
+	if err = repository.ManageQueueRepo.TxInsert(ctx, tx, manageQueue); err != nil {
+		log.Error(err)
+		return chatQueue.Base.GetId(), err
+	}
+	if err = repository.ChatQueueRepo.TxUpdate(ctx, tx, chatQueue); err != nil {
+		log.Error(err)
+		return chatQueue.Base.GetId(), err
+	}
+
+	if err = repository.ChatQueueRepo.CommitTx(ctx, tx); err != nil {
+		log.Error(err)
+		return chatQueue.Base.GetId(), err
+	}
+
+	return chatQueue.Base.GetId(), nil
+}
+
+func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequestV2) error {
+	queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if queueExist == nil {
+		log.Error("chat queue " + id + " not found")
+		return errors.New("chat queue " + id + " not found")
+	}
+
+	tx, err := repository.ChatQueueRepo.BeginTx(ctx, repository.DBConn, nil)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	defer tx.Rollback()
+
+	queueExist.QueueName = data.ChatQueue.QueueName
+	queueExist.Description = data.ChatQueue.Description
+	queueExist.ChatRoutingId = data.ChatQueue.ChatRoutingId
+	queueExist.Status = data.ChatQueue.Status
+
+	// remove old queue user
+	queueUserFilter := model.ChatQueueUserFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  []string{queueExist.GetId()},
+	}
+	_, oldQueueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, queueUserFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*oldQueueUsers) > 0 {
+		if err = repository.ChatQueueUserRepo.TxBulkDelete(ctx, tx, *oldQueueUsers); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	// remove old manage queue user
+	manageFilter := model.ChatManageQueueUserFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  queueExist.GetId(),
+	}
+	_, oldManageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, manageFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	var attachedConnectionId string
+	for _, item := range *oldManageQueues {
+		if len(item.ConnectionId) > 0 {
+			attachedConnectionId = item.ConnectionId
+			break
+		}
+	}
+	if len(*oldManageQueues) > 0 {
+		if err = repository.ManageQueueRepo.TxBulkDelete(ctx, tx, *oldManageQueues); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+
+	// insert new queue user
+	chatQueueUsers := make([]model.ChatQueueUser, 0)
+	for _, item := range data.ChatQueueUser.UserId {
+		chatQueueUser := model.ChatQueueUser{
+			Base:     model.InitBase(),
+			TenantId: authUser.TenantId,
+			QueueId:  queueExist.GetId(),
+			UserId:   item,
+			Source:   authUser.Source,
+		}
+		chatQueueUsers = append(chatQueueUsers, chatQueueUser)
+	}
+	err = repository.ChatQueueUserRepo.TxBulkInsert(ctx, tx, chatQueueUsers)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// insert manage queue user
+	manageQueue := model.ChatManageQueueUser{
+		Base: model.InitBase(),
+	}
+	manageQueue.TenantId = authUser.TenantId
+	manageQueue.ConnectionId = attachedConnectionId
+	manageQueue.QueueId = queueExist.GetId()
+	manageQueue.UserId = data.ChatManageQueueUser.UserId
+
+	queueExist.ManageQueueId = manageQueue.GetId()
+
+	if err = repository.ManageQueueRepo.TxInsert(ctx, tx, manageQueue); err != nil {
+		log.Error(err)
+		return err
+	}
+	if err = repository.ChatQueueRepo.TxUpdate(ctx, tx, *queueExist); err != nil {
+		log.Error(err)
+		return err
+	}
+	if err = repository.ChatQueueRepo.CommitTx(ctx, tx); err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error {
+	queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, id)
+	if err != nil {
+		log.Error(err)
+		return err
+	} else if queueExist == nil {
+		log.Error("chat queue " + id + " not found")
+		return errors.New("chat queue " + id + " not found")
+	}
+
+	tx, err := repository.ChatQueueRepo.BeginTx(ctx, repository.DBConn, nil)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	defer tx.Rollback()
+
+	// remove chat queue users
+	queueUserFilter := model.ChatQueueUserFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  []string{queueExist.GetId()},
+	}
+	_, oldQueueUser, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, queueUserFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*oldQueueUser) > 0 {
+		if err = repository.ChatQueueUserRepo.TxBulkDelete(ctx, tx, *oldQueueUser); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+
+	// remove old manage queue user
+	manageFilter := model.ChatManageQueueUserFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  queueExist.GetId(),
+	}
+	_, oldManageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, manageFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*oldManageQueues) > 0 {
+		if err = repository.ManageQueueRepo.TxBulkDelete(ctx, tx, *oldManageQueues); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	// delete related connection queues
+	connectionQueueFilter := model.ConnectionQueueFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  queueExist.GetId(),
+	}
+	_, oldConnectionQueues, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, connectionQueueFilter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	currentTime := time.Now()
+	// update field in connection apps
+	for _, connectionQueue := range *oldConnectionQueues {
+		connectionAppFilter := model.ChatConnectionAppFilter{
+			TenantId:          authUser.TenantId,
+			ConnectionQueueId: connectionQueue.GetId(),
+		}
+		_, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionAppFilter, -1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		for i := range *connectionApps {
+			(*connectionApps)[i].ConnectionQueueId = ""
+			(*connectionApps)[i].UpdatedAt = currentTime
+		}
+		if len(*connectionApps) > 0 {
+			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id", "updated_at"); err != nil {
+				log.Error(err)
+				return err
+			}
+		}
+	}
+
+	if len(*oldConnectionQueues) > 0 {
+		if err = repository.ConnectionQueueRepo.TxBulkDelete(ctx, tx, *oldConnectionQueues); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+
+	err = repository.ChatQueueRepo.TxDelete(ctx, tx, *queueExist)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if err = repository.ChatQueueRepo.CommitTx(ctx, tx); err != nil {
 		log.Error(err)
 		return err
 	}

@@ -29,12 +29,34 @@ type ChatQueueRequest struct {
 	Status        string   `json:"status"`
 }
 
+type ChatQueueRequestV2 struct {
+	ChatQueue           PipelineChatQueueRequest           `json:"chat_queue"`
+	ChatQueueUser       PipelineChatQueueUserRequest       `json:"chat_queue_user"`
+	ChatManageQueueUser PipelineChatManageQueueUserRequest `json:"chat_manage_queue_user"`
+}
+
 func (m *ChatQueueRequest) Validate() error {
 	if len(m.QueueName) < 1 {
 		return errors.New("queue name is required")
 	}
 	if len(m.ChatRoutingId) < 1 {
 		return errors.New("chat routing id is required")
+	}
+	return nil
+}
+
+func (m *ChatQueueRequestV2) Validate() error {
+	if len(m.ChatQueue.QueueName) < 1 {
+		return errors.New("chat queue name is required")
+	}
+	if len(m.ChatQueue.ChatRoutingId) < 1 {
+		return errors.New("chat queue routing id is required")
+	}
+	if len(m.ChatQueueUser.UserId) < 1 {
+		return errors.New("chat queue user id is required")
+	}
+	if len(m.ChatManageQueueUser.UserId) < 1 {
+		return errors.New("chat queue user id is required")
 	}
 	return nil
 }

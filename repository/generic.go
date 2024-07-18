@@ -24,6 +24,8 @@ type IRepo[T model.Model] interface {
 	TxBulkUpdate(ctx context.Context, tx bun.Tx, entities []T) error
 	TxDelete(ctx context.Context, tx bun.Tx, entity T) error
 	TxBulkDelete(ctx context.Context, tx bun.Tx, entities []T) error
+	BeginTx(ctx context.Context, db sqlclient.ISqlClientConn, opts *sql.TxOptions) (bun.Tx, error)
+	CommitTx(ctx context.Context, tx bun.Tx) error
 }
 
 type Repo[T model.Model] struct {
@@ -164,4 +166,12 @@ func (r *Repo[T]) getIds(entities []T) (result []string) {
 		result[i] = entity.GetId()
 	}
 	return
+}
+
+func (r *Repo[T]) BeginTx(ctx context.Context, db sqlclient.ISqlClientConn, opts *sql.TxOptions) (bun.Tx, error) {
+	return db.GetDB().BeginTx(ctx, opts)
+}
+
+func (r *Repo[T]) CommitTx(ctx context.Context, tx bun.Tx) error {
+	return tx.Commit()
 }
