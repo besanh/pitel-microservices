@@ -32,6 +32,11 @@ func (g *GRPCChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Cont
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
+	if err := util.ParseAnyToAny(payload.ConnectionAppRequest.OaInfo, request.ConnectionAppRequest.OaInfo); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
 	if err := payload.Validate(); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
