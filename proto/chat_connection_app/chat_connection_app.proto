@@ -12,8 +12,8 @@ import "buf/validate/validate.proto";
 message ChatConnectionApp {
   string id = 1;
   string tenant_id = 2;
-  google.protobuf.Timestamp created_at = 3;
-  google.protobuf.Timestamp updated_at = 4;
+  google.protobuf.Timestamp CreatedAt = 3;
+  google.protobuf.Timestamp UpdatedAt = 4;
   string connection_name = 5;
   string connection_type = 6;
   string app_id = 7;
@@ -81,6 +81,9 @@ message FacebookInfo {
   string oa_id = 2;
   string oa_name = 3;
   string url_oa = 4;
+  string access_token = 5;
+  string avatar = 6;
+  int64 expire = 7;
 }
 
 // get chat connection apps
