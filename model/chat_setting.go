@@ -10,4 +10,5 @@ type ChatSetting struct {
 	ConnectionQueue     ConnectionQueue
 	PreviousAssign      AllocateUser
 	ConnectionQueueUser []ChatQueueUser
+	ManagerQueueUser    ChatQueueUser
 }

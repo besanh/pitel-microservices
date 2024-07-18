@@ -35,6 +35,9 @@ type PipelineChatQueueUserRequest struct {
 }
 
 func (r *AttachConnectionQueueToConnectionAppRequest) Validate() error {
+	if len(r.ConnectionAppRequest.AppId) < 1 {
+		return errors.New("app id is required")
+	}
 	if len(r.ConnectionAppRequest.ConnectionName) < 1 {
 		return errors.New("connection name is required")
 	}
@@ -67,8 +70,8 @@ func (r *AttachConnectionQueueToConnectionAppRequest) Validate() error {
 		return errors.New("status is required")
 	}
 
-	if len(r.ConnectionQueueId) > 0 {
-		return nil
+	if len(r.ConnectionAppRequest.ChatAppId) < 1 {
+		return errors.New("chat app id is required")
 	}
 	if len(r.ChatQueue.QueueName) < 1 {
 		return errors.New("chat queue name is required")
