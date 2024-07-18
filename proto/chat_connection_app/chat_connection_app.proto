@@ -16,7 +16,7 @@ message ChatConnectionApp {
   google.protobuf.Timestamp updated_at = 4;
   string connection_name = 5;
   string connection_type = 6;
-  string app_id = 7;
+  string chat_app_id = 7;
   string connection_queue_id = 8;
   ConnectionQueue connection_queue = 9;
   OaInfo oa_info = 10;
@@ -54,7 +54,7 @@ message ChatConnectionAppView {
   google.protobuf.Timestamp updated_at = 4;
   string connection_name = 5;
   string connection_type = 6;
-  string app_id = 7;
+  string chat_app_id = 7;
   string connection_queue_id = 8;
   ConnectionQueue connection_queue = 9;
   OaInfo oa_info = 10;
@@ -103,7 +103,7 @@ message GetChatConnectionAppsRequest {
   string oa_id = 3;
   int32 limit = 4;
   int32 offset = 5;
-  string app_id = 6;
+  string chat_app_id = 6;
   string connection_name = 7;
   string connection_type = 8;
   string queue_id = 9;
@@ -138,7 +138,7 @@ message PostChatConnectionAppRequest {
   OaInfo oa_info = 6;
   string status = 7;
   string oa_id = 8;
-  string app_id = 9;
+  string chat_app_id = 9;
   string oa_name = 10;
   int64 code = 11;
   string message = 12;
@@ -160,7 +160,7 @@ message PutChatConnectionAppRequest {
   string connection_queue_id = 6;
   OaInfo oa_info = 7;
   string status = 8;
-  string oa_id = 9;
+  string chat_app_id = 9;
   string app_id = 10;
   string oa_name = 11;
   int64 code = 12;
