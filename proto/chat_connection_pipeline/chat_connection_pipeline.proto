@@ -52,18 +52,17 @@ message PostChatConnectionAppRequest {
 // create queue & attach it to app
 message ChatConnectionPipelineQueueRequest {
   PostChatConnectionAppRequest connection_app_request = 1;
-  string connection_id = 2;
 
   // for selecting existed queue
-  string connection_queue_id = 3;
+  string connection_queue_id = 2;
 
   // for creating new queue
   // queue request
-  ChatQueueRequest chat_queue = 4;
+  ChatQueueRequest chat_queue = 3;
   // queue user request
-  ChatQueueUserRequest chat_queue_user = 5;
+  ChatQueueUserRequest chat_queue_user = 4;
   // manage queue user request
-  ChatManageQueueUserRequest chat_manage_queue_user = 6;
+  ChatManageQueueUserRequest chat_manage_queue_user = 5;
 }
 
 message ChatManageQueueUserRequest {

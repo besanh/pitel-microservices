@@ -180,7 +180,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 		connectionQueue := model.ConnectionQueue{
 			Base:         model.InitBase(),
 			TenantId:     authUser.TenantId,
-			ConnectionId: data.ConnectionId,
+			ConnectionId: connectionApp.Id,
 			QueueId:      chatQueue.Base.GetId(),
 		}
 		if err = repository.ConnectionQueueRepo.TxInsert(ctx, tx, connectionQueue); err != nil {
@@ -221,7 +221,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 			Base: model.InitBase(),
 		}
 		manageQueue.TenantId = authUser.TenantId
-		manageQueue.ConnectionId = data.ConnectionId
+		manageQueue.ConnectionId = connectionApp.Id
 		manageQueue.QueueId = chatQueue.GetId()
 		manageQueue.UserId = data.ChatManageQueueUser.UserId
 
