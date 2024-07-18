@@ -84,7 +84,6 @@ message ChatQueueRequest {
 message ChatQueueUserRequest {
 //    string queue_id = 1;
   repeated string user_id = 1;
-  string source = 2; // auto set to the caller' source
 }
 
 message ChatConnectionPipelineQueueResponse {

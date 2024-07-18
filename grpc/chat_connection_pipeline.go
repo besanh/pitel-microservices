@@ -31,7 +31,6 @@ func (g *GRPCChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Cont
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	payload.ChatQueueUser.Source = user.Source
 
 	if err := payload.Validate(); err != nil {
 		log.Error(err)
