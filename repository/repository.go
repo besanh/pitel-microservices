@@ -43,6 +43,7 @@ func InitRepositories() {
 	ChatRoleRepo = NewChatRole()
 	ChatUserRepo = NewChatUser()
 	ChatTenantRepo = NewChatTenant()
+	ChatConnectionPipelineRepo = NewConnectionPipeline()
 }
 
 func InitRepositoriesES() {

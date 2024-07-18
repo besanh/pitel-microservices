@@ -23,6 +23,8 @@ type (
 	ChatConnectionApp struct{}
 )
 
+var ChatConnectionAppService IChatConnectionApp
+
 func NewChatConnectionApp() IChatConnectionApp {
 	return &ChatConnectionApp{}
 }
