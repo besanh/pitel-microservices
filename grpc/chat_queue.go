@@ -6,7 +6,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
-	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_connection_app"
+	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
 	"github.com/tel4vn/fins-microservices/middleware/auth"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
@@ -15,19 +15,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type GRPCChatConnectionApp struct{}
+type GRPCChatQueue struct{}
 
-func NewGRPCChatConnectionApp() pb.ChatConnectionAppServiceServer {
-	return &GRPCChatConnectionApp{}
+func NewGRPCChatQueue() pb.ChatQueueServiceServer {
+	return &GRPCChatQueue{}
 }
 
-func (g *GRPCChatConnectionApp) InsertChatConnectionApp(ctx context.Context, request *pb.PostChatConnectionAppRequest) (result *pb.PostChatConnectionAppResponse, err error) {
+func (g *GRPCChatQueue) InsertChatQueue(ctx context.Context, request *pb.PostChatQueueRequest) (*pb.PostChatQueueResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.ChatConnectionAppRequest{}
+	payload := model.ChatQueueRequestV2{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -38,26 +38,26 @@ func (g *GRPCChatConnectionApp) InsertChatConnectionApp(ctx context.Context, req
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	id, err := service.ChatConnectionAppService.InsertChatConnectionApp(ctx, user, payload)
+	id, err := service.ChatQueueService.InsertChatQueueV2(ctx, user, payload)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result = &pb.PostChatConnectionAppResponse{
+	result := &pb.PostChatQueueResponse{
 		Code:    "OK",
 		Message: "ok",
 		Id:      id,
 	}
-	return
+	return result, nil
 }
 
-func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, request *pb.GetChatConnectionAppsRequest) (result *pb.GetChatConnectionAppsResponse, err error) {
+func (g *GRPCChatQueue) GetChatQueues(ctx context.Context, request *pb.GetChatQueuesRequest) (*pb.GetChatQueuesResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.ChatConnectionAppFilter{}
+	payload := model.QueueFilter{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
@@ -65,40 +65,44 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 
 	limit, offset := util.ParseLimit(request.GetLimit()), util.ParseOffset(request.GetOffset())
 
-	total, data, err := service.ChatConnectionAppService.GetChatConnectionApps(ctx, user, payload, limit, offset)
+	total, data, err := service.ChatQueueService.GetChatQueues(ctx, user, payload, limit, offset)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	resultData := make([]*pb.ChatConnectionAppView, 0)
+	resultData := make([]*pb.ChatQueue, 0)
 	if len(*data) > 0 {
 		for _, item := range *data {
-			var tmp pb.ChatConnectionAppView
+			var tmp pb.ChatQueue
 			tmp.CreatedAt = &timestamppb.Timestamp{
 				Seconds: item.CreatedAt.Unix(),
 			}
 			tmp.UpdatedAt = &timestamppb.Timestamp{
 				Seconds: item.UpdatedAt.Unix(),
 			}
-			if err = util.ParseAnyToAny(item.ShareInfoForm, tmp.ShareInfoForm); err != nil {
-				log.Error(err)
-				result = &pb.GetChatConnectionAppsResponse{
-					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-					Message: err.Error(),
-				}
-			}
+
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
-				result = &pb.GetChatConnectionAppsResponse{
+				result := &pb.GetChatQueuesResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 					Message: err.Error(),
 				}
 				return result, nil
 			}
+			for i := range item.ConnectionQueue {
+				if tmp.ChatConnectionQueue[i] != nil && tmp.ChatConnectionQueue[i].ChatConnectionApp != nil {
+					tmp.ChatConnectionQueue[i].ChatConnectionApp.CreatedAt = &timestamppb.Timestamp{
+						Seconds: item.ConnectionQueue[i].ChatConnectionApp.CreatedAt.Unix(),
+					}
+					tmp.ChatConnectionQueue[i].ChatConnectionApp.UpdatedAt = &timestamppb.Timestamp{
+						Seconds: item.ConnectionQueue[i].ChatConnectionApp.UpdatedAt.Unix(),
+					}
+				}
+			}
 			resultData = append(resultData, &tmp)
 		}
 	}
 
-	result = &pb.GetChatConnectionAppsResponse{
+	result := &pb.GetChatQueuesResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    resultData,
@@ -109,77 +113,77 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 	return result, nil
 }
 
-func (g *GRPCChatConnectionApp) GetChatConnectionAppById(ctx context.Context, request *pb.GetChatConnectionAppByIdRequest) (result *pb.GetChatConnectionAppByIdResponse, err error) {
+func (g *GRPCChatQueue) GetChatQueueById(ctx context.Context, request *pb.GetChatQueueByIdRequest) (*pb.GetChatQueueByIdResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	data, err := service.ChatConnectionAppService.GetChatConnectionAppById(ctx, user, request.GetId())
+	data, err := service.ChatQueueService.GetChatQueueById(ctx, user, request.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-
-	tmp := &pb.ChatConnectionApp{
-		Id:                data.Id,
-		TenantId:          data.TenantId,
-		ConnectionName:    data.ConnectionName,
-		ConnectionType:    data.ConnectionType,
-		ConnectionQueueId: data.ConnectionQueueId,
-		ChatAppId:         data.ChatAppId,
-		Status:            data.Status,
-		CreatedAt:         timestamppb.New(data.CreatedAt),
-		UpdatedAt:         timestamppb.New(data.UpdatedAt),
+	tmp := &pb.ChatQueue{}
+	tmp.CreatedAt = &timestamppb.Timestamp{
+		Seconds: data.CreatedAt.Unix(),
+	}
+	tmp.UpdatedAt = &timestamppb.Timestamp{
+		Seconds: data.UpdatedAt.Unix(),
+	}
+	if err = util.ParseAnyToAny(data, tmp); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result = &pb.GetChatConnectionAppByIdResponse{
+	result := &pb.GetChatQueueByIdResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    tmp,
 	}
-	return
+	return result, nil
 }
 
-func (g *GRPCChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, request *pb.PutChatConnectionAppRequest) (result *pb.PutChatConnectionAppResponse, err error) {
+func (g *GRPCChatQueue) UpdateChatQueueById(ctx context.Context, request *pb.PutChatQueueRequest) (*pb.PutChatQueueResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.ChatConnectionAppRequest{}
+	payload := model.ChatQueueRequestV2{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	payload.Id = request.GetConnectionId()
 
 	if err := payload.Validate(); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	if err = service.ChatConnectionAppService.UpdateChatConnectionAppById(ctx, user, request.GetId(), payload, false); err != nil {
+	err := service.ChatQueueService.UpdateChatQueueByIdV2(ctx, user, request.GetId(), payload)
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result = &pb.PutChatConnectionAppResponse{
+	result := &pb.PutChatQueueResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
-	return
+	return result, nil
 }
 
-func (g *GRPCChatConnectionApp) DeleteChatConnectionAppById(ctx context.Context, request *pb.DeleteChatConnectionAppRequest) (result *pb.DeleteChatConnectionAppResponse, err error) {
+func (g *GRPCChatQueue) DeleteChatQueueById(ctx context.Context, request *pb.DeleteChatQueueRequest) (*pb.DeleteChatQueueResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	if err = service.ChatConnectionAppService.DeleteChatConnectionAppById(ctx, user, request.GetId()); err != nil {
+	err := service.ChatQueueService.DeleteChatQueueByIdV2(ctx, user, request.GetId())
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result = &pb.DeleteChatConnectionAppResponse{
+	result := &pb.DeleteChatQueueResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
