@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -22,7 +21,7 @@ func NewGRPCChatConnectionApp() pb.ChatConnectionAppServiceServer {
 	return &GRPCChatConnectionApp{}
 }
 
-func (g *GRPCChatConnectionApp) InsertChatConnectionApp(ctx context.Context, request *pb.PostChatConnectionAppRequest) (*pb.PostChatConnectionAppResponse, error) {
+func (g *GRPCChatConnectionApp) InsertChatConnectionApp(ctx context.Context, request *pb.PostChatConnectionAppRequest) (result *pb.PostChatConnectionAppResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -44,15 +43,15 @@ func (g *GRPCChatConnectionApp) InsertChatConnectionApp(ctx context.Context, req
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.PostChatConnectionAppResponse{
+	result = &pb.PostChatConnectionAppResponse{
 		Code:    "OK",
 		Message: "ok",
 		Id:      id,
 	}
-	return result, nil
+	return
 }
 
-func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, request *pb.GetChatConnectionAppsRequest) (*pb.GetChatConnectionAppsResponse, error) {
+func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, request *pb.GetChatConnectionAppsRequest) (result *pb.GetChatConnectionAppsResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -66,7 +65,7 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 
 	limit, offset := util.ParseLimit(request.GetLimit()), util.ParseOffset(request.GetOffset())
 
-	total, data, err := service.ChatConnectionAppService.GetChatConnectionApp(ctx, user, payload, limit, offset)
+	total, data, err := service.ChatConnectionAppService.GetChatConnectionApps(ctx, user, payload, limit, offset)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -80,19 +79,16 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 			tmp.UpdatedAt = &timestamppb.Timestamp{
 				Seconds: item.UpdatedAt.Unix(),
 			}
-			shareInfoForm, err := json.Marshal(&item.ShareInfoForm)
-			if err != nil {
+			if err = util.ParseAnyToAny(item.ShareInfoForm, tmp.ShareInfoForm); err != nil {
 				log.Error(err)
-				result := &pb.GetChatConnectionAppsResponse{
+				result = &pb.GetChatConnectionAppsResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 					Message: err.Error(),
 				}
-				return result, nil
 			}
-			tmp.ShareInfoFormRaw = string(shareInfoForm)
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
-				result := &pb.GetChatConnectionAppsResponse{
+				result = &pb.GetChatConnectionAppsResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 					Message: err.Error(),
 				}
@@ -102,7 +98,7 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 		}
 	}
 
-	result := &pb.GetChatConnectionAppsResponse{
+	result = &pb.GetChatConnectionAppsResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    resultData,
@@ -113,7 +109,7 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 	return result, nil
 }
 
-func (g *GRPCChatConnectionApp) GetChatConnectionAppById(ctx context.Context, request *pb.GetChatConnectionAppByIdRequest) (*pb.GetChatConnectionAppByIdResponse, error) {
+func (g *GRPCChatConnectionApp) GetChatConnectionAppById(ctx context.Context, request *pb.GetChatConnectionAppByIdRequest) (result *pb.GetChatConnectionAppByIdResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -135,15 +131,15 @@ func (g *GRPCChatConnectionApp) GetChatConnectionAppById(ctx context.Context, re
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.GetChatConnectionAppByIdResponse{
+	result = &pb.GetChatConnectionAppByIdResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    tmp,
 	}
-	return result, nil
+	return
 }
 
-func (g *GRPCChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, request *pb.PutChatConnectionAppRequest) (*pb.PutChatConnectionAppResponse, error) {
+func (g *GRPCChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context, request *pb.PutChatConnectionAppRequest) (result *pb.PutChatConnectionAppResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -161,30 +157,28 @@ func (g *GRPCChatConnectionApp) UpdateChatConnectionAppById(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	err := service.ChatConnectionAppService.UpdateChatConnectionAppById(ctx, user, request.GetId(), payload, false)
-	if err != nil {
+	if err = service.ChatConnectionAppService.UpdateChatConnectionAppById(ctx, user, request.GetId(), payload, false); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.PutChatConnectionAppResponse{
+	result = &pb.PutChatConnectionAppResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
-	return result, nil
+	return
 }
 
-func (g *GRPCChatConnectionApp) DeleteChatConnectionAppById(ctx context.Context, request *pb.DeleteChatConnectionAppRequest) (*pb.DeleteChatConnectionAppResponse, error) {
+func (g *GRPCChatConnectionApp) DeleteChatConnectionAppById(ctx context.Context, request *pb.DeleteChatConnectionAppRequest) (result *pb.DeleteChatConnectionAppResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	err := service.ChatConnectionAppService.DeleteChatConnectionAppById(ctx, user, request.GetId())
-	if err != nil {
+	if err = service.ChatConnectionAppService.DeleteChatConnectionAppById(ctx, user, request.GetId()); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.DeleteChatConnectionAppResponse{
+	result = &pb.DeleteChatConnectionAppResponse{
 		Code:    "OK",
 		Message: "ok",
 	}

@@ -42,7 +42,7 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 		Status:         c.Query("status"),
 	}
 
-	total, result, err := handler.chatConnectionAppService.GetChatConnectionApp(c, res.Data, filter, limit, offset)
+	total, result, err := handler.chatConnectionAppService.GetChatConnectionApps(c, res.Data, filter, limit, offset)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
