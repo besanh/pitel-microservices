@@ -13,6 +13,7 @@ import (
 type (
 	IChatConnectionPipeline interface {
 		UpdateConnectionApp(ctx context.Context, tx bun.Tx, entity model.ChatConnectionApp) error
+		BulkUpdateConnectionApp(ctx context.Context, tx bun.Tx, entities []model.ChatConnectionApp, fields ...string) error
 		InsertConnectionApp(ctx context.Context, tx bun.Tx, entity model.ChatConnectionApp) error
 		DeleteConnectionQueue(ctx context.Context, tx bun.Tx, connectionId, queueId string) (err error)
 		BeginTx(ctx context.Context, db sqlclient.ISqlClientConn, opts *sql.TxOptions) (bun.Tx, error)
@@ -47,6 +48,20 @@ func (repo *ChatConnectionPipeline) UpdateConnectionApp(ctx context.Context, tx 
 		Model(&entity).
 		Where("id = ?", entity.Id).
 		Exec(ctx)
+	return err
+}
+
+func (repo *ChatConnectionPipeline) BulkUpdateConnectionApp(ctx context.Context, tx bun.Tx, entities []model.ChatConnectionApp, fields ...string) error {
+	ids := make([]string, len(entities))
+	for i, entity := range entities {
+		ids[i] = entity.Id
+	}
+
+	updateQuery := tx.NewUpdate().Model(&entities).Where("id IN (?)", bun.In(ids))
+	if len(fields) > 0 {
+		updateQuery = updateQuery.Column(fields...)
+	}
+	_, err := updateQuery.Exec(ctx)
 	return err
 }
 

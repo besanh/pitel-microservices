@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -471,6 +472,30 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 		log.Error(err)
 		return err
 	}
+	currentTime := time.Now()
+	// update field in connection apps
+	for _, connectionQueue := range *oldConnectionQueues {
+		connectionAppFilter := model.ChatConnectionAppFilter{
+			TenantId:          authUser.TenantId,
+			ConnectionQueueId: connectionQueue.GetId(),
+		}
+		_, connectionApps, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionAppFilter, -1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		for i := range *connectionApps {
+			(*connectionApps)[i].ConnectionQueueId = ""
+			(*connectionApps)[i].UpdatedAt = currentTime
+		}
+		if len(*connectionApps) > 0 {
+			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id"); err != nil {
+				log.Error(err)
+				return err
+			}
+		}
+	}
+
 	if len(*oldConnectionQueues) > 0 {
 		if err = repository.ConnectionQueueRepo.TxBulkDelete(ctx, tx, *oldConnectionQueues); err != nil {
 			log.Error(err)
