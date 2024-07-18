@@ -135,7 +135,7 @@ func InsertConversation(ctx context.Context, conversation model.Conversation, co
 	if err != nil {
 		log.Error(err)
 		return id, err
-	} else if len(conversationExist.ExternalUserId) > 0 {
+	} else if len(conversationExist.ConversationId) > 0 {
 		log.Errorf("conversation %s not found", id)
 		return id, errors.New("conversation " + id + " not found")
 	}
