@@ -129,7 +129,7 @@ func (r *Repo[T]) TxUpdate(ctx context.Context, tx bun.Tx, entity T) (err error)
 	entity.SetUpdatedAt(time.Now())
 	_, err = tx.NewUpdate().
 		Model(&entity).
-		Where("id = ?", entity.GetId()).
+		WherePK().
 		Exec(ctx)
 	return
 }
@@ -145,7 +145,7 @@ func (r *Repo[T]) TxBulkUpdate(ctx context.Context, tx bun.Tx, entities []T) (er
 func (r *Repo[T]) TxDelete(ctx context.Context, tx bun.Tx, entity T) (err error) {
 	_, err = tx.NewDelete().
 		Model(&entity).
-		Where("id = ?", entity.GetId()).
+		WherePK().
 		Exec(ctx)
 	return
 }
