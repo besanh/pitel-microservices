@@ -86,7 +86,7 @@ func (repo *ChatQueue) UpdateChatQueueStatus(ctx context.Context, db sqlclient.I
 	_, err := db.GetDB().NewUpdate().
 		Model(&entity).
 		Column("status", "updated_at").
-		Where("id = ?", entity.Id).
+		WherePK().
 		Exec(ctx)
 	return err
 }

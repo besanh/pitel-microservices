@@ -408,8 +408,9 @@ func (s *ChatQueue) UpdateChatQueueStatus(ctx context.Context, authUser *model.A
 		log.Error(err)
 		return
 	} else if queueExist == nil {
-		log.Error("chat queue " + id + " not found")
-		return errors.New("chat queue " + id + " not found")
+		err = errors.New("chat queue " + id + " not found")
+		log.Error(err)
+		return
 	}
 
 	queueExist.Status = status

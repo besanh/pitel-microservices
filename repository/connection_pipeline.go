@@ -57,7 +57,7 @@ func (repo *ChatConnectionPipeline) UpdateConnectionAppStatus(ctx context.Contex
 	_, err := db.GetDB().NewUpdate().
 		Model(&entity).
 		Column("status", "updated_at").
-		Where("id = ?", entity.Id).
+		WherePK().
 		Exec(ctx)
 	return err
 }
