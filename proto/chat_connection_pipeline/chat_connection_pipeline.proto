@@ -139,7 +139,7 @@ service ChatConnectionPipelineService {
 
    rpc UpdateChatConnectionAppStatusById(PutChatConnectionAppStatusRequest) returns (PutChatConnectionAppStatusResponse) {
     option (google.api.http) = {
-      post : "/bss-chat/v1/chat-connection-pipeline/edit/status/{id}"
+      put : "/bss-chat/v1/chat-connection-pipeline/edit/status/{id}"
       body : "*"
     };
   };

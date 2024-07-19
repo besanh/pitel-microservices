@@ -406,14 +406,19 @@ func (s *ChatQueue) UpdateChatQueueStatus(ctx context.Context, authUser *model.A
 	queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	} else if queueExist == nil {
 		log.Error("chat queue " + id + " not found")
 		return errors.New("chat queue " + id + " not found")
 	}
 
 	queueExist.Status = status
-	err = repository.ChatQueueRepo.UpdateChatQueueStatus
+	err = repository.ChatQueueRepo.UpdateChatQueueStatus(ctx, repository.DBConn, *queueExist)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	return
 }
 
 func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error {
