@@ -172,7 +172,7 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context,
 
 	chatTenant := &model.ChatTenant{}
 	// Check tenant exist in system
-	if len(data.TenantDefaultId) < 1 {
+	if len(data.TenantDefaultId) < 1 || chatTenantExist == nil {
 		chatTenant.Base = model.InitBase()
 		chatTenant.TenantName = "default"
 		chatTenant.IntegrateSystemId = uuid.NewString()
@@ -194,7 +194,7 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context,
 		chatTenant = chatTenantExist
 	}
 
-	chatIntegrateSystemExist.TenantDefaultId = chatTenant.Id
+	chatIntegrateSystemExist.TenantDefaultId = chatTenant.GetId()
 	chatIntegrateSystemExist.SystemName = data.SystemName
 	chatIntegrateSystemExist.VendorId = data.VendorId
 	chatIntegrateSystemExist.Status = data.Status
