@@ -488,6 +488,10 @@ func (s *OttMessage) handleEsConversationQueue(d rmq.Delivery) {
 			log.Error(err)
 			return
 		}
+		if err := cache.RCache.Del([]string{CONVERSATION + "_" + payload.ConversationId}); err != nil {
+			log.Error(err)
+			return
+		}
 	}()
 
 	select {
