@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
@@ -13,6 +14,7 @@ type (
 	IChatQueue interface {
 		IRepo[model.ChatQueue]
 		GetQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error)
+		UpdateChatQueueStatus(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatQueue) error
 	}
 	ChatQueue struct {
 		Repo[model.ChatQueue]
@@ -77,4 +79,14 @@ func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientCon
 	}
 
 	return total, result, nil
+}
+
+func (repo *ChatQueue) UpdateChatQueueStatus(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatQueue) error {
+	entity.UpdatedAt = time.Now()
+	_, err := db.GetDB().NewUpdate().
+		Model(&entity).
+		Column("status", "updated_at").
+		WherePK().
+		Exec(ctx)
+	return err
 }

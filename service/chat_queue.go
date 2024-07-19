@@ -23,6 +23,7 @@ type (
 		InsertChatQueueV2(ctx context.Context, authUser *model.AuthUser, data model.ChatQueueRequestV2) (string, error)
 		UpdateChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatQueueRequestV2) error
 		DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error
+		UpdateChatQueueStatus(ctx context.Context, authUser *model.AuthUser, id string, status string) error
 	}
 	ChatQueue struct{}
 )
@@ -399,6 +400,26 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 	}
 
 	return nil
+}
+
+func (s *ChatQueue) UpdateChatQueueStatus(ctx context.Context, authUser *model.AuthUser, id string, status string) (err error) {
+	queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, id)
+	if err != nil {
+		log.Error(err)
+		return
+	} else if queueExist == nil {
+		err = errors.New("chat queue " + id + " not found")
+		log.Error(err)
+		return
+	}
+
+	queueExist.Status = status
+	err = repository.ChatQueueRepo.UpdateChatQueueStatus(ctx, repository.DBConn, *queueExist)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	return
 }
 
 func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error {
