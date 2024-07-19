@@ -65,37 +65,40 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, 
 		index, userAllocate := GetUserIsRoundRobin(tenantId, userLives)
 		userLive = userAllocate
 		userLive.IsAssignRoundRobin = true
-		userPrevious := Subscriber{}
-		if index == 0 {
-			userPrevious = userLives[len(userLives)-1]
-		} else {
-			userPrevious = userLives[index-1]
-		}
-		userPrevious.IsAssignRoundRobin = false
+		// Check len > 1 for assign online 1 user
+		if len(userLives) > 1 {
+			userPrevious := Subscriber{}
+			if index == 0 {
+				userPrevious = userLives[len(userLives)-1]
+			} else {
+				userPrevious = userLives[index-1]
+			}
+			userPrevious.IsAssignRoundRobin = false
 
-		// Update current
-		jsonByteUserLive, errTmp := json.Marshal(&userLive)
-		if errTmp != nil {
-			log.Error(errTmp)
-			err = errTmp
-			return
-		}
-		if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userLive.Id, string(jsonByteUserLive)); err != nil {
-			log.Error(err)
-			return
-		}
-
-		// Update previous
-		if userPrevious.Id != userLive.Id {
-			jsonByteUserLivePrevious, errTmp := json.Marshal(&userPrevious)
+			// Update current
+			jsonByteUserLive, errTmp := json.Marshal(&userLive)
 			if errTmp != nil {
 				log.Error(errTmp)
 				err = errTmp
 				return
 			}
-			if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
+			if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userLive.Id, string(jsonByteUserLive)); err != nil {
 				log.Error(err)
 				return
+			}
+
+			// Update previous
+			if userPrevious.Id != userLive.Id {
+				jsonByteUserLivePrevious, errTmp := json.Marshal(&userPrevious)
+				if errTmp != nil {
+					log.Error(errTmp)
+					err = errTmp
+					return
+				}
+				if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
+					log.Error(err)
+					return
+				}
 			}
 		}
 		return

@@ -98,6 +98,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 
 							log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", conversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
 							userChan <- []model.User{user}
+							continue
 						} else {
 							authInfo.TenantId = userAllocate.TenantId
 							authInfo.UserId = userAllocate.UserId
@@ -125,6 +126,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 							user.IsOk = true
 							log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", conversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
 							userChan <- []model.User{user}
+							continue
 						}
 					} else {
 						user, err := s.CheckAllSetting(ctx, conversationId, message, false, nil, chatApp, userUuidExcludes)
