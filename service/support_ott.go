@@ -187,7 +187,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 					errChan <- err
 					return
 				}
-				if len(*userAllocations) > 0 {
+				if len(*userAllocations) > 0 && user.AuthUser != nil {
 					if user.AuthUser.UserId == (*userAllocations)[0].UserId {
 						user.IsReassignSame = true
 					} else {
