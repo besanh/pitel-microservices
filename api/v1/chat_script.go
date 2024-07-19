@@ -28,7 +28,9 @@ type (
 var APIChatScript IAPIChatScript
 
 func NewAPIChatScript() IAPIChatScript {
-	return &ChatScript{}
+	return &ChatScript{
+		chatScriptService: service.NewChatScript(),
+	}
 }
 
 func NewChatScript(engine *gin.Engine, chatScriptService service.IChatScript) {

@@ -26,7 +26,9 @@ type (
 var APIChatMessageSampleHandler IAPIChatMessageSample
 
 func NewChatMessageSample() IAPIChatMessageSample {
-	return &ChatMsgSample{}
+	return &ChatMsgSample{
+		chatMsgSampleService: service.NewChatMsgSample(),
+	}
 }
 
 func NewChatMsgSample(engine *gin.Engine, chatMsgSampleService service.IChatMsgSample) {

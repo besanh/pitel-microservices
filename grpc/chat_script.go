@@ -59,10 +59,10 @@ func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChat
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.ChatScriptFilter{}
-	if err := util.ParseAnyToAny(request, &payload); err != nil {
-		log.Error(err)
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	payload := model.ChatScriptFilter{
+		TenantId:   user.TenantId,
+		Channel:    request.GetChannel(),
+		ScriptName: request.GetScriptName(),
 	}
 	limit, offset := request.GetLimit(), request.GetOffset()
 	statusTmp := request.GetStatus()
