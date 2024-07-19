@@ -51,7 +51,7 @@ func (repo *ChatQueue) GetById(ctx context.Context, db sqlclient.ISqlClientConn,
 func (repo *ChatQueue) GetQueues(ctx context.Context, db sqlclient.ISqlClientConn, filter model.QueueFilter, limit, offset int) (int, *[]model.ChatQueue, error) {
 	result := new([]model.ChatQueue)
 	query := db.GetDB().NewSelect().Model(result).
-		Relation("ConnectionQueue.ChatConnectionApp").
+		Relation("ConnectionQueue.ChatConnectionApp.ChatApp").
 		Relation("ChatRouting").
 		Relation("ChatQueueUser").
 		Relation("ChatManageQueueUser")

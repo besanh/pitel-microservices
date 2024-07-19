@@ -25,6 +25,7 @@ type ChatConnectionApp struct {
 	ConnectionQueue   *ConnectionQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
 	OaInfo            OaInfo           `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
 	Status            string           `json:"status" bun:"status,notnull"`
+	ChatApp           *ChatApp         `json:"chat_app" bun:"rel:has-one,join:chat_app_id=id"`
 }
 
 type ChatConnectionAppView struct {
