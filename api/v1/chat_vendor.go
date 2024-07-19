@@ -29,6 +29,7 @@ func NewChatVendor() IAPIChatVendor {
 func (handler *APIChatVendor) HandlePostChatVendorLogoUpload(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
+		c.JSON(response.Unauthorized())
 		return
 	}
 	var payload model.ChatVendorRequest
@@ -48,6 +49,7 @@ func (handler *APIChatVendor) HandlePostChatVendorLogoUpload(c *gin.Context) {
 func (handler *APIChatVendor) HandlePutChatVendorLogoUpload(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
+		c.JSON(response.Unauthorized())
 		return
 	}
 	id := strings.TrimPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload/")

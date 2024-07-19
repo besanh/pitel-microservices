@@ -33,7 +33,10 @@ func NewMessage(engine *gin.Engine, messageService service.IMessage) {
 
 func (h *Message) SendMessage(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	message := model.MessageRequest{}
 	var file *multipart.FileHeader
 
@@ -86,7 +89,10 @@ func (h *Message) SendMessage(c *gin.Context) {
 
 func (h *Message) GetMessages(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
@@ -101,7 +107,10 @@ func (h *Message) GetMessages(c *gin.Context) {
 
 func (h *Message) MarkReadMessages(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	markReadMessages := model.MessageMarkRead{}
 	if err := c.ShouldBindJSON(&markReadMessages); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -121,7 +130,10 @@ func (h *Message) MarkReadMessages(c *gin.Context) {
 
 func (h *Message) ShareInfo(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	shareInfo := model.ShareInfo{}
 	if err := c.ShouldBindJSON(&shareInfo); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -136,7 +148,10 @@ func (h *Message) ShareInfo(c *gin.Context) {
 
 func (h *Message) GetMessagesWithScrollAPI(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	limit := util.ParseLimit(c.Query("limit"))
 	scrollId := c.Query("scroll_id")
 

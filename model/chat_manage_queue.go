@@ -12,7 +12,7 @@ type ChatManageQueueUser struct {
 	TenantId      string `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	ConnectionId  string `json:"connection_id" bun:"connection_id,type:uuid,nullzero,default:null"`
 	QueueId       string `json:"queue_id" bun:"queue_id,type:uuid,notnull"`
-	UserId        string `json:"manage_id" bun:"manage_id,type:uuid,notnull"`
+	UserId        string `json:"user_id" bun:"user_id,type:uuid,notnull"`
 }
 
 type ChatManageQueueUserRequest struct {

@@ -30,7 +30,10 @@ func NewChatQueue(engine *gin.Engine, chatQueueService service.IChatQueue) {
 
 func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	var data model.ChatQueueRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
@@ -58,7 +61,10 @@ func (handler *ChatQueue) InsertChatQueue(c *gin.Context) {
 
 func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
@@ -76,7 +82,10 @@ func (handler *ChatQueue) GetChatQueues(c *gin.Context) {
 
 func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -95,7 +104,10 @@ func (handler *ChatQueue) GetChatQueueById(c *gin.Context) {
 
 func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -121,7 +133,10 @@ func (handler *ChatQueue) UpdateChatQueueById(c *gin.Context) {
 
 func (handler *ChatQueue) DeleteChatQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))

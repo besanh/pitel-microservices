@@ -30,7 +30,10 @@ func NewChatApp(engine *gin.Engine, chatAppService service.IChatApp) {
 
 func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	var data model.ChatAppRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
@@ -58,7 +61,10 @@ func (handler *ChatApp) InsertChatApp(c *gin.Context) {
 
 func (handler *ChatApp) GetChatApp(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	filter := model.ChatAppFilter{
 		AppName: c.Query("app_name"),
 		AppType: c.Query("app_type"),
@@ -77,7 +83,10 @@ func (handler *ChatApp) GetChatApp(c *gin.Context) {
 
 func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -96,7 +105,10 @@ func (handler *ChatApp) GetChatAppById(c *gin.Context) {
 
 func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -128,7 +140,10 @@ func (handler *ChatApp) UpdateChatAppById(c *gin.Context) {
 
 func (handler *ChatApp) DeleteChatAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))

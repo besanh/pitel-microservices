@@ -27,6 +27,10 @@ func NewAssignConversation(engine *gin.Engine, assignConversationService service
 
 func (handler *AssignConversation) GetUserInQueue(c *gin.Context) {
 	res := api.AuthMiddleware(c)
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 
 	filter := model.UserInQueueFilter{
 		AppId:            c.Query("app_id"),
@@ -46,7 +50,10 @@ func (handler *AssignConversation) GetUserInQueue(c *gin.Context) {
 
 func (handler *AssignConversation) GetUserAssigned(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	conversationId := c.Param("id")
 	status := c.Query("status")
 
@@ -60,7 +67,10 @@ func (handler *AssignConversation) GetUserAssigned(c *gin.Context) {
 
 func (handler *AssignConversation) InsertUserInQueue(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	var data model.AssignConversation
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
