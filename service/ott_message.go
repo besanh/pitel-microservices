@@ -448,9 +448,9 @@ func (s *OttMessage) InitQueueRequest() {
 		queue.RMQ.Server.RemoveQueue(BSS_CHAT_QUEUE_NAME)
 	}
 
-	// if s.NumConsumer < 1 {
-	// 	s.NumConsumer = 1
-	// }
+	if s.NumConsumer < 1 {
+		s.NumConsumer = 1
+	}
 
 	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_QUEUE_NAME, s.handleEsConversationQueue, 1); err != nil {
 		log.Error(err)
@@ -500,7 +500,7 @@ func (s *OttMessage) handleEsConversationQueue(d rmq.Delivery) {
 		d.Ack()
 	case <-ctx.Done():
 		// exceeded timeout
-		log.Errorf("handleEsQueue exceeded timeout, msg=%s", d.Payload())
+		log.Errorf("handleEsConversationQueue exceeded timeout, msg=%s", d.Payload())
 		d.Reject()
 	}
 }
