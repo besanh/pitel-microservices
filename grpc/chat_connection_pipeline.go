@@ -61,7 +61,7 @@ func (g *GRPCChatConnectionPipeline) UpsertQueueInConnectionAppById(ctx context.
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	payload := model.AttachConnectionQueueToConnectionAppRequest{}
+	payload := model.EditConnectionQueueInConnectionAppRequest{}
 	if err := util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())

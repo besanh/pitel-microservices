@@ -15,7 +15,7 @@ import (
 type (
 	IChatConnectionPipeline interface {
 		AttachConnectionQueueToApp(ctx context.Context, authUser *model.AuthUser, data model.AttachConnectionQueueToConnectionAppRequest) (string, error)
-		UpsertConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) error
+		UpsertConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.EditConnectionQueueInConnectionAppRequest) error
 	}
 	ChatConnectionPipeline struct{}
 )
@@ -265,7 +265,7 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 	return connectionApp.Id, err
 }
 
-func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.AttachConnectionQueueToConnectionAppRequest) (err error) {
+func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.EditConnectionQueueInConnectionAppRequest) (err error) {
 	connectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
