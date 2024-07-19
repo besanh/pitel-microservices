@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
@@ -45,7 +44,7 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	return manageQueueUser, nil
 }
 
-func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, queueUsers *[]model.ChatQueueUser) (userLive *Subscriber, isOk bool, err error) {
+func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, queueUsers *[]model.ChatQueueUser) (userLive *Subscriber, err error) {
 	userLives := []Subscriber{}
 	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
 	if err != nil {
@@ -100,13 +99,10 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, 
 			}
 		}
 		return
-	} else {
-		err = errors.New("no user online")
-
-		// Because if no user online, conversation will assign to manager
-		isOk = true
-		return
 	}
+
+	// Because if no user online, conversation will assign to manager
+	return
 }
 
 func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {

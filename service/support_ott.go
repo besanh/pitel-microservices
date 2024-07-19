@@ -374,9 +374,8 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 			}
 		}
 	} else if strings.ToLower(chatSetting.RoutingAlias) == "round_robin_online" {
-		userTmp, isOk, err := RoundRobinUserOnline(ctx, chatSetting.ConnectionApp.TenantId, GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId), &chatSetting.QueueUser)
-		if !isOk {
-			log.Error(err)
+		userTmp, err := RoundRobinUserOnline(ctx, chatSetting.ConnectionApp.TenantId, GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId), &chatSetting.QueueUser)
+		if err != nil {
 			return user, err
 		} else if userTmp != nil {
 			// TODO: check user exist in queue
