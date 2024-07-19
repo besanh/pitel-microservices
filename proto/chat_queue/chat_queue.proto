@@ -171,6 +171,17 @@ message PutChatQueueResponse {
   string message = 2;
 }
 
+// update queue status by id
+message PutChatQueueStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+message PutChatQueueStatusResponse {
+  string code = 1;
+  string message = 2;
+}
+
 // delete queue by id
 message DeleteChatQueueRequest { string id = 1; }
 
@@ -202,6 +213,13 @@ service ChatQueueService {
   rpc UpdateChatQueueById(PutChatQueueRequest) returns (PutChatQueueResponse) {
     option (google.api.http) = {
       put : "/bss-chat/v1/chat-queue/{id}"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatQueueStatusById(PutChatQueueStatusRequest) returns (PutChatQueueStatusResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-queue/status/{id}"
       body : "*"
     };
   };

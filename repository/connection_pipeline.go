@@ -13,6 +13,7 @@ import (
 type (
 	IChatConnectionPipeline interface {
 		UpdateConnectionApp(ctx context.Context, tx bun.Tx, entity model.ChatConnectionApp) error
+		UpdateConnectionAppStatus(ctx context.Context, dbConn sqlclient.ISqlClientConn, entity model.ChatConnectionApp) error
 		BulkUpdateConnectionApp(ctx context.Context, tx bun.Tx, entities []model.ChatConnectionApp, fields ...string) error
 		InsertConnectionApp(ctx context.Context, tx bun.Tx, entity model.ChatConnectionApp) error
 		DeleteConnectionQueue(ctx context.Context, tx bun.Tx, connectionId, queueId string) (err error)
@@ -46,6 +47,16 @@ func (repo *ChatConnectionPipeline) UpdateConnectionApp(ctx context.Context, tx 
 	entity.UpdatedAt = time.Now()
 	_, err := tx.NewUpdate().
 		Model(&entity).
+		Where("id = ?", entity.Id).
+		Exec(ctx)
+	return err
+}
+
+func (repo *ChatConnectionPipeline) UpdateConnectionAppStatus(ctx context.Context, db sqlclient.ISqlClientConn, entity model.ChatConnectionApp) error {
+	entity.UpdatedAt = time.Now()
+	_, err := db.GetDB().NewUpdate().
+		Model(&entity).
+		Column("status", "updated_at").
 		Where("id = ?", entity.Id).
 		Exec(ctx)
 	return err

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
@@ -78,6 +79,29 @@ func (g *GRPCChatConnectionPipeline) UpsertQueueInConnectionAppById(ctx context.
 	}
 
 	result := &pb.UpsertQueueInConnectionAppByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+	}
+	return result, nil
+}
+
+func (g *GRPCChatConnectionPipeline) UpdateChatConnectionAppStatusById(ctx context.Context, request *pb.PutChatConnectionAppStatusRequest) (*pb.PutChatConnectionAppStatusResponse, error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	if len(request.GetStatus()) < 1 {
+		log.Error("status is required")
+		return nil, status.Errorf(codes.InvalidArgument, errors.New("status is required").Error())
+	}
+
+	err := service.ChatConnectionPipelineService.UpdateConnectionAppStatus(ctx, user, request.GetId(), request.GetStatus())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result := &pb.PutChatConnectionAppStatusResponse{
 		Code:    "OK",
 		Message: "ok",
 	}

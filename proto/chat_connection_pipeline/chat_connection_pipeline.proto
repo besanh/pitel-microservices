@@ -111,6 +111,17 @@ message UpsertQueueInConnectionAppByIdResponse {
   string message = 2;
 }
 
+// update connection app status by id
+message PutChatConnectionAppStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+message PutChatConnectionAppStatusResponse {
+  string code = 1;
+  string message = 2;
+}
+
 service ChatConnectionPipelineService {
   rpc AttachConnectionQueueToApp(ChatConnectionPipelineQueueRequest) returns (ChatConnectionPipelineQueueResponse) {
     option (google.api.http) = {
@@ -122,6 +133,13 @@ service ChatConnectionPipelineService {
   rpc UpsertQueueInConnectionAppById(UpsertQueueInConnectionAppByIdRequest) returns (UpsertQueueInConnectionAppByIdResponse) {
     option (google.api.http) = {
       post : "/bss-chat/v1/chat-connection-pipeline/edit/{id}"
+      body : "*"
+    };
+  };
+
+   rpc UpdateChatConnectionAppStatusById(PutChatConnectionAppStatusRequest) returns (PutChatConnectionAppStatusResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-connection-pipeline/edit/status/{id}"
       body : "*"
     };
   };

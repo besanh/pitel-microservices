@@ -16,6 +16,7 @@ type (
 	IChatConnectionPipeline interface {
 		AttachConnectionQueueToApp(ctx context.Context, authUser *model.AuthUser, data model.AttachConnectionQueueToConnectionAppRequest) (string, error)
 		UpsertConnectionQueueInApp(ctx context.Context, authUser *model.AuthUser, id string, data model.EditConnectionQueueInConnectionAppRequest) error
+		UpdateConnectionAppStatus(ctx context.Context, authUser *model.AuthUser, id string, status string) error
 	}
 	ChatConnectionPipeline struct{}
 )
@@ -414,4 +415,24 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 	}
 
 	return
+}
+
+func (s *ChatConnectionPipeline) UpdateConnectionAppStatus(ctx context.Context, authUser *model.AuthUser, id string, status string) (err error) {
+	connectionAppExist, err := repository.ChatConnectionAppRepo.GetById(ctx, repository.DBConn, id)
+	if err != nil {
+		log.Error(err)
+	} else if connectionAppExist == nil {
+		err = errors.New("connection app not exist")
+		log.Error(err)
+		return
+	}
+
+	connectionAppExist.Status = status
+	err = repository.ChatConnectionPipelineRepo.UpdateConnectionAppStatus(ctx, repository.DBConn, *connectionAppExist)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	return nil
 }

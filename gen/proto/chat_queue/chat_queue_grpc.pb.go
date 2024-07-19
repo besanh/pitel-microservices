@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ChatQueueService_GetChatQueues_FullMethodName       = "/proto.chatQueue.ChatQueueService/GetChatQueues"
-	ChatQueueService_GetChatQueueById_FullMethodName    = "/proto.chatQueue.ChatQueueService/GetChatQueueById"
-	ChatQueueService_InsertChatQueue_FullMethodName     = "/proto.chatQueue.ChatQueueService/InsertChatQueue"
-	ChatQueueService_UpdateChatQueueById_FullMethodName = "/proto.chatQueue.ChatQueueService/UpdateChatQueueById"
-	ChatQueueService_DeleteChatQueueById_FullMethodName = "/proto.chatQueue.ChatQueueService/DeleteChatQueueById"
+	ChatQueueService_GetChatQueues_FullMethodName             = "/proto.chatQueue.ChatQueueService/GetChatQueues"
+	ChatQueueService_GetChatQueueById_FullMethodName          = "/proto.chatQueue.ChatQueueService/GetChatQueueById"
+	ChatQueueService_InsertChatQueue_FullMethodName           = "/proto.chatQueue.ChatQueueService/InsertChatQueue"
+	ChatQueueService_UpdateChatQueueById_FullMethodName       = "/proto.chatQueue.ChatQueueService/UpdateChatQueueById"
+	ChatQueueService_UpdateChatQueueStatusById_FullMethodName = "/proto.chatQueue.ChatQueueService/UpdateChatQueueStatusById"
+	ChatQueueService_DeleteChatQueueById_FullMethodName       = "/proto.chatQueue.ChatQueueService/DeleteChatQueueById"
 )
 
 // ChatQueueServiceClient is the client API for ChatQueueService service.
@@ -34,6 +35,7 @@ type ChatQueueServiceClient interface {
 	GetChatQueueById(ctx context.Context, in *GetChatQueueByIdRequest, opts ...grpc.CallOption) (*GetChatQueueByIdResponse, error)
 	InsertChatQueue(ctx context.Context, in *PostChatQueueRequest, opts ...grpc.CallOption) (*PostChatQueueResponse, error)
 	UpdateChatQueueById(ctx context.Context, in *PutChatQueueRequest, opts ...grpc.CallOption) (*PutChatQueueResponse, error)
+	UpdateChatQueueStatusById(ctx context.Context, in *PutChatQueueStatusRequest, opts ...grpc.CallOption) (*PutChatQueueStatusResponse, error)
 	DeleteChatQueueById(ctx context.Context, in *DeleteChatQueueRequest, opts ...grpc.CallOption) (*DeleteChatQueueResponse, error)
 }
 
@@ -85,6 +87,16 @@ func (c *chatQueueServiceClient) UpdateChatQueueById(ctx context.Context, in *Pu
 	return out, nil
 }
 
+func (c *chatQueueServiceClient) UpdateChatQueueStatusById(ctx context.Context, in *PutChatQueueStatusRequest, opts ...grpc.CallOption) (*PutChatQueueStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutChatQueueStatusResponse)
+	err := c.cc.Invoke(ctx, ChatQueueService_UpdateChatQueueStatusById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *chatQueueServiceClient) DeleteChatQueueById(ctx context.Context, in *DeleteChatQueueRequest, opts ...grpc.CallOption) (*DeleteChatQueueResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteChatQueueResponse)
@@ -103,6 +115,7 @@ type ChatQueueServiceServer interface {
 	GetChatQueueById(context.Context, *GetChatQueueByIdRequest) (*GetChatQueueByIdResponse, error)
 	InsertChatQueue(context.Context, *PostChatQueueRequest) (*PostChatQueueResponse, error)
 	UpdateChatQueueById(context.Context, *PutChatQueueRequest) (*PutChatQueueResponse, error)
+	UpdateChatQueueStatusById(context.Context, *PutChatQueueStatusRequest) (*PutChatQueueStatusResponse, error)
 	DeleteChatQueueById(context.Context, *DeleteChatQueueRequest) (*DeleteChatQueueResponse, error)
 }
 
@@ -121,6 +134,9 @@ func (UnimplementedChatQueueServiceServer) InsertChatQueue(context.Context, *Pos
 }
 func (UnimplementedChatQueueServiceServer) UpdateChatQueueById(context.Context, *PutChatQueueRequest) (*PutChatQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateChatQueueById not implemented")
+}
+func (UnimplementedChatQueueServiceServer) UpdateChatQueueStatusById(context.Context, *PutChatQueueStatusRequest) (*PutChatQueueStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateChatQueueStatusById not implemented")
 }
 func (UnimplementedChatQueueServiceServer) DeleteChatQueueById(context.Context, *DeleteChatQueueRequest) (*DeleteChatQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteChatQueueById not implemented")
@@ -209,6 +225,24 @@ func _ChatQueueService_UpdateChatQueueById_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatQueueService_UpdateChatQueueStatusById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutChatQueueStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatQueueServiceServer).UpdateChatQueueStatusById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatQueueService_UpdateChatQueueStatusById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatQueueServiceServer).UpdateChatQueueStatusById(ctx, req.(*PutChatQueueStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ChatQueueService_DeleteChatQueueById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteChatQueueRequest)
 	if err := dec(in); err != nil {
@@ -249,6 +283,10 @@ var ChatQueueService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateChatQueueById",
 			Handler:    _ChatQueueService_UpdateChatQueueById_Handler,
+		},
+		{
+			MethodName: "UpdateChatQueueStatusById",
+			Handler:    _ChatQueueService_UpdateChatQueueStatusById_Handler,
 		},
 		{
 			MethodName: "DeleteChatQueueById",
