@@ -85,9 +85,8 @@ message FacebookInfo {
   string oa_id = 2;
   string oa_name = 3;
   string url_oa = 4;
-  string access_token = 5;
-  string avatar = 6;
-  int64 expire = 7;
+  string avatar = 5;
+  string status = 6;
 }
 
 message ChatConnectionApp {
@@ -97,7 +96,7 @@ message ChatConnectionApp {
   google.protobuf.Timestamp UpdatedAt = 4;
   string connection_name = 5;
   string connection_type = 6;
-  string app_id = 7;
+  string chat_app_id = 7;
   string connection_queue_id = 8;
   ConnectionQueue connection_queue = 9;
   OaInfo oa_info = 10;

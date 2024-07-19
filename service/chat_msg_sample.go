@@ -60,7 +60,7 @@ func (s *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, authUser *mode
 	}
 	if rs == nil {
 		log.Error(errors.New("not found chat msg sample"))
-		return
+		return nil, errors.New("not found chat msg sample")
 	}
 	return
 }

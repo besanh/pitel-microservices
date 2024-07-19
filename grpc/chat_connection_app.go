@@ -79,13 +79,15 @@ func (g *GRPCChatConnectionApp) GetChatConnectionApps(ctx context.Context, reque
 			tmp.UpdatedAt = &timestamppb.Timestamp{
 				Seconds: item.UpdatedAt.Unix(),
 			}
-			if err = util.ParseAnyToAny(item.ShareInfoForm, tmp.ShareInfoForm); err != nil {
-				log.Error(err)
-				result = &pb.GetChatConnectionAppsResponse{
-					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-					Message: err.Error(),
+			if item.ShareInfoForm != nil {
+				if err = util.ParseAnyToAny(item.ShareInfoForm, &tmp.ShareInfoForm); err != nil {
+					log.Error(err)
+					result = &pb.GetChatConnectionAppsResponse{
+						Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+						Message: err.Error(),
+					}
+					return
 				}
-				return
 			}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)

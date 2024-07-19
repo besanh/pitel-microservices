@@ -12,6 +12,7 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GRPCChatMessageSample struct {
@@ -70,9 +71,45 @@ func (g *GRPCChatMessageSample) GetChatMessageSamples(ctx context.Context, reque
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	tmp := make([]*pb.ChatMessageSampleData, 0)
-	if err = util.ParseAnyToAny(data, &tmp); err != nil {
-		log.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+	for _, item := range *data {
+		dataItem := &pb.ChatMessageSampleData{
+			Id:            item.GetId(),
+			CreatedAt:     timestamppb.New(item.CreatedAt),
+			UpdatedAt:     timestamppb.New(item.UpdatedAt),
+			TenantId:      item.TenantId,
+			Keyword:       item.Keyword,
+			Theme:         item.Theme,
+			ConnectionId:  item.ConnectionId,
+			ConnectionApp: nil,
+			Channel:       item.Channel,
+			Content:       item.Content,
+			CreatedBy:     item.CreatedBy,
+			UpdatedBy:     item.UpdatedBy,
+			ImageUrl:      item.ImageUrl,
+		}
+		if item.ConnectionApp != nil {
+			dataItem.ConnectionApp = &pb.ChatConnectionApp{
+				Id:                item.ConnectionApp.Id,
+				TenantId:          item.ConnectionApp.TenantId,
+				ConnectionName:    item.ConnectionApp.ConnectionName,
+				ConnectionType:    item.ConnectionApp.ConnectionType,
+				ConnectionQueueId: item.ConnectionApp.ConnectionQueueId,
+				ChatAppId:         item.ConnectionApp.ChatAppId,
+				Status:            item.ConnectionApp.Status,
+				CreatedAt:         timestamppb.New(item.ConnectionApp.CreatedAt),
+				UpdatedAt:         timestamppb.New(item.ConnectionApp.UpdatedAt),
+				OaInfo:            nil,
+			}
+			if err = util.ParseAnyToAny(item.ConnectionApp.OaInfo, &dataItem.ConnectionApp.OaInfo); err != nil {
+				log.Error(err)
+				result := &pb.GetChatMessageSamplesResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return result, err
+			}
+		}
+		tmp = append(tmp, dataItem)
 	}
 
 	result := &pb.GetChatMessageSamplesResponse{
@@ -101,6 +138,8 @@ func (g *GRPCChatMessageSample) GetMessageSampleById(ctx context.Context, reques
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
+	tmp.CreatedAt = timestamppb.New(data.CreatedAt)
+	tmp.UpdatedAt = timestamppb.New(data.UpdatedAt)
 
 	result := &pb.GetMessageSampleByIdResponse{
 		Code:    "OK",

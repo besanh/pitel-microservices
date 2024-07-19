@@ -11,18 +11,53 @@ import "buf/validate/validate.proto";
 
 message ChatMessageSampleData {
   string id = 1;
-  string created_at = 2;
-  string updated_at = 3;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
   string tenant_id = 4;
   string keyword = 5;
   string theme = 6;
   string connection_id = 7;
-  string connection_app = 8;
+  ChatConnectionApp connection_app = 8;
   string channel = 9;
   string content = 10;
   string created_by = 11;
   string updated_by = 12;
   string image_url = 13;
+}
+
+message ChatConnectionApp {
+  string id = 1;
+  string tenant_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string connection_name = 5;
+  string connection_type = 6;
+  string chat_app_id = 7;
+  string connection_queue_id = 8;
+  OaInfo oa_info = 9;
+  string status = 10;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string status = 5;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string avatar = 5;
+  string status = 6;
 }
 
 // get chat message samples
