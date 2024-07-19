@@ -13,13 +13,14 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
+func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	filter.TenantId = authUser.TenantId
 	if authUser.Source == "authen" {
 		var queueId []string
 		if authUser.Level == "manager" {
 			filterManageQueue := model.ChatManageQueueUserFilter{
-				UserId: authUser.UserId,
+				TenantId: authUser.TenantId,
+				UserId:   authUser.UserId,
 			}
 			totalManageQueue, manageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterManageQueue, -1, 0)
 			if err != nil {
@@ -53,6 +54,7 @@ func (s *Conversation) GetConversationsByManage(ctx context.Context, authUser *m
 						}
 						if len(chatLabelIds) > 0 {
 							_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+								TenantId: authUser.TenantId,
 								LabelIds: chatLabelIds,
 							}, -1, 0)
 							if err != nil {
@@ -112,7 +114,7 @@ func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids [
 		}
 	}
 	filter.ConversationId = conversationIds
-	total, conversations, err = repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
+	total, conversations, err = repository.ConversationESRepo.GetConversations(ctx, filter.TenantId, ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return

@@ -43,7 +43,10 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 
 	// Remove because routing maybe having pitel_conversation_
 	if len(tenantId) > 0 {
-		filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
+	}
+	if len(filter.TenantId) > 0 {
+		filters = append(filters, elasticsearch.MatchQuery("tenant_id", filter.TenantId))
 	}
 	if len(filter.AppId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray(filter.AppId)...))
