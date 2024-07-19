@@ -138,6 +138,8 @@ func (g *GRPCChatMessageSample) GetMessageSampleById(ctx context.Context, reques
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
+	tmp.CreatedAt = timestamppb.New(data.CreatedAt)
+	tmp.UpdatedAt = timestamppb.New(data.UpdatedAt)
 
 	result := &pb.GetMessageSampleByIdResponse{
 		Code:    "OK",
