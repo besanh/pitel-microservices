@@ -62,7 +62,7 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, 
 		}
 	}
 	if len(userLives) > 0 {
-		index, userAllocate := GetUserIsRoundRobin(userLives)
+		index, userAllocate := GetUserIsRoundRobin(tenantId, userLives)
 		userLive = userAllocate
 		userLive.IsAssignRoundRobin = true
 		userPrevious := Subscriber{}
@@ -105,12 +105,12 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, 
 	return
 }
 
-func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
+func GetUserIsRoundRobin(tenantId string, userLives []Subscriber) (int, *Subscriber) {
 	isOk := false
 	index := 0
 	userLive := Subscriber{}
 	for i, item := range userLives {
-		if item.IsAssignRoundRobin {
+		if item.IsAssignRoundRobin && item.TenantId == tenantId {
 			if (i + 1) < len(userLives) {
 				userLive = userLives[(i + 1)]
 				isOk = true
