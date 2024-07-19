@@ -11,8 +11,8 @@ import "buf/validate/validate.proto";
 
 message ChatMessageSampleData {
   string id = 1;
-  string created_at = 2;
-  string updated_at = 3;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
   string tenant_id = 4;
   string keyword = 5;
   string theme = 6;
@@ -28,8 +28,8 @@ message ChatMessageSampleData {
 message ChatConnectionApp {
   string id = 1;
   string tenant_id = 2;
-  google.protobuf.Timestamp CreatedAt = 3;
-  google.protobuf.Timestamp UpdatedAt = 4;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
   string connection_name = 5;
   string connection_type = 6;
   string chat_app_id = 7;

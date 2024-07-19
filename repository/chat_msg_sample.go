@@ -73,7 +73,7 @@ func (repo *ChatMsgSample) GetChatMsgSampleById(ctx context.Context, db sqlclien
 	err := db.GetDB().NewSelect().
 		Model(result).
 		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name", "connection_type", "app_id", "oa_info", "status")
+			return q.Column("connection_name", "connection_type", "chat_app_id", "oa_info", "status")
 		}).
 		Where("cms.id = ?", id).
 		Limit(1).

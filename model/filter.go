@@ -152,7 +152,7 @@ type ChatMsgSampleFilter struct {
 type ChatScriptFilter struct {
 	TenantId   string       `json:"tenant_id"`
 	Channel    string       `json:"channel"`
-	Status     sql.NullBool `json:"status_value"`
+	Status     sql.NullBool `json:"status"`
 	ScriptName string       `json:"script_name"`
 }
 
