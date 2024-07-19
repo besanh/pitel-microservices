@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
@@ -44,19 +45,18 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	return manageQueueUser, nil
 }
 
-func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers *[]model.ChatQueueUser) (*Subscriber, error) {
-	userLive := Subscriber{}
+func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, queueUsers *[]model.ChatQueueUser) (userLive *Subscriber, isOk bool, err error) {
 	userLives := []Subscriber{}
 	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
 	if err != nil {
 		log.Error(err)
-		return &userLive, err
+		return
 	}
 	for _, item := range subscribers {
 		s := Subscriber{}
-		if err := json.Unmarshal([]byte(item), &s); err != nil {
+		if err = json.Unmarshal([]byte(item), &s); err != nil {
 			log.Error(err)
-			return &userLive, err
+			return
 		}
 		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) {
 			userLives = append(userLives, s)
@@ -64,7 +64,7 @@ func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers
 	}
 	if len(userLives) > 0 {
 		index, userAllocate := GetUserIsRoundRobin(userLives)
-		userLive = *userAllocate
+		userLive = userAllocate
 		userLive.IsAssignRoundRobin = true
 		userPrevious := Subscriber{}
 		if index == 0 {
@@ -75,31 +75,37 @@ func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers
 		userPrevious.IsAssignRoundRobin = false
 
 		// Update current
-		jsonByteUserLive, err := json.Marshal(&userLive)
-		if err != nil {
-			log.Error(err)
-			return &userLive, err
+		jsonByteUserLive, errTmp := json.Marshal(&userLive)
+		if errTmp != nil {
+			log.Error(errTmp)
+			err = errTmp
+			return
 		}
-		if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userLive.Id, string(jsonByteUserLive)); err != nil {
+		if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userLive.Id, string(jsonByteUserLive)); err != nil {
 			log.Error(err)
-			return &userLive, err
+			return
 		}
 
 		// Update previous
 		if userPrevious.Id != userLive.Id {
-			jsonByteUserLivePrevious, err := json.Marshal(&userPrevious)
-			if err != nil {
-				log.Error(err)
-				return &userLive, err
+			jsonByteUserLivePrevious, errTmp := json.Marshal(&userPrevious)
+			if errTmp != nil {
+				log.Error(errTmp)
+				err = errTmp
+				return
 			}
-			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
+			if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
 				log.Error(err)
-				return &userLive, err
+				return
 			}
 		}
-		return &userLive, nil
+		return
 	} else {
-		return &userLive, fmt.Errorf("no user online")
+		err = errors.New("no user online")
+
+		// Because if no user online, conversation will assign to manager
+		isOk = true
+		return
 	}
 }
 
