@@ -17,6 +17,13 @@ type AttachConnectionQueueToConnectionAppRequest struct {
 	ChatManageQueueUser  PipelineChatManageQueueUserRequest `json:"chat_manage_queue_user"`
 }
 
+type EditConnectionQueueInConnectionAppRequest struct {
+	ConnectionQueueId   string                             `json:"connection_queue_id"` // for selecting an existed queue
+	ChatQueue           PipelineChatQueueRequest           `json:"chat_queue"`
+	ChatQueueUser       PipelineChatQueueUserRequest       `json:"chat_queue_user"`
+	ChatManageQueueUser PipelineChatManageQueueUserRequest `json:"chat_manage_queue_user"`
+}
+
 type PipelineChatManageQueueUserRequest struct {
 	UserId string `json:"user_id"`
 	IsNew  bool   `json:"is_new"`
@@ -70,6 +77,25 @@ func (r *AttachConnectionQueueToConnectionAppRequest) Validate() error {
 	if len(r.ConnectionAppRequest.ChatAppId) < 1 {
 		return errors.New("chat app id is required")
 	}
+	if len(r.ConnectionQueueId) < 1 {
+		if len(r.ChatQueue.QueueName) < 1 {
+			return errors.New("chat queue name is required")
+		}
+		if len(r.ChatQueue.ChatRoutingId) < 1 {
+			return errors.New("chat queue routing id is required")
+		}
+		if len(r.ChatQueueUser.UserId) < 1 {
+			return errors.New("chat queue user id is required")
+		}
+		if len(r.ChatManageQueueUser.UserId) < 1 {
+			return errors.New("chat queue user id is required")
+		}
+	}
+
+	return nil
+}
+
+func (r *EditConnectionQueueInConnectionAppRequest) Validate() error {
 	if len(r.ConnectionQueueId) < 1 {
 		if len(r.ChatQueue.QueueName) < 1 {
 			return errors.New("chat queue name is required")
