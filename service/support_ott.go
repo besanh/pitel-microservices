@@ -401,7 +401,7 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 
 	if !isUserAccept {
 		userAllocate.UserId = chatSetting.ManagerQueueUser.Id
-		authInfo.UserId = chatSetting.ManagerQueueUser.Id
+		authInfo.UserId = chatSetting.ManagerQueueUser.UserId
 		authInfo.TenantId = chatSetting.ManagerQueueUser.TenantId
 	}
 
