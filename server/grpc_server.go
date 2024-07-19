@@ -140,6 +140,9 @@ func NewGRPCServer(port string) {
 	if err := pbAssignConversation.RegisterAssignConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbChatMessageSample.RegisterMessageSampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 	if err := pbChatScript.RegisterChatScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}

@@ -117,7 +117,7 @@ message ChatConnectionAppData {
   google.protobuf.Timestamp updated_at = 4;
   string connection_name = 5;
   string connection_type = 6;
-  string app_id = 7;
+  string chat_app_id = 7;
   string status = 8;
   string connection_queue_id = 9;
   OaInfo oa_info = 10;
@@ -127,18 +127,17 @@ message ZaloInfo {
   string app_id = 1;
   string oa_id = 2;
   string oa_name = 3;
-  string status = 4;
-  int64 created_timestamp = 5;
-  int64 updated_timestamp = 6;
+  string url_oa = 4;
+  string status = 5;
 }
 
 message FacebookInfo {
   string app_id = 1;
   string oa_id = 2;
   string oa_name = 3;
-  string status = 4;
-  int64 created_timestamp = 5;
-  int64 updated_timestamp = 6;
+  string url_oa = 4;
+  string avatar = 5;
+  string status = 6;
 }
 
 message OaInfo {
