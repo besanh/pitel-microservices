@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"slices"
 	"strings"
 	"time"
 
@@ -172,6 +171,13 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 					}
 				}
 			} else {
+				user, err := s.CheckAllSetting(ctx, conversationId, message, false, nil, chatApp, userUuidExcludes)
+				if err != nil {
+					log.Error(err)
+					errChan <- err
+					continue
+				}
+
 				filter := model.UserAllocateFilter{
 					ConversationId: conversationId,
 					MainAllocate:   "deactive",
@@ -182,17 +188,6 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 					errChan <- err
 					continue
 				}
-				if len(*userAllocations) > 0 {
-					userUuidExcludes = append(userUuidExcludes, (*userAllocations)[0].UserId)
-				}
-
-				user, err = s.CheckAllSetting(ctx, conversationId, message, false, nil, chatApp, userUuidExcludes)
-				if err != nil {
-					log.Error(err)
-					errChan <- err
-					continue
-				}
-
 				if len(*userAllocations) > 0 && user.AuthUser != nil {
 					if user.AuthUser.UserId == (*userAllocations)[0].UserId {
 						user.IsReassignSame = true
@@ -367,16 +362,14 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 			if len(chatSetting.ConnectionQueueUser) > 0 {
 				for _, item := range chatSetting.ConnectionQueueUser {
 					if item.UserId == tmp.UserId {
-						if (len(userUuidExclude) > 0 && !slices.Contains(userUuidExclude, tmp.UserId)) || (len(userUuidExclude) == 0) {
-							userAllocate.TenantId = tmp.TenantId
-							userAllocate.UserId = tmp.UserId
-							userAllocate.Username = tmp.Username
+						userAllocate.TenantId = tmp.TenantId
+						userAllocate.UserId = tmp.UserId
+						userAllocate.Username = tmp.Username
 
-							authInfo.TenantId = userAllocate.TenantId
-							authInfo.UserId = userAllocate.UserId
-							isUserAccept = true
-							break
-						}
+						authInfo.TenantId = userAllocate.TenantId
+						authInfo.UserId = userAllocate.UserId
+						isUserAccept = true
+						break
 					}
 				}
 			}
@@ -390,18 +383,16 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 			if len(chatSetting.ConnectionQueueUser) > 0 {
 				for _, item := range chatSetting.ConnectionQueueUser {
 					if item.UserId == userTmp.UserId {
-						if (len(userUuidExclude) > 0 && !slices.Contains(userUuidExclude, userTmp.UserId)) || (len(userUuidExclude) == 0) {
-							userAllocate.TenantId = userTmp.TenantId
-							userAllocate.UserId = userTmp.UserId
-							userAllocate.Username = userTmp.Username
+						userAllocate.TenantId = userTmp.TenantId
+						userAllocate.UserId = userTmp.UserId
+						userAllocate.Username = userTmp.Username
 
-							authInfo.TenantId = userTmp.TenantId
-							authInfo.UserId = userTmp.UserId
-							authInfo.Username = userTmp.Username
-							authInfo.Level = userTmp.Level
-							isUserAccept = true
-							break
-						}
+						authInfo.TenantId = userTmp.TenantId
+						authInfo.UserId = userTmp.UserId
+						authInfo.Username = userTmp.Username
+						authInfo.Level = userTmp.Level
+						isUserAccept = true
+						break
 					}
 				}
 			}
