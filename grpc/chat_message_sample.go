@@ -109,6 +109,7 @@ func (g *GRPCChatMessageSample) GetChatMessageSamples(ctx context.Context, reque
 				return result, err
 			}
 		}
+		tmp = append(tmp, dataItem)
 	}
 
 	result := &pb.GetChatMessageSamplesResponse{
