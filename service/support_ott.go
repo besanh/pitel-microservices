@@ -402,6 +402,7 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, chatSetting model.Chat
 	if !isUserAccept {
 		userAllocate.UserId = chatSetting.ManagerQueueUser.Id
 		authInfo.UserId = chatSetting.ManagerQueueUser.Id
+		authInfo.TenantId = chatSetting.ManagerQueueUser.TenantId
 	}
 
 	conversationId := GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId)

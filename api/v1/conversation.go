@@ -199,7 +199,7 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversationsByManage(c, res.Data, filter, limit, offset)
+	code, result := handler.conversationService.GetConversationsByHighLevel(c, res.Data, filter, limit, offset)
 	c.JSON(code, result)
 }
 
