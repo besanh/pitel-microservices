@@ -28,7 +28,10 @@ func NewManageQueue(engine *gin.Engine, manageQueue service.IManageQueue) {
 
 func (handler *ManageQueue) PostManageQueue(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	data := model.ChatManageQueueUserRequest{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		log.Error(err)
@@ -55,7 +58,10 @@ func (handler *ManageQueue) PostManageQueue(c *gin.Context) {
 
 func (handler *ManageQueue) UpdateManageQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -87,7 +93,10 @@ func (handler *ManageQueue) UpdateManageQueueById(c *gin.Context) {
 
 func (handler *ManageQueue) DeleteManageQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))

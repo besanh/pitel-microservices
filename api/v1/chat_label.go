@@ -34,7 +34,10 @@ func NewChatLabel(engine *gin.Engine, chatLabel service.IChatLabel) {
 
 func (handler *ChatLabel) PostChatLabel(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	data := model.ChatLabelRequest{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		log.Error(err)
@@ -61,7 +64,10 @@ func (handler *ChatLabel) PostChatLabel(c *gin.Context) {
 
 func (handler *ChatLabel) GetChatLabels(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	limit, offset := util.ParseLimit(c.Query("limit")), util.ParseOffset(c.Query("offset"))
 	statusTmp := c.Query("status")
 	var status sql.NullBool
@@ -98,7 +104,10 @@ func (handler *ChatLabel) GetChatLabels(c *gin.Context) {
 
 func (handler *ChatLabel) GetChatLabelById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -116,7 +125,10 @@ func (handler *ChatLabel) GetChatLabelById(c *gin.Context) {
 
 func (handler *ChatLabel) PutChatLabelById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -147,7 +159,10 @@ func (handler *ChatLabel) PutChatLabelById(c *gin.Context) {
 
 func (handler *ChatLabel) DeleteChatLabelById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))

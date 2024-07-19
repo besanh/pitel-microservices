@@ -28,7 +28,10 @@ func NewFacebook(engine *gin.Engine, facebook service.IFacebook) {
 
 func (s *Facebook) InsertFacebookPage(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	var data model.FacebookPageInfo
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
@@ -56,7 +59,10 @@ func (s *Facebook) InsertFacebookPage(c *gin.Context) {
 
 func (s *Facebook) BulkInsertFacebookPage(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	var data []model.FacebookPageInfo
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
@@ -73,7 +79,10 @@ func (s *Facebook) BulkInsertFacebookPage(c *gin.Context) {
 
 func (s *Facebook) GetFacebookPages(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	filter := model.FacebookPageFilter{
 		OaId: c.Query("oa_id"),
 	}

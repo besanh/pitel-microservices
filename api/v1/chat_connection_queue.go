@@ -25,7 +25,10 @@ func NewChatConnectionQueue(engine *gin.Engine, chatConnectionQueueService servi
 
 func (handler *ChatConnectionQueue) GetChatConnectionQueueById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))

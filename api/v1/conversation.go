@@ -37,7 +37,10 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 
 func (handler *Conversation) GetConversations(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
@@ -74,7 +77,10 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 
 func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	limit := util.ParseLimit(c.Query("limit"))
 	scrollId := c.Query("scroll_id")
 
@@ -111,7 +117,10 @@ func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 
 func (handler *Conversation) UpdateConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
 		c.JSON(response.BadRequestMsg("app_id is required"))
@@ -142,7 +151,10 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 
 func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	jsonBody := make(map[string]any, 0)
 	if err := c.ShouldBindJSON(&jsonBody); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -169,7 +181,10 @@ func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
 
 func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 	isDone := sql.NullBool{}
@@ -205,7 +220,10 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 
 func (handler *Conversation) GetConversationById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
 		c.JSON(response.BadRequestMsg("app_id is required"))
@@ -230,7 +248,10 @@ func (handler *Conversation) GetConversationById(c *gin.Context) {
 
 func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	labelType := c.Param("label_type")
 	if len(labelType) < 1 {
 		c.JSON(response.BadRequestMsg("label_type is required"))
@@ -265,7 +286,10 @@ func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 
 func (handler *Conversation) UpdateUserPreferenceConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	preferenceRequest := model.ConversationPreferenceRequest{}
 	if err := c.ShouldBindJSON(&preferenceRequest); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))

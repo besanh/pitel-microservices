@@ -188,7 +188,10 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 
 func (h *OttMessage) GetCodeChallenge(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
 		c.JSON(response.BadRequestMsg("app_id is required"))

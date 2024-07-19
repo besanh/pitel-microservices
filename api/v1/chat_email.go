@@ -33,7 +33,10 @@ func NewChatEmail(engine *gin.Engine, chatEmail service.IChatEmail) {
 
 func (h *ChatEmail) GetChatEmails(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	statusTmp := c.Query("status")
 	var status sql.NullBool
 	if len(statusTmp) > 0 {
@@ -61,7 +64,10 @@ func (h *ChatEmail) GetChatEmails(c *gin.Context) {
 
 func (h *ChatEmail) InsertChatEmail(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	var chatEmail model.ChatEmailRequest
 	err := c.ShouldBindJSON(&chatEmail)
 	if err != nil {
@@ -86,7 +92,10 @@ func (h *ChatEmail) InsertChatEmail(c *gin.Context) {
 
 func (h *ChatEmail) GetChatEmailById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -103,7 +112,10 @@ func (h *ChatEmail) GetChatEmailById(c *gin.Context) {
 
 func (h *ChatEmail) UpdateChatEmailById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -134,7 +146,10 @@ func (h *ChatEmail) UpdateChatEmailById(c *gin.Context) {
 
 func (h *ChatEmail) DeleteChatEmailById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
-
+	if res == nil {
+		c.JSON(response.Unauthorized())
+		return
+	}
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
