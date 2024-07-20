@@ -217,13 +217,13 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	}
 
 	// TODO: publish event to user normal
-	filterUserAllocate := model.UserAllocateFilter{
+	filterUserAllocate := model.AllocateUserFilter{
 		TenantId:       authUser.TenantId,
 		AppId:          request.AppId,
 		OaId:           request.OaId,
 		ConversationId: request.ConversationId,
 	}
-	_, userAllocate, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filterUserAllocate, 1, 0)
+	_, userAllocate, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filterUserAllocate, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return

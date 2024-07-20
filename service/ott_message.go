@@ -201,7 +201,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				user.PreviousAssign.MainAllocate = "active"
 				user.PreviousAssign.UpdatedAt = time.Now()
 				user.PreviousAssign.AllocatedTimestamp = time.Now().UnixMilli()
-				if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, *user.PreviousAssign); err != nil {
+				if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, *user.PreviousAssign); err != nil {
 					log.Error(err)
 					errChan <- err
 					return
@@ -253,12 +253,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				}
 
 				// TODO: if user not found then assign conversation for manager
-				filter := model.UserAllocateFilter{
+				filter := model.AllocateUserFilter{
 					AppId:          conversation.AppId,
 					ConversationId: conversation.ConversationId,
 					MainAllocate:   "active",
 				}
-				_, userAllocates, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+				_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 				if err != nil {
 					log.Error(err)
 					errChan <- err
@@ -266,7 +266,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				}
 				if len(*userAllocates) < 1 {
 					if len(conversation.ConversationId) > 0 {
-						_, conversationDeactiveExist, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, model.UserAllocateFilter{
+						_, conversationDeactiveExist, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, model.AllocateUserFilter{
 							AppId:          conversation.AppId,
 							ConversationId: conversation.ConversationId,
 						}, -1, 0)
@@ -276,7 +276,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 							return
 						}
 						if len(*conversationDeactiveExist) > 0 {
-							if err := repository.UserAllocateRepo.DeleteAllocateUsers(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
+							if err := repository.AllocateUserRepo.DeleteAllocateUsers(ctx, repository.DBConn, *conversationDeactiveExist); err != nil {
 								log.Error(err)
 								errChan <- err
 								return
@@ -296,7 +296,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						MainAllocate:       "active",
 						ConnectionId:       manageQueueUser.ConnectionId,
 					}
-					if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
+					if err := repository.AllocateUserRepo.Insert(ctx, repository.DBConn, userAllocation); err != nil {
 						log.Error(err)
 						errChan <- err
 						return

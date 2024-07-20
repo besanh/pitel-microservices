@@ -28,7 +28,7 @@ func InitRepositories() {
 	ChatQueueRepo = NewChatQueue()
 	ChatQueueUserRepo = NewChatQueueUser()
 	ChatRoutingRepo = NewChatRouting()
-	UserAllocateRepo = NewUserAllocate()
+	AllocateUserRepo = NewAllocateUser()
 	ConnectionQueueRepo = NewConnectionQueue()
 	ShareInfoRepo = NewShareInfo()
 	ManageQueueRepo = NewManageQueue()

@@ -69,7 +69,7 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 
 func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	conversationIds := []string{}
-	conversationFilter := model.UserAllocateFilter{
+	conversationFilter := model.AllocateUserFilter{
 		TenantId: authUser.TenantId,
 		UserId:   []string{authUser.UserId},
 	}
@@ -78,7 +78,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	} else {
 		conversationFilter.MainAllocate = "active"
 	}
-	total, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -179,7 +179,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 
 func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any) {
 	conversationIds := []string{}
-	conversationFilter := model.UserAllocateFilter{
+	conversationFilter := model.AllocateUserFilter{
 		TenantId: authUser.TenantId,
 		UserId:   []string{authUser.UserId},
 	}
@@ -188,7 +188,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	} else {
 		conversationFilter.MainAllocate = "active"
 	}
-	total, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
@@ -344,28 +344,28 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// Update User allocate
-	filter := model.UserAllocateFilter{
+	filter := model.AllocateUserFilter{
 		AppId:          appId,
 		ConversationId: conversationId,
 		MainAllocate:   statusAllocate,
 	}
-	_, userAllocate, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+	_, allocateUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	if len(*userAllocate) < 1 {
+	if len(*allocateUser) < 1 {
 		log.Errorf("conversation %s not found with active user", conversationId)
 		return errors.New("conversation " + conversationId + " not found with active user")
 	}
 
-	userAllocateTmp := (*userAllocate)[0]
+	allocateUserTmp := (*allocateUser)[0]
 
 	if status == "done" {
-		userAllocateTmp.MainAllocate = "deactive"
-		userAllocateTmp.AllocatedTimestamp = time.Now().UnixMilli()
-		userAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
+		allocateUserTmp.MainAllocate = "deactive"
+		allocateUserTmp.AllocatedTimestamp = time.Now().UnixMilli()
+		allocateUserTmp.UpdatedAt = time.Now()
+		if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, allocateUserTmp); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -373,10 +373,10 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		conversationExist.IsDoneBy = updatedBy
 		conversationExist.IsDoneAt = time.Now()
 	} else if status == "reopen" {
-		userAllocateTmp.MainAllocate = "active"
-		userAllocateTmp.AllocatedTimestamp = time.Now().UnixMilli()
-		userAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
+		allocateUserTmp.MainAllocate = "active"
+		allocateUserTmp.AllocatedTimestamp = time.Now().UnixMilli()
+		allocateUserTmp.UpdatedAt = time.Now()
+		if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, allocateUserTmp); err != nil {
 			log.Error(err)
 			return err
 		}
@@ -405,7 +405,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 
 		if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
 			log.Error(err)
-			if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*userAllocate)[0]); err != nil {
+			if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*allocateUser)[0]); err != nil {
 				log.Error(err)
 			}
 			return err
@@ -413,8 +413,8 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// TODO: clear cache
-	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId))
-	if userAllocateCache != nil {
+	allocateUserCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId))
+	if allocateUserCache != nil {
 		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId)}); err != nil {
 			log.Error(err)
 			return err
@@ -451,14 +451,13 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
-	// Event to manager
-	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+	manageQueueUser, err := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
 	if err != nil {
 		log.Error(err)
 		return err
 	} else if len(manageQueueUser.Id) < 1 {
-		log.Error("queue " + userAllocateTmp.QueueId + " not found")
-		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+		log.Error("queue " + allocateUserTmp.QueueId + " not found")
+		return errors.New("queue " + allocateUserTmp.QueueId + " not found")
 	}
 
 	var subscribers []*Subscriber
@@ -474,6 +473,12 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 				subscriberManagers = append(subscriberManagers, s.Id)
 			}
 		}
+	}
+
+	if status == "done" {
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], authUser.UserId, subscribers, true, conversationConverted)
+	} else if status == "reopen" {
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], authUser.UserId, subscribers, true, conversationConverted)
 	}
 
 	// Event to manager
@@ -564,7 +569,7 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return errors.New("conversation " + preferRequest.ConversationId + " not found")
 	}
 
-	filter := model.UserAllocateFilter{
+	filter := model.AllocateUserFilter{
 		AppId:          preferRequest.AppId,
 		ConversationId: preferRequest.ConversationId,
 		MainAllocate:   "active",
@@ -590,21 +595,21 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return err
 	}
 
-	_, userAllocate, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+	_, allocateUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	if len(*userAllocate) > 0 {
-		userAllocateTmp := (*userAllocate)[0]
+	if len(*allocateUser) > 0 {
+		allocateUserTmp := (*allocateUser)[0]
 		// Event to manager
-		manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+		manageQueueUser, err := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
 		if err != nil {
 			log.Error(err)
 			return err
 		} else if len(manageQueueUser.Id) < 1 {
-			log.Error("queue " + userAllocateTmp.QueueId + " not found")
-			return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+			log.Error("queue " + allocateUserTmp.QueueId + " not found")
+			return errors.New("queue " + allocateUserTmp.QueueId + " not found")
 		}
 		s.publishConversationEventToManagerAndAdmin(authUser, manageQueueUser, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
 	} else {
