@@ -12,7 +12,7 @@ import (
 type (
 	IAllocateUser interface {
 		IRepo[model.AllocateUser]
-		GetAllocateUsers(ctx context.Context, db sqlclient.ISqlClientConn, filter model.UserAllocateFilter, limit, offset int) (int, *[]model.AllocateUser, error)
+		GetAllocateUsers(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AllocateUserFilter, limit, offset int) (int, *[]model.AllocateUser, error)
 		DeleteAllocateUsers(ctx context.Context, db sqlclient.ISqlClientConn, userAllocates []model.AllocateUser) error
 	}
 	UserAllocate struct {
@@ -20,13 +20,13 @@ type (
 	}
 )
 
-var UserAllocateRepo IAllocateUser
+var AllocateUserRepo IAllocateUser
 
-func NewUserAllocate() IAllocateUser {
+func NewAllocateUser() IAllocateUser {
 	return &UserAllocate{}
 }
 
-func (repo *UserAllocate) GetAllocateUsers(ctx context.Context, db sqlclient.ISqlClientConn, filter model.UserAllocateFilter, limit, offset int) (int, *[]model.AllocateUser, error) {
+func (repo *UserAllocate) GetAllocateUsers(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AllocateUserFilter, limit, offset int) (int, *[]model.AllocateUser, error) {
 	result := new([]model.AllocateUser)
 	query := db.GetDB().NewSelect().Model(result)
 	if len(filter.TenantId) > 0 {

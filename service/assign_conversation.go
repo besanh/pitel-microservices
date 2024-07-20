@@ -137,11 +137,11 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 		return
 	}
 
-	conversationFilter := model.UserAllocateFilter{
+	conversationFilter := model.AllocateUserFilter{
 		ConversationId: (*conversations)[0].ConversationId,
 		MainAllocate:   status,
 	}
-	_, userAllocates, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
+	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 
 	if err != nil {
 		log.Error(err)
@@ -208,11 +208,11 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		(*conversations)[k] = conv
 	}
 
-	allocateFilter := model.UserAllocateFilter{
+	allocateFilter := model.AllocateUserFilter{
 		ConversationId: (*conversations)[0].ConversationId,
 		MainAllocate:   data.Status,
 	}
-	_, userAllocates, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, -1, 0)
+	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return
@@ -231,7 +231,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			ConnectionId:       (*conversations)[0].ConversationId,
 		}
 		log.Infof("conversation %s allocated to user %s", (*conversations)[0].ConversationId, data.UserId)
-		if err = repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocate); err != nil {
+		if err = repository.AllocateUserRepo.Insert(ctx, repository.DBConn, userAllocate); err != nil {
 			log.Error(err)
 			return
 		}
@@ -239,7 +239,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 
 	userIdAssigned := (*userAllocates)[0].UserId
 	(*userAllocates)[0].UserId = data.UserId
-	if err = repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*userAllocates)[0]); err != nil {
+	if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*userAllocates)[0]); err != nil {
 		log.Error(err)
 		return
 	}

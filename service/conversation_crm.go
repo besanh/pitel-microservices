@@ -91,7 +91,7 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 
 func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids []string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
 	conversationIds := []string{}
-	conversationFilter := model.UserAllocateFilter{
+	conversationFilter := model.AllocateUserFilter{
 		TenantId: filter.TenantId,
 	}
 	if len(queueUuids) > 0 {
@@ -103,7 +103,7 @@ func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids [
 		conversationFilter.MainAllocate = "active"
 	}
 
-	total, userAllocations, err := repository.UserAllocateRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return total, nil, err

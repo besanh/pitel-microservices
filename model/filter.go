@@ -63,7 +63,7 @@ type ConversationFilter struct {
 	Following      sql.NullBool `json:"following"`
 }
 
-type UserAllocateFilter struct {
+type AllocateUserFilter struct {
 	TenantId       string   `json:"tenant_id"`
 	AppId          string   `json:"app_id"`
 	OaId           string   `json:"oa_id"`
