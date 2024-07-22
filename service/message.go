@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
@@ -20,31 +20,34 @@ import (
 
 type (
 	IMessage interface {
-		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
+		SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (result model.Message, err error)
 		// SendMessageToOTTAsync(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any)
-		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any)
-		GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (int, any)
-		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any)
-		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
+		GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (total int, messages *[]model.Message, err error)
+		GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.Message, respScrollId string, err error)
+		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (result model.ReadMessageResponse, err error)
+		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (result model.OttCodeChallenge, err error)
 	}
 	Message struct{}
 )
+
+var MessageService IMessage
 
 func NewMessage() IMessage {
 	return &Message{}
 }
 
-func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (int, any) {
+func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (result model.Message, err error) {
 	conversation := model.Conversation{}
 	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.ConversationId)
 	if conversationCache != nil {
-		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
+		if err = json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+			return
 		}
 	} else {
 		if len(data.ConversationId) < 1 {
-			return response.BadRequestMsg("conversation " + data.ConversationId + " is required")
+			err = errors.New("conversation " + data.ConversationId + " is required")
+			return
 		}
 		filter := model.ConversationFilter{
 			ConversationId: []string{data.ConversationId},
@@ -52,19 +55,19 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+			return result, err
 		}
 		if len(*conversations) > 0 {
 			if err := util.ParseAnyToAny((*conversations)[0], &conversation); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return result, err
 			}
 			if err := cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return result, err
 			}
 		} else {
-			return response.BadRequestMsg("conversation: " + data.ConversationId + " not found")
+			return result, errors.New("conversation: " + data.ConversationId + " not found")
 		}
 	}
 
@@ -75,7 +78,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			conversationTime = conversation.CreatedAt
 		}
 		if err := CheckOutOfChatWindowTime(ctx, conversation.TenantId, conversation.ConversationType, conversationTime); err != nil {
-			return response.ServiceUnavailableMsg(err.Error())
+			return result, err
 		}
 	}
 
@@ -95,7 +98,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		var fileUrl string
 		if file == nil {
 			if len(data.Url) < 1 {
-				return response.BadRequestMsg("url or file is required")
+				return result, errors.New("url or file is required")
 			}
 			// TODO: validate url
 			fileUrl = data.Url
@@ -103,12 +106,12 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			fileUrlTmp, err := UploadDoc(ctx, data.AppId, data.OaId, file)
 			if err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return result, err
 			}
 			fileUrl = fileUrlTmp
 		}
 		if len(fileUrl) < 1 {
-			return response.BadRequestMsg("file url is required")
+			return result, errors.New("file url is required")
 		}
 
 		att := model.OttAttachments{
@@ -144,7 +147,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	resOtt, err := sendMessageToOTT(ottMessage, attachments)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
 	// Store ES
@@ -172,7 +175,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	// Should to queue
 	if err := InsertES(ctx, conversation.TenantId, ES_INDEX, message.AppId, docId, message); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return result, err
 	}
 
 	// TODO: update conversation => after refresh page, this conversation will appearance on top the list
@@ -180,17 +183,17 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	tmpBytes, err := json.Marshal(conversation)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return result, err
 	}
 	esDoc := map[string]any{}
 	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return result, err
 	}
 
 	if err = PublishPutConversationToChatQueue(ctx, conversation); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return result, err
 	}
 
 	// TODO: send message to admin/manager/user
@@ -204,11 +207,11 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	_, connection, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if len(*connection) < 1 {
 		log.Errorf("connection %s not found", (*connection)[0].Id)
-		return response.ServiceUnavailableMsg("connection " + (*connection)[0].Id + " not found")
+		return result, errors.New("connection " + (*connection)[0].Id + " not found")
 	} else {
 		message.TenantId = (*connection)[0].TenantId
 	}
@@ -217,10 +220,11 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connection)[0].ConnectionQueueId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return result, err
 	} else if connectionQueueExist == nil {
-		log.Errorf("connection queue not found")
-		return response.ServiceUnavailableMsg("connection queue not found")
+		err = errors.New("connection queue not found")
+		log.Error(err)
+		return
 	}
 
 	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
@@ -229,7 +233,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if len(*manageQueueUser) > 0 {
 		queueId = (*manageQueueUser)[0].QueueId
@@ -239,48 +243,44 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		if len(queueId) > 0 {
 			if err := SendEventToManage(ctx, authUser, message, queueId); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return result, err
 			}
 		} else {
 			log.Errorf("queue %s not found in send event to manage", queueId)
 		}
 	}
 
-	return response.Created(message)
+	return message, nil
 }
 
-func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (int, any) {
-	total, messages, err := repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX, filter, limit, offset)
+func (s *Message) GetMessages(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit, offset int) (total int, messages *[]model.Message, err error) {
+	total, messages, err = repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
-	return response.Pagination(messages, total, limit, offset)
+	return
 }
 
-func (s *Message) GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (int, any) {
-	total, messages, respScrollId, err := repository.MessageESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX, filter, limit, scrollId)
+func (s *Message) GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.Message, respScrollId string, err error) {
+	total, messages, respScrollId, err = repository.MessageESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX, filter, limit, scrollId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if messages == nil {
 		messages = make([]*model.Message, 0)
 	}
-	result := map[string]any{
-		"messages":  messages,
-		"scroll_id": respScrollId,
-	}
-	return response.Pagination(result, total, limit, 0)
+	return
 }
 
-func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (int, any) {
+func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (result model.ReadMessageResponse, err error) {
 	conversation := model.Conversation{}
 	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.ConversationId)
 	if conversationCache != nil {
 		if err := json.Unmarshal([]byte(conversationCache.(string)), &conversation); err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+			return result, err
 		}
 	} else {
 		conversationFilter := model.ConversationFilter{
@@ -290,18 +290,17 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, conversationFilter, 1, 0)
 		if err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+			return result, err
 		}
 		if total > 0 {
 			conversation := (*conversations)[0]
 			if err := cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return result, err
 			}
 		}
 	}
 
-	var result model.ReadMessageResponse
 	if data.ReadAll {
 		filter := model.MessageFilter{
 			IsRead:         "deactive",
@@ -312,7 +311,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 			log.Error(err)
 			result.TotalSuccess -= 1
 			result.TotalFail += 1
-			return response.ServiceUnavailableMsg(err.Error())
+			return result, err
 		}
 		result.TotalSuccess = total
 		if total > 0 {
@@ -328,21 +327,21 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 					log.Error(err)
 					result.TotalSuccess -= 1
 					result.TotalFail += 1
-					return response.ServiceUnavailableMsg(err.Error())
+					return result, err
 				}
 				esDoc := map[string]any{}
 				if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
 					log.Error(err)
 					result.TotalSuccess -= 1
 					result.TotalFail += 1
-					return response.ServiceUnavailableMsg(err.Error())
+					return result, err
 				}
 				// TODO: add queue to update
 				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX, item.AppId, item.Id, esDoc); err != nil {
 					log.Error(err)
 					result.TotalSuccess -= 1
 					result.TotalFail += 1
-					return response.ServiceUnavailableMsg(err.Error())
+					return result, err
 				}
 			}
 		}
@@ -396,10 +395,10 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 			result.ListSuccess[item] = "success"
 		}
 	}
-	return response.OK(result)
+	return
 }
 
-func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any) {
+func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (result model.OttCodeChallenge, err error) {
 	body := model.ShareInfoSendToOtt{
 		Name:     data.Fullname,
 		Phone:    data.PhoneNumber,
@@ -415,15 +414,15 @@ func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data 
 		SetBody(body).
 		Post(OTT_URL)
 	if err != nil {
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if resp.StatusCode() == 200 {
-		var result model.OttCodeChallenge
 		if err := json.Unmarshal([]byte(resp.Body()), &result); err != nil {
-			return response.ServiceUnavailableMsg(err.Error())
+			return result, err
 		}
-		return response.OK(result)
+		return
 	} else {
-		return response.ServiceUnavailableMsg(resp.String())
+		err = errors.New(resp.String())
+		return
 	}
 }

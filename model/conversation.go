@@ -132,6 +132,12 @@ type ConversationPreferenceRequest struct {
 	PreferenceType  string `json:"preference_type"` // major, following
 }
 
+type ConversationStatusRequest struct {
+	AppId          string `json:"app_id"`
+	ConversationId string `json:"conversation_id"`
+	Status         string `json:"status"`
+}
+
 func (m *ConversationLabelRequest) Validate() error {
 	if len(m.AppId) < 1 {
 		return errors.New("app id is required")
@@ -180,5 +186,19 @@ func (m *ConversationPreferenceRequest) Validate() error {
 		return errors.New(m.PreferenceType + " is required")
 	}
 
+	return nil
+}
+
+func (r *ConversationStatusRequest) Validate() error {
+	if len(r.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(r.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
+
+	if !slices.Contains([]string{"done", "reopen"}, r.Status) {
+		return errors.New("status is invalid")
+	}
 	return nil
 }
