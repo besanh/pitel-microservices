@@ -181,15 +181,15 @@ func NewGRPCServer(port string) {
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload/") && c.Request.Method == "PUT":
 			v1.APIChatVendorHandler.HandlePutChatVendorLogoUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload") && c.Request.Method == "POST":
-			v1.APIChatMessageSampleHandler.InsertChatMsgSample(c)
+			v1.APIChatMessageSampleHandler.HandlePostChatMessageSampleUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload/") && c.Request.Method == "PUT":
 			v1.APIChatMessageSampleHandler.HandlePutChatMessageSampleUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload") && c.Request.Method == "POST":
-			v1.APIChatScript.InsertChatScript(c)
+			v1.APIChatScript.HandlePostChatScriptUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/") && c.Request.Method == "PUT":
 			v1.APIChatScript.HandlePutChatScriptUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/form") && c.Request.Method == "POST":
-			v1.APIMessage.SendMessage(c)
+			v1.APIMessage.HandlePostSendMessage(c)
 		default:
 			gin.WrapH(mux)(c)
 		}
