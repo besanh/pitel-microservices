@@ -301,7 +301,6 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		}
 	}
 
-	result = model.ReadMessageResponse{}
 	if data.ReadAll {
 		filter := model.MessageFilter{
 			IsRead:         "deactive",
@@ -418,7 +417,6 @@ func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data 
 		return
 	}
 	if resp.StatusCode() == 200 {
-		result = model.OttCodeChallenge{}
 		if err := json.Unmarshal([]byte(resp.Body()), &result); err != nil {
 			return result, err
 		}

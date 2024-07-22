@@ -13,7 +13,6 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GRPCMessage struct{}
@@ -41,59 +40,16 @@ func (g *GRPCMessage) GetMessagesWithScrollAPI(ctx context.Context, request *pb.
 	}
 	resultData := make([]*pb.Message, 0)
 	for _, item := range data {
-		tmp := pb.Message{
-			TenantId:            item.TenantId,
-			ParentMessageId:     item.ParentMessageId,
-			Id:                  item.Id,
-			ConversationId:      item.ConversationId,
-			ParentExternalMsgId: item.ParentExternalMsgId,
-			ExternalMsgId:       item.ExternalMsgId,
-			MessageType:         item.MessageType,
-			EventName:           item.EventName,
-			Direction:           item.Direction,
-			AppId:               item.AppId,
-			OaId:                item.OaId,
-			UserIdByApp:         item.UserIdByApp,
-			ExternalUserId:      item.ExternalUserId,
-			UserAppName:         item.UserAppname,
-			Avatar:              item.Avatar,
-			SupporterId:         item.SupporterId,
-			SupporterName:       item.SupporterName,
-			SendTime:            timestamppb.New(item.SendTime),
-			SendTimestamp:       item.SendTimestamp,
-			Content:             item.Content,
-			IsRead:              item.IsRead,
-			ReadTime:            timestamppb.New(item.ReadTime),
-			ReadTimestamp:       item.ReadTimestamp,
-			ReadBy:              item.ReadBy,
-			Attachments:         nil,
-			CreatedAt:           timestamppb.New(item.CreatedAt),
-			UpdatedAt:           timestamppb.New(item.UpdatedAt),
-			ShareInfo:           nil,
-			IsEcho:              item.IsEcho,
-		}
-
-		if len(item.Attachments) > 0 {
-			if err = util.ParseAnyToAny(item.Attachments, &tmp.Attachments); err != nil {
-				log.Error(err)
-				result = &pb.GetMessagesScrollResponse{
-					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-					Message: err.Error(),
-				}
-				return
+		tmp, err := convertMessageToPbMessage(*item)
+		if err != nil {
+			log.Error(err)
+			result = &pb.GetMessagesScrollResponse{
+				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+				Message: err.Error(),
 			}
+			return result, err
 		}
-		if item.ShareInfo != nil {
-			if err = util.ParseAnyToAny(item.ShareInfo, &tmp.ShareInfo); err != nil {
-				log.Error(err)
-				result = &pb.GetMessagesScrollResponse{
-					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-					Message: err.Error(),
-				}
-				return
-			}
-		}
-		resultData = append(resultData, &tmp)
+		resultData = append(resultData, tmp)
 	}
 
 	result = &pb.GetMessagesScrollResponse{
@@ -127,59 +83,16 @@ func (g *GRPCMessage) GetMessages(ctx context.Context, request *pb.GetMessagesRe
 	resultData := make([]*pb.Message, 0)
 	if data != nil {
 		for _, item := range *data {
-			tmp := pb.Message{
-				TenantId:            item.TenantId,
-				ParentMessageId:     item.ParentMessageId,
-				Id:                  item.Id,
-				ConversationId:      item.ConversationId,
-				ParentExternalMsgId: item.ParentExternalMsgId,
-				ExternalMsgId:       item.ExternalMsgId,
-				MessageType:         item.MessageType,
-				EventName:           item.EventName,
-				Direction:           item.Direction,
-				AppId:               item.AppId,
-				OaId:                item.OaId,
-				UserIdByApp:         item.UserIdByApp,
-				ExternalUserId:      item.ExternalUserId,
-				UserAppName:         item.UserAppname,
-				Avatar:              item.Avatar,
-				SupporterId:         item.SupporterId,
-				SupporterName:       item.SupporterName,
-				SendTime:            timestamppb.New(item.SendTime),
-				SendTimestamp:       item.SendTimestamp,
-				Content:             item.Content,
-				IsRead:              item.IsRead,
-				ReadTime:            timestamppb.New(item.ReadTime),
-				ReadTimestamp:       item.ReadTimestamp,
-				ReadBy:              item.ReadBy,
-				Attachments:         nil,
-				CreatedAt:           timestamppb.New(item.CreatedAt),
-				UpdatedAt:           timestamppb.New(item.UpdatedAt),
-				ShareInfo:           nil,
-				IsEcho:              item.IsEcho,
-			}
-
-			if len(item.Attachments) > 0 {
-				if err = util.ParseAnyToAny(item.Attachments, &tmp.Attachments); err != nil {
-					log.Error(err)
-					result = &pb.GetMessagesResponse{
-						Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-						Message: err.Error(),
-					}
-					return
+			tmp, err := convertMessageToPbMessage(item)
+			if err != nil {
+				log.Error(err)
+				result = &pb.GetMessagesResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
 				}
+				return result, err
 			}
-			if item.ShareInfo != nil {
-				if err = util.ParseAnyToAny(item.ShareInfo, &tmp.ShareInfo); err != nil {
-					log.Error(err)
-					result = &pb.GetMessagesResponse{
-						Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-						Message: err.Error(),
-					}
-					return
-				}
-			}
-			resultData = append(resultData, &tmp)
+			resultData = append(resultData, tmp)
 		}
 
 	}
@@ -221,63 +134,15 @@ func (g *GRPCMessage) SendMessage(ctx context.Context, request *pb.PostMessageRe
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	tmp := pb.Message{
-		TenantId:            data.TenantId,
-		ParentMessageId:     data.ParentMessageId,
-		Id:                  data.Id,
-		ConversationId:      data.ConversationId,
-		ParentExternalMsgId: data.ParentExternalMsgId,
-		ExternalMsgId:       data.ExternalMsgId,
-		MessageType:         data.MessageType,
-		EventName:           data.EventName,
-		Direction:           data.Direction,
-		AppId:               data.AppId,
-		OaId:                data.OaId,
-		UserIdByApp:         data.UserIdByApp,
-		ExternalUserId:      data.ExternalUserId,
-		UserAppName:         data.UserAppname,
-		Avatar:              data.Avatar,
-		SupporterId:         data.SupporterId,
-		SupporterName:       data.SupporterName,
-		SendTime:            timestamppb.New(data.SendTime),
-		SendTimestamp:       data.SendTimestamp,
-		Content:             data.Content,
-		IsRead:              data.IsRead,
-		ReadTime:            timestamppb.New(data.ReadTime),
-		ReadTimestamp:       data.ReadTimestamp,
-		ReadBy:              data.ReadBy,
-		Attachments:         nil,
-		CreatedAt:           timestamppb.New(data.CreatedAt),
-		UpdatedAt:           timestamppb.New(data.UpdatedAt),
-		ShareInfo:           nil,
-		IsEcho:              data.IsEcho,
+	tmp, err := convertMessageToPbMessage(data)
+	if err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-
-	if len(data.Attachments) > 0 {
-		if err = util.ParseAnyToAny(data.Attachments, &tmp.Attachments); err != nil {
-			log.Error(err)
-			result = &pb.PostMessageResponse{
-				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-				Message: err.Error(),
-			}
-			return
-		}
-	}
-	if data.ShareInfo != nil {
-		if err = util.ParseAnyToAny(data.ShareInfo, &tmp.ShareInfo); err != nil {
-			log.Error(err)
-			result = &pb.PostMessageResponse{
-				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-				Message: err.Error(),
-			}
-			return
-		}
-	}
-
 	result = &pb.PostMessageResponse{
 		Code:    "OK",
 		Message: "ok",
-		Data:    &tmp,
+		Data:    tmp,
 	}
 	return
 }
