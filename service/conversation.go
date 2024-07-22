@@ -475,10 +475,12 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
-	if status == "done" {
-		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], authUser.UserId, subscribers, true, conversationConverted)
-	} else if status == "reopen" {
-		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], authUser.UserId, subscribers, true, conversationConverted)
+	if slices.Contains(subscriberManagers, authUser.UserId) {
+		if status == "done" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], authUser.UserId, subscribers, true, conversationConverted)
+		} else if status == "reopen" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], authUser.UserId, subscribers, true, conversationConverted)
+		}
 	}
 
 	// Event to manager
