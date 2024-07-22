@@ -133,13 +133,32 @@ func (g *GRPCChatMessageSample) GetMessageSampleById(ctx context.Context, reques
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	tmp := &pb.ChatMessageSampleData{}
-	if err = util.ParseAnyToAny(data, tmp); err != nil {
-		log.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+	tmp := &pb.ChatMessageSampleData{
+		Id:           data.GetId(),
+		CreatedAt:    timestamppb.New(data.CreatedAt),
+		UpdatedAt:    timestamppb.New(data.UpdatedAt),
+		TenantId:     data.TenantId,
+		Keyword:      data.Keyword,
+		Theme:        data.Theme,
+		ConnectionId: data.ConnectionId,
+		ConnectionApp: &pb.ChatConnectionApp{
+			Id:        data.ConnectionApp.Id,
+			Status:    data.ConnectionApp.Status,
+			CreatedAt: timestamppb.New(data.ConnectionApp.CreatedAt),
+			UpdatedAt: timestamppb.New(data.ConnectionApp.UpdatedAt),
+		},
+		Channel:   data.Channel,
+		Content:   data.Content,
+		CreatedBy: data.CreatedBy,
+		UpdatedBy: data.UpdatedBy,
+		ImageUrl:  data.ImageUrl,
 	}
-	tmp.CreatedAt = timestamppb.New(data.CreatedAt)
-	tmp.UpdatedAt = timestamppb.New(data.UpdatedAt)
+	if data.ConnectionApp != nil {
+		if err = util.ParseAnyToAny(data.ConnectionApp.OaInfo, &tmp.ConnectionApp.OaInfo); err != nil {
+			log.Error(err)
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+	}
 
 	result := &pb.GetMessageSampleByIdResponse{
 		Code:    "OK",

@@ -101,6 +101,14 @@ message ChatConnectionApp {
   ConnectionQueue connection_queue = 9;
   OaInfo oa_info = 10;
   string status = 11;
+  ChatApp chat_app = 12;
+}
+
+message ChatApp {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string app_name = 4;
 }
 
 message ChatManageQueueUserRequest {
