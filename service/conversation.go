@@ -33,6 +33,8 @@ type (
 	Conversation struct{}
 )
 
+var ConversationService IConversation
+
 func NewConversation() IConversation {
 	return &Conversation{}
 }
