@@ -15,15 +15,13 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type GRPCAssignConversation struct {
-	pb.UnimplementedAssignConversationServiceServer
-}
+type GRPCAssignConversation struct{}
 
-func NewGRPCAssignConversation() *GRPCAssignConversation {
+func NewGRPCAssignConversation() pb.AssignConversationServiceServer {
 	return &GRPCAssignConversation{}
 }
 
-func (g *GRPCChatApp) InsertUserInQueue(ctx context.Context, request *pb.PostUserInQueueRequest) (*pb.PostUserInQueueResponse, error) {
+func (g *GRPCAssignConversation) InsertUserInQueue(ctx context.Context, request *pb.PostUserInQueueRequest) (*pb.PostUserInQueueResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -52,7 +50,7 @@ func (g *GRPCChatApp) InsertUserInQueue(ctx context.Context, request *pb.PostUse
 	return result, nil
 }
 
-func (g *GRPCChatApp) GetUserAssigned(ctx context.Context, request *pb.GetUserAssignedRequest) (*pb.GetUserAssignedResponse, error) {
+func (g *GRPCAssignConversation) GetUserAssigned(ctx context.Context, request *pb.GetUserAssignedRequest) (*pb.GetUserAssignedResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -82,7 +80,7 @@ func (g *GRPCChatApp) GetUserAssigned(ctx context.Context, request *pb.GetUserAs
 	return result, nil
 }
 
-func (g *GRPCChatApp) GetUserInQueue(ctx context.Context, request *pb.GetUserInQueueRequest) (*pb.GetUserInQueueResponse, error) {
+func (g *GRPCAssignConversation) GetUserInQueue(ctx context.Context, request *pb.GetUserInQueueRequest) (*pb.GetUserInQueueResponse, error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)

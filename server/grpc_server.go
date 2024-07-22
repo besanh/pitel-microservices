@@ -31,6 +31,7 @@ import (
 	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
 	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
 	pbChatVendor "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
+	pbConversation "github.com/tel4vn/fins-microservices/gen/proto/conversation"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
@@ -85,6 +86,7 @@ func NewGRPCServer(port string) {
 	pbChatConnectionPipeline.RegisterChatConnectionPipelineServiceServer(grpcServer, grpcService.NewGRPCChatConnectionPipeline())
 	pbChatConnectionApp.RegisterChatConnectionAppServiceServer(grpcServer, grpcService.NewGRPCChatConnectionApp())
 	pbChatQueue.RegisterChatQueueServiceServer(grpcServer, grpcService.NewGRPCChatQueue())
+	pbConversation.RegisterConversationServiceServer(grpcServer, grpcService.NewGRPCConversation())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -159,6 +161,9 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err := pbChatQueue.RegisterChatQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbConversation.RegisterConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 
