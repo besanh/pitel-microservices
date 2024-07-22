@@ -12,8 +12,22 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type Message struct {
-	messageService service.IMessage
+type (
+	IAPIMessage interface {
+		SendMessage(c *gin.Context)
+	}
+
+	Message struct {
+		messageService service.IMessage
+	}
+)
+
+var APIMessage IAPIMessage
+
+func NewAPIMessage() IAPIMessage {
+	return &Message{
+		messageService: service.NewMessage(),
+	}
 }
 
 func NewMessage(engine *gin.Engine, messageService service.IMessage) {
@@ -83,8 +97,12 @@ func (h *Message) SendMessage(c *gin.Context) {
 		}
 	}
 
-	code, result := h.messageService.SendMessageToOTT(c, res.Data, message, file)
-	c.JSON(code, result)
+	data, err := h.messageService.SendMessageToOTT(c, res.Data, message, file)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Created(data))
 }
 
 func (h *Message) GetMessages(c *gin.Context) {
@@ -101,8 +119,13 @@ func (h *Message) GetMessages(c *gin.Context) {
 		ExternalUserId: c.Query("external_user_id"),
 	}
 
-	code, result := h.messageService.GetMessages(c, res.Data, filter, limit, offset)
-	c.JSON(code, result)
+	total, data, err := h.messageService.GetMessages(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.Pagination(data, total, limit, offset))
 }
 
 func (h *Message) MarkReadMessages(c *gin.Context) {
@@ -124,8 +147,13 @@ func (h *Message) MarkReadMessages(c *gin.Context) {
 		return
 	}
 
-	code, result := h.messageService.MarkReadMessages(c, res.Data, markReadMessages)
-	c.JSON(code, result)
+	data, err := h.messageService.MarkReadMessages(c, res.Data, markReadMessages)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OK(data))
 }
 
 func (h *Message) ShareInfo(c *gin.Context) {
@@ -142,8 +170,12 @@ func (h *Message) ShareInfo(c *gin.Context) {
 
 	log.Info("share info body: ", shareInfo)
 
-	code, result := h.messageService.ShareInfo(c, res.Data, shareInfo)
-	c.JSON(code, result)
+	data, err := h.messageService.ShareInfo(c, res.Data, shareInfo)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OK(data))
 }
 
 func (h *Message) GetMessagesWithScrollAPI(c *gin.Context) {
@@ -160,6 +192,15 @@ func (h *Message) GetMessagesWithScrollAPI(c *gin.Context) {
 		ExternalUserId: c.Query("external_user_id"),
 	}
 
-	code, result := h.messageService.GetMessagesWithScrollAPI(c, res.Data, filter, limit, scrollId)
-	c.JSON(code, result)
+	total, data, respScrollId, err := h.messageService.GetMessagesWithScrollAPI(c, res.Data, filter, limit, scrollId)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	result := map[string]any{
+		"messages":  data,
+		"scroll_id": respScrollId,
+	}
+	c.JSON(response.Pagination(result, total, limit, 0))
 }

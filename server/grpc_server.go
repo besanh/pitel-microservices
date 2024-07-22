@@ -33,6 +33,7 @@ import (
 	pbChatVendor "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
 	pbConversation "github.com/tel4vn/fins-microservices/gen/proto/conversation"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
+	pbMessage "github.com/tel4vn/fins-microservices/gen/proto/message"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
 
@@ -87,6 +88,7 @@ func NewGRPCServer(port string) {
 	pbChatConnectionApp.RegisterChatConnectionAppServiceServer(grpcServer, grpcService.NewGRPCChatConnectionApp())
 	pbChatQueue.RegisterChatQueueServiceServer(grpcServer, grpcService.NewGRPCChatQueue())
 	pbConversation.RegisterConversationServiceServer(grpcServer, grpcService.NewGRPCConversation())
+	pbMessage.RegisterMessageServiceServer(grpcServer, grpcService.NewGRPCMessage())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -166,6 +168,9 @@ func NewGRPCServer(port string) {
 	if err := pbConversation.RegisterConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbMessage.RegisterMessageServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
@@ -183,6 +188,8 @@ func NewGRPCServer(port string) {
 			v1.APIChatScript.InsertChatScript(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/") && c.Request.Method == "PUT":
 			v1.APIChatScript.HandlePutChatScriptUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/form") && c.Request.Method == "POST":
+			v1.APIMessage.SendMessage(c)
 		default:
 			gin.WrapH(mux)(c)
 		}
@@ -191,6 +198,7 @@ func NewGRPCServer(port string) {
 	v1.APIChatVendorHandler = v1.NewChatVendor()
 	v1.APIChatMessageSampleHandler = v1.NewChatMessageSample()
 	v1.APIChatScript = v1.NewAPIChatScript()
+	v1.APIMessage = v1.NewAPIMessage()
 	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(), service.NewConversation())
 	v1.NewMessage(httpServer, service.NewMessage())
 	v1.NewWebSocket(httpServer, service.NewSubscriberService())

@@ -1,0 +1,187 @@
+syntax = "proto3";
+
+package proto.message;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message Message {
+  string tenant_id = 1;
+  string parent_message_id = 2;
+  string id = 3;
+  string conversation_id = 4;
+  string parent_external_msg_id = 5;
+  string external_msg_id = 6;
+  string message_type = 7;
+  string event_name = 8;
+  string direction = 9;
+  string app_id = 10;
+  string oa_id = 11;
+  string user_id_by_app = 12;
+  string external_user_id = 13;
+  string user_app_name = 14;
+  string avatar = 15;
+  string supporter_id = 16;
+  string supporter_name = 17;
+  google.protobuf.Timestamp send_time = 18;
+  int64 send_timestamp = 19;
+  string content = 20;
+  string is_read = 21;
+  google.protobuf.Timestamp read_time = 22;
+  int64 read_timestamp = 23;
+  repeated string read_by = 24;
+  repeated OttAttachments attachments = 25;
+  google.protobuf.Timestamp created_at = 26;
+  google.protobuf.Timestamp updated_at = 27;
+  ShareInfo share_info = 28;
+  bool is_echo = 29;
+}
+
+message OttPayloadMedia {
+  string thumbnail = 1;
+  string description = 2;
+  string url = 3;
+  string url_ott_bk = 4;
+  string id = 5;
+  string title = 6;
+  string checksum = 7;
+  string name = 8;
+  string size = 9;
+  string type = 10;
+}
+
+message OttAttachments {
+  OttPayloadMedia payload = 1;
+  string att_type = 2; // image/audio/video/link/sticker/gif/file
+}
+
+message ShareInfo {
+  string fullname = 1;
+  string phone_number = 2;
+  string address = 3;
+  string city = 4;
+  string district = 5;
+}
+
+// get chat messages with scroll api
+message GetMessagesScrollRequest {
+  int32 limit = 1;
+  string scroll_id = 2;
+  string conversation_id = 3;
+  string external_user_id = 4;
+}
+
+message GetMessagesScrollResponse {
+  string code = 1;
+  string message = 2;
+  repeated Message data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  string scroll_id = 6;
+}
+
+// get chat messages
+message GetMessagesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string conversation_id = 3;
+  string external_user_id = 4;
+}
+
+message GetMessagesResponse {
+  string code = 1;
+  string message = 2;
+  repeated Message data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// send message
+message PostMessageRequest {
+  string event_name = 1;
+  string app_id = 2;
+  string oa_id = 3;
+  string conversation_id = 4;
+  string content = 5;
+}
+
+message PostMessageResponse {
+  string code = 1;
+  string message = 2;
+  Message data = 3;
+}
+
+// mark read message
+message MarkReadMessagesRequest {
+  string app_id = 1;
+  string oa_id = 2;
+  string conversation_id = 3;
+  repeated string message_ids = 4;
+  string read_by = 5;
+  string read_at = 6;
+  bool read_all = 7;
+}
+
+message MarkReadMessagesResponse {
+  string code = 1;
+  string message = 2;
+  int32 total_success = 3;
+  int32 total_fail = 4;
+  map<string, string> list_fail = 5;
+  map<string, string> list_success = 6;
+}
+
+// post share info
+message ShareInfoRequest {
+  string fullname = 1;
+  string phone_number = 2;
+  string address = 3;
+  string city = 4;
+  string district = 5;
+}
+
+message ShareInfoResponse {
+  string code = 1;
+  string message = 2;
+  string data = 3;
+}
+
+service MessageService {
+  rpc GetMessagesWithScrollAPI(GetMessagesScrollRequest) returns (GetMessagesScrollResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/message/scroll"
+    };
+  };
+
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/message"
+    };
+  };
+
+  rpc SendMessage(PostMessageRequest) returns (PostMessageResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/message"
+      body : "*"
+    };
+  };
+
+  rpc MarkReadMessages(MarkReadMessagesRequest) returns (MarkReadMessagesResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/message/read"
+      body : "*"
+    };
+  };
+
+  rpc ShareInfo(ShareInfoRequest) returns (ShareInfoResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/message/share-info"
+      body : "*"
+    };
+  };
+}
