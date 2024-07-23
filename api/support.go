@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -211,6 +212,38 @@ func AuthMiddlewareNew(c *gin.Context) (result *model.ChatResponse) {
 		return
 	}
 	result = auth.ChatMiddleware(c, c.Query("token"), c.Query("system-key"))
+	if result == nil {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	return
+}
+
+func AuthMiddlewareNewVersion(c *gin.Context) (result *model.ChatResponse) {
+	if len(c.GetHeader("authorization")) < 1 || len(c.GetHeader("system-key")) < 1 {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+
+	parts := strings.Split(c.GetHeader("authorization"), " ")
+
+	// Check if the header is in the expected format
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	token := parts[1]
+
+	result = auth.ChatMiddleware(c, token, c.GetHeader("system-key"))
 	if result == nil {
 		c.JSON(http.StatusUnauthorized, map[string]any{
 			"error": http.StatusText(http.StatusUnauthorized),
