@@ -15,7 +15,7 @@ message ChatAutoScriptData {
   google.protobuf.Timestamp updated_at = 3;
   string tenant_id = 4;
   string script_name = 5;
-  string status = 6;
+  bool status = 6;
   string connection_id = 7;
   ChatConnectionAppData connection_app = 8;
   string channel = 9;
