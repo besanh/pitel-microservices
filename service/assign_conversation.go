@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -121,38 +120,30 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 }
 
 func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (result *model.AllocateUser, err error) {
-	filter := model.ConversationFilter{
-		TenantId:               authUser.TenantId,
-		ExternalConversationId: []string{conversationId},
-	}
-	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, "", conversationId)
 	if err != nil {
 		log.Error(err)
 		return
-	}
-
-	if len(*conversations) < 1 {
-		log.Errorf("conversation %s not found", conversationId)
-		err = fmt.Errorf("conversation %s not found", conversationId)
+	} else if conversationExist == nil {
+		err = errors.New("conversation " + conversationId + " not found")
+		log.Error(err)
 		return
 	}
 
 	conversationFilter := model.AllocateUserFilter{
-		TenantId:               authUser.TenantId,
-		ExternalConversationId: (*conversations)[0].ConversationId,
-		MainAllocate:           status,
+		TenantId:       authUser.TenantId,
+		ConversationId: conversationId,
+		MainAllocate:   status,
 	}
-	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
-
+	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-
-	if len(*userAllocates) < 1 {
-		return nil, nil
+	if len(*userAllocates) > 0 {
+		result = &(*userAllocates)[0]
 	}
-	return &(*userAllocates)[0], nil
+	return
 }
 
 func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) (err error) {
