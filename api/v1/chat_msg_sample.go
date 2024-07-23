@@ -14,7 +14,7 @@ import (
 
 type (
 	IAPIChatMessageSample interface {
-		InsertChatMsgSample(c *gin.Context)
+		HandlePostChatMessageSampleUpload(c *gin.Context)
 		HandlePutChatMessageSampleUpload(c *gin.Context)
 	}
 
@@ -180,7 +180,7 @@ func (handler *ChatMsgSample) DeleteChatMsgSampleById(c *gin.Context) {
 }
 
 func (handler *ChatMsgSample) HandlePutChatMessageSampleUpload(c *gin.Context) {
-	res := api.AuthMiddleware(c)
+	res := api.AuthMiddlewareNewVersion(c)
 	if res == nil {
 		return
 	}
@@ -210,4 +210,34 @@ func (handler *ChatMsgSample) HandlePutChatMessageSampleUpload(c *gin.Context) {
 	}
 
 	c.JSON(response.OKResponse())
+}
+
+func (handler *ChatMsgSample) HandlePostChatMessageSampleUpload(c *gin.Context) {
+	res := api.AuthMiddlewareNewVersion(c)
+	if res == nil {
+		return
+	}
+
+	var chatMsgSampleRequest model.ChatMsgSampleRequest
+	err := c.ShouldBind(&chatMsgSampleRequest)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	if err := chatMsgSampleRequest.Validate(); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	id, err := handler.chatMsgSampleService.InsertChatMsgSample(c, res.Data, chatMsgSampleRequest, chatMsgSampleRequest.File)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OK(map[string]any{
+		"id": id,
+	}))
 }

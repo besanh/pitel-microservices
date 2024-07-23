@@ -16,7 +16,7 @@ import (
 
 type (
 	IAPIChatScript interface {
-		InsertChatScript(c *gin.Context)
+		HandlePostChatScriptUpload(c *gin.Context)
 		HandlePutChatScriptUpload(c *gin.Context)
 	}
 
@@ -226,9 +226,8 @@ func (handler *ChatScript) DeleteChatScriptById(c *gin.Context) {
 }
 
 func (handler *ChatScript) HandlePutChatScriptUpload(c *gin.Context) {
-	res := api.AuthMiddleware(c)
+	res := api.AuthMiddlewareNewVersion(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("invalid token"))
 		return
 	}
 
@@ -258,4 +257,34 @@ func (handler *ChatScript) HandlePutChatScriptUpload(c *gin.Context) {
 	}
 
 	c.JSON(response.OKResponse())
+}
+
+func (handler *ChatScript) HandlePostChatScriptUpload(c *gin.Context) {
+	res := api.AuthMiddlewareNewVersion(c)
+	if res == nil {
+		return
+	}
+
+	var chatScriptRequest model.ChatScriptRequest
+	err := c.ShouldBind(&chatScriptRequest)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	if err := chatScriptRequest.Validate(); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	id, err := handler.chatScriptService.InsertChatScript(c, res.Data, chatScriptRequest, chatScriptRequest.File)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OK(map[string]any{
+		"id": id,
+	}))
 }
