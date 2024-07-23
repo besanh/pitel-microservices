@@ -21,6 +21,8 @@ type (
 	ChatLabel struct{}
 )
 
+var ChatLabelService IChatLabel
+
 func NewChatLabel() IChatLabel {
 	return &ChatLabel{}
 }
