@@ -32,6 +32,7 @@ func InitServices() {
 	ChatQueueService = NewChatQueue()
 	ConversationService = NewConversation()
 	MessageService = NewMessage()
+	ChatPolicySettingService = NewChatPolicySetting()
 }
 
 // MAP TENANT_ID SQL_CONN
