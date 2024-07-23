@@ -86,7 +86,7 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 		return chatScript.Id, err
 	}
 	if connectionApp == nil {
-		err = errors.New("not found connection id")
+		err = errors.New("not found connection id " + chatScriptRequest.ConnectionId)
 		log.Error(err)
 		return chatScript.Id, err
 	}
@@ -155,7 +155,7 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 		return err
 	}
 	if connectionApp == nil {
-		err = errors.New("not found connection id")
+		err = errors.New("not found connection id " + chatScriptRequest.ConnectionId)
 		log.Error(err)
 		return err
 	}
