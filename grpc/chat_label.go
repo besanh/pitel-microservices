@@ -23,19 +23,19 @@ func NewGRPCChatLabel() pb.ChatLabelServiceServer {
 	return &GRPCChatLabel{}
 }
 
-func (g *GRPCChatLabel) InsertChatLabel(ctx context.Context, request *pb.PostChatLabelRequest) (*pb.PostChatLabelResponse, error) {
+func (g *GRPCChatLabel) InsertChatLabel(ctx context.Context, request *pb.PostChatLabelRequest) (result *pb.PostChatLabelResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
 	payload := model.ChatLabelRequest{}
-	if err := util.ParseAnyToAny(request, &payload); err != nil {
+	if err = util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	if err := payload.Validate(); err != nil {
+	if err = payload.Validate(); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
@@ -45,15 +45,15 @@ func (g *GRPCChatLabel) InsertChatLabel(ctx context.Context, request *pb.PostCha
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.PostChatLabelResponse{
+	result = &pb.PostChatLabelResponse{
 		Code:    "OK",
 		Message: "ok",
 		Id:      id,
 	}
-	return result, nil
+	return
 }
 
-func (g *GRPCChatLabel) GetChatLabels(ctx context.Context, request *pb.GetChatLabelsRequest) (*pb.GetChatLabelsResponse, error) {
+func (g *GRPCChatLabel) GetChatLabels(ctx context.Context, request *pb.GetChatLabelsRequest) (result *pb.GetChatLabelsResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -97,7 +97,7 @@ func (g *GRPCChatLabel) GetChatLabels(ctx context.Context, request *pb.GetChatLa
 
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
-				result := &pb.GetChatLabelsResponse{
+				result = &pb.GetChatLabelsResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 					Message: err.Error(),
 				}
@@ -107,7 +107,7 @@ func (g *GRPCChatLabel) GetChatLabels(ctx context.Context, request *pb.GetChatLa
 		}
 	}
 
-	result := &pb.GetChatLabelsResponse{
+	result = &pb.GetChatLabelsResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    resultData,
@@ -115,10 +115,10 @@ func (g *GRPCChatLabel) GetChatLabels(ctx context.Context, request *pb.GetChatLa
 		Limit:   int32(limit),
 		Offset:  int32(offset),
 	}
-	return result, nil
+	return
 }
 
-func (g *GRPCChatLabel) GetChatLabelById(ctx context.Context, request *pb.GetChatLabelByIdRequest) (*pb.GetChatLabelByIdResponse, error) {
+func (g *GRPCChatLabel) GetChatLabelById(ctx context.Context, request *pb.GetChatLabelByIdRequest) (result *pb.GetChatLabelByIdResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -136,15 +136,15 @@ func (g *GRPCChatLabel) GetChatLabelById(ctx context.Context, request *pb.GetCha
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.GetChatLabelByIdResponse{
+	result = &pb.GetChatLabelByIdResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    tmp,
 	}
-	return result, nil
+	return
 }
 
-func (g *GRPCChatLabel) UpdateChatLabelById(ctx context.Context, request *pb.PutChatLabelRequest) (*pb.PutChatLabelResponse, error) {
+func (g *GRPCChatLabel) UpdateChatLabelById(ctx context.Context, request *pb.PutChatLabelRequest) (result *pb.PutChatLabelResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -161,19 +161,19 @@ func (g *GRPCChatLabel) UpdateChatLabelById(ctx context.Context, request *pb.Put
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	err := service.ChatLabelService.UpdateChatLabelById(ctx, user, request.GetId(), &payload)
+	err = service.ChatLabelService.UpdateChatLabelById(ctx, user, request.GetId(), &payload)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.PutChatLabelResponse{
+	result = &pb.PutChatLabelResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
-	return result, nil
+	return
 }
 
-func (g *GRPCChatLabel) DeleteChatLabelById(ctx context.Context, request *pb.DeleteChatLabelRequest) (*pb.DeleteChatLabelResponse, error) {
+func (g *GRPCChatLabel) DeleteChatLabelById(ctx context.Context, request *pb.DeleteChatLabelRequest) (result *pb.DeleteChatLabelResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -183,14 +183,14 @@ func (g *GRPCChatLabel) DeleteChatLabelById(ctx context.Context, request *pb.Del
 		return nil, status.Errorf(codes.InvalidArgument, "id is required")
 	}
 
-	err := service.ChatLabelService.DeleteChatLabelById(ctx, user, request.GetId())
+	err = service.ChatLabelService.DeleteChatLabelById(ctx, user, request.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.DeleteChatLabelResponse{
+	result = &pb.DeleteChatLabelResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
-	return result, nil
+	return
 }
