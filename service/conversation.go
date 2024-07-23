@@ -94,7 +94,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		log.Error("list conversation not found")
 		return response.Pagination(nil, 0, limit, offset)
 	}
-	filter.ConversationId = conversationIds
+	filter.ExternalConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
 	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
@@ -204,7 +204,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 		log.Error("list conversation not found")
 		return response.Pagination(nil, 0, limit, 0)
 	}
-	filter.ConversationId = conversationIds
+	filter.ExternalConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
 	_, conversations, respScrollId, err := repository.ConversationESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, scrollId)
 	if err != nil {
@@ -293,15 +293,14 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	return response.Pagination(result, len(conversationCustomViews), limit, 0)
 }
 
-func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any) {
-	newConversationId := GenerateConversationId(appId, oaId, id)
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
+func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, conversationId string, data model.ShareInfo) (int, any) {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found with app_id %s", newConversationId, appId)
-		return response.NotFoundMsg("conversation " + newConversationId + " not found")
+		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
+		return response.NotFoundMsg("conversation " + conversationId + " not found")
 	}
 	conversationExist.Username = data.Fullname
 	conversationExist.ShareInfo = &data
@@ -317,7 +316,7 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 	}
 
 	// IMPROVE: should we update direction es or use queue ?
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
+	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -347,9 +346,9 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 
 	// Update User allocate
 	filter := model.AllocateUserFilter{
-		AppId:          appId,
-		ConversationId: conversationId,
-		MainAllocate:   statusAllocate,
+		AppId:                  appId,
+		ExternalConversationId: conversationId,
+		MainAllocate:           statusAllocate,
 	}
 	_, allocateUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
@@ -405,7 +404,11 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 			return err
 		}
 
-		if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+		conversationQueue := model.ConversationQueue{
+			DocId:        conversationExist.ConversationId,
+			Conversation: *conversationExist,
+		}
+		if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 			log.Error(err)
 			if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*allocateUser)[0]); err != nil {
 				log.Error(err)
@@ -574,9 +577,9 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 	}
 
 	filter := model.AllocateUserFilter{
-		AppId:          preferRequest.AppId,
-		ConversationId: preferRequest.ConversationId,
-		MainAllocate:   "active",
+		AppId:                  preferRequest.AppId,
+		ExternalConversationId: preferRequest.ConversationId,
+		MainAllocate:           "active",
 	}
 
 	tmp, _ := strconv.ParseBool(preferRequest.PreferenceValue)
@@ -588,7 +591,11 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 	default:
 	}
 
-	if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+	conversationQueue := model.ConversationQueue{
+		DocId:        conversationExist.ConversationId,
+		Conversation: *conversationExist,
+	}
+	if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 		log.Error(err)
 		return err
 	}

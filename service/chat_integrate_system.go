@@ -40,10 +40,12 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 	}
 	if len(data.TenantDefaultId) < 1 {
 		chatTenant.TenantName = data.SystemName
-		chatTenant.IntegrateSystemId = chatIntegrateSystem.Base.GetId()
+		chatTenant.IntegrateSystemId = chatIntegrateSystem.Id
+		tenantId := uuid.NewString()
+		chatTenant.TenantId = tenantId
 		chatTenant.Status = true
 
-		chatIntegrateSystem.TenantDefaultId = uuid.NewString()
+		chatIntegrateSystem.TenantDefaultId = tenantId
 	} else {
 		// Check tenant exist in system
 		filter := model.ChatIntegrateSystemFilter{
@@ -59,6 +61,9 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 			err = errors.New("tenant " + data.TenantDefaultId + " already exist in system")
 			return
 		}
+		chatTenant.TenantName = data.SystemName
+		chatTenant.IntegrateSystemId = chatIntegrateSystem.Id
+		chatTenant.TenantId = data.TenantDefaultId
 		chatIntegrateSystem.TenantDefaultId = data.TenantDefaultId
 	}
 
@@ -100,7 +105,7 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 				chatAppIntegrateSystems = append(chatAppIntegrateSystems, model.ChatAppIntegrateSystem{
 					Base:                  model.InitBase(),
 					ChatAppId:             item,
-					ChatIntegrateSystemId: systemId,
+					ChatIntegrateSystemId: chatIntegrateSystem.Id,
 				})
 			}
 		}
@@ -115,14 +120,14 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 			chatApps = append(chatApps, chatApp)
 			chatAppIntegrateSystems = append(chatAppIntegrateSystems, model.ChatAppIntegrateSystem{
 				ChatAppId:             chatApp.GetId(),
-				ChatIntegrateSystemId: systemId,
+				ChatIntegrateSystemId: chatIntegrateSystem.Id,
 			})
 		}
 	}
 
 	if err = repository.ChatIntegrateSystemRepo.InsertIntegrateSystemTransaction(ctx, repository.DBConn, chatApps, chatIntegrateSystem, chatAppIntegrateSystems, chatTenant); err != nil {
 		log.Error(err)
-		if err = repository.ChatTenantRepo.Delete(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); err != nil {
+		if errTmp := repository.ChatTenantRepo.Delete(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); errTmp != nil {
 			log.Error(err)
 			return
 		}

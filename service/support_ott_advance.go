@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
@@ -14,6 +15,16 @@ import (
 )
 
 func GenerateConversationId(appId, oaId, conversationId string) (newConversationId string) {
+	if len(appId) == 0 {
+		log.Error("app id cannot be empty")
+		return
+	} else if len(oaId) == 0 {
+		log.Error("oa id cannot be empty")
+		return
+	} else if len(conversationId) == 0 {
+		log.Error("conversation id cannot be empty")
+		return
+	}
 	newConversationId = appId + "_" + oaId + "_" + conversationId
 	return
 }
@@ -272,7 +283,7 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 	return
 }
 
-func PublishPutConversationToChatQueue(ctx context.Context, conversation model.Conversation) (err error) {
+func PublishPutConversationToChatQueue(ctx context.Context, conversation model.ConversationQueue) (err error) {
 	var b []byte
 	if b, err = json.Marshal(conversation); err != nil {
 		log.Error(err)
@@ -282,5 +293,32 @@ func PublishPutConversationToChatQueue(ctx context.Context, conversation model.C
 		log.Error(err)
 		return
 	}
+	return
+}
+
+func CacheChatRouting(ctx context.Context, chatRoutingId string) (chatRouting *model.ChatRouting, err error) {
+	chatRoutingCache := cache.RCache.Get(CHAT_ROUTING + "_" + chatRoutingId)
+	if chatRoutingCache != nil {
+		if err = json.Unmarshal([]byte(chatRoutingCache.(string)), &chatRouting); err != nil {
+			log.Error(err)
+			return
+		}
+	} else {
+		chatRouting, err = repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, chatRoutingId)
+		if err != nil {
+			log.Error(err)
+			return
+		} else if chatRouting == nil {
+			err = errors.New("chat routing " + chatRoutingId + " not found")
+			log.Error(err)
+			return
+		}
+
+		if err = cache.RCache.Set(CHAT_ROUTING+"_"+chatRoutingId, chatRouting, CHAT_ROUTING_EXPIRE); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+
 	return
 }

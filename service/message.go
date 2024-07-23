@@ -50,7 +50,8 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			return
 		}
 		filter := model.ConversationFilter{
-			ConversationId: []string{data.ConversationId},
+			TenantId:               authUser.TenantId,
+			ExternalConversationId: []string{data.ConversationId},
 		}
 		_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 		if err != nil {
@@ -191,7 +192,11 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		return result, err
 	}
 
-	if err = PublishPutConversationToChatQueue(ctx, conversation); err != nil {
+	conversationQueue := model.ConversationQueue{
+		DocId:        conversation.ConversationId,
+		Conversation: conversation,
+	}
+	if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 		log.Error(err)
 		return result, err
 	}
@@ -284,8 +289,8 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		}
 	} else {
 		conversationFilter := model.ConversationFilter{
-			ConversationId: []string{data.ConversationId},
-			TenantId:       authUser.TenantId,
+			TenantId:               authUser.TenantId,
+			ExternalConversationId: []string{data.ConversationId},
 		}
 		total, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, conversationFilter, 1, 0)
 		if err != nil {
