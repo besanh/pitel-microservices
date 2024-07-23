@@ -34,7 +34,7 @@ type ChatScriptRequest struct {
 	Content       string                `form:"content"`
 	File          *multipart.FileHeader `form:"file"`
 	OtherScriptId string                `form:"other_script_id"`
-	ConnectionId  string                `json:"chat_app_id" form:"chat_app_id" binding:"required"`
+	ConnectionId  string                `json:"connection_id" form:"connection_id" binding:"required"`
 }
 
 type ChatScriptStatusRequest struct {
