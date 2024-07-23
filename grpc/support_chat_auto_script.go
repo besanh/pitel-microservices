@@ -30,14 +30,14 @@ func convertChatAutoScriptToPbChatAutoScript(data model.ChatAutoScriptView) (res
 	if data.ConnectionApp != nil {
 		result.ConnectionApp = &pb.ChatConnectionAppData{
 			Id:                data.ConnectionApp.Id,
-			TenantId:          data.ConnectionApp.Id,
+			TenantId:          data.ConnectionApp.TenantId,
 			CreatedAt:         timestamppb.New(data.ConnectionApp.CreatedAt),
 			UpdatedAt:         timestamppb.New(data.ConnectionApp.UpdatedAt),
-			ConnectionName:    data.ConnectionApp.Id,
-			ConnectionType:    data.ConnectionApp.Id,
-			ChatAppId:         data.ConnectionApp.Id,
-			Status:            data.ConnectionApp.Id,
-			ConnectionQueueId: data.ConnectionApp.Id,
+			ConnectionName:    data.ConnectionApp.ConnectionName,
+			ConnectionType:    data.ConnectionApp.ConnectionType,
+			ChatAppId:         data.ConnectionApp.ChatAppId,
+			Status:            data.ConnectionApp.Status,
+			ConnectionQueueId: data.ConnectionApp.ConnectionQueueId,
 		}
 		if err = util.ParseAnyToAny(data.ConnectionApp.OaInfo, &result.ConnectionApp.OaInfo); err != nil {
 			return

@@ -23,6 +23,8 @@ type (
 	ChatPolicySetting struct{}
 )
 
+var ChatPolicySettingService IChatPolicySetting
+
 func NewChatPolicySetting() IChatPolicySetting {
 	return &ChatPolicySetting{}
 }
