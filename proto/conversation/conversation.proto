@@ -32,6 +32,7 @@ message ConversationCustomView {
   int64 total_unread = 20;
   string latest_message_content = 21;
   string latest_message_direction = 22;
+  string external_conversation_id = 23;
 }
 
 message ConversationView {
@@ -48,7 +49,7 @@ message ConversationView {
   string avatar = 11;
   bool major = 12;
   bool following = 13;
-  string label = 14;
+  repeated ChatLabel label = 14;
   bool is_done = 15;
   string is_done_at = 16;
   string is_done_by = 17;
@@ -57,6 +58,7 @@ message ConversationView {
   int64 total_unread = 20;
   string latest_message_content = 21;
   string latest_message_direction = 22;
+  string external_conversation_id = 23;
 }
 
 message Conversation {
@@ -73,12 +75,13 @@ message Conversation {
   string avatar = 11;
   bool major = 12;
   bool following = 13;
-  string label = 14;
+  repeated ChatLabel label = 14;
   bool is_done = 15;
   google.protobuf.Timestamp is_done_at = 16;
   string is_done_by = 17;
   string created_at = 18;
   string updated_at = 19;
+  string external_conversation_id = 20;
 }
 
 message ShareInfo {

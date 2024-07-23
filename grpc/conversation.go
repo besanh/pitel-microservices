@@ -207,7 +207,7 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 				Avatar:                 item.Avatar,
 				Major:                  item.Major,
 				Following:              item.Following,
-				Label:                  string(item.Label),
+				Label:                  make([]*pb.ChatLabel, 0),
 				IsDone:                 item.IsDone,
 				IsDoneAt:               item.IsDoneAt,
 				IsDoneBy:               item.IsDoneBy,
@@ -216,6 +216,7 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 				TotalUnread:            item.TotalUnRead,
 				LatestMessageContent:   item.LatestMessageContent,
 				LatestMessageDirection: item.LatestMessageDirection,
+				ExternalConversationId: item.ExternalConversationId,
 			}
 			if item.ShareInfo != nil {
 				if err = util.ParseAnyToAny(item.ShareInfo, &tmp.ShareInfo); err != nil {
@@ -226,6 +227,14 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 					}
 					return
 				}
+			}
+			if err = util.ParseStringToAny(string(item.Label), &tmp.Label); err != nil {
+				log.Error(err)
+				result = &pb.GetConversationsByManagerResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return
 			}
 			resultData = append(resultData, tmp)
 		}
@@ -297,7 +306,7 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 			Avatar:                 item.Avatar,
 			Major:                  item.Major,
 			Following:              item.Following,
-			Label:                  string(item.Label),
+			Label:                  make([]*pb.ChatLabel, 0),
 			IsDone:                 item.IsDone,
 			IsDoneAt:               item.IsDoneAt,
 			IsDoneBy:               item.IsDoneBy,
@@ -306,6 +315,7 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 			TotalUnread:            item.TotalUnRead,
 			LatestMessageContent:   item.LatestMessageContent,
 			LatestMessageDirection: item.LatestMessageDirection,
+			ExternalConversationId: item.ExternalConversationId,
 		}
 		if item.ShareInfo != nil {
 			if err = util.ParseAnyToAny(item.ShareInfo, &tmp.ShareInfo); err != nil {
@@ -317,6 +327,15 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 				return
 			}
 		}
+		if err = util.ParseStringToAny(string(item.Label), &tmp.Label); err != nil {
+			log.Error(err)
+			result = &pb.GetConversationsByManagerWithScrollAPIResponse{
+				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+				Message: err.Error(),
+			}
+			return
+		}
+
 		resultData = append(resultData, tmp)
 	}
 
@@ -346,31 +365,40 @@ func (g *GRPCConversation) GetConversationById(ctx context.Context, request *pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	tmp := &pb.Conversation{
-		TenantId:         data.TenantId,
-		ConversationId:   data.ConversationId,
-		ConversationType: data.ConversationType,
-		AppId:            data.AppId,
-		OaId:             data.OaId,
-		OaName:           data.OaName,
-		OaAvatar:         data.OaAvatar,
-		ShareInfo:        nil,
-		ExternalUserId:   data.ExternalUserId,
-		Username:         data.Username,
-		Avatar:           data.Avatar,
-		Major:            data.Major,
-		Following:        data.Following,
-		Label:            string(data.Label),
-		IsDone:           data.IsDone,
-		IsDoneAt:         timestamppb.New(data.IsDoneAt),
-		IsDoneBy:         data.IsDoneBy,
-		CreatedAt:        data.CreatedAt,
-		UpdatedAt:        data.UpdatedAt,
+		TenantId:               data.TenantId,
+		ConversationId:         data.ConversationId,
+		ConversationType:       data.ConversationType,
+		AppId:                  data.AppId,
+		OaId:                   data.OaId,
+		OaName:                 data.OaName,
+		OaAvatar:               data.OaAvatar,
+		ShareInfo:              nil,
+		ExternalUserId:         data.ExternalUserId,
+		Username:               data.Username,
+		Avatar:                 data.Avatar,
+		Major:                  data.Major,
+		Following:              data.Following,
+		Label:                  make([]*pb.ChatLabel, 0),
+		IsDone:                 data.IsDone,
+		IsDoneAt:               timestamppb.New(data.IsDoneAt),
+		IsDoneBy:               data.IsDoneBy,
+		CreatedAt:              data.CreatedAt,
+		UpdatedAt:              data.UpdatedAt,
+		ExternalConversationId: data.ExternalConversationId,
 	}
 	if data.ShareInfo != nil {
 		if err = util.ParseAnyToAny(data.ShareInfo, &tmp.ShareInfo); err != nil {
 			log.Error(err)
 			return nil, status.Errorf(codes.Internal, err.Error())
 		}
+	}
+	if err = util.ParseStringToAny(string(data.Label), &tmp.Label); err != nil {
+		log.Error(err)
+		result = &pb.GetConversationByIdResponse{
+			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+			Message: err.Error(),
+		}
+		return
 	}
 
 	result = &pb.GetConversationByIdResponse{
