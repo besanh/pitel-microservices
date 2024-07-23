@@ -17,7 +17,7 @@ import (
 type (
 	IAssignConversation interface {
 		GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (*model.AllocateUser, error)
-		GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (int, []model.ChatQueueUserView, error)
+		GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (result []model.ChatQueueUserView, err error)
 		AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) error
 	}
 	AssignConversation struct{}
@@ -29,8 +29,9 @@ func NewAssignConversation() IAssignConversation {
 	return &AssignConversation{}
 }
 
-func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (total int, result []model.ChatQueueUserView, err error) {
+func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (result []model.ChatQueueUserView, err error) {
 	filter := model.ChatConnectionAppFilter{
+		TenantId:       authUser.TenantId,
 		AppId:          data.AppId,
 		OaId:           data.OaId,
 		ConnectionType: data.ConversationType,
@@ -88,35 +89,37 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	result = []model.ChatQueueUserView{}
 	if len(*userInQueues) > 0 {
 		for _, item := range *userInQueues {
-			result = append(result, model.ChatQueueUserView{
-				TenantId: item.TenantId,
-				QueueId:  item.QueueId,
-				UserId:   item.UserId,
-			})
+			tmp := model.ChatQueueUserView{}
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				log.Error(err)
+				return
+			}
+			tmp.Id = item.Id
+			result = append(result, tmp)
 		}
 	}
-	if authUser.Source == "authen" {
-		if authUser.Level == "manager" || authUser.Level == "admin" {
-			chatManageQueueUserFiler := model.ChatManageQueueUserFilter{
-				TenantId: authUser.TenantId,
-				QueueId:  connectionQueueExist.QueueId,
-			}
-			_, chatManageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManageQueueUserFiler, 1, 0)
-			if err != nil {
+	if authUser.Level == "manager" || authUser.Level == "admin" {
+		chatManageQueueUserFiler := model.ChatManageQueueUserFilter{
+			TenantId: authUser.TenantId,
+			QueueId:  connectionQueueExist.QueueId,
+		}
+		_, chatManageQueueUsers, errTmp := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManageQueueUserFiler, 1, 0)
+		if errTmp != nil {
+			log.Error(errTmp)
+			return
+		}
+		if len(*chatManageQueueUsers) > 0 {
+			tmp := model.ChatQueueUserView{}
+			if err = util.ParseAnyToAny((*chatManageQueueUsers)[0], &tmp); err != nil {
 				log.Error(err)
-				return 0, nil, err
+				return
 			}
-			if len(*chatManageQueueUsers) > 0 {
-				result = append(result, model.ChatQueueUserView{
-					TenantId: (*chatManageQueueUsers)[0].TenantId,
-					QueueId:  (*chatManageQueueUsers)[0].QueueId,
-					UserId:   (*chatManageQueueUsers)[0].UserId,
-				})
-			}
+			tmp.Id = (*chatManageQueueUsers)[0].Id
+			result = append(result, tmp)
 		}
 	}
 
-	return len(result), result, nil
+	return
 }
 
 func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (result *model.AllocateUser, err error) {

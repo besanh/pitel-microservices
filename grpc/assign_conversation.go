@@ -93,7 +93,7 @@ func (g *GRPCAssignConversation) GetUserInQueue(ctx context.Context, request *pb
 		ConversationType: request.GetConversationType(),
 		Status:           request.GetStatus(),
 	}
-	total, data, err := service.AssignConversationService.GetUserInQueue(ctx, user, filter)
+	data, err := service.AssignConversationService.GetUserInQueue(ctx, user, filter)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -107,7 +107,6 @@ func (g *GRPCAssignConversation) GetUserInQueue(ctx context.Context, request *pb
 	result := &pb.GetUserInQueueResponse{
 		Code:    "OK",
 		Message: "ok",
-		Total:   int32(total),
 		Data:    tmp,
 	}
 	return result, nil
