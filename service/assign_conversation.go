@@ -122,8 +122,8 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 
 func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (result *model.AllocateUser, err error) {
 	filter := model.ConversationFilter{
-		ConversationId: []string{conversationId},
-		TenantId:       authUser.TenantId,
+		TenantId:               authUser.TenantId,
+		ExternalConversationId: []string{conversationId},
 	}
 	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 	if err != nil {
@@ -138,8 +138,9 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 	}
 
 	conversationFilter := model.AllocateUserFilter{
-		ConversationId: (*conversations)[0].ConversationId,
-		MainAllocate:   status,
+		TenantId:               authUser.TenantId,
+		ExternalConversationId: (*conversations)[0].ConversationId,
+		MainAllocate:           status,
 	}
 	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 
@@ -156,8 +157,8 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 
 func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) (err error) {
 	filter := model.ConversationFilter{
-		ConversationId: []string{data.ConversationId},
-		TenantId:       authUser.TenantId,
+		TenantId:               authUser.TenantId,
+		ExternalConversationId: []string{data.ConversationId},
 	}
 	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 	if err != nil {
@@ -209,8 +210,9 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	allocateFilter := model.AllocateUserFilter{
-		ConversationId: (*conversations)[0].ConversationId,
-		MainAllocate:   data.Status,
+		TenantId:               authUser.TenantId,
+		ExternalConversationId: (*conversations)[0].ExternalConversationId,
+		MainAllocate:           data.Status,
 	}
 	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, -1, 0)
 	if err != nil {
@@ -220,15 +222,17 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 
 	if len(*userAllocates) < 1 {
 		userAllocate := model.AllocateUser{
-			Base:               model.InitBase(),
-			TenantId:           (*conversations)[0].TenantId,
-			AppId:              (*conversations)[0].AppId,
-			OaId:               (*conversations)[0].OaId,
-			UserId:             data.UserId,
-			QueueId:            data.QueueId,
-			AllocatedTimestamp: time.Now().UnixMilli(),
-			MainAllocate:       "active",
-			ConnectionId:       (*conversations)[0].ConversationId,
+			Base:                   model.InitBase(),
+			TenantId:               (*conversations)[0].TenantId,
+			AppId:                  (*conversations)[0].AppId,
+			OaId:                   (*conversations)[0].OaId,
+			ConversationId:         (*conversations)[0].ConversationId,
+			ExternalConversationId: (*conversations)[0].ExternalConversationId,
+			UserId:                 data.UserId,
+			QueueId:                data.QueueId,
+			AllocatedTimestamp:     time.Now().UnixMilli(),
+			MainAllocate:           "active",
+			ConnectionId:           (*conversations)[0].ConversationId,
 		}
 		log.Infof("conversation %s allocated to user %s", (*conversations)[0].ConversationId, data.UserId)
 		if err = repository.AllocateUserRepo.Insert(ctx, repository.DBConn, userAllocate); err != nil {

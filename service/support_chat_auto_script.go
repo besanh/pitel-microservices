@@ -477,7 +477,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 		content = strings.ReplaceAll(content, "{{customer_name}}", customerName)
 	}
 
-	// >send message to ott
+	// send message to ott
 	ottMessage := model.SendMessageToOtt{
 		Type:          conversationView.ConversationType,
 		EventName:     eventName,
@@ -532,7 +532,11 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 		log.Error(err)
 		return err
 	}
-	if err = PublishPutConversationToChatQueue(ctx, conversation); err != nil {
+	conversationQueue := model.ConversationQueue{
+		DocId:        conversation.ConversationId,
+		Conversation: conversation,
+	}
+	if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 		log.Error(err)
 		return err
 	}

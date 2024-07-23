@@ -51,27 +51,29 @@ type ChatRoutingFilter struct {
 }
 
 type ConversationFilter struct {
-	AppId          []string     `json:"app_id"`
-	TenantId       string       `json:"tenant_id"`
-	ConversationId []string     `json:"conversation_id"`
-	Username       string       `json:"username"`
-	PhoneNumber    string       `json:"phone_number"`
-	Email          string       `json:"email"`
-	Insensitive    string       `json:"insensitive"`
-	IsDone         sql.NullBool `json:"is_done"`
-	Major          sql.NullBool `json:"major"`
-	Following      sql.NullBool `json:"following"`
+	AppId                  []string     `json:"app_id"`
+	TenantId               string       `json:"tenant_id"`
+	ConversationId         []string     `json:"conversation_id"`
+	ExternalConversationId []string     `json:"external_conversation_id"`
+	Username               string       `json:"username"`
+	PhoneNumber            string       `json:"phone_number"`
+	Email                  string       `json:"email"`
+	Insensitive            string       `json:"insensitive"`
+	IsDone                 sql.NullBool `json:"is_done"`
+	Major                  sql.NullBool `json:"major"`
+	Following              sql.NullBool `json:"following"`
 }
 
 type AllocateUserFilter struct {
-	TenantId       string   `json:"tenant_id"`
-	AppId          string   `json:"app_id"`
-	OaId           string   `json:"oa_id"`
-	ConversationId string   `json:"conversation_id"`
-	UserId         []string `json:"user_id"`
-	QueueId        []string `json:"queue_id"`
-	AllocatedTime  int64    `json:"allocated_time"`
-	MainAllocate   string   `json:"main_allocate"`
+	TenantId               string   `json:"tenant_id"`
+	AppId                  string   `json:"app_id"`
+	OaId                   string   `json:"oa_id"`
+	ConversationId         string   `json:"conversation_id"`
+	ExternalConversationId string   `json:"external_conversation_id"`
+	UserId                 []string `json:"user_id"`
+	QueueId                []string `json:"queue_id"`
+	AllocatedTime          int64    `json:"allocated_time"`
+	MainAllocate           string   `json:"main_allocate"`
 }
 
 type MessageFilter struct {

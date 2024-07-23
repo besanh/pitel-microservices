@@ -47,6 +47,9 @@ func (repo *UserAllocate) GetAllocateUsers(ctx context.Context, db sqlclient.ISq
 	if len(filter.ConversationId) > 0 {
 		query.Where("conversation_id = ?", filter.ConversationId)
 	}
+	if len(filter.ExternalConversationId) > 0 {
+		query.Where("external_conversation_id = ?", filter.ExternalConversationId)
+	}
 	if len(filter.MainAllocate) > 0 {
 		query.Where("main_allocate = ?", filter.MainAllocate)
 	}

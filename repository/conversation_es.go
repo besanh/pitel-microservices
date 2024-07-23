@@ -54,6 +54,9 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	if len(filter.ConversationId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("conversation_id", util.ParseToAnyArray(filter.ConversationId)...))
 	}
+	if len(filter.ExternalConversationId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("external_conversation_id", util.ParseToAnyArray(filter.ExternalConversationId)...))
+	}
 	if len(filter.Username) > 0 {
 		// Search like
 		filters = append(filters, elasticsearch.WildcardQuery("username", "*"+filter.Username, insensitive))

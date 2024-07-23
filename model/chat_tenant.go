@@ -11,6 +11,7 @@ type ChatTenant struct {
 	bun.BaseModel     `bun:"table:chat_tenant,alias:ct"`
 	TenantName        string               `json:"tenant_name" bun:"tenant_name,type:text,notnull"`
 	IntegrateSystemId string               `json:"integrate_system_id" bun:"integrate_system_id,type:uuid,nullzero,default:null"`
+	TenantId          string               `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	IntegrateSystem   *ChatIntegrateSystem `json:"integrate_system" bun:"rel:has-one,join:integrate_system_id=id"`
 	Status            bool                 `json:"status" bun:"status,type:boolean,notnull"`
 }
