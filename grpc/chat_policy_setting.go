@@ -70,7 +70,7 @@ func (g *GRPCChatPolicySetting) GetChatPolicySettings(ctx context.Context, reque
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	resultData := make([]*pb.ChatPolicySetting, 0)
-	if len(*data) > 0 {
+	if data != nil {
 		for _, item := range *data {
 			var tmp pb.ChatPolicySetting
 			tmp.CreatedAt = timestamppb.New(item.CreatedAt)
