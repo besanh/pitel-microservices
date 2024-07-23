@@ -151,6 +151,29 @@ message GetConversationsByManagerResponse {
   int32 offset = 6;
 }
 
+// get conversations by manager with scroll
+message GetConversationsByManagerWithScrollAPIRequest {
+  int32 limit = 1;
+  string scroll_id = 2;
+  string is_done = 3;
+  string major = 4;
+  string following = 5;
+  repeated string app_id = 6;
+  repeated string conversation_id = 7;
+  string username = 8;
+  string phone_number = 9;
+  string email = 10;
+}
+
+message GetConversationsByManagerWithScrollAPIResponse {
+  string code = 1;
+  string message = 2;
+  repeated ConversationView data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  string scroll_id = 6;
+}
+
 // get conversations with scroll
 message GetConversationsWithScrollAPIRequest {
   int32 limit = 1;
@@ -266,6 +289,12 @@ service ConversationService {
   rpc GetConversationsByManager(GetConversationsByManagerRequest) returns (GetConversationsByManagerResponse) {
     option (google.api.http) = {
       get : "/bss-chat/v1/conversation/manager"
+    };
+  };
+
+  rpc GetConversationsByManagerWithScrollAPI(GetConversationsByManagerWithScrollAPIRequest) returns (GetConversationsByManagerWithScrollAPIResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/conversation/manager/scroll"
     };
   };
 

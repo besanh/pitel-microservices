@@ -146,8 +146,12 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 		c.JSON(response.OKResponse())
 	} else if eventName == "submit_info" {
-		code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
-		c.JSON(code, result)
+		err := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
+		if err != nil {
+			c.JSON(response.ServiceUnavailableMsg(err.Error()))
+			return
+		}
+		c.JSON(response.OKResponse())
 		return
 	} else {
 		if slices.Contains(variables.EVENT_NAME_EXCLUDE, eventName) {
@@ -227,6 +231,10 @@ func (h *OttMessage) AskInfo(c *gin.Context) {
 		District:    shareInfoDistrict,
 	}
 
-	code, result := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
-	c.JSON(code, result)
+	err := h.conversationService.UpdateConversationById(c, &model.AuthUser{}, appId, oaId, externalUserId, shareInfo)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }

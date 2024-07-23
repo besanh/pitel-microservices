@@ -71,8 +71,12 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
-	c.JSON(code, result)
+	total, result, err := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(result, total, limit, offset))
 }
 
 func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
@@ -111,8 +115,16 @@ func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversationsWithScrollAPI(c, res.Data, filter, limit, scrollId)
-	c.JSON(code, result)
+	total, data, respScrollId, err := handler.conversationService.GetConversationsWithScrollAPI(c, res.Data, filter, limit, scrollId)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	result := map[string]any{
+		"conversations": data,
+		"scroll_id":     respScrollId,
+	}
+	c.JSON(response.Pagination(result, total, limit, 0))
 }
 
 func (handler *Conversation) UpdateConversation(c *gin.Context) {
@@ -145,8 +157,12 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 
 	log.Info("update conversation payload -> ", shareInfo)
 
-	code, result := handler.conversationService.UpdateConversationById(c, res.Data, appId, oaId, id, shareInfo)
-	c.JSON(code, result)
+	err := handler.conversationService.UpdateConversationById(c, res.Data, appId, oaId, id, shareInfo)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
 }
 
 func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
@@ -214,8 +230,12 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversationsByHighLevel(c, res.Data, filter, limit, offset)
-	c.JSON(code, result)
+	total, result, err := handler.conversationService.GetConversationsByHighLevel(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(result, total, limit, offset))
 }
 
 func (handler *Conversation) GetConversationById(c *gin.Context) {
@@ -242,8 +262,12 @@ func (handler *Conversation) GetConversationById(c *gin.Context) {
 		return
 	}
 
-	code, result := handler.conversationService.GetConversationById(c, res.Data, appId, conversationId)
-	c.JSON(code, result)
+	result, err := handler.conversationService.GetConversationById(c, res.Data, appId, conversationId)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OK(result))
 }
 
 func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
