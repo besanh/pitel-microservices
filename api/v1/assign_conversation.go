@@ -40,12 +40,12 @@ func (handler *AssignConversation) GetUserInQueue(c *gin.Context) {
 		Status:           c.Query("status"),
 	}
 
-	total, result, err := handler.assignConversation.GetUserInQueue(c, res.Data, filter)
+	result, err := handler.assignConversation.GetUserInQueue(c, res.Data, filter)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
-	c.JSON(response.Pagination(result, total, -1, 0))
+	c.JSON(response.OK(result))
 }
 
 func (handler *AssignConversation) GetUserAssigned(c *gin.Context) {
