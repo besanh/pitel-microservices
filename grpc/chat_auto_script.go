@@ -14,7 +14,6 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GRPCChatAutoScript struct{}
@@ -81,22 +80,13 @@ func (g *GRPCChatAutoScript) GetChatAutoScripts(ctx context.Context, request *pb
 	resultData := make([]*pb.ChatAutoScriptData, 0)
 	if len(*data) > 0 {
 		for _, item := range *data {
-			var tmp pb.ChatAutoScriptData
-			tmp.CreatedAt = &timestamppb.Timestamp{
-				Seconds: item.CreatedAt.Unix(),
-			}
-			tmp.UpdatedAt = &timestamppb.Timestamp{
-				Seconds: item.UpdatedAt.Unix(),
-			}
-			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+			tmp, err := convertChatAutoScriptToPbChatAutoScript(item)
+			if err != nil {
 				log.Error(err)
-				result := &pb.GetChatAutoScriptsResponse{
-					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-					Message: err.Error(),
-				}
-				return result, nil
+				return nil, status.Errorf(codes.Internal, err.Error())
 			}
-			resultData = append(resultData, &tmp)
+
+			resultData = append(resultData, tmp)
 		}
 	}
 
@@ -121,14 +111,8 @@ func (g *GRPCChatAutoScript) GetChatAutoScriptById(ctx context.Context, request 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	tmp := &pb.ChatAutoScriptData{}
-	tmp.CreatedAt = &timestamppb.Timestamp{
-		Seconds: data.CreatedAt.Unix(),
-	}
-	tmp.UpdatedAt = &timestamppb.Timestamp{
-		Seconds: data.UpdatedAt.Unix(),
-	}
-	if err = util.ParseAnyToAny(data, tmp); err != nil {
+	tmp, err := convertChatAutoScriptToPbChatAutoScript(*data)
+	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

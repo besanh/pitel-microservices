@@ -15,7 +15,7 @@ message ChatScriptData {
   google.protobuf.Timestamp updated_at = 3;
   string tenant_id = 4;
   string script_name = 5;
-  string status = 6;
+  bool status = 6;
   string script_type = 7;
   string file_url = 8;
   string channel = 9;
@@ -97,6 +97,7 @@ message PostChatScriptRequest {
   string channel = 4;
   string content = 5;
   string other_script_id = 6;
+  string connection_id = 7;
 }
 
 message PostChatScriptResponse {
@@ -114,6 +115,7 @@ message PutChatScriptRequest {
   string channel = 5;
   string content = 6;
   string other_script_id = 7;
+  string connection_id = 8;
 }
 
 message PutChatScriptResponse {
