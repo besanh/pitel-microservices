@@ -7,35 +7,36 @@ import (
 )
 
 type Message struct {
-	TenantId            string            `json:"tenant_id"`
-	ParentMessageId     string            `json:"parent_message_id"`
-	Id                  string            `json:"id"`
-	ConversationId      string            `json:"conversation_id"`
-	ParentExternalMsgId string            `json:"parent_external_msg_id"`
-	ExternalMsgId       string            `json:"external_msg_id"`
-	MessageType         string            `json:"message_type"`
-	EventName           string            `json:"event_name"`
-	Direction           string            `json:"direction"`
-	AppId               string            `json:"app_id"`
-	OaId                string            `json:"oa_id"`            // connection id
-	UserIdByApp         string            `json:"user_id_by_app"`   // require for zalo
-	ExternalUserId      string            `json:"external_user_id"` // id zalo
-	UserAppname         string            `json:"user_app_name"`    // username zalo
-	Avatar              string            `json:"avatar"`           // avatar zalo
-	SupporterId         string            `json:"supporter_id"`     // from crm
-	SupporterName       string            `json:"supporter_name"`   // from crm
-	SendTime            time.Time         `json:"send_time"`
-	SendTimestamp       int64             `json:"send_timestamp"`
-	Content             string            `json:"content"`
-	IsRead              string            `json:"is_read"`
-	ReadTime            time.Time         `json:"read_time"`
-	ReadTimestamp       int64             `json:"read_timestamp"`
-	ReadBy              []string          `json:"read_by"`
-	Attachments         []*OttAttachments `json:"attachments"`
-	CreatedAt           time.Time         `json:"created_at"`
-	UpdatedAt           time.Time         `json:"updated_at"`
-	ShareInfo           *ShareInfo        `json:"share_info"`
-	IsEcho              bool              `json:"is_echo"`
+	TenantId               string            `json:"tenant_id"`
+	ParentMessageId        string            `json:"parent_message_id"`
+	Id                     string            `json:"id"`
+	ConversationId         string            `json:"conversation_id"` // uuid of conversation
+	ParentExternalMsgId    string            `json:"parent_external_msg_id"`
+	ExternalConversationId string            `json:"external_conversation_id"` // app_id+oa_id+external_user_id
+	ExternalMsgId          string            `json:"external_msg_id"`
+	MessageType            string            `json:"message_type"`
+	EventName              string            `json:"event_name"`
+	Direction              string            `json:"direction"`
+	AppId                  string            `json:"app_id"`
+	OaId                   string            `json:"oa_id"`            // connection id
+	UserIdByApp            string            `json:"user_id_by_app"`   // require for zalo
+	ExternalUserId         string            `json:"external_user_id"` // id zalo
+	UserAppname            string            `json:"user_app_name"`    // username zalo
+	Avatar                 string            `json:"avatar"`           // avatar zalo
+	SupporterId            string            `json:"supporter_id"`     // from crm
+	SupporterName          string            `json:"supporter_name"`   // from crm
+	SendTime               time.Time         `json:"send_time"`
+	SendTimestamp          int64             `json:"send_timestamp"`
+	Content                string            `json:"content"`
+	IsRead                 string            `json:"is_read"`
+	ReadTime               time.Time         `json:"read_time"`
+	ReadTimestamp          int64             `json:"read_timestamp"`
+	ReadBy                 []string          `json:"read_by"`
+	Attachments            []*OttAttachments `json:"attachments"`
+	CreatedAt              time.Time         `json:"created_at"`
+	UpdatedAt              time.Time         `json:"updated_at"`
+	ShareInfo              *ShareInfo        `json:"share_info"`
+	IsEcho                 bool              `json:"is_echo"`
 }
 
 type AttachmentsDetails struct {

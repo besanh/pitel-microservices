@@ -218,10 +218,10 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 
 	// TODO: publish event to user normal
 	filterUserAllocate := model.AllocateUserFilter{
-		TenantId:       authUser.TenantId,
-		AppId:          request.AppId,
-		OaId:           request.OaId,
-		ConversationId: request.ConversationId,
+		TenantId:               authUser.TenantId,
+		AppId:                  request.AppId,
+		OaId:                   request.OaId,
+		ExternalConversationId: request.ConversationId,
 	}
 	_, userAllocate, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filterUserAllocate, 1, 0)
 	if err != nil {
@@ -395,7 +395,11 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 	}
 	conversationExist.Label = result
 
-	if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+	conversationQueue := model.ConversationQueue{
+		DocId:        conversationExist.ConversationId,
+		Conversation: *conversationExist,
+	}
+	if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 		log.Error(err)
 		return
 	}

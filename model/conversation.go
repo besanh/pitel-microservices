@@ -10,30 +10,32 @@ import (
 )
 
 type Conversation struct {
-	TenantId         string          `json:"tenant_id"`
-	ConversationId   string          `json:"conversation_id"`
-	ConversationType string          `json:"conversation_type"`
-	AppId            string          `json:"app_id"`
-	OaId             string          `json:"oa_id"`
-	OaName           string          `json:"oa_name"`
-	OaAvatar         string          `json:"oa_avatar"`
-	ShareInfo        *ShareInfo      `json:"share_info"`
-	ExternalUserId   string          `json:"external_user_id"`
-	Username         string          `json:"username"`
-	Avatar           string          `json:"avatar"`
-	Major            bool            `json:"major"`
-	Following        bool            `json:"following"`
-	Label            json.RawMessage `json:"label"`
-	IsDone           bool            `json:"is_done"`
-	IsDoneAt         time.Time       `json:"is_done_at"`
-	IsDoneBy         string          `json:"is_done_by"`
-	CreatedAt        string          `json:"created_at"`
-	UpdatedAt        string          `json:"updated_at"`
+	TenantId               string          `json:"tenant_id"`
+	ConversationId         string          `json:"conversation_id"` // uuid
+	ExternalConversationId string          `json:"external_conversation_id"`
+	ConversationType       string          `json:"conversation_type"`
+	AppId                  string          `json:"app_id"`
+	OaId                   string          `json:"oa_id"`
+	OaName                 string          `json:"oa_name"`
+	OaAvatar               string          `json:"oa_avatar"`
+	ShareInfo              *ShareInfo      `json:"share_info"`
+	ExternalUserId         string          `json:"external_user_id"`
+	Username               string          `json:"username"`
+	Avatar                 string          `json:"avatar"`
+	Major                  bool            `json:"major"`
+	Following              bool            `json:"following"`
+	Label                  json.RawMessage `json:"label"`
+	IsDone                 bool            `json:"is_done"`
+	IsDoneAt               time.Time       `json:"is_done_at"`
+	IsDoneBy               string          `json:"is_done_by"`
+	CreatedAt              string          `json:"created_at"`
+	UpdatedAt              string          `json:"updated_at"`
 }
 
 type ConversationView struct {
 	TenantId               string          `json:"tenant_id"`
 	ConversationId         string          `json:"conversation_id"`
+	ExternalConversationId string          `json:"external_conversation_id"`
 	ConversationType       string          `json:"conversation_type"`
 	AppId                  string          `json:"app_id"`
 	OaId                   string          `json:"oa_id"`
@@ -59,6 +61,7 @@ type ConversationView struct {
 type ConversationCustomView struct {
 	TenantId               string       `json:"tenant_id"`
 	ConversationId         string       `json:"conversation_id"`
+	ExternalConversationId string       `json:"external_conversation_id"`
 	ConversationType       string       `json:"conversation_type"`
 	AppId                  string       `json:"app_id"`
 	OaId                   string       `json:"oa_id"`
@@ -79,6 +82,11 @@ type ConversationCustomView struct {
 	TotalUnRead            int64        `json:"total_unread"`
 	LatestMessageContent   string       `json:"latest_message_content"`
 	LatestMessageDirection string       `json:"latest_message_direction"`
+}
+
+type ConversationQueue struct {
+	DocId        string
+	Conversation Conversation
 }
 
 type ElasticsearchChatResponse struct {

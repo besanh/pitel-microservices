@@ -11,17 +11,19 @@ import (
 )
 
 type User struct {
-	AuthUser           *AuthUser     `json:"auth_user"`
-	ConnectionId       string        `json:"connection_id"`
-	QueueId            string        `json:"queue_id"`
-	ConnectionQueueId  string        `json:"connection_queue_id"`
-	IsOk               bool          `json:"is_ok"`
-	IsReassignNew      bool          `json:"is_reassign_new"`
-	IsReassignSame     bool          `json:"is_reassign_same"`
-	UserIdReassignNew  string        `json:"user_id_reassign_new"`
-	UserIdReassignSame string        `json:"user_id_reassign_same"`
-	UserIdRemove       string        `json:"user_id_remove"`
-	PreviousAssign     *AllocateUser `json:"previous_assign"`
+	AuthUser               *AuthUser     `json:"auth_user"`
+	ConnectionId           string        `json:"connection_id"`
+	QueueId                string        `json:"queue_id"`
+	ConnectionQueueId      string        `json:"connection_queue_id"`
+	IsOk                   bool          `json:"is_ok"`
+	IsReassignNew          bool          `json:"is_reassign_new"`
+	IsReassignSame         bool          `json:"is_reassign_same"`
+	UserIdReassignNew      string        `json:"user_id_reassign_new"`
+	UserIdReassignSame     string        `json:"user_id_reassign_same"`
+	UserIdRemove           string        `json:"user_id_remove"`
+	PreviousAssign         *AllocateUser `json:"previous_assign"`
+	ConversationId         string        `json:"conversation_id"`
+	ExternalConversationId string        `json:"external_conversation_id"`
 }
 
 type ChatUser struct {
