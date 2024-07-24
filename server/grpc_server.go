@@ -203,7 +203,7 @@ func NewGRPCServer(port string) {
 			v1.APIChatScript.HandlePostChatScriptUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/") && c.Request.Method == "PUT":
 			v1.APIChatScript.HandlePutChatScriptUpload(c)
-		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/form") && c.Request.Method == "POST":
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/send") && c.Request.Method == "POST":
 			v1.APIMessage.HandlePostSendMessage(c)
 		default:
 			gin.WrapH(mux)(c)

@@ -245,7 +245,7 @@ func RegisterMessageServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.message.MessageService/SendMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.message.MessageService/SendMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message/send"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -403,7 +403,7 @@ func RegisterMessageServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.message.MessageService/SendMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.message.MessageService/SendMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message/send"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -471,7 +471,7 @@ var (
 
 	pattern_MessageService_GetMessages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "message"}, ""))
 
-	pattern_MessageService_SendMessage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"bss-chat", "v1", "message"}, ""))
+	pattern_MessageService_SendMessage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss-chat", "v1", "message", "send"}, ""))
 
 	pattern_MessageService_MarkReadMessages_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"bss-chat", "v1", "message", "read"}, ""))
 
