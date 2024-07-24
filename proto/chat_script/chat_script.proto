@@ -23,43 +23,6 @@ message ChatScriptData {
   string created_by = 11;
   string updated_by = 12;
   string other_script_id = 13;
-  string connection_id = 14;
-  ChatConnectionAppData connection_app = 15;
-}
-
-message ChatConnectionAppData {
-  string id = 1;
-  string tenant_id = 2;
-  google.protobuf.Timestamp created_at = 3;
-  google.protobuf.Timestamp updated_at = 4;
-  string connection_name = 5;
-  string connection_type = 6;
-  string chat_app_id = 7;
-  string status = 8;
-  string connection_queue_id = 9;
-  OaInfo oa_info = 10;
-}
-
-message ZaloInfo {
-  string app_id = 1;
-  string oa_id = 2;
-  string oa_name = 3;
-  string url_oa = 4;
-  string status = 5;
-}
-
-message FacebookInfo {
-  string app_id = 1;
-  string oa_id = 2;
-  string oa_name = 3;
-  string url_oa = 4;
-  string avatar = 5;
-  string status = 6;
-}
-
-message OaInfo {
-  repeated ZaloInfo zalo = 1;
-  repeated FacebookInfo facebook = 2;
 }
 
 // get chat scripts
@@ -97,7 +60,6 @@ message PostChatScriptRequest {
   string channel = 4;
   string content = 5;
   string other_script_id = 6;
-  string connection_id = 7;
 }
 
 message PostChatScriptResponse {
@@ -115,7 +77,6 @@ message PutChatScriptRequest {
   string channel = 5;
   string content = 6;
   string other_script_id = 7;
-  string connection_id = 8;
 }
 
 message PutChatScriptResponse {

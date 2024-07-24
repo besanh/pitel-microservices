@@ -25,6 +25,7 @@ type (
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
 		GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
+		GetConversationsByHighLevelWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
 		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
@@ -202,7 +203,11 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	}
 	if len(conversationIds) < 1 {
 		log.Error("list conversation not found")
-		return response.Pagination(nil, 0, limit, 0)
+		result := map[string]any{
+			"conversations": nil,
+			"scroll_id":     "",
+		}
+		return response.Pagination(result, 0, limit, 0)
 	}
 	filter.ExternalConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
@@ -310,13 +315,13 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	esDoc := map[string]any{}
-	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	// IMPROVE: should we update direction es or use queue ?
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
@@ -521,6 +526,7 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 		return response.ServiceUnavailableMsg(err.Error())
 	} else if len(conversationExist.ConversationId) < 1 {
 		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
+		err = errors.New("conversation " + conversationId + " with app_id " + appId + " not found")
 		return response.ServiceUnavailableMsg("conversation " + conversationId + " with app_id " + appId + " not found")
 	}
 

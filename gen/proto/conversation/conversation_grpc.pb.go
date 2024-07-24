@@ -19,14 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ConversationService_GetConversations_FullMethodName                  = "/proto.conversation.ConversationService/GetConversations"
-	ConversationService_GetConversationsWithScrollAPI_FullMethodName     = "/proto.conversation.ConversationService/GetConversationsWithScrollAPI"
-	ConversationService_GetConversationsByManager_FullMethodName         = "/proto.conversation.ConversationService/GetConversationsByManager"
-	ConversationService_UpdateConversation_FullMethodName                = "/proto.conversation.ConversationService/UpdateConversation"
-	ConversationService_UpdateStatusConversation_FullMethodName          = "/proto.conversation.ConversationService/UpdateStatusConversation"
-	ConversationService_GetConversationById_FullMethodName               = "/proto.conversation.ConversationService/GetConversationById"
-	ConversationService_PutLabelToConversation_FullMethodName            = "/proto.conversation.ConversationService/PutLabelToConversation"
-	ConversationService_UpdaterUserPreferenceConversation_FullMethodName = "/proto.conversation.ConversationService/UpdaterUserPreferenceConversation"
+	ConversationService_GetConversations_FullMethodName                       = "/proto.conversation.ConversationService/GetConversations"
+	ConversationService_GetConversationsWithScrollAPI_FullMethodName          = "/proto.conversation.ConversationService/GetConversationsWithScrollAPI"
+	ConversationService_GetConversationsByManager_FullMethodName              = "/proto.conversation.ConversationService/GetConversationsByManager"
+	ConversationService_GetConversationsByManagerWithScrollAPI_FullMethodName = "/proto.conversation.ConversationService/GetConversationsByManagerWithScrollAPI"
+	ConversationService_UpdateConversation_FullMethodName                     = "/proto.conversation.ConversationService/UpdateConversation"
+	ConversationService_UpdateStatusConversation_FullMethodName               = "/proto.conversation.ConversationService/UpdateStatusConversation"
+	ConversationService_GetConversationById_FullMethodName                    = "/proto.conversation.ConversationService/GetConversationById"
+	ConversationService_PutLabelToConversation_FullMethodName                 = "/proto.conversation.ConversationService/PutLabelToConversation"
+	ConversationService_UpdaterUserPreferenceConversation_FullMethodName      = "/proto.conversation.ConversationService/UpdaterUserPreferenceConversation"
 )
 
 // ConversationServiceClient is the client API for ConversationService service.
@@ -36,6 +37,7 @@ type ConversationServiceClient interface {
 	GetConversations(ctx context.Context, in *GetConversationsRequest, opts ...grpc.CallOption) (*GetConversationsResponse, error)
 	GetConversationsWithScrollAPI(ctx context.Context, in *GetConversationsWithScrollAPIRequest, opts ...grpc.CallOption) (*GetConversationsWithScrollAPIResponse, error)
 	GetConversationsByManager(ctx context.Context, in *GetConversationsByManagerRequest, opts ...grpc.CallOption) (*GetConversationsByManagerResponse, error)
+	GetConversationsByManagerWithScrollAPI(ctx context.Context, in *GetConversationsByManagerWithScrollAPIRequest, opts ...grpc.CallOption) (*GetConversationsByManagerWithScrollAPIResponse, error)
 	UpdateConversation(ctx context.Context, in *PutConversationRequest, opts ...grpc.CallOption) (*PutConversationResponse, error)
 	UpdateStatusConversation(ctx context.Context, in *PutConversationStatusRequest, opts ...grpc.CallOption) (*PutConversationStatusResponse, error)
 	GetConversationById(ctx context.Context, in *GetConversationByIdRequest, opts ...grpc.CallOption) (*GetConversationByIdResponse, error)
@@ -75,6 +77,16 @@ func (c *conversationServiceClient) GetConversationsByManager(ctx context.Contex
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetConversationsByManagerResponse)
 	err := c.cc.Invoke(ctx, ConversationService_GetConversationsByManager_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *conversationServiceClient) GetConversationsByManagerWithScrollAPI(ctx context.Context, in *GetConversationsByManagerWithScrollAPIRequest, opts ...grpc.CallOption) (*GetConversationsByManagerWithScrollAPIResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetConversationsByManagerWithScrollAPIResponse)
+	err := c.cc.Invoke(ctx, ConversationService_GetConversationsByManagerWithScrollAPI_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +150,7 @@ type ConversationServiceServer interface {
 	GetConversations(context.Context, *GetConversationsRequest) (*GetConversationsResponse, error)
 	GetConversationsWithScrollAPI(context.Context, *GetConversationsWithScrollAPIRequest) (*GetConversationsWithScrollAPIResponse, error)
 	GetConversationsByManager(context.Context, *GetConversationsByManagerRequest) (*GetConversationsByManagerResponse, error)
+	GetConversationsByManagerWithScrollAPI(context.Context, *GetConversationsByManagerWithScrollAPIRequest) (*GetConversationsByManagerWithScrollAPIResponse, error)
 	UpdateConversation(context.Context, *PutConversationRequest) (*PutConversationResponse, error)
 	UpdateStatusConversation(context.Context, *PutConversationStatusRequest) (*PutConversationStatusResponse, error)
 	GetConversationById(context.Context, *GetConversationByIdRequest) (*GetConversationByIdResponse, error)
@@ -157,6 +170,9 @@ func (UnimplementedConversationServiceServer) GetConversationsWithScrollAPI(cont
 }
 func (UnimplementedConversationServiceServer) GetConversationsByManager(context.Context, *GetConversationsByManagerRequest) (*GetConversationsByManagerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetConversationsByManager not implemented")
+}
+func (UnimplementedConversationServiceServer) GetConversationsByManagerWithScrollAPI(context.Context, *GetConversationsByManagerWithScrollAPIRequest) (*GetConversationsByManagerWithScrollAPIResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConversationsByManagerWithScrollAPI not implemented")
 }
 func (UnimplementedConversationServiceServer) UpdateConversation(context.Context, *PutConversationRequest) (*PutConversationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateConversation not implemented")
@@ -235,6 +251,24 @@ func _ConversationService_GetConversationsByManager_Handler(srv interface{}, ctx
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConversationServiceServer).GetConversationsByManager(ctx, req.(*GetConversationsByManagerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConversationService_GetConversationsByManagerWithScrollAPI_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConversationsByManagerWithScrollAPIRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConversationServiceServer).GetConversationsByManagerWithScrollAPI(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConversationService_GetConversationsByManagerWithScrollAPI_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConversationServiceServer).GetConversationsByManagerWithScrollAPI(ctx, req.(*GetConversationsByManagerWithScrollAPIRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -347,6 +381,10 @@ var ConversationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetConversationsByManager",
 			Handler:    _ConversationService_GetConversationsByManager_Handler,
+		},
+		{
+			MethodName: "GetConversationsByManagerWithScrollAPI",
+			Handler:    _ConversationService_GetConversationsByManagerWithScrollAPI_Handler,
 		},
 		{
 			MethodName: "UpdateConversation",

@@ -79,18 +79,6 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 		return chatScript.Id, err
 	}
 
-	// check if connectionApp id exists
-	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, chatScriptRequest.ConnectionId)
-	if err != nil {
-		log.Error(err)
-		return chatScript.Id, err
-	}
-	if connectionApp == nil {
-		err = errors.New("not found connection id " + chatScriptRequest.ConnectionId)
-		log.Error(err)
-		return chatScript.Id, err
-	}
-
 	switch chatScriptRequest.ScriptType {
 	case "text":
 		chatScript.Content = chatScriptRequest.Content
@@ -129,7 +117,6 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 	chatScript.ScriptName = chatScriptRequest.ScriptName
 	chatScript.CreatedBy = authUser.UserId
 	chatScript.Channel = chatScriptRequest.Channel
-	chatScript.ConnectionId = chatScriptRequest.ConnectionId
 	chatScript.CreatedAt = time.Now()
 
 	err = repository.ChatScriptRepo.Insert(ctx, dbCon, chatScript)
@@ -144,18 +131,6 @@ func (s *ChatScript) InsertChatScript(ctx context.Context, authUser *model.AuthU
 func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.AuthUser, id string, chatScriptRequest model.ChatScriptRequest, file *multipart.FileHeader) error {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
-		log.Error(err)
-		return err
-	}
-
-	// check if connectionApp id exists
-	connectionApp, err := repository.ChatConnectionAppRepo.GetById(ctx, dbCon, chatScriptRequest.ConnectionId)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	if connectionApp == nil {
-		err = errors.New("not found connection id " + chatScriptRequest.ConnectionId)
 		log.Error(err)
 		return err
 	}
@@ -224,7 +199,6 @@ func (s *ChatScript) UpdateChatScriptById(ctx context.Context, authUser *model.A
 	}
 	chatScript.ScriptType = chatScriptRequest.ScriptType
 	chatScript.Channel = chatScriptRequest.Channel
-	chatScript.ConnectionId = chatScriptRequest.ConnectionId
 	chatScript.UpdatedBy = authUser.UserId
 	chatScript.UpdatedAt = time.Now()
 	err = repository.ChatScriptRepo.Update(ctx, dbCon, *chatScript)
