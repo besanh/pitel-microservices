@@ -19,6 +19,8 @@ type (
 	ManageQueue struct{}
 )
 
+var ManageQueueService IManageQueue
+
 func NewManageQueue() IManageQueue {
 	return &ManageQueue{}
 }
