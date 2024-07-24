@@ -22,6 +22,7 @@ import (
 	pbChatAutoScript "github.com/tel4vn/fins-microservices/gen/proto/chat_auto_script"
 	pbChatConnectionApp "github.com/tel4vn/fins-microservices/gen/proto/chat_connection_app"
 	pbChatConnectionPipeline "github.com/tel4vn/fins-microservices/gen/proto/chat_connection_pipeline"
+	pbConnectionQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_connection_queue"
 	pbChatEmail "github.com/tel4vn/fins-microservices/gen/proto/chat_email"
 	pbChatIntegrateSystem "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
 	pbChatLabel "github.com/tel4vn/fins-microservices/gen/proto/chat_label"
@@ -29,6 +30,7 @@ import (
 	pbChatPolicySetting "github.com/tel4vn/fins-microservices/gen/proto/chat_policy_setting"
 	pbChatQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
 	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
+	pbChatRouting "github.com/tel4vn/fins-microservices/gen/proto/chat_routing"
 	pbChatScript "github.com/tel4vn/fins-microservices/gen/proto/chat_script"
 	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
 	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
@@ -36,6 +38,7 @@ import (
 	pbConversation "github.com/tel4vn/fins-microservices/gen/proto/conversation"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	pbMessage "github.com/tel4vn/fins-microservices/gen/proto/message"
+	pbProfile "github.com/tel4vn/fins-microservices/gen/proto/profile"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
 
@@ -93,6 +96,9 @@ func NewGRPCServer(port string) {
 	pbMessage.RegisterMessageServiceServer(grpcServer, grpcService.NewGRPCMessage())
 	pbChatLabel.RegisterChatLabelServiceServer(grpcServer, grpcService.NewGRPCChatLabel())
 	pbChatPolicySetting.RegisterChatPolicySettingServiceServer(grpcServer, grpcService.NewGRPCChatPolicySetting())
+	pbChatRouting.RegisterChatRoutingServiceServer(grpcServer, grpcService.NewGRPCChatRouting())
+	pbProfile.RegisterProfileServiceServer(grpcServer, grpcService.NewGRPCProfile())
+	pbConnectionQueue.RegisterChatConnectionQueueServiceServer(grpcServer, grpcService.NewGRPCChatConnectionQueue())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -181,6 +187,15 @@ func NewGRPCServer(port string) {
 	if err := pbChatLabel.RegisterChatLabelServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbChatRouting.RegisterChatRoutingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbProfile.RegisterProfileServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbConnectionQueue.RegisterChatConnectionQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
@@ -198,7 +213,7 @@ func NewGRPCServer(port string) {
 			v1.APIChatScript.HandlePostChatScriptUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/") && c.Request.Method == "PUT":
 			v1.APIChatScript.HandlePutChatScriptUpload(c)
-		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/form") && c.Request.Method == "POST":
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/send") && c.Request.Method == "POST":
 			v1.APIMessage.HandlePostSendMessage(c)
 		default:
 			gin.WrapH(mux)(c)

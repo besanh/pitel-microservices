@@ -17,6 +17,8 @@ type (
 	Profile struct{}
 )
 
+var ProfileService IProfile
+
 func NewProfile() IProfile {
 	return &Profile{}
 }

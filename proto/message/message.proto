@@ -166,7 +166,7 @@ service MessageService {
 
   rpc SendMessage(PostMessageRequest) returns (PostMessageResponse) {
     option (google.api.http) = {
-      post : "/bss-chat/v1/message"
+      post : "/bss-chat/v1/message/send"
       body : "*"
     };
   };
