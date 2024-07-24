@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"time"
 
@@ -49,6 +50,7 @@ func (s *ChatUser) InsertChatUser(ctx context.Context, request *model.ChatUserRe
 		log.Error(err)
 		return
 	} else if roleExist == nil {
+		err = errors.New("role " + request.RoleId + " not found")
 		log.Error(err)
 		return
 	}

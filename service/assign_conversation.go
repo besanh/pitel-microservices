@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -18,7 +17,7 @@ import (
 type (
 	IAssignConversation interface {
 		GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (*model.AllocateUser, error)
-		GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (int, []model.ChatQueueUserView, error)
+		GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (result []model.ChatQueueUserView, err error)
 		AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) error
 	}
 	AssignConversation struct{}
@@ -30,8 +29,9 @@ func NewAssignConversation() IAssignConversation {
 	return &AssignConversation{}
 }
 
-func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (total int, result []model.ChatQueueUserView, err error) {
+func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (result []model.ChatQueueUserView, err error) {
 	filter := model.ChatConnectionAppFilter{
+		TenantId:       authUser.TenantId,
 		AppId:          data.AppId,
 		OaId:           data.OaId,
 		ConnectionType: data.ConversationType,
@@ -89,70 +89,64 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	result = []model.ChatQueueUserView{}
 	if len(*userInQueues) > 0 {
 		for _, item := range *userInQueues {
-			result = append(result, model.ChatQueueUserView{
-				TenantId: item.TenantId,
-				QueueId:  item.QueueId,
-				UserId:   item.UserId,
-			})
+			tmp := model.ChatQueueUserView{}
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				log.Error(err)
+				return
+			}
+			tmp.Id = item.Id
+			result = append(result, tmp)
 		}
 	}
-	if authUser.Source == "authen" {
-		if authUser.Level == "manager" || authUser.Level == "admin" {
-			chatManageQueueUserFiler := model.ChatManageQueueUserFilter{
-				TenantId: authUser.TenantId,
-				QueueId:  connectionQueueExist.QueueId,
-			}
-			_, chatManageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManageQueueUserFiler, 1, 0)
-			if err != nil {
+	if authUser.Level == "manager" || authUser.Level == "admin" {
+		chatManageQueueUserFiler := model.ChatManageQueueUserFilter{
+			TenantId: authUser.TenantId,
+			QueueId:  connectionQueueExist.QueueId,
+		}
+		_, chatManageQueueUsers, errTmp := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManageQueueUserFiler, 1, 0)
+		if errTmp != nil {
+			log.Error(errTmp)
+			return
+		}
+		if len(*chatManageQueueUsers) > 0 {
+			tmp := model.ChatQueueUserView{}
+			if err = util.ParseAnyToAny((*chatManageQueueUsers)[0], &tmp); err != nil {
 				log.Error(err)
-				return 0, nil, err
+				return
 			}
-			if len(*chatManageQueueUsers) > 0 {
-				result = append(result, model.ChatQueueUserView{
-					TenantId: (*chatManageQueueUsers)[0].TenantId,
-					QueueId:  (*chatManageQueueUsers)[0].QueueId,
-					UserId:   (*chatManageQueueUsers)[0].UserId,
-				})
-			}
+			tmp.Id = (*chatManageQueueUsers)[0].Id
+			result = append(result, tmp)
 		}
 	}
 
-	return len(result), result, nil
+	return
 }
 
 func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (result *model.AllocateUser, err error) {
-	filter := model.ConversationFilter{
-		TenantId:               authUser.TenantId,
-		ExternalConversationId: []string{conversationId},
-	}
-	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, "", conversationId)
 	if err != nil {
 		log.Error(err)
 		return
-	}
-
-	if len(*conversations) < 1 {
-		log.Errorf("conversation %s not found", conversationId)
-		err = fmt.Errorf("conversation %s not found", conversationId)
+	} else if conversationExist == nil {
+		err = errors.New("conversation " + conversationId + " not found")
+		log.Error(err)
 		return
 	}
 
 	conversationFilter := model.AllocateUserFilter{
-		TenantId:               authUser.TenantId,
-		ExternalConversationId: (*conversations)[0].ConversationId,
-		MainAllocate:           status,
+		TenantId:       authUser.TenantId,
+		ConversationId: conversationId,
+		MainAllocate:   status,
 	}
-	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
-
+	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-
-	if len(*userAllocates) < 1 {
-		return nil, nil
+	if len(*userAllocates) > 0 {
+		result = &(*userAllocates)[0]
 	}
-	return &(*userAllocates)[0], nil
+	return
 }
 
 func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) (err error) {
