@@ -37,6 +37,7 @@ import (
 	pbConversation "github.com/tel4vn/fins-microservices/gen/proto/conversation"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	pbMessage "github.com/tel4vn/fins-microservices/gen/proto/message"
+	pbProfile "github.com/tel4vn/fins-microservices/gen/proto/profile"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
 
@@ -95,6 +96,7 @@ func NewGRPCServer(port string) {
 	pbChatLabel.RegisterChatLabelServiceServer(grpcServer, grpcService.NewGRPCChatLabel())
 	pbChatPolicySetting.RegisterChatPolicySettingServiceServer(grpcServer, grpcService.NewGRPCChatPolicySetting())
 	pbChatRouting.RegisterChatRoutingServiceServer(grpcServer, grpcService.NewGRPCChatRouting())
+	pbProfile.RegisterProfileServiceServer(grpcServer, grpcService.NewGRPCProfile())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -184,6 +186,9 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err := pbChatRouting.RegisterChatRoutingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbProfile.RegisterProfileServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 

@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package proto.profile;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message Conversation {
+  string tenant_id = 1;
+  string conversation_id = 2;
+  string conversation_type = 3;
+  string app_id = 4;
+  string oa_id = 5;
+  string oa_name = 6;
+  string oa_avatar = 7;
+  ShareInfo share_info = 8;
+  string external_user_id = 9;
+  string username = 10;
+  string avatar = 11;
+  bool major = 12;
+  bool following = 13;
+  repeated ChatLabel label = 14;
+  bool is_done = 15;
+  google.protobuf.Timestamp is_done_at = 16;
+  string is_done_by = 17;
+  string created_at = 18;
+  string updated_at = 19;
+  string external_conversation_id = 20;
+}
+
+message ShareInfo {
+  string fullname = 1;
+  string phone_number = 2;
+  string address = 3;
+  string city = 4;
+  string district = 5;
+}
+
+message ChatLabel {
+  string tenant_id = 1;
+  string app_id = 2;
+  string oa_id = 3;
+  string label_name = 4;
+  string label_type = 5;
+  string external_label_id = 6;
+  string label_color = 7;
+  bool label_status = 8;
+  string created_by = 9;
+  string updated_by = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+  string id = 13;
+}
+
+// get profile
+message GetUpdateProfileRequest {
+  string app_id = 1;
+  string oa_id = 2;
+  string user_id = 3;
+  string profile_type = 4;
+  string conversation_id = 5;
+}
+
+message GetUpdateProfileResponse {
+  string code = 1;
+  string message = 2;
+  Conversation data = 3;
+}
+
+service ProfileService {
+  rpc GetUpdateProfile(GetUpdateProfileRequest) returns (GetUpdateProfileResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/profile/get-update"
+    };
+  };
+}
