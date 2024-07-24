@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"database/sql"
+	"net/http"
 	"strconv"
 
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -58,8 +59,23 @@ func (g *GRPCConversation) GetConversations(ctx context.Context, request *pb.Get
 		Following:      following,
 	}
 
-	total, data, err := service.ConversationService.GetConversations(ctx, user, filter, limit, offset)
-	if err != nil {
+	code, responseData := service.ConversationService.GetConversations(ctx, user, filter, limit, offset)
+	if code != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, response.ERR_GET_FAILED)
+	}
+	var paginationData map[string]any
+	if err = util.ParseAnyToAny(responseData, &paginationData); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	total, ok2 := paginationData["total"].(float64)
+	if !ok2 {
+		log.Error("not found total")
+		return nil, status.Errorf(codes.Internal, "not found total")
+	}
+	var data []model.ConversationCustomView
+	if err = util.ParseAnyToAny(paginationData["data"], &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	resultData := make([]*pb.ConversationCustomView, 0)
@@ -122,8 +138,35 @@ func (g *GRPCConversation) GetConversationsWithScrollAPI(ctx context.Context, re
 		Following:      following,
 	}
 
-	total, data, respScrollId, err := service.ConversationService.GetConversationsWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
-	if err != nil {
+	code, responseData := service.ConversationService.GetConversationsWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
+	if code != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, response.ERR_GET_FAILED)
+	}
+	var paginationData map[string]any
+	if err = util.ParseAnyToAny(responseData, &paginationData); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	total, ok2 := paginationData["total"].(float64)
+	if !ok2 {
+		log.Error("not found total")
+		return nil, status.Errorf(codes.Internal, "not found total")
+	}
+
+	var parsedData map[string]any
+	if err = util.ParseAnyToAny(paginationData["data"], &parsedData); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	respScrollId, ok3 := parsedData["scroll_id"].(string)
+	if !ok3 {
+		log.Error("scroll_id not found in parsedData")
+		return nil, status.Errorf(codes.Internal, "scroll_id not found in parsedData")
+	}
+	var data []model.ConversationCustomView
+	if err = util.ParseAnyToAny(parsedData["conversations"], &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	resultData := make([]*pb.ConversationCustomView, 0)
@@ -186,8 +229,23 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 		Following:      following,
 	}
 
-	total, data, err := service.ConversationService.GetConversationsByHighLevel(ctx, user, filter, limit, offset)
-	if err != nil {
+	code, responseData := service.ConversationService.GetConversationsByHighLevel(ctx, user, filter, limit, offset)
+	if code != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, response.ERR_GET_FAILED)
+	}
+	var paginationData map[string]any
+	if err = util.ParseAnyToAny(responseData, &paginationData); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	total, ok2 := paginationData["total"].(float64)
+	if !ok2 {
+		log.Error("not found total")
+		return nil, status.Errorf(codes.Internal, "not found total")
+	}
+	var data *[]model.ConversationView
+	if err = util.ParseAnyToAny(paginationData["data"], &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	resultData := make([]*pb.ConversationView, 0)
@@ -286,10 +344,36 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 		Following:      following,
 	}
 
-	total, data, respScrollId, err := service.ConversationService.GetConversationsByHighLevelWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
-	if err != nil {
+	code, responseData := service.ConversationService.GetConversationsByHighLevelWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
+	if code != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, response.ERR_GET_FAILED)
+	}
+	var paginationData map[string]any
+	if err = util.ParseAnyToAny(responseData, &paginationData); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
+	total, ok2 := paginationData["total"].(float64)
+	if !ok2 {
+		log.Error("not found total")
+		return nil, status.Errorf(codes.Internal, "not found total")
+	}
+	var parsedData map[string]any
+	if err = util.ParseAnyToAny(paginationData["data"], &parsedData); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	respScrollId, ok3 := parsedData["scroll_id"].(string)
+	if !ok3 {
+		log.Error("scroll_id not found in parsedData")
+		return nil, status.Errorf(codes.Internal, "scroll_id not found in parsedData")
+	}
+	var data []*model.ConversationView
+	if err = util.ParseAnyToAny(parsedData["conversations"], &data); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
 	resultData := make([]*pb.ConversationView, 0)
 	for _, item := range data {
 		tmp := &pb.ConversationView{
@@ -360,8 +444,13 @@ func (g *GRPCConversation) GetConversationById(ctx context.Context, request *pb.
 	if len(conversationId) < 1 {
 		return nil, status.Errorf(codes.InvalidArgument, response.ERR_GET_FAILED)
 	}
-	data, err := service.ConversationService.GetConversationById(ctx, user, request.GetAppId(), conversationId)
-	if err != nil {
+	code, responseData := service.ConversationService.GetConversationById(ctx, user, request.GetAppId(), conversationId)
+	if code != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, response.ERR_GET_FAILED)
+	}
+	var data model.Conversation
+	if err = util.ParseAnyToAny(responseData, &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	tmp := &pb.Conversation{
@@ -430,8 +519,13 @@ func (g *GRPCConversation) UpdateConversation(ctx context.Context, request *pb.P
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	err = service.ConversationService.UpdateConversationById(ctx, user, request.GetAppId(), request.GetOaId(), request.GetId(), payload)
-	if err != nil {
+	code, responseData := service.ConversationService.UpdateConversationById(ctx, user, request.GetAppId(), request.GetOaId(), request.GetId(), payload)
+	if code != http.StatusOK {
+		return nil, status.Errorf(codes.Internal, response.ERR_PUT_FAILED)
+	}
+	var data map[string]any
+	if err = util.ParseAnyToAny(responseData, &data); err != nil {
+		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 

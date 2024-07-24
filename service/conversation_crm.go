@@ -6,13 +6,14 @@ import (
 	"reflect"
 
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 	"golang.org/x/exp/slices"
 )
 
-func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
+func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
 	filter.TenantId = authUser.TenantId
 	var queueId []string
 	if authUser.Level == "manager" {
@@ -23,7 +24,7 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 		totalManageQueue, manageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterManageQueue, -1, 0)
 		if err != nil {
 			log.Error(err)
-			return 0, nil, err
+			return response.ServiceUnavailableMsg(err.Error())
 		}
 		if totalManageQueue > 0 {
 			for _, item := range *manageQueues {
@@ -31,10 +32,10 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 			}
 		}
 	}
-	total, conversations, err = s.getConversationByFilter(ctx, queueId, filter, limit, offset)
+	total, conversations, err := s.getConversationByFilter(ctx, queueId, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, err
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	if len(*conversations) > 0 {
@@ -43,7 +44,7 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 				var labels []map[string]string
 				if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
 					log.Error(err)
-					return
+					return response.ServiceUnavailableMsg(err.Error())
 				}
 				chatLabelIds := []string{}
 				if len(labels) > 0 {
@@ -57,13 +58,13 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 						}, -1, 0)
 						if err != nil {
 							log.Error(err)
-							return 0, nil, err
+							return response.ServiceUnavailableMsg(err.Error())
 						}
 						if len(*chatLabelExist) > 0 {
 							tmp, err := json.Marshal(*chatLabelExist)
 							if err != nil {
 								log.Error(err)
-								return 0, nil, err
+								return response.ServiceUnavailableMsg(err.Error())
 							}
 							(*conversations)[k].Label = tmp
 						} else {
@@ -81,7 +82,7 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 		}
 	}
 
-	return
+	return response.Pagination(conversations, total, limit, offset)
 }
 
 func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids []string, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error) {
@@ -155,7 +156,7 @@ func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids [
 	return
 }
 
-func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (total int, conversations []*model.ConversationView, respScrollId string, err error) {
+func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any) {
 	filter.TenantId = authUser.TenantId
 	var queueId []string
 	if authUser.Level == "manager" {
@@ -166,7 +167,7 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 		totalManageQueue, manageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterManageQueue, -1, 0)
 		if err != nil {
 			log.Error(err)
-			return 0, nil, "", err
+			return response.ServiceUnavailableMsg(err.Error())
 		}
 		if totalManageQueue > 0 {
 			for _, item := range *manageQueues {
@@ -174,10 +175,10 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 			}
 		}
 	}
-	total, conversations, respScrollId, err = s.getConversationByFilterWithScrollAPI(ctx, queueId, filter, limit, scrollId)
+	total, conversations, respScrollId, err := s.getConversationByFilterWithScrollAPI(ctx, queueId, filter, limit, scrollId)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, "", err
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	for k, item := range conversations {
@@ -188,7 +189,7 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 			var labels []map[string]string
 			if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
 				log.Error(err)
-				return
+				return response.ServiceUnavailableMsg(err.Error())
 			}
 			chatLabelIds := []string{}
 			if len(labels) > 0 {
@@ -202,13 +203,13 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 					}, -1, 0)
 					if err != nil {
 						log.Error(err)
-						return 0, nil, "", err
+						return response.ServiceUnavailableMsg(err.Error())
 					}
 					if len(*chatLabelExist) > 0 {
 						tmp, err := json.Marshal(*chatLabelExist)
 						if err != nil {
 							log.Error(err)
-							return 0, nil, "", err
+							return response.ServiceUnavailableMsg(err.Error())
 						}
 						conversations[k].Label = tmp
 					} else {
@@ -225,7 +226,11 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 		}
 	}
 
-	return
+	result := map[string]any{
+		"conversations": conversations,
+		"scroll_id":     respScrollId,
+	}
+	return response.Pagination(result, total, limit, 0)
 }
 
 func (s *Conversation) getConversationByFilterWithScrollAPI(ctx context.Context, queueUuids []string, filter model.ConversationFilter, limit int, scrollId string) (total int, conversations []*model.ConversationView, respScrollId string, err error) {
