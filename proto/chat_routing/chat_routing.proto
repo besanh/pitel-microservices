@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package proto.chatRouting;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatRouting {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string routing_name = 4;
+  string routing_alias = 5;
+  bool status = 6;
+}
+
+// get chat routings
+message GetChatRoutingsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string status = 3;
+  string routing_name = 4;
+  string routing_alias = 5;
+}
+
+message GetChatRoutingsResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatRouting data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get routing by id
+message GetChatRoutingByIdRequest { string id = 1; }
+
+message GetChatRoutingByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatRouting data = 3;
+}
+
+// create routing
+message PostChatRoutingRequest {
+  string routing_name = 1;
+  string routing_alias = 2;
+  string status = 3;
+}
+
+message PostChatRoutingResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update routing by id
+message PutChatRoutingRequest {
+  string id = 1;
+  string routing_name = 2;
+  string routing_alias = 3;
+  string status = 4;
+}
+
+message PutChatRoutingResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete routing by id
+message DeleteChatRoutingRequest { string id = 1; }
+
+message DeleteChatRoutingResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatRoutingService {
+  rpc GetChatRoutings(GetChatRoutingsRequest) returns (GetChatRoutingsResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-routing"
+    };
+  };
+
+  rpc GetChatRoutingById(GetChatRoutingByIdRequest) returns (GetChatRoutingByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-routing/{id}"
+    };
+  };
+
+  rpc InsertChatRouting(PostChatRoutingRequest) returns (PostChatRoutingResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-routing"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatRoutingById(PutChatRoutingRequest) returns (PutChatRoutingResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-routing/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatRoutingById(DeleteChatRoutingRequest) returns (DeleteChatRoutingResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-routing/{id}"
+    };
+  };
+}
