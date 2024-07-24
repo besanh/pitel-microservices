@@ -23,6 +23,8 @@ type (
 	ChatRouting struct{}
 )
 
+var ChatRoutingService IChatRouting
+
 func NewChatRouting() IChatRouting {
 	return &ChatRouting{}
 }

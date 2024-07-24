@@ -29,6 +29,7 @@ import (
 	pbChatPolicySetting "github.com/tel4vn/fins-microservices/gen/proto/chat_policy_setting"
 	pbChatQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
 	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
+	pbChatRouting "github.com/tel4vn/fins-microservices/gen/proto/chat_routing"
 	pbChatScript "github.com/tel4vn/fins-microservices/gen/proto/chat_script"
 	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
 	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
@@ -93,6 +94,7 @@ func NewGRPCServer(port string) {
 	pbMessage.RegisterMessageServiceServer(grpcServer, grpcService.NewGRPCMessage())
 	pbChatLabel.RegisterChatLabelServiceServer(grpcServer, grpcService.NewGRPCChatLabel())
 	pbChatPolicySetting.RegisterChatPolicySettingServiceServer(grpcServer, grpcService.NewGRPCChatPolicySetting())
+	pbChatRouting.RegisterChatRoutingServiceServer(grpcServer, grpcService.NewGRPCChatRouting())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -181,6 +183,9 @@ func NewGRPCServer(port string) {
 	if err := pbChatLabel.RegisterChatLabelServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err := pbChatRouting.RegisterChatRoutingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
 
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
@@ -198,7 +203,7 @@ func NewGRPCServer(port string) {
 			v1.APIChatScript.HandlePostChatScriptUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/") && c.Request.Method == "PUT":
 			v1.APIChatScript.HandlePutChatScriptUpload(c)
-		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/form") && c.Request.Method == "POST":
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/send") && c.Request.Method == "POST":
 			v1.APIMessage.HandlePostSendMessage(c)
 		default:
 			gin.WrapH(mux)(c)
