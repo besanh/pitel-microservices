@@ -32,6 +32,7 @@ message ConversationCustomView {
   int64 total_unread = 20;
   string latest_message_content = 21;
   string latest_message_direction = 22;
+  string external_conversation_id = 23;
 }
 
 message ConversationView {
@@ -48,7 +49,7 @@ message ConversationView {
   string avatar = 11;
   bool major = 12;
   bool following = 13;
-  string label = 14;
+  repeated ChatLabel label = 14;
   bool is_done = 15;
   string is_done_at = 16;
   string is_done_by = 17;
@@ -57,6 +58,7 @@ message ConversationView {
   int64 total_unread = 20;
   string latest_message_content = 21;
   string latest_message_direction = 22;
+  string external_conversation_id = 23;
 }
 
 message Conversation {
@@ -73,12 +75,13 @@ message Conversation {
   string avatar = 11;
   bool major = 12;
   bool following = 13;
-  string label = 14;
+  repeated ChatLabel label = 14;
   bool is_done = 15;
   google.protobuf.Timestamp is_done_at = 16;
   string is_done_by = 17;
   string created_at = 18;
   string updated_at = 19;
+  string external_conversation_id = 20;
 }
 
 message ShareInfo {
@@ -149,6 +152,29 @@ message GetConversationsByManagerResponse {
   int32 total = 4;
   int32 limit = 5;
   int32 offset = 6;
+}
+
+// get conversations by manager with scroll
+message GetConversationsByManagerWithScrollAPIRequest {
+  int32 limit = 1;
+  string scroll_id = 2;
+  string is_done = 3;
+  string major = 4;
+  string following = 5;
+  repeated string app_id = 6;
+  repeated string conversation_id = 7;
+  string username = 8;
+  string phone_number = 9;
+  string email = 10;
+}
+
+message GetConversationsByManagerWithScrollAPIResponse {
+  string code = 1;
+  string message = 2;
+  repeated ConversationView data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  string scroll_id = 6;
 }
 
 // get conversations with scroll
@@ -266,6 +292,12 @@ service ConversationService {
   rpc GetConversationsByManager(GetConversationsByManagerRequest) returns (GetConversationsByManagerResponse) {
     option (google.api.http) = {
       get : "/bss-chat/v1/conversation/manager"
+    };
+  };
+
+  rpc GetConversationsByManagerWithScrollAPI(GetConversationsByManagerWithScrollAPIRequest) returns (GetConversationsByManagerWithScrollAPIResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/conversation/manager/scroll"
     };
   };
 
