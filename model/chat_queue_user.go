@@ -45,8 +45,5 @@ func (m *ChatQueueUserRequest) Validate() error {
 	if len(m.UserId) < 1 {
 		return errors.New("user id is required")
 	}
-	if len(m.Source) < 1 {
-		return errors.New("source is required")
-	}
 	return nil
 }

@@ -30,6 +30,7 @@ import (
 	pbChatMessageSample "github.com/tel4vn/fins-microservices/gen/proto/chat_message_sample"
 	pbChatPolicySetting "github.com/tel4vn/fins-microservices/gen/proto/chat_policy_setting"
 	pbChatQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
+	pbChatQueueUser "github.com/tel4vn/fins-microservices/gen/proto/chat_queue_user"
 	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
 	pbChatRouting "github.com/tel4vn/fins-microservices/gen/proto/chat_routing"
 	pbChatScript "github.com/tel4vn/fins-microservices/gen/proto/chat_script"
@@ -101,6 +102,7 @@ func NewGRPCServer(port string) {
 	pbProfile.RegisterProfileServiceServer(grpcServer, grpcService.NewGRPCProfile())
 	pbConnectionQueue.RegisterChatConnectionQueueServiceServer(grpcServer, grpcService.NewGRPCChatConnectionQueue())
 	pbChatManageQueue.RegisterChatManageQueueServiceServer(grpcServer, grpcService.NewGRPCChatManageQueue())
+	pbChatQueueUser.RegisterChatQueueUserServiceServer(grpcServer, grpcService.NewGRPCChatQueueUser())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -199,6 +201,9 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err := pbChatManageQueue.RegisterChatManageQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err := pbChatQueueUser.RegisterChatQueueUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 
