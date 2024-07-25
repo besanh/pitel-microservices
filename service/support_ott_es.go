@@ -56,7 +56,7 @@ func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId, conve
 		conversation.Avatar = conversationExist.Avatar
 		conversation.Major = conversationExist.Major
 		conversation.Following = conversationExist.Following
-		conversation.Label = conversationExist.Label
+		conversation.Labels = conversationExist.Label
 		conversation.IsDone = false
 		conversation.IsDoneBy = ""
 		isDoneAt, _ := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
@@ -87,6 +87,8 @@ func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId, conve
 
 		isExisted = true
 		return
+	} else {
+		conversation.Labels = []byte("[]")
 	}
 
 	if !isExisted {

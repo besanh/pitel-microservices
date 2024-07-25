@@ -78,7 +78,7 @@ func (g *GRPCProfile) GetUpdateProfile(ctx context.Context, request *pb.GetUpdat
 			return nil, status.Errorf(codes.Internal, err.Error())
 		}
 	}
-	if err = util.ParseStringToAny(string(data.Label), &tmp.Label); err != nil {
+	if err = util.ParseStringToAny(string(data.Labels), &tmp.Label); err != nil {
 		log.Error(err)
 		result = &pb.GetUpdateProfileResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
