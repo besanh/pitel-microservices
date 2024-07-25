@@ -8,6 +8,10 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
+type GoAuthInfo interface {
+	auth.Info
+}
+
 func GetUser(c *gin.Context) (*model.AuthUser, bool) {
 	tmp, isExist := c.Get("user")
 	if isExist {
@@ -26,10 +30,6 @@ func GetUserFromContext(ctx context.Context) (*model.AuthUser, bool) {
 	} else {
 		return nil, false
 	}
-}
-
-type GoAuthInfo interface {
-	auth.Info
 }
 
 func NewGoAuthUser(userId, username, tenantId, roleId, level, systemId, secretKey string) GoAuthInfo {

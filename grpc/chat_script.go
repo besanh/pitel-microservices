@@ -100,7 +100,7 @@ func (g *GRPCChatScript) GetChatScripts(ctx context.Context, request *pb.GetChat
 	return result, nil
 }
 
-func (g *GRPCChatScript) GetChatScriptById(ctx context.Context, request *pb.GetScriptByIdRequest) (*pb.GetScriptByIdResponse, error) {
+func (g *GRPCChatScript) GetChatScriptById(ctx context.Context, request *pb.GetScriptByIdRequest) (result *pb.GetScriptByIdResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -111,17 +111,21 @@ func (g *GRPCChatScript) GetChatScriptById(ctx context.Context, request *pb.GetS
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	tmp, err := convertChatScriptToPbChatScript(*data)
+	if err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
 	if err = util.ParseAnyToAny(data, tmp); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result := &pb.GetScriptByIdResponse{
+	result = &pb.GetScriptByIdResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    tmp,
 	}
-	return result, nil
+	return
 }
 
 func (g *GRPCChatScript) UpdateChatScriptById(ctx context.Context, request *pb.PutChatScriptRequest) (*pb.PutChatScriptResponse, error) {

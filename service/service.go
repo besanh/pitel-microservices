@@ -39,6 +39,7 @@ func InitServices() {
 	ChatConnectionQueueService = NewChatConnectionQueue()
 	ManageQueueService = NewManageQueue()
 	ChatQueueUserService = NewChatQueueUser()
+	ShareInfoService = NewShareInfo()
 }
 
 // MAP TENANT_ID SQL_CONN
@@ -215,16 +216,11 @@ func GetDBConnOfUser(user model.AuthUser) (dbConn sqlclient.ISqlClientConn, err 
 	return
 }
 
-func HandleGetDBConSource(authUser *model.AuthUser) (sqlclient.ISqlClientConn, error) {
-	var dbCon sqlclient.ISqlClientConn
+func HandleGetDBConSource(authUser *model.AuthUser) (dbCon sqlclient.ISqlClientConn, err error) {
 	if authUser == nil {
-		return nil, errors.New("authUser is nil")
+		err = errors.New("authUser is nil")
+		return
 	}
 	dbCon = repository.DBConn
-	// dbConTmp, err := GetDBConnOfUser(*authUser)
-	// if err != nil {
-	// 	return dbCon, err
-	// }
-	// dbCon = dbConTmp
-	return dbCon, nil
+	return
 }

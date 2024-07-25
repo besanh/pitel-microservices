@@ -14,7 +14,7 @@ import (
 
 type ChatConnectionApp struct {
 	bun.BaseModel     `bun:"table:chat_connection_app,alias:cca"`
-	Id                string           `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	Id                string           `bun:"id,pk,type:uuid,notnull"`
 	TenantId          string           `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	CreatedAt         time.Time        `json:"created_at" bun:"created_at,notnull"`
 	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`

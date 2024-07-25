@@ -21,12 +21,12 @@ import (
 )
 
 const (
-	AUTHENTICATED                      = "authenticated"
-	USER                               = "user"
-	ERR_TOKEN_IS_EMPTY                 = "token is empty"
-	ERR_TOKEN_IS_INVALID               = "token is invalid"
-	ERR_TOKEN_IS_EXPIRED               = "token is expired"
-	ERR_TOKEN_OR_SYSTEM_KEY_IS_INVALID = "token or system key is invalid"
+	AUTHENTICATED                      string = "authenticated"
+	USER                               string = "user"
+	ERR_TOKEN_IS_EMPTY                 string = "token is empty"
+	ERR_TOKEN_IS_INVALID               string = "token is invalid"
+	ERR_TOKEN_IS_EXPIRED               string = "token is expired"
+	ERR_TOKEN_OR_SYSTEM_KEY_IS_INVALID string = "token or system key is invalid"
 )
 
 // AuthFunc is a middleware (interceptor) that extracts token from header
