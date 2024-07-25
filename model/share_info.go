@@ -11,7 +11,7 @@ type ShareInfoForm struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_share_info,alias:csi"`
 	TenantId      string    `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	ConnectionId  string    `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	ConnectionId  string    `json:"connection_id" bun:"connection_id,type:uuid,default:null"`
 	ShareType     string    `json:"share_type" bun:"share_type,type:text,notnull"` //zalo,fb,....
 	ShareForm     ShareForm `json:"share_form" bun:"share_form,type:jsonb,notnull"`
 }
