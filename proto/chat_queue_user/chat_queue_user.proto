@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package proto.chatQueueUser;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+// create queue user
+message PostChatQueueUserRequest {
+  string queue_id = 1;
+  repeated string user_id = 2;
+  string source = 3;
+}
+
+message PostChatQueueUserResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// update queue user by id
+message PutChatQueueUserRequest {
+  string id = 1;
+  string queue_id = 2;
+  repeated string user_id = 3;
+  string source = 4;
+}
+
+message PutChatQueueUserResponse {
+  string code = 1;
+  string message = 2;
+  int32 total_success = 3;
+  int32 total_fail = 4;
+  repeated string list_fail = 5;
+  repeated string list_success = 6;
+}
+
+service ChatQueueUserService {
+  rpc InsertChatQueueUser(PostChatQueueUserRequest) returns (PostChatQueueUserResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-queue-user"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatQueueUserById(PutChatQueueUserRequest) returns (PutChatQueueUserResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-queue-user/{id}"
+      body : "*"
+    };
+  };
+}

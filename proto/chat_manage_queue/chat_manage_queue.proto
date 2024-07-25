@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package proto.chatManageQueue;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+// create manage queue
+message PostChatManageQueueRequest {
+  string connection_id = 1;
+  string queue_id = 2;
+  string user_id = 3;
+  string is_new = 4;
+}
+
+message PostChatManageQueueResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update manage queue by id
+message PutChatManageQueueRequest {
+  string id = 1;
+  string connection_id = 2;
+  string queue_id = 3;
+  string user_id = 4;
+  string is_new = 5;
+}
+
+message PutChatManageQueueResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete manage queue by id
+message DeleteChatManageQueueRequest { string id = 1; }
+
+message DeleteChatManageQueueResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatManageQueueService {
+  rpc InsertChatManageQueue(PostChatManageQueueRequest) returns (PostChatManageQueueResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/manage-queue"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatManageQueueById(PutChatManageQueueRequest) returns (PutChatManageQueueResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/manage-queue/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatManageQueueById(DeleteChatManageQueueRequest) returns (DeleteChatManageQueueResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/manage-queue/{id}"
+    };
+  };
+}
