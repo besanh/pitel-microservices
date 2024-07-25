@@ -122,11 +122,31 @@ func (g *GRPCConversation) GetConversationsWithScrollAPI(ctx context.Context, re
 		Following:      following,
 	}
 
-	code, responseData := service.ConversationService.GetConversationsWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
-	result, err = parseResponseDataOfGetConversationsWithScrollAPI(code, responseData, limit)
+	total, data, respScrollId, err := service.ConversationService.GetConversationsWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	resultData := make([]*pb.ConversationCustomView, 0)
+	for _, item := range data {
+		var tmp pb.ConversationCustomView
+		if err = util.ParseAnyToAny(item, &tmp); err != nil {
+			log.Error(err)
+			result = &pb.GetConversationsWithScrollAPIResponse{
+				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+				Message: err.Error(),
+			}
+			return result, nil
+		}
+		resultData = append(resultData, &tmp)
+	}
+	result = &pb.GetConversationsWithScrollAPIResponse{
+		Code:     "OK",
+		Message:  "ok",
+		Data:     resultData,
+		Total:    int32(total),
+		Limit:    int32(limit),
+		ScrollId: respScrollId,
 	}
 	return
 }
@@ -166,11 +186,33 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 		Following:      following,
 	}
 
-	code, responseData := service.ConversationService.GetConversationsByHighLevel(ctx, user, filter, limit, offset)
-	result, err = parseResponseDataOfGetConversationsByManager(code, responseData, limit, offset)
+	total, data, err := service.ConversationService.GetConversationsByHighLevel(ctx, user, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	resultData := make([]*pb.ConversationView, 0)
+	if data != nil {
+		for _, item := range *data {
+			tmp, err := convertConversationViewToPbConversationView(&item)
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				log.Error(err)
+				result = &pb.GetConversationsByManagerResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return result, nil
+			}
+			resultData = append(resultData, tmp)
+		}
+	}
+	result = &pb.GetConversationsByManagerResponse{
+		Code:    "OK",
+		Message: "ok",
+		Data:    resultData,
+		Total:   int32(total),
+		Limit:   int32(limit),
+		Offset:  int32(offset),
 	}
 	return
 }
@@ -210,11 +252,31 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 		Following:      following,
 	}
 
-	code, responseData := service.ConversationService.GetConversationsByHighLevelWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
-	result, err = parseResponseDataOfGetConversationsByManagerWithScrollAPI(code, responseData, limit)
+	total, data, respScrollId, err := service.ConversationService.GetConversationsByHighLevelWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	resultData := make([]*pb.ConversationView, 0)
+	for _, item := range data {
+		tmp, err := convertConversationViewToPbConversationView(item)
+		if err != nil {
+			log.Error(err)
+			result = &pb.GetConversationsByManagerWithScrollAPIResponse{
+				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+				Message: err.Error(),
+			}
+			return result, nil
+		}
+		resultData = append(resultData, tmp)
+	}
+	result = &pb.GetConversationsByManagerWithScrollAPIResponse{
+		Code:     "OK",
+		Message:  "ok",
+		Data:     resultData,
+		Total:    int32(total),
+		Limit:    int32(limit),
+		ScrollId: respScrollId,
 	}
 	return
 }
@@ -229,11 +291,24 @@ func (g *GRPCConversation) GetConversationById(ctx context.Context, request *pb.
 	if len(conversationId) < 1 {
 		return nil, status.Errorf(codes.InvalidArgument, response.ERR_GET_FAILED)
 	}
-	code, responseData := service.ConversationService.GetConversationById(ctx, user, request.GetAppId(), conversationId)
-	result, err = parseResponseDataOfGetConversationById(code, responseData)
+	data, err := service.ConversationService.GetConversationById(ctx, user, request.GetAppId(), conversationId)
 	if err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	tmp, err := convertConversationToPbConversation(data)
+	if err != nil {
+		log.Error(err)
+		result = &pb.GetConversationByIdResponse{
+			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+			Message: err.Error(),
+		}
+		return
+	}
+	result = &pb.GetConversationByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+		Data:    tmp,
 	}
 	return
 }
