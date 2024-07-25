@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
@@ -15,8 +16,23 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type ShareInfo struct {
-	shareInfo service.IShareInfo
+type (
+	IShareInfo interface {
+		HandlePostConfigForm(c *gin.Context)
+		HandleGetImageShareInfo(c *gin.Context)
+		HandlePutShareInfoById(c *gin.Context)
+	}
+	ShareInfo struct {
+		shareInfo service.IShareInfo
+	}
+)
+
+var APIShareInfo IShareInfo
+
+func NewAPIShareInfo() IShareInfo {
+	return &ShareInfo{
+		shareInfo: service.NewShareInfo(),
+	}
 }
 
 /**
@@ -30,13 +46,13 @@ func NewShareInfo(engine *gin.Engine, shareInfo service.IShareInfo) {
 	Group := engine.Group("bss-message/v1/share-info")
 	{
 		// Insert db
-		Group.POST("config", handler.PostConfigForm)
+		Group.POST("config", handler.PostConfigForm) //
 		// Send to ott share info
 		Group.POST("", handler.PostRequestShareInfo)
-		Group.GET("image/:filename", handler.GetImageShareInfo)
+		Group.GET("image/:filename", handler.GetImageShareInfo) //
 		Group.GET("", handler.GetShareInfos)
 		Group.GET(":id", handler.GetShareInfoById)
-		Group.PUT(":id", handler.PutShareInfoById)
+		Group.PUT(":id", handler.PutShareInfoById) //
 		Group.DELETE(":id", handler.DeleteShareInfoById)
 	}
 }
@@ -232,6 +248,95 @@ func (h *ShareInfo) DeleteShareInfoById(c *gin.Context) {
 		return
 	}
 	err := h.shareInfo.DeleteShareInfoById(c, res.Data, id)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
+}
+
+func (h *ShareInfo) HandlePostConfigForm(c *gin.Context) {
+	res := api.AuthMiddlewareNewVersion(c)
+	if res == nil {
+		return
+	}
+
+	var data model.ShareInfoFormRequest
+	if err := c.ShouldBind(&data); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	if err := data.Validate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	err := uploadShareInfo(c, data.Files, true)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	err = h.shareInfo.PostConfigForm(c, res.Data, data, data.Files)
+	if err != nil {
+		errUpload := uploadShareInfo(c, data.Files, false)
+		if errUpload != nil {
+			c.JSON(response.ServiceUnavailableMsg(err.Error()))
+			return
+		}
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OKResponse())
+}
+
+func (h *ShareInfo) HandleGetImageShareInfo(c *gin.Context) {
+	fileName := strings.TrimPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/image/")
+	if len(fileName) < 1 {
+		c.JSON(response.BadRequestMsg("file name is required"))
+		return
+	}
+	input := storage.NewRetrieveInput(fileName)
+	result, err := storage.Instance.Retrieve(c, *input)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition",
+		fmt.Sprintf("attachment; filename=%s", fileName))
+	c.Writer.Header().Add("Content-Type", c.GetHeader("Content-Type"))
+	_, err = c.Writer.Write(result)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.NotFoundMsg(err))
+	}
+}
+
+func (h *ShareInfo) HandlePutShareInfoById(c *gin.Context) {
+	res := api.AuthMiddlewareNewVersion(c)
+	if res == nil {
+		return
+	}
+	id := strings.TrimPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/")
+	if len(id) < 1 {
+		c.JSON(response.BadRequestMsg("id is required"))
+		return
+	}
+
+	var data model.ShareInfoFormRequest
+	if err := c.ShouldBind(&data); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	if err := data.ValidateUpdate(); err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+	data.Id = id
+	err := h.shareInfo.UpdateConfigForm(c, res.Data, data, data.Files)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return

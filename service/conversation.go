@@ -350,9 +350,9 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 
 	// Update User allocate
 	filter := model.AllocateUserFilter{
-		AppId:                  appId,
-		ExternalConversationId: conversationId,
-		MainAllocate:           statusAllocate,
+		AppId:          appId,
+		ConversationId: conversationId,
+		MainAllocate:   statusAllocate,
 	}
 	_, allocateUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
@@ -582,9 +582,9 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 	}
 
 	filter := model.AllocateUserFilter{
-		AppId:                  preferRequest.AppId,
-		ExternalConversationId: preferRequest.ConversationId,
-		MainAllocate:           "active",
+		AppId:          preferRequest.AppId,
+		ConversationId: preferRequest.ConversationId,
+		MainAllocate:   "active",
 	}
 
 	tmp, _ := strconv.ParseBool(preferRequest.PreferenceValue)

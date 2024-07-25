@@ -107,21 +107,23 @@ func (s *S3Storage) Store(ctx context.Context, input StoreInput) (result bool, e
 			_, err = minioClient.PutObject(ctx, bucketName, objectName, reader, objectSize, putObjectOptions)
 			if err != nil {
 				log.Error(err)
-				return false, err
+				return
 			}
 		} else {
-			log.Error(errBucketExists)
-			return false, errBucketExists
+			err = errBucketExists
+			log.Error(err)
+			return
 		}
 	} else {
 		log.Infof("Successfully created and connected to bucket %s", bucketName)
 		_, err = minioClient.PutObject(ctx, bucketName, objectName, reader, objectSize, putObjectOptions)
 		if err != nil {
 			log.Error(err)
-			return false, err
+			return
 		}
 	}
-	return true, nil
+	result = true
+	return
 }
 
 func (s *S3Storage) Retrieve(ctx context.Context, input RetrieveInput) ([]byte, error) {

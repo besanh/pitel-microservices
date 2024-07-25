@@ -41,6 +41,7 @@ import (
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	pbMessage "github.com/tel4vn/fins-microservices/gen/proto/message"
 	pbProfile "github.com/tel4vn/fins-microservices/gen/proto/profile"
+	pbShareInfo "github.com/tel4vn/fins-microservices/gen/proto/share_info"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
 
@@ -103,6 +104,7 @@ func NewGRPCServer(port string) {
 	pbConnectionQueue.RegisterChatConnectionQueueServiceServer(grpcServer, grpcService.NewGRPCChatConnectionQueue())
 	pbChatManageQueue.RegisterChatManageQueueServiceServer(grpcServer, grpcService.NewGRPCChatManageQueue())
 	pbChatQueueUser.RegisterChatQueueUserServiceServer(grpcServer, grpcService.NewGRPCChatQueueUser())
+	pbShareInfo.RegisterShareInfoServiceServer(grpcServer, grpcService.NewGRPCShareInfo())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -125,85 +127,89 @@ func NewGRPCServer(port string) {
 	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	// setting up a dial up for gRPC service by specifying endpoint/target url
-	if err := pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	var err error
+	if err = pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatRole.RegisterChatRoleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatRole.RegisterChatRoleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatUser.RegisterChatUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatUser.RegisterChatUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatAuth.RegisterChatAuthServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatAuth.RegisterChatAuthServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatAuth.RegisterChatTokenServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatAuth.RegisterChatTokenServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatVendor.RegisterChatVendorServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatVendor.RegisterChatVendorServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatTenant.RegisterChatTenantServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatTenant.RegisterChatTenantServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatApp.RegisterChatAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatApp.RegisterChatAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbAssignConversation.RegisterAssignConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbAssignConversation.RegisterAssignConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatMessageSample.RegisterMessageSampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatMessageSample.RegisterMessageSampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatScript.RegisterChatScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatScript.RegisterChatScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatAutoScript.RegisterChatAutoScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatAutoScript.RegisterChatAutoScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatEmail.RegisterChatEmailServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatEmail.RegisterChatEmailServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatConnectionApp.RegisterChatConnectionAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatConnectionApp.RegisterChatConnectionAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatConnectionPipeline.RegisterChatConnectionPipelineServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatConnectionPipeline.RegisterChatConnectionPipelineServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatQueue.RegisterChatQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatQueue.RegisterChatQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbConversation.RegisterConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbConversation.RegisterConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbMessage.RegisterMessageServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbMessage.RegisterMessageServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatPolicySetting.RegisterChatPolicySettingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatPolicySetting.RegisterChatPolicySettingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatLabel.RegisterChatLabelServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatLabel.RegisterChatLabelServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatRouting.RegisterChatRoutingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatRouting.RegisterChatRoutingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbProfile.RegisterProfileServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbProfile.RegisterProfileServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbConnectionQueue.RegisterChatConnectionQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbConnectionQueue.RegisterChatConnectionQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatManageQueue.RegisterChatManageQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatManageQueue.RegisterChatManageQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatQueueUser.RegisterChatQueueUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatQueueUser.RegisterChatQueueUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbShareInfo.RegisterShareInfoServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 
@@ -225,6 +231,12 @@ func NewGRPCServer(port string) {
 			v1.APIChatScript.HandlePutChatScriptUpload(c)
 		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/send") && c.Request.Method == "POST":
 			v1.APIMessage.HandlePostSendMessage(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/config") && c.Request.Method == "POST":
+			v1.APIShareInfo.HandlePostConfigForm(c) // create form
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/image/") && c.Request.Method == "GET":
+			v1.APIShareInfo.HandleGetImageShareInfo(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/") && c.Request.Method == "PUT":
+			v1.APIShareInfo.HandlePutShareInfoById(c)
 		default:
 			gin.WrapH(mux)(c)
 		}
@@ -234,6 +246,7 @@ func NewGRPCServer(port string) {
 	v1.APIChatMessageSampleHandler = v1.NewChatMessageSample()
 	v1.APIChatScript = v1.NewAPIChatScript()
 	v1.APIMessage = v1.NewAPIMessage()
+	v1.APIShareInfo = v1.NewAPIShareInfo()
 	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(), service.NewConversation())
 	v1.NewMessage(httpServer, service.NewMessage())
 	v1.NewWebSocket(httpServer, service.NewSubscriberService())
