@@ -62,8 +62,8 @@ message GetUserAssignedResponse {
 
 message AllocateUserData {
   string id = 1;
-  string created_at = 2;
-  string updated_at = 3;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
   string tenant_id = 4;
   string app_id = 5;
   string oa_id = 6;
@@ -75,6 +75,7 @@ message AllocateUserData {
   string connection_id = 12;
   string connection_queue_id = 13;
   string username = 14;
+  string external_conversation_id = 15;
 }
 
 service AssignConversationService {
