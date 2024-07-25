@@ -22,7 +22,7 @@ import (
 type (
 	IConversation interface {
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
-		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
+		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, result []model.ConversationCustomView, err error)
 		GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
 		GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
 		GetConversationsByHighLevelWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
@@ -70,13 +70,13 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 	return docId, nil
 }
 
-func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
+func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, result []model.ConversationCustomView, err error) {
 	conversationIds := []string{}
 	conversationFilter := model.AllocateUserFilter{
 		TenantId: authUser.TenantId,
 		UserId:   []string{authUser.UserId},
 	}
-	if filter.IsDone.Valid {
+	if filter.IsDone.Valid && !filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"
 	} else {
 		conversationFilter.MainAllocate = "active"
@@ -84,7 +84,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if total > 0 {
 		for _, item := range *userAllocations {
@@ -93,14 +93,14 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	}
 	if len(conversationIds) < 1 {
 		log.Error("list conversation not found")
-		return response.Pagination(nil, 0, limit, offset)
+		return
 	}
-	filter.ExternalConversationId = conversationIds
+	filter.ConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
-	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
+	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
 	var conversationCustomViews []model.ConversationCustomView
@@ -115,9 +115,9 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 					"seen",
 				},
 			}
-			_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
-			if err != nil {
-				log.Error(err)
+			_, messages, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
 				break
 			}
 			conv.TotalUnRead = int64(len(*messages))
@@ -126,9 +126,9 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 			}
-			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
-			if err != nil {
-				log.Error(err)
+			_, message, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
 				break
 			}
 			if len(*message) > 0 {
@@ -144,40 +144,43 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 
 			// TODO: parse label
 			var conversationCustomView model.ConversationCustomView
-			if err := util.ParseAnyToAny((*conversations)[k], &conversationCustomView); err != nil {
+			if err = util.ParseAnyToAny((*conversations)[k], &conversationCustomView); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return
 			}
-
-			if !reflect.DeepEqual((*conversations)[k].Label, "") {
-				var labels []map[string]string
-				if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
-					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
-				}
+			labels := []any{}
+			if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
+				log.Error(err)
+				return
+			}
+			if len(labels) > 0 {
 				chatLabelIds := []string{}
-				if len(labels) > 0 {
-					for _, item := range labels {
-						chatLabelIds = append(chatLabelIds, item["label_id"])
+				for _, item := range labels {
+					var tmp map[string]string
+					if err := util.ParseAnyToAny(item, &tmp); err != nil {
+						log.Error(err)
+						continue
 					}
-					if len(chatLabelIds) > 0 {
-						_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
-							LabelIds: chatLabelIds,
-						}, -1, 0)
-						if err != nil {
-							log.Error(err)
-							return response.ServiceUnavailableMsg(err.Error())
-						}
-						if len(*chatLabelExist) > 0 {
-							conversationCustomView.Label = chatLabelExist
-						}
+					chatLabelIds = append(chatLabelIds, tmp["label_id"])
+				}
+				if len(chatLabelIds) > 0 {
+					_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+						LabelIds: chatLabelIds,
+					}, -1, 0)
+					if errTmp != nil {
+						log.Error(errTmp)
+						return
+					}
+					if len(*chatLabelExist) > 0 {
+						conversationCustomView.Label = chatLabelExist
 					}
 				}
 			}
 			conversationCustomViews = append(conversationCustomViews, conversationCustomView)
 		}
 	}
-	return response.Pagination(conversationCustomViews, len(conversationCustomViews), limit, offset)
+	result = conversationCustomViews
+	return
 }
 
 func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any) {
@@ -525,14 +528,14 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
 		err = errors.New("conversation " + conversationId + " with app_id " + appId + " not found")
-		return response.ServiceUnavailableMsg("conversation " + conversationId + " with app_id " + appId + " not found")
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	if !reflect.DeepEqual(conversationExist.Label, "") {
+	if !reflect.DeepEqual(conversationExist.Labels, "") {
 		var labels []map[string]string
-		if err = json.Unmarshal([]byte(conversationExist.Label), &labels); err != nil {
+		if err = json.Unmarshal([]byte(conversationExist.Labels), &labels); err != nil {
 			log.Error(err)
 			return response.ServiceUnavailableMsg(err.Error())
 		}
@@ -555,18 +558,18 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 						log.Error(err)
 						return response.ServiceUnavailableMsg(err.Error())
 					}
-					conversationExist.Label = tmp
+					conversationExist.Labels = tmp
 				} else {
-					conversationExist.Label = []byte("[]")
+					conversationExist.Labels = []byte("[]")
 				}
 			} else {
-				conversationExist.Label = []byte("[]")
+				conversationExist.Labels = []byte("[]")
 			}
 		} else {
-			conversationExist.Label = []byte("[]")
+			conversationExist.Labels = []byte("[]")
 		}
 	} else {
-		conversationExist.Label = []byte("[]")
+		conversationExist.Labels = []byte("[]")
 	}
 
 	return response.OK(conversationExist)

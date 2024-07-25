@@ -23,7 +23,7 @@ message ConversationCustomView {
   string avatar = 11;
   bool major = 12;
   bool following = 13;
-  repeated ChatLabel label = 14;
+  repeated ChatLabel labels = 14;
   bool is_done = 15;
   string is_done_at = 16;
   string is_done_by = 17;
@@ -49,7 +49,7 @@ message ConversationView {
   string avatar = 11;
   bool major = 12;
   bool following = 13;
-  repeated ChatLabel label = 14;
+  repeated ChatLabel labels = 14;
   bool is_done = 15;
   string is_done_at = 16;
   string is_done_by = 17;
@@ -75,7 +75,7 @@ message Conversation {
   string avatar = 11;
   bool major = 12;
   bool following = 13;
-  repeated ChatLabel label = 14;
+  repeated ChatLabel labels = 14;
   bool is_done = 15;
   google.protobuf.Timestamp is_done_at = 16;
   string is_done_by = 17;

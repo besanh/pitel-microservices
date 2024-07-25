@@ -71,8 +71,12 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
-	c.JSON(code, result)
+	total, result, err := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(result, total, limit, offset))
 }
 
 func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {

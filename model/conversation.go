@@ -24,7 +24,7 @@ type Conversation struct {
 	Avatar                 string          `json:"avatar"`
 	Major                  bool            `json:"major"`
 	Following              bool            `json:"following"`
-	Label                  json.RawMessage `json:"label"`
+	Labels                 json.RawMessage `json:"labels"`
 	IsDone                 bool            `json:"is_done"`
 	IsDoneAt               time.Time       `json:"is_done_at"`
 	IsDoneBy               string          `json:"is_done_by"`

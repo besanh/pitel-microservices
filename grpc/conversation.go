@@ -59,27 +59,12 @@ func (g *GRPCConversation) GetConversations(ctx context.Context, request *pb.Get
 		Following:      following,
 	}
 
-	code, responseData := service.ConversationService.GetConversations(ctx, user, filter, limit, offset)
-	if code != http.StatusOK {
-		return nil, status.Errorf(codes.Internal, response.ERR_GET_FAILED)
-	}
-	var paginationData map[string]any
-	if err = util.ParseAnyToAny(responseData, &paginationData); err != nil {
-		log.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-	total, ok2 := paginationData["total"].(float64)
-	if !ok2 {
-		log.Error("not found total")
-		return nil, status.Errorf(codes.Internal, "not found total")
-	}
-	var data []model.ConversationCustomView
-	if err = util.ParseAnyToAny(paginationData["data"], &data); err != nil {
-		log.Error(err)
+	total, responseData, err := service.ConversationService.GetConversations(ctx, user, filter, limit, offset)
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	resultData := make([]*pb.ConversationCustomView, 0)
-	for _, item := range data {
+	for _, item := range responseData {
 		var tmp pb.ConversationCustomView
 		if err = util.ParseAnyToAny(item, &tmp); err != nil {
 			log.Error(err)
@@ -265,7 +250,7 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 				Avatar:                 item.Avatar,
 				Major:                  item.Major,
 				Following:              item.Following,
-				Label:                  make([]*pb.ChatLabel, 0),
+				Labels:                 make([]*pb.ChatLabel, 0),
 				IsDone:                 item.IsDone,
 				IsDoneAt:               item.IsDoneAt,
 				IsDoneBy:               item.IsDoneBy,
@@ -286,7 +271,7 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 					return
 				}
 			}
-			if err = util.ParseStringToAny(string(item.Label), &tmp.Label); err != nil {
+			if err = util.ParseStringToAny(string(item.Label), &tmp.Labels); err != nil {
 				log.Error(err)
 				result = &pb.GetConversationsByManagerResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
@@ -390,7 +375,7 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 			Avatar:                 item.Avatar,
 			Major:                  item.Major,
 			Following:              item.Following,
-			Label:                  make([]*pb.ChatLabel, 0),
+			Labels:                 make([]*pb.ChatLabel, 0),
 			IsDone:                 item.IsDone,
 			IsDoneAt:               item.IsDoneAt,
 			IsDoneBy:               item.IsDoneBy,
@@ -411,7 +396,7 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 				return
 			}
 		}
-		if err = util.ParseStringToAny(string(item.Label), &tmp.Label); err != nil {
+		if err = util.ParseStringToAny(string(item.Label), &tmp.Labels); err != nil {
 			log.Error(err)
 			result = &pb.GetConversationsByManagerWithScrollAPIResponse{
 				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
@@ -467,7 +452,7 @@ func (g *GRPCConversation) GetConversationById(ctx context.Context, request *pb.
 		Avatar:                 data.Avatar,
 		Major:                  data.Major,
 		Following:              data.Following,
-		Label:                  make([]*pb.ChatLabel, 0),
+		Labels:                 make([]*pb.ChatLabel, 0),
 		IsDone:                 data.IsDone,
 		IsDoneAt:               timestamppb.New(data.IsDoneAt),
 		IsDoneBy:               data.IsDoneBy,
@@ -481,7 +466,7 @@ func (g *GRPCConversation) GetConversationById(ctx context.Context, request *pb.
 			return nil, status.Errorf(codes.Internal, err.Error())
 		}
 	}
-	if err = util.ParseStringToAny(string(data.Label), &tmp.Label); err != nil {
+	if err = util.ParseStringToAny(string(data.Labels), &tmp.Labels); err != nil {
 		log.Error(err)
 		result = &pb.GetConversationByIdResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,

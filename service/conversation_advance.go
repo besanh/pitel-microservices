@@ -389,11 +389,11 @@ func putConversation(ctx context.Context, authUser *model.AuthUser, labelId, lab
 		return
 	}
 
-	result, err := UpdateConversationLabelList(conversationExist.Label, labelType, request.Action, labelId)
+	result, err := UpdateConversationLabelList(conversationExist.Labels, labelType, request.Action, labelId)
 	if err != nil {
 		return
 	}
-	conversationExist.Label = result
+	conversationExist.Labels = result
 
 	conversationQueue := model.ConversationQueue{
 		DocId:        conversationExist.ConversationId,

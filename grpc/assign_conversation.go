@@ -80,10 +80,11 @@ func (g *GRPCAssignConversation) GetUserAssigned(ctx context.Context, request *p
 	return result, nil
 }
 
-func (g *GRPCAssignConversation) GetUserInQueue(ctx context.Context, request *pb.GetUserInQueueRequest) (*pb.GetUserInQueueResponse, error) {
+func (g *GRPCAssignConversation) GetUserInQueue(ctx context.Context, request *pb.GetUserInQueueRequest) (result *pb.GetUserInQueueResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+		err = status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+		return
 	}
 
 	filter := model.UserInQueueFilter{
@@ -95,19 +96,19 @@ func (g *GRPCAssignConversation) GetUserInQueue(ctx context.Context, request *pb
 	}
 	data, err := service.AssignConversationService.GetUserInQueue(ctx, user, filter)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return
 	}
 	var tmp []*pb.ChatQueueUserData
 	err = util.ParseAnyToAny(data, &tmp)
 	if err != nil {
 		log.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return
 	}
 
-	result := &pb.GetUserInQueueResponse{
+	result = &pb.GetUserInQueueResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    tmp,
 	}
-	return result, nil
+	return
 }
