@@ -40,7 +40,7 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 
 	if len(*conversations) > 0 {
 		for k, item := range *conversations {
-			if !reflect.DeepEqual(item.Label, "") {
+			if item.Label != nil && !reflect.DeepEqual(item.Label, "") {
 				var labels []map[string]string
 				if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
 					log.Error(err)
@@ -185,7 +185,7 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 		if conversations[k] == nil {
 			continue
 		}
-		if !reflect.DeepEqual(item.Label, "") {
+		if item.Label != nil && !reflect.DeepEqual(item.Label, "") {
 			var labels []map[string]string
 			if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
 				log.Error(err)

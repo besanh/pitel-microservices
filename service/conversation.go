@@ -149,9 +149,11 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				return
 			}
 			labels := []any{}
-			if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
-				log.Error(err)
-				return
+			if (*conversations)[k].Label != nil {
+				if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
+					log.Error(err)
+					return
+				}
 			}
 			if len(labels) > 0 {
 				chatLabelIds := []string{}
@@ -266,7 +268,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 				return response.ServiceUnavailableMsg(err.Error())
 			}
 
-			if !reflect.DeepEqual(conversations[k].Label, "") {
+			if conversations[k].Label != nil && !reflect.DeepEqual(conversations[k].Label, "") {
 				var labels []map[string]string
 				if err = json.Unmarshal([]byte(conversations[k].Label), &labels); err != nil {
 					log.Error(err)
@@ -533,7 +535,7 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
-	if !reflect.DeepEqual(conversationExist.Labels, "") {
+	if conversationExist.Labels != nil && !reflect.DeepEqual(conversationExist.Labels, "") {
 		var labels []map[string]string
 		if err = json.Unmarshal([]byte(conversationExist.Labels), &labels); err != nil {
 			log.Error(err)
