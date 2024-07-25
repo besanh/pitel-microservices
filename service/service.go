@@ -50,7 +50,7 @@ var (
 	ERR_DB_CONN_FAIL      = errors.New("db_conn_fail")
 
 	// ES
-	ES_INDEX              = "" //             = "pitel_bss_chat"
+	ES_INDEX_MESSAGE      = "" //             = "pitel_bss_chat"
 	ES_INDEX_CONVERSATION = "" // = "pitel_bss_conversation"
 
 	// Redis

@@ -520,7 +520,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	log.Info("message to es: ", scriptedMessage)
 
 	// Should to queue
-	if err := InsertES(ctx, conversationView.TenantId, ES_INDEX, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
+	if err := InsertMessage(ctx, conversationView.TenantId, ES_INDEX_MESSAGE, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
 		log.Error(err)
 		return err
 	}
