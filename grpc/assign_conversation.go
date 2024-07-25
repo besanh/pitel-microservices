@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type GRPCAssignConversation struct{}
@@ -75,6 +76,8 @@ func (g *GRPCAssignConversation) GetUserAssigned(ctx context.Context, request *p
 			log.Error(err)
 			return nil, status.Errorf(codes.Internal, err.Error())
 		}
+		tmp.CreatedAt = timestamppb.New(data.CreatedAt)
+		tmp.UpdatedAt = timestamppb.New(data.UpdatedAt)
 		result.DataDetail = &pb.GetUserAssignedResponse_Data{Data: &tmp}
 	}
 	return result, nil
