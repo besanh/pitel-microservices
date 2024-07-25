@@ -484,7 +484,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
-	if slices.Contains(subscriberManagers, authUser.UserId) {
+	if !slices.Contains(subscriberManagers, authUser.UserId) && !slices.Contains(subscriberAdmins, authUser.UserId) {
 		if status == "done" {
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], authUser.UserId, subscribers, true, conversationConverted)
 		} else if status == "reopen" {
