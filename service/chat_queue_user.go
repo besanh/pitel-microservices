@@ -16,6 +16,8 @@ type (
 	ChatQueueUser struct{}
 )
 
+var ChatQueueUserService IChatQueueUser
+
 func NewChatQueueUser() IChatQueueUser {
 	return &ChatQueueUser{}
 }
