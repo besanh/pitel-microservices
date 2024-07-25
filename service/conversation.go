@@ -23,12 +23,12 @@ type (
 	IConversation interface {
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
 		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, result []model.ConversationCustomView, err error)
-		GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
-		GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
-		GetConversationsByHighLevelWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
+		GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (total int, result []model.ConversationCustomView, respScrollId string, err error)
+		GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error)
+		GetConversationsByHighLevelWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (total int, conversations []*model.ConversationView, respScrollId string, err error)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
-		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
+		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (result *model.Conversation, err error)
 		UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error
 	}
 	Conversation struct{}
@@ -149,9 +149,11 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				return
 			}
 			labels := []any{}
-			if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
-				log.Error(err)
-				return
+			if (*conversations)[k].Label != nil {
+				if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
+					log.Error(err)
+					return
+				}
 			}
 			if len(labels) > 0 {
 				chatLabelIds := []string{}
@@ -183,7 +185,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	return
 }
 
-func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any) {
+func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (total int, result []model.ConversationCustomView, respScrollId string, err error) {
 	conversationIds := []string{}
 	conversationFilter := model.AllocateUserFilter{
 		TenantId: authUser.TenantId,
@@ -197,7 +199,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if total > 0 {
 		for _, item := range *userAllocations {
@@ -206,18 +208,14 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	}
 	if len(conversationIds) < 1 {
 		log.Error("list conversation not found")
-		result := map[string]any{
-			"conversations": nil,
-			"scroll_id":     "",
-		}
-		return response.Pagination(result, 0, limit, 0)
+		return
 	}
 	filter.ExternalConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
 	_, conversations, respScrollId, err := repository.ConversationESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, scrollId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
 	conversationCustomViews := make([]model.ConversationCustomView, 0)
@@ -263,14 +261,14 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 			var conversationCustomView model.ConversationCustomView
 			if err := util.ParseAnyToAny(conversations[k], &conversationCustomView); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return 0, nil, "", err
 			}
 
-			if !reflect.DeepEqual(conversations[k].Label, "") {
+			if conversations[k].Label != nil && !reflect.DeepEqual(conversations[k].Label, "") {
 				var labels []map[string]string
 				if err = json.Unmarshal([]byte(conversations[k].Label), &labels); err != nil {
 					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
+					return 0, nil, "", err
 				}
 				chatLabelIds := []string{}
 				if len(labels) > 0 {
@@ -283,7 +281,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 						}, -1, 0)
 						if err != nil {
 							log.Error(err)
-							return response.ServiceUnavailableMsg(err.Error())
+							return 0, nil, "", err
 						}
 						if len(*chatLabelExist) > 0 {
 							conversationCustomView.Label = chatLabelExist
@@ -294,11 +292,9 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 			conversationCustomViews = append(conversationCustomViews, conversationCustomView)
 		}
 	}
-	result := map[string]any{
-		"conversations": conversationCustomViews,
-		"scroll_id":     respScrollId,
-	}
-	return response.Pagination(result, len(conversationCustomViews), limit, 0)
+	total = len(conversationCustomViews)
+	result = conversationCustomViews
+	return
 }
 
 func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, conversationId string, data model.ShareInfo) (int, any) {
@@ -522,22 +518,22 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	return nil
 }
 
-func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any) {
+func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (result *model.Conversation, err error) {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	} else if len(conversationExist.ConversationId) < 1 {
 		err = errors.New("conversation " + conversationId + " with app_id " + appId + " not found")
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
-	if !reflect.DeepEqual(conversationExist.Labels, "") {
+	if conversationExist.Labels != nil && !reflect.DeepEqual(conversationExist.Labels, "") {
 		var labels []map[string]string
 		if err = json.Unmarshal([]byte(conversationExist.Labels), &labels); err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+			return
 		}
 		chatLabelIds := []string{}
 		if len(labels) > 0 {
@@ -550,13 +546,13 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 				}, -1, 0)
 				if err != nil {
 					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
+					return nil, err
 				}
 				if len(*chatLabelExist) > 0 {
 					tmp, err := json.Marshal(*chatLabelExist)
 					if err != nil {
 						log.Error(err)
-						return response.ServiceUnavailableMsg(err.Error())
+						return nil, err
 					}
 					conversationExist.Labels = tmp
 				} else {
@@ -572,7 +568,7 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 		conversationExist.Labels = []byte("[]")
 	}
 
-	return response.OK(conversationExist)
+	return conversationExist, nil
 }
 
 func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error {
