@@ -175,7 +175,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 				"seen",
 			},
 		}
-		_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+		_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
 		if err != nil {
 			log.Error(err)
 			break
@@ -186,7 +186,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			TenantId:       conv.TenantId,
 			ConversationId: conv.ConversationId,
 		}
-		_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+		_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 		if err != nil {
 			log.Error(err)
 			break
@@ -271,7 +271,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		// 	TenantId:       (*conversations)[0].TenantId,
 		// 	ConversationId: (*conversations)[0].ConversationId,
 		// }
-		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
+		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 		// if err != nil {
 		// 	log.Error(err)
 		// 	return response.ServiceUnavailableMsg(err.Error())
@@ -315,7 +315,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			TenantId:       conversationEvent.TenantId,
 			ConversationId: conversationEvent.ConversationId,
 		}
-		_, message, err := repository.MessageESRepo.GetMessages(ctx, conversationEvent.TenantId, ES_INDEX, filterMessage, 1, 0)
+		_, message, err := repository.MessageESRepo.GetMessages(ctx, conversationEvent.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 		if err != nil {
 			log.Error(err)
 		}
@@ -335,7 +335,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		// 	TenantId:       (*conversations)[0].TenantId,
 		// 	ConversationId: (*conversations)[0].ConversationId,
 		// }
-		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
+		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 		// if err != nil {
 		// 	log.Error(err)
 		// 	return response.ServiceUnavailableMsg(err.Error())

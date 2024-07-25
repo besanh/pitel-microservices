@@ -53,16 +53,16 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 		log.Error(err)
 		return docId, err
 	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, conversation.TenantId); err != nil {
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX_MESSAGE, conversation.TenantId); err != nil {
 		log.Error(err)
 		return docId, err
 	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, conversation.TenantId); err != nil {
+		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX_MESSAGE, conversation.TenantId); err != nil {
 			log.Error(err)
 			return docId, err
 		}
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX, conversation.AppId, docId, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_MESSAGE, conversation.AppId, docId, esDoc); err != nil {
 		log.Error(err)
 		return docId, err
 	}
@@ -115,7 +115,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 					"seen",
 				},
 			}
-			_, messages, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+			_, messages, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
 			if errTmp != nil {
 				log.Error(errTmp)
 				break
@@ -126,7 +126,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 			}
-			_, message, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			_, message, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 			if errTmp != nil {
 				log.Error(errTmp)
 				break
@@ -230,7 +230,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 					"seen",
 				},
 			}
-			_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+			_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
 			if err != nil {
 				log.Error(err)
 				break
@@ -241,7 +241,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 			}
-			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 			if err != nil {
 				log.Error(err)
 				break
@@ -446,7 +446,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		// 	"seen",
 		// },
 	}
-	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, -1, 0)
+	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX_MESSAGE, filterMessage, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return err

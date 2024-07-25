@@ -125,7 +125,7 @@ func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids [
 					"seen",
 				},
 			}
-			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
 			if err != nil {
 				log.Error(err)
 				break
@@ -135,7 +135,7 @@ func (s *Conversation) getConversationByFilter(ctx context.Context, queueUuids [
 			filterMessage := model.MessageFilter{
 				ConversationId: conv.ConversationId,
 			}
-			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 			if err != nil {
 				log.Error(err)
 				break
@@ -269,7 +269,7 @@ func (s *Conversation) getConversationByFilterWithScrollAPI(ctx context.Context,
 					"seen",
 				},
 			}
-			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+			total, _, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
 			if err != nil {
 				log.Error(err)
 				break
@@ -279,7 +279,7 @@ func (s *Conversation) getConversationByFilterWithScrollAPI(ctx context.Context,
 			filterMessage := model.MessageFilter{
 				ConversationId: conv.ConversationId,
 			}
-			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 			if err != nil {
 				log.Error(err)
 				break

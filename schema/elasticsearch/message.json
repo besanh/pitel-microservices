@@ -1,0 +1,140 @@
+{
+    "aliases": {},
+    "mappings": {
+        "properties": {
+            "tenant_id": {
+                "type": "keyword"
+            },
+            "parent_message_id": {
+                "type": "keyword"
+            },
+            "id": {
+                "type": "keyword"
+            },
+            "conversation_id": {
+                "type": "keyword"
+            },
+            "parent_external_msg_id": {
+                "type": "keyword"
+            },
+            "extenal_msg_id": {
+                "type": "keyword"
+            },
+            "message_type": {
+                "type": "keyword"
+            },
+            "event_name": {
+                "type": "keyword"
+            },
+            "direction": {
+                "type": "keyword"
+            },
+            "app_id": {
+                "type": "keyword"
+            },
+            "oa_id": {
+                "type": "keyword"
+            },
+            "oa_info": {
+                "type": "keyword"
+            },
+            "share_info": {
+                "properties": {
+                    "address": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "city": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "district": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "fullname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "phone_number": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "user_id_by_app": {
+                "type": "keyword"
+            },
+            "uid": {
+                "type": "keyword"
+            },
+            "user_app_name": {
+                "type": "keyword"
+            },
+            "avatar": {
+                "type": "keyword"
+            },
+            "supporter_id": {
+                "type": "keyword"
+            },
+            "supporter_name": {
+                "type": "keyword"
+            },
+            "send_time": {
+                "type": "keyword"
+            },
+            "send_timestamp": {
+                "type": "keyword"
+            },
+            "content": {
+                "type": "keyword"
+            },
+            "is_read": {
+                "type": "keyword"
+            },
+            "read_time": {
+                "type": "keyword"
+            },
+            "read_timestamp": {
+                "type": "keyword"
+            },
+            "read_by": {
+                "type": "keyword"
+            },
+            "attachments": {
+                "type": "nested"
+            }
+        }
+    },
+    "settings": {
+        "index": {
+            "number_of_shards": 1,
+            "number_of_replicas": 1
+        }
+    }
+}

@@ -1,0 +1,113 @@
+{
+    "aliases": {},
+    "mappings": {
+        "properties": {
+            "tenant_id": {
+                "type": "keyword"
+            },
+            "conversation_id": {
+                "type": "keyword"
+            },
+            "external_conversation_id": {
+                "type": "keyword"
+            },
+            "conversation_type": {
+                "type": "keyword"
+            },
+            "app_id": {
+                "type": "keyword"
+            },
+            "oa_id": {
+                "type": "keyword"
+            },
+            "external_user_id": {
+                "type": "keyword"
+            },
+            "username": {
+                "type": "keyword"
+            },
+            "share_info": {
+                "properties": {
+                    "address": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "city": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "district": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "fullname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "phone_number": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "avatar": {
+                "type": "keyword"
+            },
+            "oa_avatar": {
+                "type": "keyword"
+            },
+            "oa_name": {
+                "type": "keyword"
+            },
+            "is_done": {
+                "type": "keyword"
+            },
+            "is_done_at": {
+                "type": "keyword"
+            },
+            "is_done_by": {
+                "type": "keyword"
+            },
+            "created_at": {
+                "type": "keyword"
+            },
+            "updated_at": {
+                "type": "keyword"
+            },
+            "label": {
+                "type": "nested"
+            }
+        }
+    },
+    "settings": {
+        "index": {
+            "number_of_shards": 1,
+            "number_of_replicas": 1
+        }
+    }
+}

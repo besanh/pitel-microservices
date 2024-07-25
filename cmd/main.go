@@ -47,7 +47,7 @@ func RunMainService() {
 	// Init services
 	service.SECRET_KEY_SUPERADMIN = env.GetStringENV("SECRET_KEY_SUPERADMIN", "RnXyO4178f2gvXV8bbSgVf3ipcO7PR5y6jLATrfvHcmEbVWjgwgm2dl8GE3EPEG7KFqHzOznCNBbe3aiNWykfT32lw0RM8ThRTCD")
 	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
-	service.ES_INDEX = env.GetStringENV("ES_INDEX", "pitel_bss_chat")
+	service.ES_INDEX_MESSAGE = env.GetStringENV("ES_INDEX_MESSAGE", "pitel_bss_message")
 	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
 	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
 	service.OTT_VERSION = env.GetStringENV("OTT_VERSION", "v1")

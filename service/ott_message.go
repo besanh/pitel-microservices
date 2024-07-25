@@ -257,18 +257,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					isNew = isNewTmp
 
 					if len(conversation.ConversationId) > 0 {
-						// message.ConversationId = conversation.ConversationId
 						message.IsRead = "deactive"
 						if message.IsEcho {
 							message.Direction = variables.DIRECTION["send"]
 							message.Avatar = conversation.OaAvatar
 							message.SupporterId = ""
 							message.SupporterName = "Admin OA"
-						}
-						if err = InsertES(ctx, data.TenantId, ES_INDEX, conversation.AppId, docId, message); err != nil {
-							log.Error(err)
-							errChan <- err
-							return
 						}
 					} else {
 						log.Error("conversation " + conversation.ConversationId + " not found with app id " + data.AppId)
@@ -296,6 +290,15 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					log.Error(err)
 					errChan <- err
 					return
+				}
+
+				// Insert message
+				if len(conversation.ConversationId) > 0 {
+					if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, conversation.AppId, docId, message); err != nil {
+						log.Error(err)
+						errChan <- err
+						return
+					}
 				}
 
 				subscribers := []*Subscriber{}
