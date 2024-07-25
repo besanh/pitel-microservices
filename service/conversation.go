@@ -199,7 +199,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, "", err
+		return
 	}
 	if total > 0 {
 		for _, item := range *userAllocations {
@@ -208,7 +208,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	}
 	if len(conversationIds) < 1 {
 		log.Error("list conversation not found")
-		return 0, result, "", nil
+		return
 	}
 	filter.ExternalConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
