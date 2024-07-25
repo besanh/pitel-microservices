@@ -34,7 +34,7 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 	total, conversations, err = s.getConversationByFilter(ctx, queueId, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, err
+		return
 	}
 
 	if len(*conversations) > 0 {
@@ -177,7 +177,7 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 	total, conversations, respScrollId, err = s.getConversationByFilterWithScrollAPI(ctx, queueId, filter, limit, scrollId)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, "", err
+		return
 	}
 
 	for k, item := range conversations {
@@ -245,7 +245,7 @@ func (s *Conversation) getConversationByFilterWithScrollAPI(ctx context.Context,
 	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return total, nil, "", err
+		return
 	}
 	if total > 0 {
 		for _, item := range *userAllocations {
