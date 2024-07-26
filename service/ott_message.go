@@ -139,9 +139,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	}
 
 	userChan := make(chan []model.User, len(tenants)) // Buffered channel to avoid blocking
+
 	var wg sync.WaitGroup
 	wg.Add(len(tenants))
-
 	go func(userChan chan []model.User, done chan<- bool) {
 		defer close(userChan)
 		for users := range userChan {
