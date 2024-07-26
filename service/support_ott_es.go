@@ -56,7 +56,7 @@ func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId, conve
 		conversation.Avatar = conversationExist.Avatar
 		conversation.Major = conversationExist.Major
 		conversation.Following = conversationExist.Following
-		conversation.Labels = conversationExist.Label
+		conversation.Labels = conversationExist.Labels
 		conversation.IsDone = false
 		conversation.IsDoneBy = ""
 		isDoneAt, _ := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
@@ -193,6 +193,9 @@ func (s *OttMessage) UpdateESAndCache(ctx context.Context, tenantId, appId, oaId
 			return
 		}
 	}
+	if conversationExist.Labels == nil {
+		conversationExist.Labels = []byte("[]")
+	}
 	tmpBytes, err := json.Marshal(conversationExist)
 	if err != nil {
 		log.Error(err)
@@ -231,5 +234,5 @@ func (s *OttMessage) UpdateESAndCache(ctx context.Context, tenantId, appId, oaId
 		return
 	}
 
-	return nil
+	return
 }

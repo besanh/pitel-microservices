@@ -47,7 +47,7 @@ type ConversationView struct {
 	Avatar                 string          `json:"avatar"`
 	Major                  bool            `json:"major"`
 	Following              bool            `json:"following"`
-	Label                  json.RawMessage `json:"label"`
+	Labels                 json.RawMessage `json:"labels"`
 	IsDone                 bool            `json:"is_done"`
 	IsDoneAt               string          `json:"is_done_at"`
 	IsDoneBy               string          `json:"is_done_by"`
@@ -73,7 +73,7 @@ type ConversationCustomView struct {
 	Avatar                 string       `json:"avatar"`
 	Major                  bool         `json:"major"`
 	Following              bool         `json:"following"`
-	Label                  *[]ChatLabel `json:"label"`
+	Labels                 *[]ChatLabel `json:"labels"`
 	IsDone                 bool         `json:"is_done"`
 	IsDoneAt               string       `json:"is_done_at"`
 	IsDoneBy               string       `json:"is_done_by"`
