@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -36,7 +35,7 @@ func NewMessage() IMessage {
 	return &Message{}
 }
 
-func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (result model.Message, err error) {
+func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser, data model.MessageRequest, file *multipart.FileHeader) (message model.Message, err error) {
 	conversation := model.Conversation{}
 	conversationCache := cache.RCache.Get(CONVERSATION + "_" + data.ConversationId)
 	if conversationCache != nil {
@@ -45,31 +44,19 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 			return
 		}
 	} else {
-		if len(data.ConversationId) < 1 {
-			err = errors.New("conversation " + data.ConversationId + " is required")
-			return
-		}
-		filter := model.ConversationFilter{
-			TenantId:               authUser.TenantId,
-			ExternalConversationId: []string{data.ConversationId},
-		}
-		_, conversations, errTmp := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
+		conversationTmp, errTmp := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, data.AppId, data.ConversationId)
 		if errTmp != nil {
 			err = errTmp
 			log.Error(err)
 			return
-		}
-		if len(*conversations) > 0 {
-			if err = util.ParseAnyToAny((*conversations)[0], &conversation); err != nil {
-				log.Error(err)
-				return
-			}
-			if err = cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
-				log.Error(err)
-				return
-			}
-		} else {
+		} else if conversationTmp == nil {
 			err = errors.New("conversation: " + data.ConversationId + " not found")
+			log.Error(err)
+			return
+		}
+		conversation = *conversationTmp
+		if err = cache.RCache.Set(CONVERSATION+"_"+conversation.ConversationId, conversation, CONVERSATION_EXPIRE); err != nil {
+			log.Error(err)
 			return
 		}
 	}
@@ -80,8 +67,8 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		if len(conversationTime) < 1 {
 			conversationTime = conversation.CreatedAt
 		}
-		if err := CheckOutOfChatWindowTime(ctx, conversation.TenantId, conversation.ConversationType, conversationTime); err != nil {
-			return result, err
+		if err = CheckOutOfChatWindowTime(ctx, conversation.TenantId, conversation.ConversationType, conversationTime); err != nil {
+			return
 		}
 	}
 
@@ -157,7 +144,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 
 	// Store ES
-	message := model.Message{
+	message = model.Message{
 		TenantId:            conversation.TenantId,
 		ParentExternalMsgId: "",
 		Id:                  docId,
