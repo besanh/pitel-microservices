@@ -210,7 +210,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 		log.Error("list conversation not found")
 		return
 	}
-	filter.ExternalConversationId = conversationIds
+	filter.ConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
 	_, conversations, respScrollId, err := repository.ConversationESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, scrollId)
 	if err != nil {

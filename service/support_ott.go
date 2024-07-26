@@ -18,6 +18,19 @@ import (
 )
 
 /**
+* TODO: improve workflow in new version
+* We need to write new workflow that can support multi tenant with one or multi chat app
+* We should use transaction that can rollback between each workflow, posgre and elasticsearch
+* Always remember that if no user online, we will assign conversaton for manager of queue
+* If customer chatting with us, we need to check conversation exist in database and elasticsearch to determine it is new conversation or not
+* If it's new conversation, we should create new conversation in database and elasticsearch
+* If it's not new conversation, we should update conversation in database and elasticsearch
+* If user make done conversation then customer chat with us again, we should check rule allocate again to determine assign for old user or not
+* If customer chatting with user A then admin assign for user B, we will transfer for that user
+* Finally we should prepare data ready to push to wss, include conversation, message, allocated user
+ */
+
+/**
 * Chia patch cho phan loop
  */
 func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error, tenants []string) {
