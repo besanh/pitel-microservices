@@ -289,7 +289,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
  */
 func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView, script model.ChatAutoScriptView) (err error) {
 	if conversation == nil {
-		err = errors.New("conversation " + conversation.ConversationId + " not found")
+		err = errors.New("conversation not found")
 		return
 	}
 
@@ -355,7 +355,7 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 					if len(label.ExternalLabelId) < 1 {
 						// request fb to create new external label id
 						request.Action = "create"
-						externalLabelId, errTmp := handleLabelFacebook(ctx, repository.DBConn, conversation.ConversationType, *label, request)
+						externalLabelId, errTmp := handleLabelFacebook(ctx, conversation.ConversationType, *label, request)
 						if errTmp != nil {
 							err = errTmp
 							return
