@@ -46,41 +46,45 @@ type ChatConnectionAppView struct {
 }
 
 type OaInfo struct {
-	Zalo []struct {
-		AppId               string `json:"app_id"`
-		OaId                string `json:"oa_id"`
-		OaName              string `json:"oa_name"`
-		UrlOa               string `json:"url_oa"`
-		Avatar              string `json:"avatar"`
-		Cover               string `json:"cover"`
-		CateName            string `json:"cate_name"`
-		Status              string `json:"status"`
-		AccessToken         string `json:"access_token"`
-		Expire              int64  `json:"expire"`
-		TokenCreatedAt      string `json:"token_created_at"`
-		TokenExpiresIn      int64  `json:"token_expires_in"`
-		TokenTimeRemainning int64  `json:"token_time_remaining"`
-		CreatedTimestamp    int64  `json:"created_timestamp"`
-		UpdatedTimestamp    int64  `json:"updated_timestamp"`
-		IsNotify            bool   `json:"is_notify"`
-	} `json:"zalo"`
-	Facebook []struct {
-		AppId               string `json:"app_id"`
-		OaId                string `json:"oa_id"`
-		OaName              string `json:"oa_name"`
-		UrlOa               string `json:"url_oa"`
-		Avatar              string `json:"avatar"`
-		Cover               string `json:"cover"`
-		AccessToken         string `json:"access_token"`
-		Expire              int64  `json:"expire"`
-		TokenCreatedAt      string `json:"token_created_at"`
-		TokenExpiresIn      int64  `json:"token_expires_in"`
-		TokenTimeRemainning int64  `json:"token_time_remaining"`
-		Status              string `json:"status"`
-		CreatedTimestamp    int64  `json:"created_timestamp"`
-		UpdatedTimestamp    int64  `json:"updated_timestamp"`
-		IsNotify            bool   `json:"is_notify"`
-	} `json:"facebook"`
+	Zalo     []ZaloInfo     `json:"zalo"`
+	Facebook []FacebookInfo `json:"facebook"`
+}
+
+type ZaloInfo struct {
+	AppId               string `json:"app_id"`
+	OaId                string `json:"oa_id"`
+	OaName              string `json:"oa_name"`
+	UrlOa               string `json:"url_oa"`
+	Avatar              string `json:"avatar"`
+	Cover               string `json:"cover"`
+	CateName            string `json:"cate_name"`
+	Status              string `json:"status"`
+	AccessToken         string `json:"access_token"`
+	Expire              int64  `json:"expire"`
+	TokenCreatedAt      string `json:"token_created_at"`
+	TokenExpiresIn      int64  `json:"token_expires_in"`
+	TokenTimeRemainning int64  `json:"token_time_remaining"`
+	CreatedTimestamp    int64  `json:"created_timestamp"`
+	UpdatedTimestamp    int64  `json:"updated_timestamp"`
+	IsNotify            bool   `json:"is_notify"`
+}
+
+type FacebookInfo struct {
+	AppId               string `json:"app_id"`
+	OaId                string `json:"oa_id"`
+	OaName              string `json:"oa_name"`
+	UrlOa               string `json:"url_oa"`
+	Avatar              string `json:"avatar"`
+	Cover               string `json:"cover"`
+	AccessToken         string `json:"access_token"`
+	Expire              int64  `json:"expire"`
+	TokenCreatedAt      string `json:"token_created_at"`
+	TokenExpiresIn      int64  `json:"token_expires_in"`
+	TokenTimeRemainning int64  `json:"token_time_remaining"`
+	Status              string `json:"status"`
+	CreatedTimestamp    int64  `json:"created_timestamp"`
+	UpdatedTimestamp    int64  `json:"updated_timestamp"`
+	IsNotify            bool   `json:"is_notify"`
 }
 
 type ChatConnectionAppRequest struct {
@@ -137,7 +141,7 @@ func (m *ChatConnectionAppRequest) Validate() error {
 	}
 
 	if m.ConnectionType == "facebook" {
-		if len(m.OaInfo.Facebook) < 1 {
+		if len(m.OaInfo.Zalo) < 1 {
 			return errors.New("oa info facebook is required for facebook connection type")
 		}
 	}

@@ -72,9 +72,11 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 	if data.ConnectionAppRequest.ConnectionType == "facebook" && len(connectionApp.OaInfo.Facebook) > 0 {
 		connectionApp.OaInfo.Facebook[0].AppId = app.InfoApp.Facebook.AppId
 		connectionApp.OaInfo.Facebook[0].CreatedTimestamp = time.Now().Unix()
+		connectionApp.OaInfo.Zalo = []model.ZaloInfo{}
 	} else if data.ConnectionAppRequest.ConnectionType == "zalo" && len(connectionApp.OaInfo.Zalo) > 0 {
 		connectionApp.OaInfo.Zalo[0].AppId = app.InfoApp.Zalo.AppId
 		connectionApp.OaInfo.Zalo[0].CreatedTimestamp = time.Now().Unix()
+		connectionApp.OaInfo.Facebook = []model.FacebookInfo{}
 	}
 	connectionApp.Status = data.ConnectionAppRequest.Status
 
