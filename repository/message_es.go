@@ -122,7 +122,7 @@ func (repo *MessageES) GetMessageById(ctx context.Context, tenantId, index, id s
 		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
 		filters = append(filters, elasticsearch.MatchQuery("tenant_id", tenantId))
 	}
-	musts = append(filters, elasticsearch.MatchQuery("_id", id))
+	musts = append(musts, elasticsearch.MatchQuery("_id", id))
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{
