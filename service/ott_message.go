@@ -49,128 +49,54 @@ func NewOttMessage() IOttMessage {
 * IMPROVE: add channel, mutex
  */
 func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (int, any) {
+	// Check and cache the chat app configuration
 	chatApp, err := CheckConfigAppCache(ctx, data.AppId)
 	if err != nil {
 		return response.ServiceUnavailableMsg(err.Error())
 	}
-	var connectionCache model.ChatConnectionApp
-	connectionCache, err = GetConfigConnectionAppCache(ctx, data.AppId, data.OaId, data.MessageType)
-	if err != nil {
-		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	}
 
 	timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
-	messageTmp := model.Message{
-		ParentExternalMsgId: "",
-		ExternalMsgId:       data.MsgId,
-		MessageType:         data.MessageType,
-		EventName:           data.EventName,
-		Direction:           variables.DIRECTION["receive"],
-		AppId:               data.AppId,
-		OaId:                data.OaId,
-		UserIdByApp:         data.UserIdByApp,
-		ExternalUserId:      data.ExternalUserId,
-		Avatar:              data.Avatar,
-		SendTime:            timestamp,
-		SendTimestamp:       data.Timestamp,
-		Content:             data.Content,
-		UserAppname:         data.Username,
-		CreatedAt:           time.Now(),
-		ShareInfo:           data.ShareInfo,
-		IsEcho:              data.IsEcho,
-	}
+	messageTmp := s.createMessage(data, timestamp)
 	if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
 		messageTmp.ReadTime = timestamp
 		messageTmp.ReadTimestamp = data.Timestamp
 	}
 
+	externalConversationId := GenerateConversationId(data.AppId, data.OaId, data.ExternalUserId)
+
+	// Retrieve and cache chat app integrate systems
+	chatAppIntegrateSystems, err := s.getChatAppIntegrateSystems(ctx, chatApp.Id, externalConversationId)
+	if err != nil {
+		log.Error(err)
+		return response.ServiceUnavailableMsg(err.Error())
+	}
+
+	// Process tenants
+	tenants := s.proccessIntegrateSystems(chatAppIntegrateSystems)
+
 	var isNew bool
 	var conversation model.ConversationView
 	var user model.User
-	// Channels for handling users, errors, and completion
-	errChan := make(chan error, 1)
-	done := make(chan bool, 1)
-	tenants := []string{}
-	chatIntegrateSystems := []model.ChatIntegrateSystem{}
-	chatAppIntegrateSystems := []model.ChatAppIntegrateSystem{}
-	externalConversationId := GenerateConversationId(data.AppId, data.OaId, data.ExternalUserId)
-
-	chatAppIntegrateSystemCache := cache.RCache.Get(CHAT_APP_INTEGRATE_SYSTEM + "_" + externalConversationId)
-	if chatAppIntegrateSystemCache != nil {
-		if err = json.Unmarshal([]byte(chatAppIntegrateSystemCache.(string)), &chatAppIntegrateSystems); err != nil {
-			log.Error(err)
-			errChan <- err
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-	} else {
-		filterChatAppIntegrateSystem := model.ChatAppIntegrateSystemFilter{
-			ChatAppId: chatApp.Id,
-		}
-		_, tmp, err := repository.ChatAppIntegrateSystemRepo.GetChatAppIntegrateSystems(ctx, repository.DBConn, filterChatAppIntegrateSystem, -1, 0)
-		if err != nil {
-			log.Error(err)
-			errChan <- err
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-		chatAppIntegrateSystems = *tmp
-
-		if err = cache.RCache.Set(CHAT_APP_INTEGRATE_SYSTEM+"_"+externalConversationId, chatAppIntegrateSystems, CHAT_APP_INTEGRATE_SYSTEM_EXPIRE); err != nil {
-			log.Error(err)
-			errChan <- err
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-	}
-
-	if len(chatAppIntegrateSystems) > 0 {
-		for _, integrateSystem := range chatAppIntegrateSystems {
-			if integrateSystem.ChatIntegrateSystem[0].Status {
-				chatIntegrateSystems = append(chatIntegrateSystems, *integrateSystem.ChatIntegrateSystem[0])
-			}
-		}
-	}
-
-	if len(chatIntegrateSystems) > 0 {
-		for _, integrateSystem := range chatIntegrateSystems {
-			if len(integrateSystem.TenantDefaultId) > 0 {
-				tenants = append(tenants, integrateSystem.TenantDefaultId)
-			}
-		}
-	}
-
 	userChan := make(chan []model.User, len(tenants)) // Buffered channel to avoid blocking
+	done := make(chan bool, 1)
+	errChan := make(chan error, 1)
 
+	// Process users
 	var wg sync.WaitGroup
 	wg.Add(len(tenants))
-	go func(userChan chan []model.User, done chan<- bool) {
+	go func(timeStamp time.Time, userChan chan []model.User, done chan<- bool) {
 		defer close(userChan)
 		for users := range userChan {
-			for _, item := range users {
+			for k, item := range users {
 				user = item
 				docId := uuid.NewString()
-				timestamp := time.Unix(0, data.Timestamp*int64(time.Millisecond))
-				message := model.Message{
-					Id:                     docId,
-					ParentExternalMsgId:    "",
-					ConversationId:         user.ConversationId,
-					ExternalConversationId: externalConversationId,
-					ExternalMsgId:          data.MsgId,
-					MessageType:            data.MessageType,
-					EventName:              data.EventName,
-					Direction:              variables.DIRECTION["receive"],
-					AppId:                  data.AppId,
-					OaId:                   data.OaId,
-					UserIdByApp:            data.UserIdByApp,
-					ExternalUserId:         data.ExternalUserId,
-					Avatar:                 data.Avatar,
-					SendTime:               timestamp,
-					SendTimestamp:          data.Timestamp,
-					Content:                data.Content,
-					UserAppname:            data.Username,
-					CreatedAt:              time.Now(),
-					ShareInfo:              data.ShareInfo,
-					IsEcho:                 data.IsEcho,
+				connectionCache, err := GetConfigConnectionAppCache(ctx, tenants[k], data.AppId, data.OaId, data.MessageType)
+				if err != nil {
+					log.Error(err)
+					errChan <- err
+					return
 				}
+				message := s.createMessage(data, timestamp)
 				if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
 					message.ReadTime = timestamp
 					message.ReadTimestamp = data.Timestamp
@@ -280,10 +206,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						errChan <- err
 						return
 					}
-				} else if len(user.QueueId) < 1 && err != nil {
-					log.Error(err)
-					errChan <- err
-					return
 				}
 				if len(conversation.ConversationId) < 1 {
 					err = errors.New("conversation " + conversation.ConversationId + " not found")
@@ -302,7 +224,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						return
 					}
 				}
-
+				wg.Done()
 				subscribers := []*Subscriber{}
 				subscriberAdmins := []string{}
 				subscriberManagers := []string{}
@@ -323,33 +245,31 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				}
 
 				// TODO: publish message to manager
-				if len(user.QueueId) > 0 {
-					manageQueueUser, err := GetManageQueueUser(ctx, user.QueueId)
-					if err != nil {
-						log.Error(err)
-						errChan <- err
-						return
-					} else if manageQueueUser == nil {
-						log.Error("queue " + user.QueueId + " not found")
-						errChan <- errors.New("queue " + user.QueueId + " not found")
-						return
-					}
-					if len(manageQueueUser.ConnectionId) < 1 {
-						manageQueueUser.ConnectionId = connectionCache.Id
-					}
+				manageQueueUser, err := GetManageQueueUser(ctx, user.QueueId)
+				if err != nil {
+					log.Error(err)
+					errChan <- err
+					return
+				} else if manageQueueUser == nil {
+					log.Error("queue " + user.QueueId + " not found")
+					errChan <- errors.New("queue " + user.QueueId + " not found")
+					return
+				}
+				if len(manageQueueUser.ConnectionId) < 1 {
+					manageQueueUser.ConnectionId = connectionCache.Id
+				}
 
-					// TODO: publish message to manager
-					isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
-					if isExist {
-						if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.UserId) || (user.AuthUser == nil && len(manageQueueUser.UserId) > 0) {
-							go handlePublishEvent(false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
-						}
+				// TODO: publish message to manager
+				isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
+				if isExist {
+					if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.UserId) || (user.AuthUser == nil && len(manageQueueUser.UserId) > 0) {
+						go handlePublishEvent(false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
 					}
+				}
 
-					// TODO: publish to admin
-					if ENABLE_PUBLISH_ADMIN {
-						go handlePublishEvent(true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
-					}
+				// TODO: publish to admin
+				if ENABLE_PUBLISH_ADMIN {
+					go handlePublishEvent(true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
 				}
 
 				if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
@@ -359,10 +279,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						return
 					}
 				}
-				wg.Done()
 			}
 		}
-	}(userChan, done)
+	}(timestamp, userChan, done)
 
 	// TODO: check queue setting
 	go s.CheckChatSetting(ctx, &s.mux, messageTmp, *chatApp, userChan, errChan, tenants)
@@ -384,6 +303,75 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		log.Debug("context timeout")
 		return response.ServiceUnavailableMsg(errors.New("context timeout"))
 	}
+}
+
+func (s *OttMessage) createMessage(data model.OttMessage, timestamp time.Time) model.Message {
+	return model.Message{
+		ParentExternalMsgId: "",
+		ExternalMsgId:       data.MsgId,
+		MessageType:         data.MessageType,
+		EventName:           data.EventName,
+		Direction:           variables.DIRECTION["receive"],
+		AppId:               data.AppId,
+		OaId:                data.OaId,
+		UserIdByApp:         data.UserIdByApp,
+		ExternalUserId:      data.ExternalUserId,
+		Avatar:              data.Avatar,
+		SendTime:            timestamp,
+		SendTimestamp:       data.Timestamp,
+		Content:             data.Content,
+		UserAppname:         data.Username,
+		CreatedAt:           time.Now(),
+		ShareInfo:           data.ShareInfo,
+		IsEcho:              data.IsEcho,
+	}
+}
+
+func (s *OttMessage) getChatAppIntegrateSystems(ctx context.Context, chatAppId, externalConversationId string) (result []model.ChatAppIntegrateSystem, err error) {
+	chatAppIntegrateSystemCache := cache.RCache.Get(CHAT_APP_INTEGRATE_SYSTEM + "_" + externalConversationId)
+	if chatAppIntegrateSystemCache != nil {
+		if err = json.Unmarshal([]byte(chatAppIntegrateSystemCache.(string)), &result); err != nil {
+			log.Error(err)
+			return
+		}
+	} else {
+		filterChatAppIntegrateSystem := model.ChatAppIntegrateSystemFilter{
+			ChatAppId: chatAppId,
+		}
+		_, tmp, errTmp := repository.ChatAppIntegrateSystemRepo.GetChatAppIntegrateSystems(ctx, repository.DBConn, filterChatAppIntegrateSystem, -1, 0)
+		if errTmp != nil {
+			err = errTmp
+			log.Error(err)
+			return
+		}
+		result = *tmp
+
+		if err = cache.RCache.Set(CHAT_APP_INTEGRATE_SYSTEM+"_"+externalConversationId, result, CHAT_APP_INTEGRATE_SYSTEM_EXPIRE); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+	return
+}
+
+func (s *OttMessage) proccessIntegrateSystems(chatAppIntegrateSystems []model.ChatAppIntegrateSystem) (tenants []string) {
+	chatIntegrateSystems := []model.ChatIntegrateSystem{}
+	if len(chatAppIntegrateSystems) > 0 {
+		for _, integrateSystem := range chatAppIntegrateSystems {
+			if integrateSystem.ChatIntegrateSystem[0].Status {
+				chatIntegrateSystems = append(chatIntegrateSystems, *integrateSystem.ChatIntegrateSystem[0])
+			}
+		}
+	}
+
+	if len(chatIntegrateSystems) > 0 {
+		for _, integrateSystem := range chatIntegrateSystems {
+			if len(integrateSystem.TenantDefaultId) > 0 {
+				tenants = append(tenants, integrateSystem.TenantDefaultId)
+			}
+		}
+	}
+	return
 }
 
 func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser *model.ChatManageQueueUser, subscriberAdmins []string, subscribers []*Subscriber, conversation model.ConversationView, message model.Message, isNew bool) {
