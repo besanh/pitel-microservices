@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/uptrace/bun"
@@ -57,6 +58,7 @@ func (repo *UserAllocate) GetAllocateUsers(ctx context.Context, db sqlclient.ISq
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
+	log.Info(query.String())
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil

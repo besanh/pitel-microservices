@@ -56,7 +56,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 						user.ConnectionQueueId = allocateUser.ConnectionQueueId
 						user.ConversationId = allocateUser.ConversationId
 
-						log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
+						log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
 						userChan <- []model.User{user}
 					} else {
 						authInfo.TenantId = allocateUser.TenantId
@@ -83,7 +83,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 
 						user.IsOk = true
 						user.ConversationId = allocateUser.ConversationId
-						log.Infof("conversation %s allocated to username %s, id: %s, domain: %s, source: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId, user.AuthUser.Source)
+						log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
 						userChan <- []model.User{user}
 					}
 				} else {
@@ -118,7 +118,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 						continue
 					}
 
-					log.Infof("conversation %s allocated to username %s, id: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId)
+					log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
 					userChan <- []model.User{user}
 
 					// Set to cache
@@ -164,7 +164,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 				user.ConversationId = (*userAllocations)[0].ConversationId
 			}
 
-			log.Infof("conversation %s allocated to username %s, id: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId)
+			log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
 			userChan <- []model.User{user}
 		}
 	}
@@ -289,6 +289,26 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, tenantId, conversation
 					log.Error(err)
 					return
 				}
+
+				// Update main_allocate from deactive to active if customer chat again and assign to the same user deactive
+				_, allocateUsers, errTmp := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, model.AllocateUserFilter{
+					TenantId:               tenantId,
+					ExternalConversationId: externalConversationId,
+					MainAllocate:           "deactive",
+				}, 1, 0)
+				if errTmp != nil {
+					err = errTmp
+					log.Error(err)
+					return
+				}
+				if len(*allocateUsers) > 0 {
+					(*allocateUsers)[0].MainAllocate = "active"
+					if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*allocateUsers)[0]); err != nil {
+						log.Error(err)
+						return
+					}
+				}
+
 				user.QueueId = userTmp.QueueId
 				user.ConnectionId = connectionQueue.ConnectionId
 				user.ConnectionQueueId = connectionQueue.Id
