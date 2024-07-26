@@ -39,9 +39,9 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 
 	if len(*conversations) > 0 {
 		for k, item := range *conversations {
-			if item.Label != nil && !reflect.DeepEqual(item.Label, "") {
+			if item.Labels != nil && !reflect.DeepEqual(item.Labels, "") {
 				var labels []map[string]string
-				if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
+				if err = json.Unmarshal([]byte(item.Labels), &labels); err != nil {
 					log.Error(err)
 					return
 				}
@@ -65,18 +65,18 @@ func (s *Conversation) GetConversationsByHighLevel(ctx context.Context, authUser
 								log.Error(err)
 								return 0, nil, err
 							}
-							(*conversations)[k].Label = tmp
+							(*conversations)[k].Labels = tmp
 						} else {
-							(*conversations)[k].Label = []byte("[]")
+							(*conversations)[k].Labels = []byte("[]")
 						}
 					} else {
-						(*conversations)[k].Label = []byte("[]")
+						(*conversations)[k].Labels = []byte("[]")
 					}
 				} else {
-					(*conversations)[k].Label = []byte("[]")
+					(*conversations)[k].Labels = []byte("[]")
 				}
 			} else {
-				(*conversations)[k].Label = []byte("[]")
+				(*conversations)[k].Labels = []byte("[]")
 			}
 		}
 	}
@@ -184,9 +184,9 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 		if conversations[k] == nil {
 			continue
 		}
-		if item.Label != nil && !reflect.DeepEqual(item.Label, "") {
+		if item.Labels != nil && !reflect.DeepEqual(item.Labels, "") {
 			var labels []map[string]string
-			if err = json.Unmarshal([]byte(item.Label), &labels); err != nil {
+			if err = json.Unmarshal([]byte(item.Labels), &labels); err != nil {
 				log.Error(err)
 				return
 			}
@@ -210,18 +210,18 @@ func (s *Conversation) GetConversationsByHighLevelWithScrollAPI(ctx context.Cont
 							log.Error(err)
 							return 0, nil, "", err
 						}
-						conversations[k].Label = tmp
+						conversations[k].Labels = tmp
 					} else {
-						conversations[k].Label = []byte("[]")
+						conversations[k].Labels = []byte("[]")
 					}
 				} else {
-					conversations[k].Label = []byte("[]")
+					conversations[k].Labels = []byte("[]")
 				}
 			} else {
-				conversations[k].Label = []byte("[]")
+				conversations[k].Labels = []byte("[]")
 			}
 		} else {
-			conversations[k].Label = []byte("[]")
+			conversations[k].Labels = []byte("[]")
 		}
 	}
 

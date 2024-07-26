@@ -38,7 +38,7 @@ func convertConversationViewToPbConversationView(data *model.ConversationView) (
 			return
 		}
 	}
-	if err = util.ParseStringToAny(string(data.Label), &result.Labels); err != nil {
+	if err = util.ParseStringToAny(string(data.Labels), &result.Labels); err != nil {
 		return
 	}
 	return

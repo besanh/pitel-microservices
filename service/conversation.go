@@ -149,8 +149,8 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				return
 			}
 			labels := []any{}
-			if (*conversations)[k].Label != nil {
-				if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
+			if (*conversations)[k].Labels != nil {
+				if err = json.Unmarshal([]byte((*conversations)[k].Labels), &labels); err != nil {
 					log.Error(err)
 					return
 				}
@@ -174,7 +174,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 						return
 					}
 					if len(*chatLabelExist) > 0 {
-						conversationCustomView.Label = chatLabelExist
+						conversationCustomView.Labels = chatLabelExist
 					}
 				}
 			}
@@ -264,9 +264,9 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 				return 0, nil, "", err
 			}
 
-			if conversations[k].Label != nil && !reflect.DeepEqual(conversations[k].Label, "") {
+			if conversations[k].Labels != nil && !reflect.DeepEqual(conversations[k].Labels, "") {
 				var labels []map[string]string
-				if err = json.Unmarshal([]byte(conversations[k].Label), &labels); err != nil {
+				if err = json.Unmarshal([]byte(conversations[k].Labels), &labels); err != nil {
 					log.Error(err)
 					return 0, nil, "", err
 				}
@@ -284,7 +284,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 							return 0, nil, "", err
 						}
 						if len(*chatLabelExist) > 0 {
-							conversationCustomView.Label = chatLabelExist
+							conversationCustomView.Labels = chatLabelExist
 						}
 					}
 				}
@@ -519,19 +519,19 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 }
 
 func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (result *model.Conversation, err error) {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
+	result, err = repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
 		return
-	} else if len(conversationExist.ConversationId) < 1 {
+	} else if len(result.ConversationId) < 1 {
 		err = errors.New("conversation " + conversationId + " with app_id " + appId + " not found")
 		log.Error(err)
 		return
 	}
 
-	if conversationExist.Labels != nil && !reflect.DeepEqual(conversationExist.Labels, "") {
+	if result.Labels != nil && !reflect.DeepEqual(result.Labels, "") {
 		var labels []map[string]string
-		if err = json.Unmarshal([]byte(conversationExist.Labels), &labels); err != nil {
+		if err = json.Unmarshal([]byte(result.Labels), &labels); err != nil {
 			log.Error(err)
 			return
 		}
@@ -541,34 +541,36 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 				chatLabelIds = append(chatLabelIds, item["label_id"])
 			}
 			if len(chatLabelIds) > 0 {
-				_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+				_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
 					LabelIds: chatLabelIds,
 				}, -1, 0)
-				if err != nil {
+				if errTmp != nil {
+					err = errTmp
 					log.Error(err)
-					return nil, err
+					return
 				}
 				if len(*chatLabelExist) > 0 {
-					tmp, err := json.Marshal(*chatLabelExist)
-					if err != nil {
+					tmp, errTmp := json.Marshal(*chatLabelExist)
+					if errTmp != nil {
+						err = errTmp
 						log.Error(err)
-						return nil, err
+						return
 					}
-					conversationExist.Labels = tmp
+					result.Labels = tmp
 				} else {
-					conversationExist.Labels = []byte("[]")
+					result.Labels = []byte("[]")
 				}
 			} else {
-				conversationExist.Labels = []byte("[]")
+				result.Labels = []byte("[]")
 			}
 		} else {
-			conversationExist.Labels = []byte("[]")
+			result.Labels = []byte("[]")
 		}
 	} else {
-		conversationExist.Labels = []byte("[]")
+		result.Labels = []byte("[]")
 	}
 
-	return conversationExist, nil
+	return
 }
 
 func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error {
