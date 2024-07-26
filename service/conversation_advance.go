@@ -10,7 +10,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -19,11 +18,6 @@ import (
 * Create in internal system, then create in external
  */
 func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, labelType string, request model.ConversationLabelRequest) (labelId string, err error) {
-	dbCon, err := HandleGetDBConSource(authUser)
-	if err != nil {
-		log.Error(err)
-		return
-	}
 	filter := model.ChatLabelFilter{
 		TenantId:        authUser.TenantId,
 		AppId:           request.AppId,
@@ -33,7 +27,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		IsSearchExactly: sql.NullBool{Bool: true, Valid: true},
 		ExternalLabelId: request.ExternalLabelId,
 	}
-	_, chatLabelExists, err := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filter, -1, 0)
+	_, chatLabelExists, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, filter, -1, 0)
 	if err != nil {
 		log.Error(err)
 		return
@@ -59,7 +53,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		ConnectionType: labelType,
 		Status:         "active",
 	}
-	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filterConnection, 1, 0)
+	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filterConnection, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
@@ -90,7 +84,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 		}
 		labelId = chatLabel.GetId()
 	} else if labelType == "facebook" {
-		externalLabelId, err = handleLabelFacebook(ctx, dbCon, labelType, chatLabel, request)
+		externalLabelId, err = handleLabelFacebook(ctx, labelType, chatLabel, request)
 		if err != nil {
 			return
 		}
@@ -99,7 +93,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	}
 
 	if request.Action == "create" {
-		if err = repository.ChatLabelRepo.Insert(ctx, dbCon, chatLabel); err != nil {
+		if err = repository.ChatLabelRepo.Insert(ctx, repository.DBConn, chatLabel); err != nil {
 			log.Error(err)
 			return
 		}
@@ -116,7 +110,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 				LabelName: request.LabelName,
 				LabelType: labelType,
 			}
-			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, filterTmp, 1, 0)
 			if errTmp != nil {
 				log.Error(errTmp)
 				return
@@ -127,7 +121,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 				return
 			}
 			(*labelExist)[0].ExternalLabelId = externalLabelId
-			if err = repository.ChatLabelRepo.Update(ctx, dbCon, (*labelExist)[0]); err != nil {
+			if err = repository.ChatLabelRepo.Update(ctx, repository.DBConn, (*labelExist)[0]); err != nil {
 				log.Error(err)
 				return
 			}
@@ -139,7 +133,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 				LabelName: request.LabelName,
 				LabelType: labelType,
 			}
-			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, filterTmp, 1, 0)
 			if errTmp != nil {
 				log.Error(errTmp)
 				return
@@ -162,7 +156,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 				LabelName: request.LabelName,
 				LabelType: labelType,
 			}
-			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, dbCon, filterTmp, 1, 0)
+			_, labelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, filterTmp, 1, 0)
 			if errTmp != nil {
 				log.Error(errTmp)
 				return
@@ -180,7 +174,7 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 	conversation, err := putConversation(ctx, authUser, externalLabelId, labelType, request)
 	if err != nil {
 		if request.Action == "create" {
-			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
+			if err = repository.ChatLabelRepo.Delete(ctx, repository.DBConn, chatLabel.GetId()); err != nil {
 				log.Error(err)
 				return
 			}
@@ -210,39 +204,35 @@ func PutLabelToConversation(ctx context.Context, authUser *model.AuthUser, label
 			if s.Level == "admin" {
 				subscriberAdmins = append(subscriberAdmins, s.Id)
 			}
-			// if s.Level == "manager" {
-			// 	subscriberManagers = append(subscriberManagers, s.Id)
-			// }
 		}
 	}
 
 	// TODO: publish event to user normal
-	filterUserAllocate := model.AllocateUserFilter{
+	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, model.AllocateUserFilter{
 		TenantId:       authUser.TenantId,
 		AppId:          request.AppId,
 		OaId:           request.OaId,
 		ConversationId: request.ConversationId,
-	}
-	_, userAllocate, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filterUserAllocate, 1, 0)
+	}, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return
-	} else if len(*userAllocate) > 0 {
+	} else if len(*userAllocates) > 0 {
 		// Publish to user normal
 		if request.Action == "create" || request.Action == "update" {
 			if len(subscribers) > 0 {
-				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_add_labels"], (*userAllocate)[0].UserId, subscribers, true, conversationConverted)
+				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_add_labels"], (*userAllocates)[0].UserId, subscribers, true, conversationConverted)
 			}
 		} else if request.Action == "delete" {
 			if len(subscribers) > 0 {
-				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_remove_labels"], (*userAllocate)[0].UserId, subscribers, true, conversationConverted)
+				go PublishConversationToOneUser(variables.EVENT_CHAT["conversation_remove_labels"], (*userAllocates)[0].UserId, subscribers, true, conversationConverted)
 			}
 		}
 
 		// TODO: get user manager then publish
 		manageQueueUserFilter := model.ChatManageQueueUserFilter{
 			TenantId: authUser.TenantId,
-			QueueId:  (*userAllocate)[0].QueueId,
+			QueueId:  (*userAllocates)[0].QueueId,
 		}
 		_, manageQueueUser, errTmp := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, manageQueueUserFilter, 1, 0)
 		if errTmp != nil {
@@ -306,7 +296,7 @@ func handleLabelZalo(ctx context.Context, labelType string, request model.Conver
 	return
 }
 
-func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, labelType string, chatLabel model.ChatLabel, request model.ConversationLabelRequest) (externalLabelId string, err error) {
+func handleLabelFacebook(ctx context.Context, labelType string, chatLabel model.ChatLabel, request model.ConversationLabelRequest) (externalLabelId string, err error) {
 	if labelType == "facebook" {
 		labelType = "face"
 	}
@@ -327,7 +317,7 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 		externalCreateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
-			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
+			if err = repository.ChatLabelRepo.Delete(ctx, repository.DBConn, chatLabel.GetId()); err != nil {
 				log.Error(err)
 				return externalLabelId, err
 			}
@@ -353,7 +343,7 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 		_, errTmp = RequestOttLabel(ctx, labelType, externalUrl, facebookAssociateRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
-			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
+			if err = repository.ChatLabelRepo.Delete(ctx, repository.DBConn, chatLabel.GetId()); err != nil {
 				log.Error(err)
 				return externalLabelId, err
 			}
@@ -365,7 +355,7 @@ func handleLabelFacebook(ctx context.Context, dbCon sqlclient.ISqlClientConn, la
 		_, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
 		if errTmp != nil {
 			log.Error(errTmp)
-			if err = repository.ChatLabelRepo.Delete(ctx, dbCon, chatLabel.GetId()); err != nil {
+			if err = repository.ChatLabelRepo.Delete(ctx, repository.DBConn, chatLabel.GetId()); err != nil {
 				log.Error(err)
 				return externalLabelId, err
 			}
