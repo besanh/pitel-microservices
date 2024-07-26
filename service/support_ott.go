@@ -299,7 +299,7 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, tenantId, conversation
 			}
 		}
 	} else {
-		err = errors.New("connect for conversation " + externalConversationId + " not found")
+		err = errors.New("connect for conversation " + externalConversationId + " not found in tenant " + tenantId)
 		log.Error(err)
 	}
 	return
