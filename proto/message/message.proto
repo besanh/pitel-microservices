@@ -28,11 +28,11 @@ message Message {
   string supporter_id = 16;
   string supporter_name = 17;
   google.protobuf.Timestamp send_time = 18;
-  int32 send_timestamp = 19;
+  int64 send_timestamp = 19;
   string content = 20;
   string is_read = 21;
   google.protobuf.Timestamp read_time = 22;
-  int32 read_timestamp = 23;
+  int64 read_timestamp = 23;
   repeated string read_by = 24;
   repeated OttAttachments attachments = 25;
   google.protobuf.Timestamp created_at = 26;
