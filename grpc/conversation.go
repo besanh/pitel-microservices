@@ -154,7 +154,8 @@ func (g *GRPCConversation) GetConversationsWithScrollAPI(ctx context.Context, re
 func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, request *pb.GetConversationsByManagerRequest) (result *pb.GetConversationsByManagerResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+		err = status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+		return
 	}
 
 	limit, offset := util.ParseLimit(request.GetLimit()), util.ParseOffset(request.GetOffset())
@@ -189,19 +190,28 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 	total, data, err := service.ConversationService.GetConversationsByHighLevel(ctx, user, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return
 	}
 	resultData := make([]*pb.ConversationView, 0)
 	if data != nil {
 		for _, item := range *data {
-			tmp, err := convertConversationViewToPbConversationView(&item)
+			tmp, errTmp := convertConversationViewToPbConversationView(&item)
+			if errTmp != nil {
+				err = errTmp
+				log.Error(err)
+				result = &pb.GetConversationsByManagerResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return
+			}
 			if err = util.ParseAnyToAny(item, &tmp); err != nil {
 				log.Error(err)
 				result = &pb.GetConversationsByManagerResponse{
 					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 					Message: err.Error(),
 				}
-				return result, nil
+				return
 			}
 			resultData = append(resultData, tmp)
 		}
@@ -259,14 +269,15 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 	}
 	resultData := make([]*pb.ConversationView, 0)
 	for _, item := range data {
-		tmp, err := convertConversationViewToPbConversationView(item)
-		if err != nil {
+		tmp, errTmp := convertConversationViewToPbConversationView(item)
+		if errTmp != nil {
+			err = errTmp
 			log.Error(err)
 			result = &pb.GetConversationsByManagerWithScrollAPIResponse{
 				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
 				Message: err.Error(),
 			}
-			return result, nil
+			return
 		}
 		resultData = append(resultData, tmp)
 	}
