@@ -28,7 +28,7 @@ func convertConversationViewToPbConversationView(data *model.ConversationView) (
 		IsDoneBy:               data.IsDoneBy,
 		CreatedAt:              data.CreatedAt,
 		UpdatedAt:              data.UpdatedAt,
-		TotalUnread:            data.TotalUnRead,
+		TotalUnread:            int32(data.TotalUnRead),
 		LatestMessageContent:   data.LatestMessageContent,
 		LatestMessageDirection: data.LatestMessageDirection,
 		ExternalConversationId: data.ExternalConversationId,

@@ -96,7 +96,7 @@ message FacebookInfo {
   string url_oa = 4;
   string access_token = 5;
   string avatar = 6;
-  int64 expire = 7;
+  int32 expire = 7;
   string status = 8;
 }
 

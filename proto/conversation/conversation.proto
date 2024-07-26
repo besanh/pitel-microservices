@@ -29,7 +29,7 @@ message ConversationCustomView {
   string is_done_by = 17;
   string created_at = 18;
   string updated_at = 19;
-  int64 total_unread = 20;
+  int32 total_unread = 20;
   string latest_message_content = 21;
   string latest_message_direction = 22;
   string external_conversation_id = 23;
@@ -55,7 +55,7 @@ message ConversationView {
   string is_done_by = 17;
   string created_at = 18;
   string updated_at = 19;
-  int64 total_unread = 20;
+  int32 total_unread = 20;
   string latest_message_content = 21;
   string latest_message_direction = 22;
   string external_conversation_id = 23;

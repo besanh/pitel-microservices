@@ -53,8 +53,8 @@ message ZaloInfo {
   string oa_id = 2;
   string oa_name = 3;
   string status = 4;
-  int64 created_timestamp = 5;
-  int64 updated_timestamp = 6;
+  int32 created_timestamp = 5;
+  int32 updated_timestamp = 6;
 }
 
 message FacebookInfo {
@@ -62,8 +62,8 @@ message FacebookInfo {
   string oa_id = 2;
   string oa_name = 3;
   string status = 4;
-  int64 created_timestamp = 5;
-  int64 updated_timestamp = 6;
+  int32 created_timestamp = 5;
+  int32 updated_timestamp = 6;
 }
 
 message OaInfo {
