@@ -236,7 +236,7 @@ func (h *Message) HandlePostSendMessage(c *gin.Context) {
 		file = messageForm.File
 	} else {
 		jsonBody := make(map[string]any, 0)
-		if err := c.ShouldBind(&jsonBody); err != nil {
+		if err := c.ShouldBindJSON(&jsonBody); err != nil {
 			log.Error(err)
 			c.JSON(response.BadRequestMsg(err))
 			return
