@@ -151,8 +151,8 @@ func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *mode
 
 func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) (err error) {
 	filter := model.ConversationFilter{
-		TenantId:               authUser.TenantId,
-		ExternalConversationId: []string{data.ConversationId},
+		TenantId:       authUser.TenantId,
+		ConversationId: []string{data.ConversationId},
 	}
 	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 	if err != nil {
