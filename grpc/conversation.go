@@ -360,21 +360,22 @@ func (g *GRPCConversation) UpdateConversation(ctx context.Context, request *pb.P
 func (g *GRPCConversation) PutLabelToConversation(ctx context.Context, request *pb.PutLabelToConversationRequest) (result *pb.PutLabelToConversationResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
-		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+		err = status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+		return
 	}
 	var payload model.ConversationLabelRequest
 	if err = util.ParseAnyToAny(request, &payload); err != nil {
 		log.Error(err)
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return
 	}
 
 	if err = payload.Validate(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return
 	}
 
 	labelId, err := service.PutLabelToConversation(ctx, user, request.GetLabelType(), payload)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return
 	}
 
 	result = &pb.PutLabelToConversationResponse{
