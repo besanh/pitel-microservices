@@ -12,7 +12,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
-	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/goauth"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -168,12 +167,12 @@ func (s *ChatAuth) VerifyToken(ctx context.Context, token string) (goAuthUser *g
 // 	return
 // }
 
-func generateToken(id string) string {
-	code := util.GenerateRandomString(36)
-	idEnc := base64.StdEncoding.EncodeToString([]byte(id))
-	token := fmt.Sprintf("chat-%s-%s", code, idEnc)
-	return token
-}
+// func generateToken(id string) string {
+// 	code := util.GenerateRandomString(36)
+// 	idEnc := base64.StdEncoding.EncodeToString([]byte(id))
+// 	token := fmt.Sprintf("chat-%s-%s", code, idEnc)
+// 	return token
+// }
 
 // func (s *ChatAuth) forgotPasswordRequest(ctx context.Context, body model.ForgotPassword) (res *model.ForgotPasswordResponse, err error) {
 // 	res = &model.ForgotPasswordResponse{

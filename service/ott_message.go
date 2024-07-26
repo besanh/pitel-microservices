@@ -294,6 +294,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 				// Insert message
 				if len(conversation.ConversationId) > 0 {
+					// Parsing conversation_id
+					message.ConversationId = conversation.ConversationId
 					if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, conversation.AppId, docId, message); err != nil {
 						log.Error(err)
 						errChan <- err
