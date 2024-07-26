@@ -246,7 +246,7 @@ func CheckConfigAppCache(ctx context.Context, appId string) (chatApp *model.Chat
 	return
 }
 
-func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionType string) (connectionApp model.ChatConnectionApp, err error) {
+func GetConfigConnectionAppCache(ctx context.Context, tenantId, appId, oaId, connectionType string) (connectionApp model.ChatConnectionApp, err error) {
 	connectionAppCache := cache.RCache.Get(CHAT_CONNECTION + "_" + appId + "_" + oaId)
 	if connectionAppCache != nil {
 		var tmp model.ChatConnectionApp
@@ -273,7 +273,7 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			return
 		}
 
-		if err = cache.RCache.Set(CHAT_CONNECTION+"_"+appId+"_"+oaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
+		if err = cache.RCache.Set(CHAT_CONNECTION+"_"+connectionApp.TenantId+"_"+appId+"_"+oaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
 			log.Error(err)
 			return
 		}

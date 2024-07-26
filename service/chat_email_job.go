@@ -84,7 +84,7 @@ func handleFlowExpireFacebook(ctx context.Context, dbCon sqlclient.ISqlClientCon
 	if time.Now().After(dayBeforeStartExpire) && time.Now().Before(dayBeforeEndExpire) && !connection.OaInfo.Facebook[0].IsNotify {
 		// Caching connection
 		chatEmail := model.ChatEmail{}
-		connectionCache := cache.RCache.Get(CHAT_CONNECTION + "_" + connection.OaInfo.Facebook[0].OaId)
+		connectionCache := cache.RCache.Get(CHAT_CONNECTION + "_" + connection.OaInfo.Facebook[0].AppId + "_" + "_" + connection.OaInfo.Facebook[0].OaId)
 		if connectionCache != nil {
 			if err = json.Unmarshal(connectionCache.([]byte), &chatEmail); err != nil {
 				log.Error(err)
@@ -167,7 +167,7 @@ func handleFlowExpireZalo(ctx context.Context, dbCon sqlclient.ISqlClientConn, c
 	if time.Now().After(dayBeforeStartExpire) && time.Now().Before(dayBeforeEndExpire) && !connection.OaInfo.Zalo[0].IsNotify {
 		// Caching connection
 		chatEmail := model.ChatEmail{}
-		connectionCache := cache.RCache.Get(CHAT_CONNECTION + "_" + connection.OaInfo.Zalo[0].OaId)
+		connectionCache := cache.RCache.Get(CHAT_CONNECTION + "_" + connection.TenantId + "_" + connection.OaInfo.Zalo[0].AppId + "_" + connection.OaInfo.Zalo[0].OaId)
 		if connectionCache != nil {
 			if err = json.Unmarshal(connectionCache.([]byte), &chatEmail); err != nil {
 				log.Error(err)
