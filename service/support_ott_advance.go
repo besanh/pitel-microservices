@@ -175,11 +175,15 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 	}
 	if connectionExist != nil {
 		if connectionExist.ConnectionType == "zalo" && conversation.ConversationType == "zalo" {
-			conversation.OaName = connectionExist.OaInfo.Zalo[0].OaName
-			conversation.OaAvatar = connectionExist.OaInfo.Zalo[0].Avatar
+			if len(connectionExist.OaInfo.Zalo) > 0 {
+				conversation.OaName = connectionExist.OaInfo.Zalo[0].OaName
+				conversation.OaAvatar = connectionExist.OaInfo.Zalo[0].Avatar
+			}
 		} else if connectionExist.ConnectionType == "facebook" && conversation.ConversationType == "facebook" {
-			conversation.OaName = connectionExist.OaInfo.Facebook[0].OaName
-			conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
+			if len(connectionExist.OaInfo.Facebook) > 0 {
+				conversation.OaName = connectionExist.OaInfo.Facebook[0].OaName
+				conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
+			}
 		}
 	}
 

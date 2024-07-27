@@ -42,13 +42,17 @@ func (s *ChatEmail) HandleJobExpireToken() {
 	if total > 0 {
 		for _, connection := range *connections {
 			log.Info("start job processing connection: " + connection.ConnectionName)
-			if connection.OaInfo.Facebook != nil && connection.OaInfo.Facebook[0].Expire != 0 {
-				if err := handleFlowExpireFacebook(ctx, dbCon, connection); err != nil {
-					continue
+			if len(connection.OaInfo.Facebook) > 0 {
+				if connection.OaInfo.Facebook[0].Expire != 0 {
+					if err := handleFlowExpireFacebook(ctx, dbCon, connection); err != nil {
+						continue
+					}
 				}
-			} else if connection.OaInfo.Zalo != nil && connection.OaInfo.Zalo[0].Expire != 0 {
-				if err := handleFlowExpireZalo(ctx, dbCon, connection); err != nil {
-					continue
+			} else if len(connection.OaInfo.Zalo) > 0 {
+				if connection.OaInfo.Zalo[0].Expire != 0 {
+					if err := handleFlowExpireZalo(ctx, dbCon, connection); err != nil {
+						continue
+					}
 				}
 			}
 		}
