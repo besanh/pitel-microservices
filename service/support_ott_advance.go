@@ -293,7 +293,20 @@ func PublishPutConversationToChatQueue(ctx context.Context, conversation model.C
 		log.Error(err)
 		return
 	}
-	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_QUEUE_NAME, b); err != nil {
+	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_CONVERSATION_QUEUE_NAME, b); err != nil {
+		log.Error(err)
+		return
+	}
+	return
+}
+
+func PublishPutMessageToChatQueue(ctx context.Context, message model.Message) (err error) {
+	var b []byte
+	if b, err = json.Marshal(message); err != nil {
+		log.Error(err)
+		return
+	}
+	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_MESSAGE_QUEUE_NAME, b); err != nil {
 		log.Error(err)
 		return
 	}

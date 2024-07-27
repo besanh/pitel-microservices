@@ -9,7 +9,7 @@ import (
 type Message struct {
 	TenantId               string            `json:"tenant_id"`
 	ParentMessageId        string            `json:"parent_message_id"`
-	Id                     string            `json:"id"`
+	MessageId              string            `json:"message_id"`
 	ConversationId         string            `json:"conversation_id"` // uuid of conversation
 	ParentExternalMsgId    string            `json:"parent_external_msg_id"`
 	ExternalConversationId string            `json:"external_conversation_id"` // app_id+oa_id+external_user_id

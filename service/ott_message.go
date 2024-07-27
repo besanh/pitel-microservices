@@ -218,7 +218,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				if len(conversation.ConversationId) > 0 {
 					// Parsing conversation_id
 					message.ConversationId = conversation.ConversationId
-					if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, conversation.AppId, docId, message); err != nil {
+					message.MessageId = docId
+					if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, data.AppId, docId, message); err != nil {
 						log.Error(err)
 						errChan <- err
 						return
@@ -307,6 +308,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 
 func (s *OttMessage) createMessage(data model.OttMessage, timestamp time.Time) model.Message {
 	return model.Message{
+		MessageId:           uuid.NewString(),
 		ParentExternalMsgId: "",
 		ExternalMsgId:       data.MsgId,
 		MessageType:         data.MessageType,
@@ -449,16 +451,25 @@ func (s *OttMessage) PostShareInfoEvent(ctx context.Context, authUser *model.Aut
 }
 
 func (s *OttMessage) InitQueueRequest() {
-	isExist := queue.RMQ.Server.IsHasQueue(BSS_CHAT_QUEUE_NAME)
-	if isExist {
-		queue.RMQ.Server.RemoveQueue(BSS_CHAT_QUEUE_NAME)
+	isExistConversationQueue := queue.RMQ.Server.IsHasQueue(BSS_CHAT_CONVERSATION_QUEUE_NAME)
+	if isExistConversationQueue {
+		queue.RMQ.Server.RemoveQueue(BSS_CHAT_CONVERSATION_QUEUE_NAME)
 	}
 
-	if s.NumConsumer < 1 {
-		s.NumConsumer = 1
+	isExistMessageQueue := queue.RMQ.Server.IsHasQueue(BSS_CHAT_MESSAGE_QUEUE_NAME)
+	if isExistMessageQueue {
+		queue.RMQ.Server.RemoveQueue(BSS_CHAT_MESSAGE_QUEUE_NAME)
 	}
 
-	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_QUEUE_NAME, s.handleEsConversationQueue, 1); err != nil {
+	if s.NumConsumer < 2 {
+		s.NumConsumer = 2
+	}
+
+	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_CONVERSATION_QUEUE_NAME, s.handleEsConversationQueue, 1); err != nil {
+		log.Error(err)
+	}
+
+	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_MESSAGE_QUEUE_NAME, s.handleEsMessageQueue, 1); err != nil {
 		log.Error(err)
 	}
 }
@@ -507,6 +518,50 @@ func (s *OttMessage) handleEsConversationQueue(d rmq.Delivery) {
 	case <-ctx.Done():
 		// exceeded timeout
 		log.Errorf("handleEsConversationQueue exceeded timeout, msg=%s", d.Payload())
+		d.Reject()
+	}
+}
+
+func (s *OttMessage) handleEsMessageQueue(d rmq.Delivery) {
+	payload := model.Message{}
+	if err := util.ParseStringToAny(d.Payload(), &payload); err != nil {
+		log.Error(err)
+		d.Reject()
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	done := make(chan struct{})
+
+	go func() {
+		defer func() {
+			close(done)
+		}()
+		tmpBytes, err := json.Marshal(payload)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		esDoc := map[string]any{}
+		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_MESSAGE, payload.AppId, payload.MessageId, esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+	}()
+
+	select {
+	case <-done:
+		// job have been success
+		d.Ack()
+	case <-ctx.Done():
+		// exceeded timeout
+		log.Errorf("handleEsMessageQueue exceeded timeout, msg=%s", d.Payload())
 		d.Reject()
 	}
 }

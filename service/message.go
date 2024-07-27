@@ -147,7 +147,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	message = model.Message{
 		TenantId:            conversation.TenantId,
 		ParentExternalMsgId: "",
-		Id:                  docId,
+		MessageId:           docId,
 		MessageType:         conversation.ConversationType,
 		ConversationId:      conversation.ConversationId,
 		ExternalMsgId:       resOtt.Data.MsgId,
@@ -320,22 +320,8 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 				item.UpdatedAt = time.Now()
 				item.ReadTime = time.Now()
 
-				tmpBytes, err := json.Marshal(item)
-				if err != nil {
-					log.Error(err)
-					result.TotalSuccess -= 1
-					result.TotalFail += 1
-					return result, err
-				}
-				esDoc := map[string]any{}
-				if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-					log.Error(err)
-					result.TotalSuccess -= 1
-					result.TotalFail += 1
-					return result, err
-				}
 				// TODO: add queue to update
-				if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_MESSAGE, item.AppId, item.Id, esDoc); err != nil {
+				if err := PublishPutMessageToChatQueue(ctx, item); err != nil {
 					log.Error(err)
 					result.TotalSuccess -= 1
 					result.TotalFail += 1
@@ -345,7 +331,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 		}
 	} else {
 		for _, item := range data.MessageIds {
-			// Need tracking message stil not read ?
+			// Need tracking message still not read ?
 			message, err := repository.MessageESRepo.GetMessageById(ctx, "", ES_INDEX_MESSAGE, item)
 			if err != nil {
 				log.Error(err)
@@ -353,7 +339,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 				result.TotalFail += 1
 				result.ListFail[item] = err.Error()
 				continue
-			} else if len(message.Id) < 1 {
+			} else if len(message.MessageId) < 1 {
 				result.TotalSuccess -= 1
 				result.TotalFail += 1
 				log.Errorf("message %s not found", item)
@@ -367,24 +353,7 @@ func (s *Message) MarkReadMessages(ctx context.Context, authUser *model.AuthUser
 			message.UpdatedAt = time.Now()
 			message.ReadTime = time.Now()
 
-			tmpBytes, err := json.Marshal(message)
-			if err != nil {
-				log.Error(err)
-				result.TotalSuccess -= 1
-				result.TotalFail += 1
-				result.ListFail[item] = err.Error()
-				continue
-			}
-
-			esDoc := map[string]any{}
-			if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
-				log.Error(err)
-				result.TotalSuccess -= 1
-				result.TotalFail += 1
-				result.ListFail[item] = err.Error()
-			}
-			newConversationId := GenerateConversationId(data.AppId, data.OaId, item)
-			if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_MESSAGE, data.AppId, newConversationId, esDoc); err != nil {
+			if err := PublishPutMessageToChatQueue(ctx, *message); err != nil {
 				log.Error(err)
 				result.TotalSuccess -= 1
 				result.TotalFail += 1

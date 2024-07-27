@@ -120,7 +120,8 @@ var (
 	ENABLE_NOTIFY_EMAIL bool   = false
 
 	// Queue
-	BSS_CHAT_QUEUE_NAME string = "bss_chat_request_queue"
+	BSS_CHAT_CONVERSATION_QUEUE_NAME string = "bss_chat_conversation_request_queue"
+	BSS_CHAT_MESSAGE_QUEUE_NAME      string = "bss_chat_message_request_queue"
 )
 
 type (
