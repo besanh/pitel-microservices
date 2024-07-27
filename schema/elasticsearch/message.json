@@ -8,7 +8,7 @@
             "parent_message_id": {
                 "type": "keyword"
             },
-            "id": {
+            "message_id": {
                 "type": "keyword"
             },
             "conversation_id": {

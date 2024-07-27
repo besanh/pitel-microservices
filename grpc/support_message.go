@@ -11,7 +11,7 @@ func convertMessageToPbMessage(data model.Message) (result *pb.Message, err erro
 	result = &pb.Message{
 		TenantId:            data.TenantId,
 		ParentMessageId:     data.ParentMessageId,
-		Id:                  data.Id,
+		MessageId:           data.MessageId,
 		ConversationId:      data.ConversationId,
 		ParentExternalMsgId: data.ParentExternalMsgId,
 		ExternalMsgId:       data.ExternalMsgId,

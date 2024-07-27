@@ -512,7 +512,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	scriptedMessage := model.Message{
 		TenantId:            conversationView.TenantId,
 		ParentExternalMsgId: "",
-		Id:                  docId,
+		MessageId:           docId,
 		MessageType:         conversationView.ConversationType,
 		ConversationId:      conversationView.ConversationId,
 		ExternalMsgId:       resOtt.Data.MsgId,
