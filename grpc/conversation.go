@@ -35,25 +35,16 @@ func (g *GRPCConversation) GetConversations(ctx context.Context, request *pb.Get
 	if len(request.GetIsDone()) > 0 {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(request.GetIsDone())
-	} else {
-		isDone.Valid = true
-		isDone.Bool = false
 	}
 	major := sql.NullBool{}
 	if len(request.GetMajor()) > 0 {
 		major.Valid = true
 		major.Bool, _ = strconv.ParseBool(request.GetMajor())
-	} else {
-		major.Valid = true
-		major.Bool = false
 	}
 	following := sql.NullBool{}
 	if len(request.GetFollowing()) > 0 {
 		following.Valid = true
 		following.Bool, _ = strconv.ParseBool(request.GetFollowing())
-	} else {
-		following.Valid = true
-		following.Bool = false
 	}
 
 	filter := model.ConversationFilter{
@@ -108,25 +99,16 @@ func (g *GRPCConversation) GetConversationsWithScrollAPI(ctx context.Context, re
 	if len(request.GetIsDone()) > 0 {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(request.GetIsDone())
-	} else {
-		isDone.Valid = true
-		isDone.Bool = false
 	}
 	major := sql.NullBool{}
 	if len(request.GetMajor()) > 0 {
 		major.Valid = true
 		major.Bool, _ = strconv.ParseBool(request.GetMajor())
-	} else {
-		major.Valid = true
-		major.Bool = false
 	}
 	following := sql.NullBool{}
 	if len(request.GetFollowing()) > 0 {
 		following.Valid = true
 		following.Bool, _ = strconv.ParseBool(request.GetFollowing())
-	} else {
-		following.Valid = true
-		following.Bool = false
 	}
 
 	filter := model.ConversationFilter{
@@ -182,25 +164,16 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 	if len(request.GetIsDone()) > 0 {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(request.GetIsDone())
-	} else {
-		isDone.Valid = true
-		isDone.Bool = false
 	}
 	major := sql.NullBool{}
 	if len(request.GetMajor()) > 0 {
 		major.Valid = true
 		major.Bool, _ = strconv.ParseBool(request.GetMajor())
-	} else {
-		major.Valid = true
-		major.Bool = false
 	}
 	following := sql.NullBool{}
 	if len(request.GetFollowing()) > 0 {
 		following.Valid = true
 		following.Bool, _ = strconv.ParseBool(request.GetFollowing())
-	} else {
-		following.Valid = true
-		following.Bool = false
 	}
 
 	filter := model.ConversationFilter{
@@ -266,25 +239,16 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 	if len(request.GetIsDone()) > 0 {
 		isDone.Valid = true
 		isDone.Bool, _ = strconv.ParseBool(request.GetIsDone())
-	} else {
-		isDone.Valid = true
-		isDone.Bool = false
 	}
 	major := sql.NullBool{}
 	if len(request.GetMajor()) > 0 {
 		major.Valid = true
 		major.Bool, _ = strconv.ParseBool(request.GetMajor())
-	} else {
-		major.Valid = true
-		major.Bool = false
 	}
 	following := sql.NullBool{}
 	if len(request.GetFollowing()) > 0 {
 		following.Valid = true
 		following.Bool, _ = strconv.ParseBool(request.GetFollowing())
-	} else {
-		following.Valid = true
-		following.Bool = false
 	}
 
 	filter := model.ConversationFilter{
