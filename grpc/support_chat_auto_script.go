@@ -66,7 +66,7 @@ func convertChatAutoScriptToPbChatAutoScript(data model.ChatAutoScriptView) (res
 			}
 			if label.ChatLabel != nil {
 				if err = util.ParseAnyToAny(label.ChatLabel, &tmp.ChatLabel); err != nil {
-					continue
+					return
 				}
 			}
 			result.ChatLabelLink = append(result.ChatLabelLink, tmp)
