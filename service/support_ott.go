@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math/rand"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,7 +32,7 @@ import (
 /**
 * Chia patch cho phan loop
  */
-func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error, tenants []string) {
+func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error, tenants []string) {
 	for _, item := range tenants {
 		var authInfo model.AuthUser
 		var user model.User
@@ -45,14 +44,14 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 		allocateUsersCache, err := cache.RCache.HGetAll(USER_ALLOCATE + "_" + item + "_" + externalConversationId)
 		if err != nil {
 			log.Error(err)
-			errChan <- err
+			userChan <- []model.User{}
 			continue
 		}
 		if len(allocateUsersCache) > 0 {
 			for _, AllocateUserCache := range allocateUsersCache {
 				if err = json.Unmarshal([]byte(AllocateUserCache), allocateUser); err != nil {
 					log.Error(err)
-					errChan <- err
+					userChan <- []model.User{}
 					continue
 				}
 
@@ -81,8 +80,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 						userUuidExcludes = append(userUuidExcludes, allocateUser.UserId)
 						user, err := s.CheckAllSetting(ctx, item, conversationId, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, true, allocateUser, chatApp, userUuidExcludes)
 						if err != nil {
-							log.Error(err)
-							errChan <- err
+							userChan <- []model.User{}
 							continue
 						}
 
@@ -102,7 +100,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 					user, err := s.CheckAllSetting(ctx, item, conversationId, externalConversationId, message, false, nil, chatApp, userUuidExcludes)
 					if err != nil {
 						log.Error(err)
-						errChan <- err
+						userChan <- []model.User{}
 						continue
 					}
 
@@ -114,7 +112,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 					_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 					if err != nil {
 						log.Error(err)
-						errChan <- err
+						userChan <- []model.User{}
 						continue
 					}
 					if len(*userAllocations) > 0 {
@@ -126,7 +124,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 						}
 						user.ConversationId = (*userAllocations)[0].ConversationId
 					} else {
-						errChan <- errors.New("conversation " + externalConversationId + " not found")
+						log.Error(errors.New("conversation " + externalConversationId + " not found"))
 						continue
 					}
 
@@ -137,12 +135,12 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 					jsonByte, err := json.Marshal(&allocateUser)
 					if err != nil {
 						log.Error(err)
-						errChan <- err
+						userChan <- []model.User{}
 						continue
 					}
 					if err = cache.RCache.HSetRaw(ctx, USER_ALLOCATE+"_"+item+"_"+externalConversationId, externalConversationId, string(jsonByte)); err != nil {
 						log.Error(err)
-						errChan <- err
+						userChan <- []model.User{}
 						continue
 					}
 				}
@@ -150,8 +148,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 		} else {
 			user, err := s.CheckAllSetting(ctx, item, conversationId, externalConversationId, message, false, nil, chatApp, userUuidExcludes)
 			if err != nil {
-				log.Error(err)
-				errChan <- err
+				userChan <- []model.User{}
 				continue
 			}
 
@@ -163,7 +160,7 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, mutex *sync.RWMutex, 
 			_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 			if err != nil {
 				log.Error(err)
-				errChan <- err
+				userChan <- []model.User{}
 				continue
 			}
 			if len(*userAllocations) > 0 && user.AuthUser != nil {

@@ -31,7 +31,6 @@ type (
 	OttMessage struct {
 		NumConsumer int
 		Users       map[string]chan []model.User
-		mux         sync.RWMutex
 	}
 )
 
@@ -78,223 +77,234 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	var conversation model.ConversationView
 	var user model.User
 	userChan := make(chan []model.User, len(tenants)) // Buffered channel to avoid blocking
-	done := make(chan bool, 1)
+	doneChan := make(chan bool, 1)
 	errChan := make(chan error, 1)
 
 	// Process users
 	var wg sync.WaitGroup
 	wg.Add(len(tenants))
-	go func(timeStamp time.Time, userChan chan []model.User, done chan<- bool) {
+	go func(timeStamp time.Time, userChan chan []model.User, doneChan chan<- bool) {
 		defer close(userChan)
 		for users := range userChan {
-			for k, item := range users {
-				user = item
-				docId := uuid.NewString()
-				connectionCache, err := GetConfigConnectionAppCache(ctx, tenants[k], data.AppId, data.OaId, data.MessageType)
-				if err != nil {
-					log.Error(err)
-					errChan <- err
-					return
-				}
-				message := s.createMessage(data, timestamp)
-				if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
-					message.ReadTime = timestamp
-					message.ReadTimestamp = data.Timestamp
-				}
-				if data.Attachments != nil {
-					for _, val := range *data.Attachments {
-						var attachmentFile model.OttPayloadFile
-						var attachmentMedia model.OttPayloadMedia
-						var attachmentDetail model.OttAttachments
-						var payload model.OttPayloadMedia
-						attachmentDetail.AttType = val.AttType
-						if val.AttType == "file" {
-							if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
-								log.Error(err)
-								errChan <- err
-								return
-							}
-							attachmentFile.Url = strings.ReplaceAll(attachmentFile.Url, "u0026", "&")
-							attachmentDetail.Payload = &payload
-						} else {
-							if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
-								log.Error(err)
-								errChan <- err
-								return
-							}
-							attachmentMedia.Url = strings.ReplaceAll(attachmentMedia.Url, "u0026", "&")
-							attachmentDetail.Payload = &payload
-						}
-						message.Attachments = append(message.Attachments, &attachmentDetail)
-						message.Content = val.Payload.Name
-					}
-				}
-
-				if user.AuthUser != nil {
-					data.TenantId = user.AuthUser.TenantId
-					message.TenantId = user.AuthUser.TenantId
-				} else {
-					data.TenantId = connectionCache.TenantId
-					message.TenantId = connectionCache.TenantId
-
-					// TODO: find connection_queue
-					connectionQueueFilter := model.ConnectionQueueFilter{
-						TenantId:     connectionCache.TenantId,
-						ConnectionId: connectionCache.Id,
-					}
-					_, connectionQueueExists, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, connectionQueueFilter, 1, 0)
-					if err != nil {
-						log.Error(err)
-						errChan <- err
-						return
-					} else if len(*connectionQueueExists) < 1 {
-						log.Errorf("connection queue " + connectionCache.Id + " not found")
-						errChan <- errors.New("connection queue " + connectionCache.Id + " not found")
-						return
-					}
-
-					filterChatManageQueueUser := model.ChatManageQueueUserFilter{
-						QueueId: (*connectionQueueExists)[0].QueueId,
-					}
-					_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
+			if len(users) > 0 {
+				for k, item := range users {
+					log.Info(123)
+					user = item
+					docId := uuid.NewString()
+					connectionCache, err := GetConfigConnectionAppCache(ctx, tenants[k], data.AppId, data.OaId, data.MessageType)
 					if err != nil {
 						log.Error(err)
 						errChan <- err
 						return
 					}
-					if len(*manageQueueUser) > 0 {
-						user.QueueId = (*manageQueueUser)[0].QueueId
-						user.ConnectionId = (*manageQueueUser)[0].ConnectionId
-						user.IsOk = true
+					message := s.createMessage(data, timestamp)
+					if slices.Contains[[]string](variables.EVENT_READ_MESSAGE, data.EventName) {
+						message.ReadTime = timestamp
+						message.ReadTimestamp = data.Timestamp
 					}
-				}
-
-				if user.IsOk {
-					conversationTmp, isNewTmp, errConv := s.UpSertConversation(ctx, user.ConnectionId, user.ConversationId, data)
-					if errConv != nil {
-						errChan <- errConv
-						return
-					}
-					if err := util.ParseAnyToAny(conversationTmp, &conversation); err != nil {
-						log.Error(err)
-						errChan <- err
-						return
-					}
-					isNew = isNewTmp
-
-					if len(conversation.ConversationId) > 0 {
-						message.IsRead = "deactive"
-						if message.IsEcho {
-							message.Direction = variables.DIRECTION["send"]
-							message.Avatar = conversation.OaAvatar
-							message.SupporterId = ""
-							message.SupporterName = "Admin OA"
+					if data.Attachments != nil {
+						for _, val := range *data.Attachments {
+							var attachmentFile model.OttPayloadFile
+							var attachmentMedia model.OttPayloadMedia
+							var attachmentDetail model.OttAttachments
+							var payload model.OttPayloadMedia
+							attachmentDetail.AttType = val.AttType
+							if val.AttType == "file" {
+								if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
+									log.Error(err)
+									errChan <- err
+									return
+								}
+								attachmentFile.Url = strings.ReplaceAll(attachmentFile.Url, "u0026", "&")
+								attachmentDetail.Payload = &payload
+							} else {
+								if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
+									log.Error(err)
+									errChan <- err
+									return
+								}
+								attachmentMedia.Url = strings.ReplaceAll(attachmentMedia.Url, "u0026", "&")
+								attachmentDetail.Payload = &payload
+							}
+							message.Attachments = append(message.Attachments, &attachmentDetail)
+							message.Content = val.Payload.Name
 						}
+					}
+
+					if user.AuthUser != nil {
+						data.TenantId = user.AuthUser.TenantId
+						message.TenantId = user.AuthUser.TenantId
 					} else {
-						log.Error("conversation " + conversation.ConversationId + " not found with app id " + data.AppId)
-						errChan <- errors.New("conversation " + conversation.ConversationId + " not found with app id " + data.AppId)
-						return
-					}
-				} else if user.PreviousAssign != nil {
-					// TODO: insert or update allocate user
-					user.PreviousAssign.UserId = user.AuthUser.UserId
-					user.PreviousAssign.MainAllocate = "active"
-					user.PreviousAssign.UpdatedAt = time.Now()
-					user.PreviousAssign.AllocatedTimestamp = time.Now().UnixMilli()
-					if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, *user.PreviousAssign); err != nil {
-						log.Error(err)
-						errChan <- err
-						return
-					}
-				}
-				if len(conversation.ConversationId) < 1 {
-					err = errors.New("conversation " + conversation.ConversationId + " not found")
-					log.Error(err)
-					errChan <- err
-					return
-				}
+						data.TenantId = connectionCache.TenantId
+						message.TenantId = connectionCache.TenantId
 
-				// Insert message
-				if len(conversation.ConversationId) > 0 {
-					// Parsing conversation_id
-					message.ConversationId = conversation.ConversationId
-					message.MessageId = docId
-					if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, data.AppId, docId, message); err != nil {
+						// TODO: find connection_queue
+						connectionQueueFilter := model.ConnectionQueueFilter{
+							TenantId:     connectionCache.TenantId,
+							ConnectionId: connectionCache.Id,
+						}
+						_, connectionQueueExists, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, connectionQueueFilter, 1, 0)
+						if err != nil {
+							log.Error(err)
+							errChan <- err
+							return
+						} else if len(*connectionQueueExists) < 1 {
+							log.Errorf("connection queue " + connectionCache.Id + " not found")
+							errChan <- errors.New("connection queue " + connectionCache.Id + " not found")
+							return
+						}
+
+						filterChatManageQueueUser := model.ChatManageQueueUserFilter{
+							QueueId: (*connectionQueueExists)[0].QueueId,
+						}
+						_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
+						if err != nil {
+							log.Error(err)
+							errChan <- err
+							return
+						}
+						if len(*manageQueueUser) > 0 {
+							user.QueueId = (*manageQueueUser)[0].QueueId
+							user.ConnectionId = (*manageQueueUser)[0].ConnectionId
+							user.IsOk = true
+						}
+					}
+
+					if user.IsOk {
+						conversationTmp, isNewTmp, errConv := s.UpSertConversation(ctx, user.ConnectionId, user.ConversationId, data)
+						if errConv != nil {
+							errChan <- errConv
+							return
+						}
+						if err := util.ParseAnyToAny(conversationTmp, &conversation); err != nil {
+							log.Error(err)
+							errChan <- err
+							return
+						}
+						isNew = isNewTmp
+
+						if len(conversation.ConversationId) > 0 {
+							message.IsRead = "deactive"
+							if message.IsEcho {
+								message.Direction = variables.DIRECTION["send"]
+								message.Avatar = conversation.OaAvatar
+								message.SupporterId = ""
+								message.SupporterName = "Admin OA"
+							}
+						} else {
+							log.Error("conversation " + conversation.ConversationId + " not found with app id " + data.AppId)
+							errChan <- errors.New("conversation " + conversation.ConversationId + " not found with app id " + data.AppId)
+							return
+						}
+					} else if user.PreviousAssign != nil {
+						// TODO: insert or update allocate user
+						user.PreviousAssign.UserId = user.AuthUser.UserId
+						user.PreviousAssign.MainAllocate = "active"
+						user.PreviousAssign.UpdatedAt = time.Now()
+						user.PreviousAssign.AllocatedTimestamp = time.Now().UnixMilli()
+						if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, *user.PreviousAssign); err != nil {
+							log.Error(err)
+							errChan <- err
+							return
+						}
+					}
+					if len(conversation.ConversationId) < 1 {
+						err = errors.New("conversation " + conversation.ConversationId + " not found")
 						log.Error(err)
 						errChan <- err
 						return
 					}
+
+					// Insert message
+					if len(conversation.ConversationId) > 0 {
+						// Parsing conversation_id
+						message.ConversationId = conversation.ConversationId
+						message.MessageId = docId
+						if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, data.AppId, docId, message); err != nil {
+							log.Error(err)
+							errChan <- err
+							return
+						}
+					}
+
+					wg.Done()
+
+					subscribers := []*Subscriber{}
+					subscriberAdmins := []string{}
+					subscriberManagers := []string{}
+					for s := range WsSubscribers.Subscribers {
+						if (user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId) || (conversation.TenantId == s.TenantId) {
+							subscribers = append(subscribers, s)
+							if s.Level == "admin" {
+								subscriberAdmins = append(subscriberAdmins, s.Id)
+							}
+							if s.Level == "manager" {
+								subscriberManagers = append(subscriberManagers, s.Id)
+							}
+						}
+					}
+
+					if user.AuthUser != nil {
+						go handlePublishEvent(false, &user, nil, subscriberAdmins, subscribers, conversation, message, isNew)
+					}
+
+					// TODO: publish message to manager
+					manageQueueUser, err := GetManageQueueUser(ctx, user.QueueId)
+					if err != nil {
+						log.Error(err)
+						errChan <- err
+						return
+					} else if manageQueueUser == nil {
+						log.Error("queue " + user.QueueId + " not found")
+						errChan <- errors.New("queue " + user.QueueId + " not found")
+						return
+					}
+					if len(manageQueueUser.ConnectionId) < 1 {
+						manageQueueUser.ConnectionId = connectionCache.Id
+					}
+
+					// TODO: publish message to manager
+					isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
+					if isExist {
+						if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.UserId) || (user.AuthUser == nil && len(manageQueueUser.UserId) > 0) {
+							go handlePublishEvent(false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
+						}
+					}
+
+					// TODO: publish to admin
+					if ENABLE_PUBLISH_ADMIN {
+						go handlePublishEvent(true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
+					}
+
+					if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
+						if err = ExecutePlannedAutoScript(ctx, user, message, &conversation); err != nil {
+							log.Error(err)
+							errChan <- err
+							return
+						}
+					}
 				}
+			} else {
 				wg.Done()
-				subscribers := []*Subscriber{}
-				subscriberAdmins := []string{}
-				subscriberManagers := []string{}
-				for s := range WsSubscribers.Subscribers {
-					if (user.AuthUser != nil && s.TenantId == user.AuthUser.TenantId) || (conversation.TenantId == s.TenantId) {
-						subscribers = append(subscribers, s)
-						if s.Level == "admin" {
-							subscriberAdmins = append(subscriberAdmins, s.Id)
-						}
-						if s.Level == "manager" {
-							subscriberManagers = append(subscriberManagers, s.Id)
-						}
-					}
-				}
-
-				if user.AuthUser != nil {
-					go handlePublishEvent(false, &user, nil, subscriberAdmins, subscribers, conversation, message, isNew)
-				}
-
-				// TODO: publish message to manager
-				manageQueueUser, err := GetManageQueueUser(ctx, user.QueueId)
-				if err != nil {
-					log.Error(err)
-					errChan <- err
-					return
-				} else if manageQueueUser == nil {
-					log.Error("queue " + user.QueueId + " not found")
-					errChan <- errors.New("queue " + user.QueueId + " not found")
-					return
-				}
-				if len(manageQueueUser.ConnectionId) < 1 {
-					manageQueueUser.ConnectionId = connectionCache.Id
-				}
-
-				// TODO: publish message to manager
-				isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
-				if isExist {
-					if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.UserId) || (user.AuthUser == nil && len(manageQueueUser.UserId) > 0) {
-						go handlePublishEvent(false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
-					}
-				}
-
-				// TODO: publish to admin
-				if ENABLE_PUBLISH_ADMIN {
-					go handlePublishEvent(true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
-				}
-
-				if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
-					if err = ExecutePlannedAutoScript(ctx, user, message, &conversation); err != nil {
-						log.Error(err)
-						errChan <- err
-						return
-					}
-				}
 			}
 		}
-	}(timestamp, userChan, done)
+		if err = <-errChan; err != nil {
+			log.Error(err)
+			return
+		}
+	}(timestamp, userChan, doneChan)
 
 	// TODO: check queue setting
-	go s.CheckChatSetting(ctx, &s.mux, messageTmp, *chatApp, userChan, errChan, tenants)
+	go s.CheckChatSetting(ctx, messageTmp, *chatApp, userChan, errChan, tenants)
 
 	// Wait for all tenants to be processed
 	go func() {
 		wg.Wait() // Wait for all goroutines to finish processing
-		done <- true
+		doneChan <- true
 	}()
 
 	select {
-	case <-done:
+	case <-doneChan:
 		log.Debug("receive ott message done")
 		return response.OKResponse()
 	case err = <-errChan:
@@ -545,11 +555,11 @@ func (s *OttMessage) handleEsMessageQueue(d rmq.Delivery) {
 			return
 		}
 		esDoc := map[string]any{}
-		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
 			log.Error(err)
 			return
 		}
-		if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_MESSAGE, payload.AppId, payload.MessageId, esDoc); err != nil {
+		if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_MESSAGE, payload.AppId, payload.MessageId, esDoc); err != nil {
 			log.Error(err)
 			return
 		}
