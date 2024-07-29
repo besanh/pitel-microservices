@@ -87,6 +87,7 @@ message ZaloInfo {
   string oa_name = 3;
   string url_oa = 4;
   string status = 5;
+  string avatar = 6;
 }
 
 message FacebookInfo {

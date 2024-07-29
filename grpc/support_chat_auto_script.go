@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_auto_script"
 	"github.com/tel4vn/fins-microservices/model"
@@ -24,7 +25,7 @@ func convertChatAutoScriptToPbChatAutoScript(data model.ChatAutoScriptView) (res
 		TriggerKeywords:    nil,
 		ChatScriptLink:     nil,
 		SendMessageActions: nil,
-		ChatLabelLink:      nil,
+		ChatLabelLink:      make([]*pb.ChatLabelLinkDataType, 0),
 		ActionScript:       nil,
 	}
 	if data.ConnectionApp != nil {
@@ -52,11 +53,30 @@ func convertChatAutoScriptToPbChatAutoScript(data model.ChatAutoScriptView) (res
 	if err = util.ParseAnyToAny(data.SendMessageActions, &result.SendMessageActions); err != nil {
 		return
 	}
-	if err = util.ParseAnyToAny(data.ChatLabelLink, &result.ChatLabelLink); err != nil {
-		return
+	for _, label := range data.ChatLabelLink {
+		if label != nil {
+			tmp := &pb.ChatLabelLinkDataType{
+				ChatAutoScriptId: label.ChatAutoScriptId,
+				ChatLabelId:      label.ChatLabelId,
+				ActionType:       label.ActionType,
+				Order:            int32(label.Order),
+				ChatAutoScript:   nil,
+				ChatLabel:        nil,
+				CreatedAt:        timestamppb.New(label.CreatedAt),
+				UpdatedAt:        timestamppb.New(label.UpdatedAt),
+			}
+			if label.ChatLabel != nil {
+				if err = util.ParseAnyToAny(label.ChatLabel, &tmp.ChatLabel); err != nil {
+					log.Error("failed to parse label err: " + err.Error())
+					return
+				}
+			}
+			result.ChatLabelLink = append(result.ChatLabelLink, tmp)
+		}
 	}
 	if data.ActionScript != nil {
 		if err = util.ParseAnyToAny(data.ActionScript, &result.ActionScript); err != nil {
+			log.Error("failed to parse action script err: " + err.Error())
 			return
 		}
 	}
