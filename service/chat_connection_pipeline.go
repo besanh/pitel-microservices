@@ -69,16 +69,36 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 		connectionApp.OaInfo = *data.ConnectionAppRequest.OaInfo
 	}
 
+	var oaIdFilter string
 	if data.ConnectionAppRequest.ConnectionType == "facebook" && len(connectionApp.OaInfo.Facebook) > 0 {
 		connectionApp.OaInfo.Facebook[0].AppId = app.InfoApp.Facebook.AppId
 		connectionApp.OaInfo.Facebook[0].CreatedTimestamp = time.Now().Unix()
 		connectionApp.OaInfo.Zalo = []model.ZaloInfo{}
+
+		oaIdFilter = connectionApp.OaInfo.Facebook[0].OaId
 	} else if data.ConnectionAppRequest.ConnectionType == "zalo" && len(connectionApp.OaInfo.Zalo) > 0 {
 		connectionApp.OaInfo.Zalo[0].AppId = app.InfoApp.Zalo.AppId
 		connectionApp.OaInfo.Zalo[0].CreatedTimestamp = time.Now().Unix()
 		connectionApp.OaInfo.Facebook = []model.FacebookInfo{}
+
+		oaIdFilter = connectionApp.OaInfo.Zalo[0].OaId
 	}
 	connectionApp.Status = data.ConnectionAppRequest.Status
+
+	connectionAppFilter := model.ChatConnectionAppFilter{
+		TenantId:       authUser.TenantId,
+		ConnectionType: data.ConnectionAppRequest.ConnectionType,
+		OaId:           oaIdFilter,
+	}
+	total, _, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionAppFilter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return connectionApp.Id, err
+	}
+	if total > 0 {
+		log.Error(errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists"))
+		return connectionApp.Id, errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists")
+	}
 
 	if err := repository.ChatConnectionPipelineRepo.InsertConnectionApp(ctx, tx, connectionApp); err != nil {
 		log.Error(err)
