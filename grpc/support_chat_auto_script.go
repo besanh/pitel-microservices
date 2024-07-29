@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_auto_script"
 	"github.com/tel4vn/fins-microservices/model"
@@ -66,6 +67,7 @@ func convertChatAutoScriptToPbChatAutoScript(data model.ChatAutoScriptView) (res
 			}
 			if label.ChatLabel != nil {
 				if err = util.ParseAnyToAny(label.ChatLabel, &tmp.ChatLabel); err != nil {
+					log.Error("failed to parse label err: " + err.Error())
 					return
 				}
 			}
@@ -74,6 +76,7 @@ func convertChatAutoScriptToPbChatAutoScript(data model.ChatAutoScriptView) (res
 	}
 	if data.ActionScript != nil {
 		if err = util.ParseAnyToAny(data.ActionScript, &result.ActionScript); err != nil {
+			log.Error("failed to parse action script err: " + err.Error())
 			return
 		}
 	}
