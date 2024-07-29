@@ -24,11 +24,14 @@ message ChatConnectionApp {
 }
 
 message ConnectionQueue {
-  string tenant_id = 1;
-  string connection_id = 2;
-  ChatConnectionApp chat_connection_app = 3;
-  string queue_id = 4;
-  ChatQueue chat_queue = 5;
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string connection_id = 5;
+  ChatConnectionApp chat_connection_app = 6;
+  string queue_id = 7;
+  ChatQueue chat_queue = 8;
 }
 
 message ChatQueue {

@@ -133,6 +133,20 @@ func (g *GRPCChatConnectionApp) GetChatConnectionAppById(ctx context.Context, re
 		Status:            data.Status,
 		CreatedAt:         timestamppb.New(data.CreatedAt),
 		UpdatedAt:         timestamppb.New(data.UpdatedAt),
+		ConnectionQueue:   nil,
+		OaInfo:            nil,
+	}
+	if data.ConnectionQueue != nil {
+		if err = util.ParseAnyToAny(data.ConnectionQueue, &tmp.ConnectionQueue); err != nil {
+			log.Error(err)
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+		tmp.ConnectionQueue.CreatedAt = timestamppb.New(data.ConnectionQueue.CreatedAt)
+		tmp.ConnectionQueue.UpdatedAt = timestamppb.New(data.ConnectionQueue.UpdatedAt)
+	}
+	if err = util.ParseAnyToAny(data.OaInfo, &tmp.OaInfo); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	result = &pb.GetChatConnectionAppByIdResponse{
