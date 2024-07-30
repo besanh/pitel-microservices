@@ -46,7 +46,7 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 		filters = append(filters, elasticsearch.TermsQuery("is_read", util.ParseToAnyArray([]string{filter.IsRead})...))
 	}
 	if len(filter.ExternalMessageId) > 0 {
-		filters = append(filters, elasticsearch.TermsQuery("external_msg_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
+		filters = append(filters, elasticsearch.TermsQuery("external_message_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
 	}
 
 	boolQuery := map[string]any{
@@ -233,6 +233,9 @@ func (repo *MessageES) searchWithScroll(ctx context.Context, tenantId, index str
 	}
 	if len(filter.IsRead) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("is_read", util.ParseToAnyArray([]string{filter.IsRead})...))
+	}
+	if len(filter.ExternalMessageId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("external_message_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
 	}
 
 	boolQuery := map[string]any{
