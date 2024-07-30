@@ -32,14 +32,20 @@ import (
 /**
 * Chia patch cho phan loop
  */
-func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error, tenants []string) {
+func (s *OttMessage) CheckChatSetting(ctx context.Context, externalConversationId string, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error, tenants []string) {
 	for _, item := range tenants {
+		if len(message.ExternalMsgId) > 0 {
+			isExistMessage, err := s.checkMessageEcho(ctx, item, message)
+			if err != nil || isExistMessage {
+				userChan <- []model.User{}
+				continue
+			}
+		}
 		var authInfo model.AuthUser
 		var user model.User
 		allocateUser := &model.AllocateUser{}
 		userUuidExcludes := []string{}
 		conversationId := uuid.NewString()
-		externalConversationId := GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId)
 
 		allocateUsersCache, err := cache.RCache.HGetAll(USER_ALLOCATE + "_" + item + "_" + externalConversationId)
 		if err != nil {
@@ -177,6 +183,23 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, message model.Message
 			userChan <- []model.User{user}
 		}
 	}
+}
+
+// Check message echo to prevent duplicate message
+func (s *OttMessage) checkMessageEcho(ctx context.Context, tenant string, message model.Message) (isExist bool, err error) {
+	filter := model.MessageFilter{
+		TenantId:          tenant,
+		ExternalMessageId: message.ExternalMsgId,
+	}
+	_, messages, err := repository.MessageESRepo.GetMessages(ctx, tenant, ES_INDEX_MESSAGE, filter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	if len(*messages) > 0 {
+		isExist = true
+	}
+	return
 }
 
 /**

@@ -13,8 +13,7 @@ import (
 	"github.com/tel4vn/fins-microservices/model"
 )
 
-func sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachments) (model.OttResponse, error) {
-	var result model.OttResponse
+func sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachments) (result model.OttResponse, err error) {
 	var body any
 	var resMix model.SendMessageToOttWithAttachment
 	resMix.Type = ott.Type
@@ -33,8 +32,8 @@ func sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachm
 		resMix.Attachments = attachment
 	}
 
-	if err := util.ParseAnyToAny(resMix, &body); err != nil {
-		return result, err
+	if err = util.ParseAnyToAny(resMix, &body); err != nil {
+		return
 	}
 
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm"
@@ -46,17 +45,17 @@ func sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachm
 		SetBody(body).
 		Post(url)
 	if err != nil {
-		return result, err
+		return
 	}
 
-	if err := json.Unmarshal([]byte(res.Body()), &result); err != nil {
-		return result, err
+	if err = json.Unmarshal([]byte(res.Body()), &result); err != nil {
+		return
 	}
-	if res.StatusCode() == 200 {
-		return result, nil
-	} else {
-		return result, errors.New(result.Message)
+	log.Info("result: ", result)
+	if res.StatusCode() != 200 {
+		err = errors.New(result.Message)
 	}
+	return
 }
 
 func SendEventToManage(ctx context.Context, authUser *model.AuthUser, message model.Message, queueId string) (err error) {
