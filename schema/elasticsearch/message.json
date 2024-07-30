@@ -14,10 +14,10 @@
             "conversation_id": {
                 "type": "keyword"
             },
-            "parent_external_msg_id": {
+            "parent_external_message_id": {
                 "type": "keyword"
             },
-            "extenal_msg_id": {
+            "extenal_message_id": {
                 "type": "keyword"
             },
             "message_type": {
@@ -128,6 +128,9 @@
             },
             "attachments": {
                 "type": "nested"
+            },
+            "is_echo": {
+                "type": "boolean"
             }
         }
     },
