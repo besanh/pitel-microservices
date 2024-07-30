@@ -288,14 +288,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				wg.Done()
 			}
 		}
-		if err = <-errChan; err != nil {
-			log.Error(err)
-			return
-		}
 	}(timestamp, userChan, doneChan)
 
 	// TODO: check queue setting
-	go s.CheckChatSetting(ctx, messageTmp, *chatApp, userChan, errChan, tenants)
+	go s.CheckChatSetting(ctx, externalConversationId, messageTmp, *chatApp, userChan, errChan, tenants)
 
 	// Wait for all tenants to be processed
 	go func() {

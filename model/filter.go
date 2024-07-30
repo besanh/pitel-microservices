@@ -82,6 +82,7 @@ type MessageFilter struct {
 	ParentMessageId     string          `json:"parent_message_id"`
 	ConversationId      string          `json:"conversation_id"`
 	ParentExternalMsgId string          `json:"parent_external_msg_id"`
+	ExternalMessageId   string          `json:"external_message_id"`
 	MessageType         string          `json:"message_type"`
 	EventName           string          `json:"event_name"`
 	Direction           string          `json:"direction"`
