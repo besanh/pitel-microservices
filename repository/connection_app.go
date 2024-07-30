@@ -71,6 +71,7 @@ func (repo *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, db sqlc
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)
 	}
+	query.Order("cca.created_at DESC")
 
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
@@ -124,6 +125,8 @@ func (repo *ChatConnectionApp) GetChatConnectionAppCustom(ctx context.Context, d
 	}
 
 	query.Join("LEFT JOIN LATERAL (?) AS tmp ON true", query2)
+	query.Order("cca.created_at DESC")
+
 	total, err := query.ScanAndCount(ctx)
 	if err == sql.ErrNoRows {
 		return 0, result, nil
