@@ -47,11 +47,31 @@ func convertChatAutoScriptToPbChatAutoScript(data model.ChatAutoScriptView) (res
 	if err = util.ParseAnyToAny(data.TriggerKeywords, &result.TriggerKeywords); err != nil {
 		return
 	}
-	if err = util.ParseAnyToAny(data.ChatScriptLink, &result.ChatScriptLink); err != nil {
-		return
-	}
 	if err = util.ParseAnyToAny(data.SendMessageActions, &result.SendMessageActions); err != nil {
 		return
+	}
+
+	for _, script := range data.ChatScriptLink {
+		if script != nil {
+			tmp := &pb.ChatScriptLinkDataType{
+				ChatAutoScriptId: script.ChatAutoScriptId,
+				ChatScriptId:     script.ChatScriptId,
+				Order:            int32(script.Order),
+				ChatAutoScript:   nil,
+				ChatScript:       nil,
+				CreatedAt:        timestamppb.New(script.CreatedAt),
+				UpdatedAt:        timestamppb.New(script.UpdatedAt),
+			}
+			if script.ChatScript != nil {
+				if err = util.ParseAnyToAny(script.ChatScript, &tmp.ChatScript); err != nil {
+					log.Error("failed to parse script err: " + err.Error())
+					return
+				}
+				tmp.ChatScript.CreatedAt = timestamppb.New(script.CreatedAt)
+				tmp.ChatScript.UpdatedAt = timestamppb.New(script.UpdatedAt)
+			}
+			result.ChatScriptLink = append(result.ChatScriptLink, tmp)
+		}
 	}
 	for _, label := range data.ChatLabelLink {
 		if label != nil {
