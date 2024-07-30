@@ -323,7 +323,7 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, tenantId, conversation
 				ManagerQueueUser:    (*chatManangers)[0],
 			}
 
-			userTmp, errTmp := s.GetAllocateUser(ctx, tenantId, conversationId, externalConversationId, chatSetting, isConversationExist, currentAllocateUser, userUuidExlucdes)
+			userTmp, nextUserId, errTmp := s.GetAllocateUser(ctx, tenantId, conversationId, externalConversationId, chatSetting, isConversationExist, currentAllocateUser, userUuidExlucdes)
 			if errTmp != nil {
 				user.ConnectionId = connectionQueue.ConnectionId
 				user.ConnectionQueueId = connectionQueue.Id
@@ -347,6 +347,9 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, tenantId, conversation
 				return
 			}
 			if len(*allocateUsers) > 0 {
+				if (*allocateUsers)[0].UserId != nextUserId && len(nextUserId) > 0 {
+					(*allocateUsers)[0].UserId = nextUserId
+				}
 				(*allocateUsers)[0].MainAllocate = "active"
 				if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*allocateUsers)[0]); err != nil {
 					log.Error(err)
@@ -371,7 +374,7 @@ func (s *OttMessage) CheckAllSetting(ctx context.Context, tenantId, conversation
 * if isConversationExist = true,  it means conversation is exist, and we can get user from user_allocate
 * if isConversationExist = false, it means conversation is not exist, we need to get user from chat_setting
  */
-func (s *OttMessage) GetAllocateUser(ctx context.Context, tenantId, conversationId, externalConversationId string, chatSetting model.ChatSetting, isConversationExist bool, currentAllocateUser *model.AllocateUser, userUuidExclude []string) (user model.User, err error) {
+func (s *OttMessage) GetAllocateUser(ctx context.Context, tenantId, conversationId, externalConversationId string, chatSetting model.ChatSetting, isConversationExist bool, currentAllocateUser *model.AllocateUser, userUuidExclude []string) (user model.User, nextUserId string, err error) {
 	allocateUser := model.AllocateUser{}
 	var authInfo model.AuthUser
 	var userLives []Subscriber
@@ -515,6 +518,7 @@ func (s *OttMessage) GetAllocateUser(ctx context.Context, tenantId, conversation
 	user.QueueId = chatSetting.ConnectionQueue.QueueId
 	user.ConnectionQueueId = chatSetting.ConnectionApp.ConnectionQueueId
 	user.ConversationId = allocateUser.ConversationId
+	nextUserId = allocateUser.UserId
 
 	return
 }
