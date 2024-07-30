@@ -84,7 +84,7 @@ message ChatScriptData {
   google.protobuf.Timestamp updated_at = 3;
   string tenant_id = 4;
   string script_name = 5;
-  string status = 6;
+  bool status = 6;
   string script_type = 7;
   string file_url = 8;
   string channel = 9;
