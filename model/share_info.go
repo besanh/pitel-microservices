@@ -36,7 +36,6 @@ type ShareInfoFormSubmitRequest struct {
 	AppId          string `json:"app_id"`
 	OaId           string `json:"oa_id"`
 	ExternalUserId string `json:"external_user_id"`
-	ConnectionId   string `json:"connection_id"`
 }
 
 type ShareForm struct {
@@ -103,9 +102,6 @@ func (s *ShareInfoFormSubmitRequest) Validate() (err error) {
 	}
 	if len(s.ExternalUserId) < 1 {
 		return errors.New("external_user_id is required")
-	}
-	if len(s.ConnectionId) < 1 {
-		return errors.New("connection_id is required")
 	}
 	return
 }
