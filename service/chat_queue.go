@@ -333,29 +333,6 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 			return err
 		}
 	}
-	// remove old manage queue user
-	manageFilter := model.ChatManageQueueUserFilter{
-		TenantId: authUser.TenantId,
-		QueueId:  queueExist.GetId(),
-	}
-	_, oldManageQueues, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, manageFilter, -1, 0)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	var attachedConnectionId string
-	for _, item := range *oldManageQueues {
-		if len(item.ConnectionId) > 0 {
-			attachedConnectionId = item.ConnectionId
-			break
-		}
-	}
-	if len(*oldManageQueues) > 0 {
-		if err = repository.ManageQueueRepo.TxBulkDelete(ctx, tx, *oldManageQueues); err != nil {
-			log.Error(err)
-			return err
-		}
-	}
 
 	// insert new queue user
 	chatQueueUsers := make([]model.ChatQueueUser, 0)
@@ -375,21 +352,33 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 		return err
 	}
 
-	// insert manage queue user
-	manageQueue := model.ChatManageQueueUser{
-		Base: model.InitBase(),
+	// update manager's user id
+	manageFilter := model.ChatManageQueueUserFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  queueExist.GetId(),
 	}
-	manageQueue.TenantId = authUser.TenantId
-	manageQueue.ConnectionId = attachedConnectionId
-	manageQueue.QueueId = queueExist.GetId()
-	manageQueue.UserId = data.ChatManageQueueUser.UserId
-
-	queueExist.ManageQueueId = manageQueue.GetId()
-
-	if err = repository.ManageQueueRepo.TxInsert(ctx, tx, manageQueue); err != nil {
+	_, chatManagers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, manageFilter, -1, 0)
+	if err != nil {
 		log.Error(err)
 		return err
 	}
+	if chatManagers != nil {
+		isOk := false
+		for i, manageQueueUser := range *chatManagers {
+			if len(data.ChatManageQueueUser.UserId) > 0 && data.ChatManageQueueUser.UserId != manageQueueUser.UserId {
+				(*chatManagers)[i].UserId = data.ChatManageQueueUser.UserId
+				isOk = true
+			}
+		}
+
+		if isOk && len(*chatManagers) > 0 {
+			if err = repository.ManageQueueRepo.TxBulkUpdate(ctx, tx, *chatManagers); err != nil {
+				log.Error(err)
+				return err
+			}
+		}
+	}
+
 	if err = repository.ChatQueueRepo.TxUpdate(ctx, tx, *queueExist); err != nil {
 		log.Error(err)
 		return err
