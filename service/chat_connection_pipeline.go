@@ -194,6 +194,24 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 				return connectionApp.Id, err
 			}
 
+			manageQueueExist, err := repository.ManageQueueRepo.GetById(ctx, repository.DBConn, chatQueueExist.ManageQueueId)
+			if err != nil {
+				log.Error(err)
+				return connectionApp.Id, err
+			}
+			// insert new manage queue user
+			newManageQueue := model.ChatManageQueueUser{
+				Base:         model.InitBase(),
+				TenantId:     authUser.TenantId,
+				ConnectionId: connectionApp.Id,
+				QueueId:      chatQueueExist.Id,
+				UserId:       manageQueueExist.UserId,
+			}
+			if err = repository.ManageQueueRepo.TxInsert(ctx, tx, newManageQueue); err != nil {
+				log.Error(err)
+				return connectionApp.Id, err
+			}
+
 			connectionApp.ConnectionQueueId = connectionQueue.Id
 		}
 	} else if len(data.ConnectionQueueId) < 1 {
@@ -320,6 +338,27 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			log.Error(err)
 			return
 		}
+
+		// remove chat managers
+		for _, connectionQueue := range *connectionQueueExists {
+			chatManagerQueueFilter := model.ChatManageQueueUserFilter{
+				TenantId:     authUser.TenantId,
+				QueueId:      connectionQueue.QueueId,
+				ConnectionId: connectionAppExist.Id,
+			}
+			_, chatManagers, errTmp := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManagerQueueFilter, -1, 0)
+			if errTmp != nil {
+				err = errTmp
+				log.Error(err)
+				return
+			}
+			if len(*chatManagers) > 0 {
+				if err = repository.ManageQueueRepo.TxBulkDelete(ctx, tx, *chatManagers); err != nil {
+					log.Error(err)
+					return err
+				}
+			}
+		}
 	}
 
 	// select existed queue
@@ -333,6 +372,15 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			log.Error(err)
 			return err
 		}
+		manageQueueExist, err := repository.ManageQueueRepo.GetById(ctx, repository.DBConn, chatQueueExist.ManageQueueId)
+		if err != nil {
+			log.Error(err)
+			return err
+		} else if manageQueueExist == nil {
+			err = errors.New("manage queue " + chatQueueExist.ManageQueueId + " not found")
+			log.Error(err)
+			return err
+		}
 
 		// insert connection queue
 		connectionQueue := model.ConnectionQueue{
@@ -342,6 +390,19 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			QueueId:      data.ConnectionQueueId,
 		}
 		if err = repository.ConnectionQueueRepo.TxInsert(ctx, tx, connectionQueue); err != nil {
+			log.Error(err)
+			return err
+		}
+
+		// insert new manage queue user
+		newManageQueue := model.ChatManageQueueUser{
+			Base:         model.InitBase(),
+			TenantId:     authUser.TenantId,
+			ConnectionId: connectionAppExist.Id,
+			QueueId:      chatQueueExist.Id,
+			UserId:       manageQueueExist.UserId,
+		}
+		if err = repository.ManageQueueRepo.TxInsert(ctx, tx, newManageQueue); err != nil {
 			log.Error(err)
 			return err
 		}
