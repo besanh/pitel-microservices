@@ -68,7 +68,6 @@ message PostShareInfoRequest {
     string app_id = 3;
     string oa_id = 4;
     string external_user_id = 5;
-    string connection_id = 6;
 }
 
 message PostShareInfoResponse {
