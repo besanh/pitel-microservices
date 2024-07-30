@@ -32,173 +32,148 @@ import (
 /**
 * Chia patch cho phan loop
  */
-func (s *OttMessage) CheckChatSetting(ctx context.Context, externalConversationId string, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error, tenants []string) {
-	for _, item := range tenants {
-		if len(message.ExternalMsgId) > 0 && message.IsEcho {
-			if isExistMessage := s.checkMessageEcho(ctx, item, message); isExistMessage {
-				userChan <- []model.User{}
-				continue
-			}
-		}
-		var authInfo model.AuthUser
-		var user model.User
-		allocateUser := &model.AllocateUser{}
-		userUuidExcludes := []string{}
-		conversationId := uuid.NewString()
+func (s *OttMessage) CheckChatSetting(ctx context.Context, externalConversationId string, message model.Message, chatApp model.ChatApp, userChan chan<- []model.User, errChan chan<- error, tenant string) {
+	var authInfo model.AuthUser
+	var user model.User
+	allocateUser := &model.AllocateUser{}
+	userUuidExcludes := []string{}
+	conversationId := uuid.NewString()
 
-		allocateUsersCache, err := cache.RCache.HGetAll(USER_ALLOCATE + "_" + item + "_" + externalConversationId)
-		if err != nil {
-			log.Error(err)
-			userChan <- []model.User{}
-			continue
-		}
-		if len(allocateUsersCache) > 0 {
-			for _, AllocateUserCache := range allocateUsersCache {
-				if err = json.Unmarshal([]byte(AllocateUserCache), allocateUser); err != nil {
+	allocateUsersCache, err := cache.RCache.HGetAll(USER_ALLOCATE + "_" + tenant + "_" + externalConversationId)
+	if err != nil {
+		log.Error(err)
+		userChan <- []model.User{}
+		return
+	}
+	if len(allocateUsersCache) > 0 {
+		for _, AllocateUserCache := range allocateUsersCache {
+			if err = json.Unmarshal([]byte(AllocateUserCache), allocateUser); err != nil {
+				log.Error(err)
+				userChan <- []model.User{}
+				return
+			}
+
+			// Exist user allocate
+			if allocateUser.TenantId == tenant && allocateUser.ConversationId == externalConversationId {
+				if allocateUser.MainAllocate == "active" {
+					authInfo.TenantId = allocateUser.TenantId
+					authInfo.UserId = allocateUser.UserId
+					user.AuthUser = &authInfo
+					user.IsOk = true
+					user.ConnectionId = allocateUser.ConnectionId
+					user.QueueId = allocateUser.QueueId
+					user.ConnectionQueueId = allocateUser.ConnectionQueueId
+					user.ConversationId = allocateUser.ConversationId
+
+					log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
+					userChan <- []model.User{user}
+				} else {
+					authInfo.TenantId = allocateUser.TenantId
+					authInfo.UserId = allocateUser.UserId
+					user.AuthUser = &authInfo
+					user.ConnectionId = allocateUser.ConnectionId
+					user.QueueId = allocateUser.QueueId
+					user.ConnectionQueueId = allocateUser.ConnectionQueueId
+
+					userUuidExcludes = append(userUuidExcludes, allocateUser.UserId)
+					user, err := s.CheckAllSetting(ctx, tenant, conversationId, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, true, allocateUser, chatApp, userUuidExcludes)
+					if err != nil {
+						userChan <- []model.User{}
+						return
+					}
+
+					if user.AuthUser.UserId == allocateUser.UserId {
+						user.IsReassignSame = true
+					} else {
+						user.IsReassignNew = true
+						user.UserIdRemove = allocateUser.UserId
+					}
+
+					user.IsOk = true
+					user.ConversationId = allocateUser.ConversationId
+					log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
+					userChan <- []model.User{user}
+				}
+			} else {
+				user, err := s.CheckAllSetting(ctx, tenant, conversationId, externalConversationId, message, false, nil, chatApp, userUuidExcludes)
+				if err != nil {
 					log.Error(err)
 					userChan <- []model.User{}
 					continue
 				}
 
-				// Exist user allocate
-				if allocateUser.TenantId == item && allocateUser.ConversationId == externalConversationId {
-					if allocateUser.MainAllocate == "active" {
-						authInfo.TenantId = allocateUser.TenantId
-						authInfo.UserId = allocateUser.UserId
-						user.AuthUser = &authInfo
-						user.IsOk = true
-						user.ConnectionId = allocateUser.ConnectionId
-						user.QueueId = allocateUser.QueueId
-						user.ConnectionQueueId = allocateUser.ConnectionQueueId
-						user.ConversationId = allocateUser.ConversationId
-
-						log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
-						userChan <- []model.User{user}
+				filter := model.AllocateUserFilter{
+					TenantId:               tenant,
+					ExternalConversationId: externalConversationId,
+					MainAllocate:           "deactive",
+				}
+				_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+				if err != nil {
+					log.Error(err)
+					userChan <- []model.User{}
+					continue
+				}
+				if len(*userAllocations) > 0 {
+					if user.AuthUser.UserId == (*userAllocations)[0].UserId {
+						user.IsReassignSame = true
 					} else {
-						authInfo.TenantId = allocateUser.TenantId
-						authInfo.UserId = allocateUser.UserId
-						user.AuthUser = &authInfo
-						user.ConnectionId = allocateUser.ConnectionId
-						user.QueueId = allocateUser.QueueId
-						user.ConnectionQueueId = allocateUser.ConnectionQueueId
-
-						userUuidExcludes = append(userUuidExcludes, allocateUser.UserId)
-						user, err := s.CheckAllSetting(ctx, item, conversationId, GenerateConversationId(message.AppId, message.OaId, message.ExternalUserId), message, true, allocateUser, chatApp, userUuidExcludes)
-						if err != nil {
-							userChan <- []model.User{}
-							continue
-						}
-
-						if user.AuthUser.UserId == allocateUser.UserId {
-							user.IsReassignSame = true
-						} else {
-							user.IsReassignNew = true
-							user.UserIdRemove = allocateUser.UserId
-						}
-
-						user.IsOk = true
-						user.ConversationId = allocateUser.ConversationId
-						log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
-						userChan <- []model.User{user}
+						user.IsReassignNew = true
+						user.UserIdRemove = (*userAllocations)[0].UserId
 					}
+					user.ConversationId = (*userAllocations)[0].ConversationId
 				} else {
-					user, err := s.CheckAllSetting(ctx, item, conversationId, externalConversationId, message, false, nil, chatApp, userUuidExcludes)
-					if err != nil {
-						log.Error(err)
-						userChan <- []model.User{}
-						continue
-					}
+					log.Error(errors.New("conversation " + externalConversationId + " not found"))
+					continue
+				}
 
-					filter := model.AllocateUserFilter{
-						TenantId:               item,
-						ExternalConversationId: externalConversationId,
-						MainAllocate:           "deactive",
-					}
-					_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
-					if err != nil {
-						log.Error(err)
-						userChan <- []model.User{}
-						continue
-					}
-					if len(*userAllocations) > 0 {
-						if user.AuthUser.UserId == (*userAllocations)[0].UserId {
-							user.IsReassignSame = true
-						} else {
-							user.IsReassignNew = true
-							user.UserIdRemove = (*userAllocations)[0].UserId
-						}
-						user.ConversationId = (*userAllocations)[0].ConversationId
-					} else {
-						log.Error(errors.New("conversation " + externalConversationId + " not found"))
-						continue
-					}
+				log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
+				userChan <- []model.User{user}
 
-					log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
-					userChan <- []model.User{user}
-
-					// Set to cache
-					jsonByte, err := json.Marshal(&allocateUser)
-					if err != nil {
-						log.Error(err)
-						userChan <- []model.User{}
-						continue
-					}
-					if err = cache.RCache.HSetRaw(ctx, USER_ALLOCATE+"_"+item+"_"+externalConversationId, externalConversationId, string(jsonByte)); err != nil {
-						log.Error(err)
-						userChan <- []model.User{}
-						continue
-					}
+				// Set to cache
+				jsonByte, err := json.Marshal(&allocateUser)
+				if err != nil {
+					log.Error(err)
+					userChan <- []model.User{}
+					continue
+				}
+				if err = cache.RCache.HSetRaw(ctx, USER_ALLOCATE+"_"+tenant+"_"+externalConversationId, externalConversationId, string(jsonByte)); err != nil {
+					log.Error(err)
+					userChan <- []model.User{}
+					continue
 				}
 			}
-		} else {
-			user, err := s.CheckAllSetting(ctx, item, conversationId, externalConversationId, message, false, nil, chatApp, userUuidExcludes)
-			if err != nil {
-				userChan <- []model.User{}
-				continue
-			}
-
-			filter := model.AllocateUserFilter{
-				TenantId:               user.AuthUser.TenantId,
-				ExternalConversationId: externalConversationId,
-				MainAllocate:           "deactive",
-			}
-			_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
-			if err != nil {
-				log.Error(err)
-				userChan <- []model.User{}
-				continue
-			}
-			if len(*userAllocations) > 0 && user.AuthUser != nil {
-				if user.AuthUser.UserId == (*userAllocations)[0].UserId {
-					user.IsReassignSame = true
-				} else {
-					user.IsReassignNew = true
-					user.UserIdRemove = (*userAllocations)[0].UserId
-				}
-				user.ConversationId = (*userAllocations)[0].ConversationId
-			}
-
-			log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
-			userChan <- []model.User{user}
 		}
-	}
-}
+	} else {
+		user, err := s.CheckAllSetting(ctx, tenant, conversationId, externalConversationId, message, false, nil, chatApp, userUuidExcludes)
+		if err != nil {
+			userChan <- []model.User{}
+			return
+		}
 
-// Check message echo to prevent duplicate message
-func (s *OttMessage) checkMessageEcho(ctx context.Context, tenant string, message model.Message) (isExist bool) {
-	filter := model.MessageFilter{
-		TenantId:          tenant,
-		ExternalMessageId: message.ExternalMsgId,
+		filter := model.AllocateUserFilter{
+			TenantId:               user.AuthUser.TenantId,
+			ExternalConversationId: externalConversationId,
+			MainAllocate:           "deactive",
+		}
+		_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			userChan <- []model.User{}
+			return
+		}
+		if len(*userAllocations) > 0 && user.AuthUser != nil {
+			if user.AuthUser.UserId == (*userAllocations)[0].UserId {
+				user.IsReassignSame = true
+			} else {
+				user.IsReassignNew = true
+				user.UserIdRemove = (*userAllocations)[0].UserId
+			}
+			user.ConversationId = (*userAllocations)[0].ConversationId
+		}
+
+		log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
+		userChan <- []model.User{user}
 	}
-	_, messages, _, err := repository.MessageESRepo.SearchWithScroll(ctx, tenant, ES_INDEX_MESSAGE, filter, 1, "")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	if len(messages) > 0 {
-		isExist = true
-	}
-	return
 }
 
 /**

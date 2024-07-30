@@ -83,8 +83,19 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	// Process users
 	var wg sync.WaitGroup
 	wg.Add(len(tenants))
-	go func(timeStamp time.Time, userChan chan []model.User, doneChan chan<- bool) {
+	go func(tenants []string, timeStamp time.Time, userChan chan []model.User, doneChan chan<- bool) {
 		defer close(userChan)
+		// TODO: check queue setting
+		for _, tenant := range tenants {
+			if len(messageTmp.ExternalMsgId) > 0 && messageTmp.IsEcho {
+				if isExistMessage := s.checkMessageEcho(ctx, tenant, messageTmp); isExistMessage {
+					userChan <- []model.User{}
+					return
+				}
+			}
+			go s.CheckChatSetting(ctx, externalConversationId, messageTmp, *chatApp, userChan, errChan, tenant)
+		}
+
 		for users := range userChan {
 			if len(users) > 0 {
 				for k, item := range users {
@@ -272,10 +283,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 				wg.Done()
 			}
 		}
-	}(timestamp, userChan, doneChan)
-
-	// TODO: check queue setting
-	go s.CheckChatSetting(ctx, externalConversationId, messageTmp, *chatApp, userChan, errChan, tenants)
+	}(tenants, timestamp, userChan, doneChan)
 
 	// Wait for all tenants to be processed
 	go func() {
@@ -362,6 +370,23 @@ func (s *OttMessage) proccessIntegrateSystems(chatAppIntegrateSystems []model.Ch
 				tenants = append(tenants, integrateSystem.TenantDefaultId)
 			}
 		}
+	}
+	return
+}
+
+// Check message echo to prevent duplicate message
+func (s *OttMessage) checkMessageEcho(ctx context.Context, tenant string, message model.Message) (isExist bool) {
+	filter := model.MessageFilter{
+		TenantId:          tenant,
+		ExternalMessageId: message.ExternalMsgId,
+	}
+	_, messages, _, err := repository.MessageESRepo.SearchWithScroll(ctx, tenant, ES_INDEX_MESSAGE, filter, 1, "")
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	if len(messages) > 0 {
+		isExist = true
 	}
 	return
 }
