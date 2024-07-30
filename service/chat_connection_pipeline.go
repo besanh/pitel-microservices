@@ -194,6 +194,24 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 				return connectionApp.Id, err
 			}
 
+			manageQueueExist, err := repository.ManageQueueRepo.GetById(ctx, repository.DBConn, chatQueueExist.ManageQueueId)
+			if err != nil {
+				log.Error(err)
+				return connectionApp.Id, err
+			}
+			// insert new manage queue user
+			newManageQueue := model.ChatManageQueueUser{
+				Base:         model.InitBase(),
+				TenantId:     authUser.TenantId,
+				ConnectionId: connectionApp.Id,
+				QueueId:      chatQueueExist.Id,
+				UserId:       manageQueueExist.UserId,
+			}
+			if err = repository.ManageQueueRepo.TxInsert(ctx, tx, newManageQueue); err != nil {
+				log.Error(err)
+				return connectionApp.Id, err
+			}
+
 			connectionApp.ConnectionQueueId = connectionQueue.Id
 		}
 	} else if len(data.ConnectionQueueId) < 1 {
