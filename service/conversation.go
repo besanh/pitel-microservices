@@ -443,9 +443,9 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		log.Error(err)
 		return
 	}
-	if conversationExist.Labels != nil && !reflect.DeepEqual(conversationExist.Labels, "") {
+	if conversationConverted.Labels != nil && !reflect.DeepEqual(conversationConverted.Labels, "") {
 		var labels []map[string]string
-		if err = json.Unmarshal([]byte(conversationExist.Labels), &labels); err != nil {
+		if err = json.Unmarshal([]byte(conversationConverted.Labels), &labels); err != nil {
 			log.Error(err)
 			return
 		}
@@ -464,7 +464,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 					return
 				}
 				if len(*chatLabelExist) > 0 {
-					tmp, errTmp := json.Marshal((*chatLabelExist)[0])
+					tmp, errTmp := json.Marshal((*chatLabelExist))
 					if errTmp != nil {
 						err = errTmp
 						log.Error(err)
@@ -544,7 +544,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 
 	// Event to manager
 	isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
-	if isExist && (manageQueueUser.UserId != conversationExist.IsDoneBy) {
+	if isExist {
 		if status == "done" {
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.UserId, subscribers, true, conversationConverted)
 		} else if status == "reopen" {
