@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -160,8 +163,8 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		return
 	}
 	if len(*conversations) < 1 {
-		log.Errorf("conversation not found")
-		err = errors.New("conversation not found")
+		err = fmt.Errorf("conversation %s not found", data.ConversationId)
+		log.Error(err)
 		return
 	}
 
@@ -201,6 +204,44 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		conv.LatestMessageDirection = (*message)[0].Direction
 
 		(*conversations)[k] = conv
+	}
+
+	conversationEvent := &model.ConversationView{}
+	if err = util.ParseAnyToAny((*conversations)[0], conversationEvent); err != nil {
+		log.Error(err)
+		return
+	}
+	if conversationEvent.Labels != nil && !reflect.DeepEqual(conversationEvent.Labels, "") {
+		var labels []map[string]string
+		if err = json.Unmarshal([]byte(conversationEvent.Labels), &labels); err != nil {
+			log.Error(err)
+			return
+		}
+		chatLabelIds := []string{}
+		if len(labels) > 0 {
+			for _, item := range labels {
+				chatLabelIds = append(chatLabelIds, item["label_id"])
+			}
+			if len(chatLabelIds) > 0 {
+				_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+					LabelIds: chatLabelIds,
+				}, -1, 0)
+				if errTmp != nil {
+					err = errTmp
+					log.Error(err)
+					return
+				}
+				if len(*chatLabelExist) > 0 {
+					tmp, errTmp := json.Marshal((*chatLabelExist))
+					if errTmp != nil {
+						err = errTmp
+						log.Error(err)
+						return
+					}
+					conversationEvent.Labels = tmp
+				}
+			}
+		}
 	}
 
 	allocateFilter := model.AllocateUserFilter{
@@ -259,26 +300,8 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 				break
 			}
 		}
-		var conversationEvent model.ConversationView
-		if err = util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
-			log.Error(err)
-			return
-		}
-		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, &conversationEvent)
 
-		// TODO: publish message
-		// filterMessage := model.MessageFilter{
-		// 	TenantId:       (*conversations)[0].TenantId,
-		// 	ConversationId: (*conversations)[0].ConversationId,
-		// }
-		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
-		// if err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
-		// if len(*messages) > 0 {
-		// 	PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], userIdAssigned, subscribers, &(*messages)[0])
-		// }
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, conversationEvent)
 	}
 
 	// Event user_assigned
@@ -305,12 +328,6 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	if len(userUuids) > 0 {
-		conversationEvent := model.ConversationView{}
-		if err = util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
-			log.Error(err)
-			return
-		}
-
 		filterMessage := model.MessageFilter{
 			TenantId:       conversationEvent.TenantId,
 			ConversationId: conversationEvent.ConversationId,
@@ -328,21 +345,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			conversationEvent.LatestMessageDirection = (*message)[0].Direction
 		}
 
-		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, &conversationEvent)
-
-		// TODO: publish message
-		// filterMessage := model.MessageFilter{
-		// 	TenantId:       (*conversations)[0].TenantId,
-		// 	ConversationId: (*conversations)[0].ConversationId,
-		// }
-		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
-		// if err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
-		// if len(*messages) > 0 {
-		// 	PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], userUuids, &(*messages)[0])
-		// }
+		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, conversationEvent)
 	}
 
 	return
