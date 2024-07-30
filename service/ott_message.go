@@ -88,13 +88,11 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		for users := range userChan {
 			if len(users) > 0 {
 				for k, item := range users {
-					log.Info(123)
 					user = item
 					docId := uuid.NewString()
 					connectionCache, err := GetConfigConnectionAppCache(ctx, tenants[k], data.AppId, data.OaId, data.MessageType)
 					if err != nil {
 						log.Error(err)
-						errChan <- err
 						return
 					}
 					message := s.createMessage(data, timestamp)
@@ -112,7 +110,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 							if val.AttType == "file" {
 								if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
 									log.Error(err)
-									errChan <- err
 									return
 								}
 								attachmentFile.Url = strings.ReplaceAll(attachmentFile.Url, "u0026", "&")
@@ -120,7 +117,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 							} else {
 								if err := util.ParseAnyToAny(val.Payload, &payload); err != nil {
 									log.Error(err)
-									errChan <- err
 									return
 								}
 								attachmentMedia.Url = strings.ReplaceAll(attachmentMedia.Url, "u0026", "&")
@@ -146,11 +142,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						_, connectionQueueExists, err := repository.ConnectionQueueRepo.GetConnectionQueues(ctx, repository.DBConn, connectionQueueFilter, 1, 0)
 						if err != nil {
 							log.Error(err)
-							errChan <- err
 							return
 						} else if len(*connectionQueueExists) < 1 {
 							log.Errorf("connection queue " + connectionCache.Id + " not found")
-							errChan <- errors.New("connection queue " + connectionCache.Id + " not found")
 							return
 						}
 
@@ -160,7 +154,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, 1, 0)
 						if err != nil {
 							log.Error(err)
-							errChan <- err
 							return
 						}
 						if len(*manageQueueUser) > 0 {
@@ -173,12 +166,10 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					if user.IsOk {
 						conversationTmp, isNewTmp, errConv := s.UpSertConversation(ctx, user.ConnectionId, user.ConversationId, data)
 						if errConv != nil {
-							errChan <- errConv
 							return
 						}
 						if err := util.ParseAnyToAny(conversationTmp, &conversation); err != nil {
 							log.Error(err)
-							errChan <- err
 							return
 						}
 						isNew = isNewTmp
@@ -193,7 +184,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 							}
 						} else {
 							log.Error("conversation " + conversation.ConversationId + " not found with app id " + data.AppId)
-							errChan <- errors.New("conversation " + conversation.ConversationId + " not found with app id " + data.AppId)
 							return
 						}
 					} else if user.PreviousAssign != nil {
@@ -204,14 +194,12 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						user.PreviousAssign.AllocatedTimestamp = time.Now().UnixMilli()
 						if err := repository.AllocateUserRepo.Update(ctx, repository.DBConn, *user.PreviousAssign); err != nil {
 							log.Error(err)
-							errChan <- err
 							return
 						}
 					}
 					if len(conversation.ConversationId) < 1 {
 						err = errors.New("conversation " + conversation.ConversationId + " not found")
 						log.Error(err)
-						errChan <- err
 						return
 					}
 
@@ -222,7 +210,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						message.MessageId = docId
 						if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, data.AppId, docId, message); err != nil {
 							log.Error(err)
-							errChan <- err
 							return
 						}
 					}
@@ -252,11 +239,9 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					manageQueueUser, err := GetManageQueueUser(ctx, user.QueueId)
 					if err != nil {
 						log.Error(err)
-						errChan <- err
 						return
 					} else if manageQueueUser == nil {
 						log.Error("queue " + user.QueueId + " not found")
-						errChan <- errors.New("queue " + user.QueueId + " not found")
 						return
 					}
 					if len(manageQueueUser.ConnectionId) < 1 {
@@ -279,7 +264,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
 						if err = ExecutePlannedAutoScript(ctx, user, message, &conversation); err != nil {
 							log.Error(err)
-							errChan <- err
 							return
 						}
 					}
