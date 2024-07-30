@@ -141,7 +141,7 @@ func (m *ChatConnectionAppRequest) Validate() error {
 	}
 
 	if m.ConnectionType == "facebook" {
-		if len(m.OaInfo.Zalo) < 1 {
+		if len(m.OaInfo.Facebook) < 1 {
 			return errors.New("oa info facebook is required for facebook connection type")
 		}
 	}

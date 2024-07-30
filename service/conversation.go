@@ -76,7 +76,7 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 		TenantId: authUser.TenantId,
 		UserId:   []string{authUser.UserId},
 	}
-	if filter.IsDone.Valid && !filter.IsDone.Bool {
+	if filter.IsDone.Valid && filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"
 	} else {
 		conversationFilter.MainAllocate = "active"
@@ -191,7 +191,7 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 		TenantId: authUser.TenantId,
 		UserId:   []string{authUser.UserId},
 	}
-	if filter.IsDone.Valid {
+	if filter.IsDone.Valid && filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"
 	} else {
 		conversationFilter.MainAllocate = "active"
