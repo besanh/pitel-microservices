@@ -227,29 +227,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						}
 					}
 
-					// update allocate user when "done" marked conversation reassigned to new agent in queue
-					if len(user.NewAllocateUserId) > 0 {
-						filter := model.AllocateUserFilter{
-							TenantId:               user.AuthUser.TenantId,
-							ExternalConversationId: externalConversationId,
-							QueueId:                []string{user.QueueId},
-						}
-						_, currentAllocatedUsers, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
-						if err != nil {
-							log.Error(err)
-							return
-						}
-						if len(*currentAllocatedUsers) > 0 {
-							if (*currentAllocatedUsers)[0].UserId != user.NewAllocateUserId {
-								(*currentAllocatedUsers)[0].UserId = user.NewAllocateUserId
-								if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*currentAllocatedUsers)[0]); err != nil {
-									log.Error(err)
-									return
-								}
-							}
-						}
-					}
-
 					wg.Done()
 
 					subscribers := []*Subscriber{}

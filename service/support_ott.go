@@ -148,27 +148,6 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, externalConversationI
 			return
 		}
 
-		filter := model.AllocateUserFilter{
-			TenantId:               user.AuthUser.TenantId,
-			ExternalConversationId: externalConversationId,
-			MainAllocate:           "deactive",
-		}
-		_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
-		if err != nil {
-			log.Error(err)
-			userChan <- []model.User{}
-			return
-		}
-		if len(*userAllocations) > 0 && user.AuthUser != nil {
-			if user.AuthUser.UserId == (*userAllocations)[0].UserId {
-				user.IsReassignSame = true
-			} else {
-				user.IsReassignNew = true
-				user.UserIdRemove = (*userAllocations)[0].UserId
-			}
-			user.ConversationId = (*userAllocations)[0].ConversationId
-		}
-
 		log.Infof("conversation %s allocated to username %s, id: %s, domain: %s", externalConversationId, user.AuthUser.Fullname, user.AuthUser.UserId, user.AuthUser.TenantId)
 		userChan <- []model.User{user}
 	}
@@ -251,6 +230,13 @@ func (s *OttMessage) checkAllSetting(ctx context.Context, tenantId, conversation
 		user.QueueId = (*allocateUsers)[0].QueueId
 		user.ConnectionQueueId = (*allocateUsers)[0].ConnectionQueueId
 		user.ConversationId = (*allocateUsers)[0].ConversationId
+
+		if user.AuthUser.UserId == (*allocateUsers)[0].UserId {
+			user.IsReassignSame = true
+		} else {
+			user.IsReassignNew = true
+			user.UserIdRemove = (*allocateUsers)[0].UserId
+		}
 	} else {
 		// Connection prevent duplicate
 		// Meaning: 1 connection with page A in 1 app => only recieve one queue
@@ -330,7 +316,7 @@ func (s *OttMessage) checkAllSetting(ctx context.Context, tenantId, conversation
 				return
 			}
 
-			// Update allocate_main from deactive to active if customer chat again and assign to the same user deactive
+			// Update allocate_main from deactive to active if customer chat again and assign to the user chosen from routing setting
 			_, allocateUsers, errTmp := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, model.AllocateUserFilter{
 				TenantId:               tenantId,
 				ExternalConversationId: externalConversationId,
@@ -341,7 +327,19 @@ func (s *OttMessage) checkAllSetting(ctx context.Context, tenantId, conversation
 				log.Error(err)
 				return
 			}
+
 			if len(*allocateUsers) > 0 {
+				if len(*allocateUsers) > 0 && user.AuthUser != nil {
+					if user.AuthUser.UserId == (*allocateUsers)[0].UserId {
+						user.IsReassignSame = true
+					} else {
+						user.IsReassignNew = true
+						user.UserIdRemove = (*allocateUsers)[0].UserId
+					}
+					user.ConversationId = (*allocateUsers)[0].ConversationId
+				}
+
+				(*allocateUsers)[0].UserId = user.AuthUser.UserId
 				(*allocateUsers)[0].MainAllocate = "active"
 				if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*allocateUsers)[0]); err != nil {
 					log.Error(err)
@@ -402,25 +400,27 @@ func (s *OttMessage) getAllocateUser(ctx context.Context, tenantId, conversation
 			}
 		}
 	} else if strings.ToLower(chatSetting.RoutingAlias) == "round_robin_online" {
-		userTmp, errTmp := RoundRobinUserOnline(ctx, tenantId, GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId), &chatSetting.QueueUser)
-		if errTmp != nil {
-			err = errTmp
-			return
-		} else if userTmp != nil {
-			// TODO: check user exist in queue
-			if len(chatSetting.ConnectionQueueUser) > 0 {
-				for _, item := range chatSetting.ConnectionQueueUser {
-					if item.UserId == userTmp.UserId && item.TenantId == tenantId {
-						allocateUser.TenantId = userTmp.TenantId
-						allocateUser.UserId = userTmp.UserId
-						allocateUser.Username = userTmp.Username
+		if len(chatSetting.QueueUser) > 0 {
+			userTmp, errTmp := RoundRobinUserOnline(ctx, tenantId, GenerateConversationId(chatSetting.Message.AppId, chatSetting.Message.OaId, chatSetting.Message.ExternalUserId), &chatSetting.QueueUser)
+			if errTmp != nil {
+				err = errTmp
+				return
+			} else if userTmp != nil {
+				// TODO: check user exist in queue
+				if len(chatSetting.ConnectionQueueUser) > 0 {
+					for _, item := range chatSetting.ConnectionQueueUser {
+						if item.UserId == userTmp.UserId && item.TenantId == tenantId {
+							allocateUser.TenantId = userTmp.TenantId
+							allocateUser.UserId = userTmp.UserId
+							allocateUser.Username = userTmp.Username
 
-						authInfo.TenantId = userTmp.TenantId
-						authInfo.UserId = userTmp.UserId
-						authInfo.Username = userTmp.Username
-						authInfo.Level = userTmp.Level
-						isUserAccept = true
-						break
+							authInfo.TenantId = userTmp.TenantId
+							authInfo.UserId = userTmp.UserId
+							authInfo.Username = userTmp.Username
+							authInfo.Level = userTmp.Level
+							isUserAccept = true
+							break
+						}
 					}
 				}
 			}
@@ -510,7 +510,6 @@ func (s *OttMessage) getAllocateUser(ctx context.Context, tenantId, conversation
 	user.QueueId = chatSetting.ConnectionQueue.QueueId
 	user.ConnectionQueueId = chatSetting.ConnectionApp.ConnectionQueueId
 	user.ConversationId = allocateUser.ConversationId
-	user.NewAllocateUserId = allocateUser.UserId
 
 	return
 }

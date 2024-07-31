@@ -62,11 +62,6 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, externalConversationId 
 		log.Error(err)
 		return
 	}
-	if queueUsers == nil {
-		err = errors.New("queueUsers is nil")
-		log.Error(err)
-		return
-	}
 	filter := model.AllocateUserFilter{
 		TenantId:               tenantId,
 		ExternalConversationId: externalConversationId,

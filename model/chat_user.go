@@ -24,7 +24,6 @@ type User struct {
 	PreviousAssign         *AllocateUser `json:"previous_assign"`
 	ConversationId         string        `json:"conversation_id"`
 	ExternalConversationId string        `json:"external_conversation_id"`
-	NewAllocateUserId      string        `json:"new_allocate_user_id"`
 }
 
 type ChatUser struct {
