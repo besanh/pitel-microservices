@@ -242,7 +242,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						if len(*currentAllocatedUsers) > 0 {
 							if (*currentAllocatedUsers)[0].UserId != user.NewAllocateUserId {
 								(*currentAllocatedUsers)[0].UserId = user.NewAllocateUserId
-								(*currentAllocatedUsers)[0].UpdatedAt = time.Now()
 								if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*currentAllocatedUsers)[0]); err != nil {
 									log.Error(err)
 									return
