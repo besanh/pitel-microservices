@@ -45,15 +45,15 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, externalConversationI
 		return
 	}
 	if len(allocateUsersCache) > 0 {
-		for _, AllocateUserCache := range allocateUsersCache {
-			if err = json.Unmarshal([]byte(AllocateUserCache), allocateUser); err != nil {
+		for _, allocateUserCache := range allocateUsersCache {
+			if err = json.Unmarshal([]byte(allocateUserCache), allocateUser); err != nil {
 				log.Error(err)
 				userChan <- []model.User{}
 				return
 			}
 
 			// Exist user allocate
-			if allocateUser.TenantId == tenant && allocateUser.ConversationId == externalConversationId {
+			if allocateUser.TenantId == tenant && allocateUser.ExternalConversationId == externalConversationId {
 				if allocateUser.MainAllocate == "active" {
 					authInfo.TenantId = allocateUser.TenantId
 					authInfo.UserId = allocateUser.UserId
@@ -97,30 +97,6 @@ func (s *OttMessage) CheckChatSetting(ctx context.Context, externalConversationI
 				if err != nil {
 					log.Error(err)
 					userChan <- []model.User{}
-					continue
-				}
-
-				filter := model.AllocateUserFilter{
-					TenantId:               tenant,
-					ExternalConversationId: externalConversationId,
-					MainAllocate:           "deactive",
-				}
-				_, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
-				if err != nil {
-					log.Error(err)
-					userChan <- []model.User{}
-					continue
-				}
-				if len(*userAllocations) > 0 {
-					if user.AuthUser.UserId == (*userAllocations)[0].UserId {
-						user.IsReassignSame = true
-					} else {
-						user.IsReassignNew = true
-						user.UserIdRemove = (*userAllocations)[0].UserId
-					}
-					user.ConversationId = (*userAllocations)[0].ConversationId
-				} else {
-					log.Error(errors.New("conversation " + externalConversationId + " not found"))
 					continue
 				}
 
