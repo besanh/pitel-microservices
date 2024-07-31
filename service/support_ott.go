@@ -510,6 +510,7 @@ func (s *OttMessage) getAllocateUser(ctx context.Context, tenantId, conversation
 	user.QueueId = chatSetting.ConnectionQueue.QueueId
 	user.ConnectionQueueId = chatSetting.ConnectionApp.ConnectionQueueId
 	user.ConversationId = allocateUser.ConversationId
+	user.NewAllocateUserId = allocateUser.UserId
 
 	return
 }
