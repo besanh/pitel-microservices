@@ -55,13 +55,29 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	return manageQueueUser, nil
 }
 
-func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, queueUsers *[]model.ChatQueueUser) (userLive *Subscriber, err error) {
+func RoundRobinUserOnline(ctx context.Context, tenantId, externalConversationId string, queueUsers *[]model.ChatQueueUser) (userLive *Subscriber, err error) {
 	userLives := []Subscriber{}
 	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
 	if err != nil {
 		log.Error(err)
 		return
 	}
+	if queueUsers == nil {
+		err = errors.New("queueUsers is nil")
+		log.Error(err)
+		return
+	}
+	filter := model.AllocateUserFilter{
+		TenantId:               tenantId,
+		ExternalConversationId: externalConversationId,
+		QueueId:                []string{(*queueUsers)[0].QueueId},
+	}
+	_, currentAllocatedUsers, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
 	for _, item := range subscribers {
 		s := Subscriber{}
 		if err = json.Unmarshal([]byte(item), &s); err != nil {
@@ -69,6 +85,11 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, 
 			return
 		}
 		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) && s.TenantId == tenantId {
+			if len(subscribers) > 1 && len(*currentAllocatedUsers) > 0 {
+				if (*currentAllocatedUsers)[0].UserId == s.UserId {
+					continue
+				}
+			}
 			userLives = append(userLives, s)
 		}
 	}
