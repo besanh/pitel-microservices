@@ -68,12 +68,12 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, 
 			log.Error(err)
 			return
 		}
-		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) {
+		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) && s.TenantId == tenantId {
 			userLives = append(userLives, s)
 		}
 	}
 	if len(userLives) > 0 {
-		index, userAllocate := GetUserIsRoundRobin(tenantId, userLives)
+		index, userAllocate := GetUserIsRoundRobin(userLives)
 		userLive = userAllocate
 		userLive.IsAssignRoundRobin = true
 		// Check len > 1 for assign online 1 user
@@ -119,12 +119,12 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, conversationId string, 
 	return
 }
 
-func GetUserIsRoundRobin(tenantId string, userLives []Subscriber) (int, *Subscriber) {
+func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
 	isOk := false
 	index := 0
 	userLive := Subscriber{}
 	for i, item := range userLives {
-		if item.IsAssignRoundRobin && item.TenantId == tenantId {
+		if item.IsAssignRoundRobin {
 			if (i + 1) < len(userLives) {
 				userLive = userLives[(i + 1)]
 				isOk = true
