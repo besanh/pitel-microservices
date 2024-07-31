@@ -336,14 +336,14 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return
 	} else if len(conversationExist.ConversationId) < 1 {
 		err = errors.New("conversation " + conversationId + " not found")
-		log.Errorf(err.Error())
+		log.Error(err.Error())
 		return
 	}
 
 	if status != "reopen" {
 		if conversationExist.IsDone {
 			err = errors.New("conversation " + conversationId + " is done")
-			log.Errorf(err.Error())
+			log.Error(err.Error())
 			return
 		}
 	}
@@ -366,7 +366,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 	if len(*allocateUser) < 1 {
 		err = errors.New("conversation " + conversationId + " not found with active user")
-		log.Errorf(err.Error())
+		log.Error(err.Error())
 		return
 	}
 
