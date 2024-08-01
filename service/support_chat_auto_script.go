@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -214,7 +215,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 /*
  * Handle detect agents online status then executing the first matching script
  */
-func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) error {
+func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) (err error) {
 	if conversation == nil {
 		return errors.New("not found conversation")
 	}
@@ -223,10 +224,74 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 		return nil
 	}
 
+	queueUserExist := make(map[string]struct{})
+	queueUserExistCache, errTmp := cache.RCache.HGet(CHAT_QUEUE_USER+"_"+user.AuthUser.TenantId, conversation.ExternalConversationId)
+	if errTmp != nil && !errors.Is(errTmp, redis.Nil) {
+		err = errTmp
+		log.Error(err)
+		return err
+	}
+	if len(queueUserExistCache) > 0 {
+		if err = json.Unmarshal([]byte(queueUserExistCache), &queueUserExist); err != nil {
+			log.Error("failed to unmarshal: ", err)
+			return
+		}
+	} else {
+		queueUserFilter := model.ChatQueueUserFilter{
+			TenantId: user.AuthUser.TenantId,
+			QueueId:  []string{user.QueueId},
+		}
+		_, queueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, queueUserFilter, -1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if len(*queueUsers) < 1 {
+			log.Info("not found any users in chat queue user")
+			return nil
+		}
+		_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, model.ChatManageQueueUserFilter{
+			TenantId: user.AuthUser.UserId,
+			QueueId:  user.QueueId,
+		}, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if len(*manageQueueUser) < 1 {
+			log.Info("not found manager of queue " + user.QueueId)
+			return nil
+		}
+		// add manager's id to the map
+		queueUserExist[(*manageQueueUser)[0].UserId] = struct{}{}
+
+		for _, item := range *queueUsers {
+			queueUserExist[item.UserId] = struct{}{}
+		}
+
+		// set to cache
+		jsonByte, err := json.Marshal(&queueUserExist)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if err = cache.RCache.HSetRaw(ctx, CHAT_QUEUE_USER+"_"+user.AuthUser.TenantId, conversation.ExternalConversationId, string(jsonByte)); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	if len(queueUserExist) < 1 {
+		log.Info("not found any users in chat queue user")
+		return nil
+	}
+
 	// check if subscribers' level is agent/user
 	userLive := false
 	for s := range WsSubscribers.Subscribers {
-		if s.Level == "user" || s.Level == "agent" {
+		if s.TenantId == user.AuthUser.TenantId && (s.Level == "user" || s.Level == "agent") {
+			if _, ok := queueUserExist[s.UserId]; !ok {
+				continue
+			}
 			userLive = true
 			break
 		}
@@ -234,7 +299,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	if userLive {
 		// has online agents -> do nothing
 		log.Info("not executed offline auto script because agents are online")
-		return nil
+		return
 	}
 
 	filter := model.ChatAutoScriptFilter{
@@ -249,9 +314,9 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	key := GenerateChatAutoScriptId(filter.TenantId, filter.Channel, conversation.AppId, filter.OaId, filter.TriggerEvent)
 	chatAutoScriptsCache := cache.RCache.Get(key)
 	if chatAutoScriptsCache != nil {
-		if err := json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
+		if err = json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
 			log.Error(err)
-			return err
+			return
 		}
 	} else {
 		total, scripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
@@ -273,15 +338,15 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 
 	chatAutoScripts = mergeActionScripts(chatAutoScripts)
 	if len(*chatAutoScripts) == 0 {
-		return nil
+		return
 	}
 	// try to execute the first script
 	script := (*chatAutoScripts)[0]
 
-	if err := executeScriptActions(ctx, user, message, conversation, script); err != nil {
-		return err
+	if err = executeScriptActions(ctx, user, message, conversation, script); err != nil {
+		return
 	}
-	return nil
+	return
 }
 
 /*
