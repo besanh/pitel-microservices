@@ -409,7 +409,11 @@ func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser
 			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, &conversation)
 			PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 		} else if user.IsReassignNew {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_removed"], subscriberAdmins, true, &conversation)
+			if user.IsReopenConversation {
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, &conversation)
+			} else {
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_removed"], subscriberAdmins, true, &conversation)
+			}
 			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_created"], subscriberAdmins, isNew, &conversation)
 			PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 		} else {
@@ -423,6 +427,9 @@ func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser
 		} else if user.IsReassignNew {
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], userIdRemove, subscribers, true, &conversation)
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], userId, subscribers, isNew, &conversation)
+			if user.IsReopenConversation {
+				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], userId, subscribers, true, &conversation)
+			}
 			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], userId, subscribers, &message)
 		} else {
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], userId, subscribers, isNew, &conversation)

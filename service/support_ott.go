@@ -311,6 +311,7 @@ func (s *OttMessage) checkAllSetting(ctx context.Context, tenantId, conversation
 					} else {
 						user.IsReassignNew = true
 						user.UserIdRemove = (*allocateUsers)[0].UserId
+						user.IsReopenConversation = true
 					}
 					user.ConversationId = (*allocateUsers)[0].ConversationId
 				}

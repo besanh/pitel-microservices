@@ -22,6 +22,7 @@ type User struct {
 	UserIdReassignSame     string        `json:"user_id_reassign_same"`
 	UserIdRemove           string        `json:"user_id_remove"`
 	PreviousAssign         *AllocateUser `json:"previous_assign"`
+	IsReopenConversation   bool          `json:"is_reassign_online_agent"`
 	ConversationId         string        `json:"conversation_id"`
 	ExternalConversationId string        `json:"external_conversation_id"`
 }
