@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -362,6 +363,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 	}
 
 	// select existed queue
+	var newQueueId string
 	if len(data.ConnectionQueueId) > 0 {
 		chatQueueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, data.ConnectionQueueId)
 		if err != nil {
@@ -407,6 +409,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			return err
 		}
 
+		newQueueId = chatQueueExist.Id
 		connectionAppExist.ConnectionQueueId = connectionQueue.Id
 	} else if len(data.ConnectionQueueId) < 1 {
 		// create new queue and update it to c.app
@@ -482,7 +485,32 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			return err
 		}
 
+		newQueueId = chatQueue.Id
 		connectionAppExist.ConnectionQueueId = connectionQueue.Id
+	}
+	// update queue id for this connection app in allocate user
+	_, allocateUsers, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, model.AllocateUserFilter{
+		TenantId:     authUser.TenantId,
+		ConnectionId: connectionAppExist.Id,
+	}, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if len(*allocateUsers) > 0 && len(newQueueId) > 0 {
+		for i := range *allocateUsers {
+			(*allocateUsers)[i].QueueId = newQueueId
+		}
+		if err = repository.AllocateUserRepo.TxBulkUpdate(ctx, tx, *allocateUsers); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+
+	// clear map queue user exist cache
+	if err = cache.RCache.Del([]string{CHAT_QUEUE_USER + "_" + authUser.TenantId}); err != nil {
+		log.Error(err)
+		return err
 	}
 
 	if len(connectionAppExist.ConnectionQueueId) > 0 {

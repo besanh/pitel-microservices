@@ -74,6 +74,7 @@ type AllocateUserFilter struct {
 	QueueId                []string `json:"queue_id"`
 	AllocatedTime          int64    `json:"allocated_time"`
 	MainAllocate           string   `json:"main_allocate"`
+	ConnectionId           string   `json:"connection_id"`
 }
 
 type MessageFilter struct {
