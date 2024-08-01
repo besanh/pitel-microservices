@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -73,6 +74,10 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, externalConversationId 
 		return
 	}
 
+	totalValidSubscribers, err := countOnlineSubscribers(tenantId, subscribers, queueUsers, "user", "agent")
+	if err != nil {
+		return
+	}
 	for _, item := range subscribers {
 		s := Subscriber{}
 		if err = json.Unmarshal([]byte(item), &s); err != nil {
@@ -80,7 +85,7 @@ func RoundRobinUserOnline(ctx context.Context, tenantId, externalConversationId 
 			return
 		}
 		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) && s.TenantId == tenantId {
-			if len(subscribers) > 1 && len(*currentAllocatedUsers) > 0 {
+			if totalValidSubscribers > 1 && len(*currentAllocatedUsers) > 0 {
 				if (*currentAllocatedUsers)[0].UserId == s.UserId {
 					continue
 				}
@@ -353,5 +358,19 @@ func CacheChatRouting(ctx context.Context, chatRoutingId string) (chatRouting *m
 		}
 	}
 
+	return
+}
+
+func countOnlineSubscribers(tenantId string, subscribers map[string]string, queueUsers *[]model.ChatQueueUser, levels ...string) (result int, err error) {
+	for _, item := range subscribers {
+		s := Subscriber{}
+		if err = json.Unmarshal([]byte(item), &s); err != nil {
+			log.Error(err)
+			return
+		}
+		if slices.Contains(levels, s.Level) && CheckInLive(*queueUsers, s.Id) && s.TenantId == tenantId {
+			result++
+		}
+	}
 	return
 }
