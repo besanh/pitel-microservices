@@ -229,7 +229,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	if errTmp != nil && !errors.Is(errTmp, redis.Nil) {
 		err = errTmp
 		log.Error(err)
-		return err
+		return
 	}
 	if len(queueUserExistCache) > 0 {
 		if err = json.Unmarshal([]byte(queueUserExistCache), &queueUserExist); err != nil {
@@ -247,8 +247,9 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 			return err
 		}
 		if len(*queueUsers) < 1 {
-			log.Info("not found any users in chat queue user")
-			return nil
+			err = errors.New("not found any users in chat queue user")
+			log.Error(err)
+			return err
 		}
 		_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, model.ChatManageQueueUserFilter{
 			TenantId: user.AuthUser.UserId,
@@ -259,8 +260,9 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 			return err
 		}
 		if len(*manageQueueUser) < 1 {
-			log.Info("not found manager of queue " + user.QueueId)
-			return nil
+			err = errors.New("not found manager of queue " + user.QueueId)
+			log.Error(err)
+			return err
 		}
 		// add manager's id to the map
 		queueUserExist[(*manageQueueUser)[0].UserId] = struct{}{}
@@ -281,8 +283,9 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 		}
 	}
 	if len(queueUserExist) < 1 {
-		log.Info("not found any users in chat queue user")
-		return nil
+		err = errors.New("not found any users in chat queue user")
+		log.Error(err)
+		return
 	}
 
 	// check if subscribers' level is agent/user
