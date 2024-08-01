@@ -380,7 +380,7 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 	}
 
 	// clear cache
-	if err = cache.RCache.HDel(CHAT_QUEUE_USER + "_" + authUser.TenantId); err != nil {
+	if err = cache.RCache.Del([]string{CHAT_QUEUE_USER + "_" + authUser.TenantId}); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -513,7 +513,7 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 		return err
 	}
 	// clear cache
-	if err = cache.RCache.HDel(CHAT_QUEUE_USER + "_" + authUser.TenantId); err != nil {
+	if err = cache.RCache.Del([]string{CHAT_QUEUE_USER + "_" + authUser.TenantId}); err != nil {
 		log.Error(err)
 		return err
 	}
