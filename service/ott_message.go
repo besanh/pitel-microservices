@@ -403,6 +403,11 @@ func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser
 		userId = user.AuthUser.UserId
 		userIdRemove = user.UserIdRemove
 	}
+	// pre-process to get labels info before publishing conversation to subscribers
+	if err := GetLabelsInfo(context.Background(), &conversation); err != nil {
+		log.Error(err)
+		return
+	}
 
 	if isPublishToAdmin {
 		if user.IsReassignSame {
