@@ -713,6 +713,11 @@ func GetLabelsInfo(ctx context.Context, conversation *model.ConversationView) (e
 					log.Error(err)
 					return err
 				}
+				// check if conversation has already had labels info
+				if _, ok := itm["label_name"]; ok {
+					return
+				}
+
 				chatLabelIds = append(chatLabelIds, itm["label_id"])
 			}
 			if len(chatLabelIds) > 0 {
