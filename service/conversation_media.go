@@ -88,9 +88,6 @@ func (s *ConversationMedia) InsertConversationMedias(ctx context.Context, authUs
 		entities = append(entities, tmp)
 	}
 
-	// if message contains links
-	re := regexp.MustCompile(`https?://[^\s]+`)
-
 	// Find all matches in the text
 	data := model.ConversationMediaRequest{
 		TenantId:               authUser.TenantId,
@@ -101,6 +98,7 @@ func (s *ConversationMedia) InsertConversationMedias(ctx context.Context, authUs
 		MediaType:              string(model.MediaLink),
 		SendTimestamp:          time.UnixMilli(message.SendTimestamp),
 	}
+	re := regexp.MustCompile(`https?://[^\s]+`)
 	matches := re.FindAllString(message.Content, -1)
 	for _, embeddedLink := range matches {
 		data.MediaUrl = embeddedLink
