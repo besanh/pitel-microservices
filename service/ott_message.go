@@ -245,7 +245,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					}
 
 					if user.AuthUser != nil {
-						go handlePublishEvent(false, &user, nil, subscriberAdmins, subscribers, conversation, message, isNew)
+						go handlePublishEvent(ctx, false, &user, nil, subscriberAdmins, subscribers, conversation, message, isNew)
 					}
 
 					// TODO: publish message to manager
@@ -265,13 +265,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
 					if isExist {
 						if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.UserId) || (user.AuthUser == nil && len(manageQueueUser.UserId) > 0) {
-							go handlePublishEvent(false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
+							go handlePublishEvent(ctx, false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
 						}
 					}
 
 					// TODO: publish to admin
 					if ENABLE_PUBLISH_ADMIN {
-						go handlePublishEvent(true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
+						go handlePublishEvent(ctx, true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
 					}
 
 					if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
@@ -393,7 +393,7 @@ func (s *OttMessage) checkMessageEcho(ctx context.Context, tenant string, messag
 	return
 }
 
-func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser *model.ChatManageQueueUser, subscriberAdmins []string, subscribers []*Subscriber, conversation model.ConversationView, message model.Message, isNew bool) {
+func handlePublishEvent(ctx context.Context, isPublishToAdmin bool, user *model.User, manageQueueUser *model.ChatManageQueueUser, subscriberAdmins []string, subscribers []*Subscriber, conversation model.ConversationView, message model.Message, isNew bool) {
 	var userId string
 	var userIdRemove string
 	if manageQueueUser != nil {
@@ -404,7 +404,7 @@ func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser
 		userIdRemove = user.UserIdRemove
 	}
 	// pre-process to get labels info before publishing conversation to subscribers
-	if err := GetLabelsInfo(context.Background(), &conversation); err != nil {
+	if err := GetLabelsInfo(ctx, &conversation); err != nil {
 		log.Error(err)
 		return
 	}
