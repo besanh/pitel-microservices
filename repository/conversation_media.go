@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
@@ -23,7 +24,17 @@ type (
 var ConversationMediaRepo IConversationMedia
 
 func NewConversationMedia() IConversationMedia {
-	return &ConversationMedia{}
+	repo := &ConversationMedia{}
+	repo.InitIndex()
+	return repo
+}
+
+func (repo *ConversationMedia) InitIndex() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+	defer cancel()
+	if _, err := DBConn.GetDB().NewCreateIndex().Model((*model.ConversationMedia)(nil)).IfNotExists().Index("idx_conversation_media_conversation_id").Column("conversation_id").Exec(ctx); err != nil {
+		panic(err)
+	}
 }
 
 func (repo *ConversationMedia) GetConversationMedias(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ConversationMediaFilter, limit, offset int) (int, *[]model.ConversationMedia, error) {
