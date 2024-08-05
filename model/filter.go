@@ -226,3 +226,13 @@ type ChatAppIntegrateSystemFilter struct {
 	ChatAppId             string `json:"chat_app_id"`
 	ChatIntegrateSystemId string `json:"chat_integrate_system_id"`
 }
+
+type ConversationMediaFilter struct {
+	TenantId               string `json:"tenant_id"`
+	ConversationId         string `json:"conversation_id"`
+	ExternalConversationId string `json:"external_conversation_id"`
+	ConversationType       string `json:"conversation_type"`
+	MediaType              string `json:"media_type"`
+	MediaName              string `json:"media_name"`
+	SendTimestamp          string `json:"send_timestamp"`
+}

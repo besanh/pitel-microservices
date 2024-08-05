@@ -220,8 +220,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					if len(conversation.ConversationId) > 0 {
 						// Parsing conversation_id
 						message.ConversationId = conversation.ConversationId
+						message.ExternalConversationId = conversation.ExternalConversationId
 						message.MessageId = docId
 						if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, data.AppId, docId, message); err != nil {
+							log.Error(err)
+							continue
+						}
+						if err = ConversationMediaService.InsertConversationMedias(ctx, user.AuthUser, message); err != nil {
 							log.Error(err)
 							continue
 						}

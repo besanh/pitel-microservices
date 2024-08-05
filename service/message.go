@@ -145,23 +145,24 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	// Store ES
 	message = model.Message{
-		TenantId:            conversation.TenantId,
-		ParentExternalMsgId: "",
-		MessageId:           docId,
-		MessageType:         conversation.ConversationType,
-		ConversationId:      conversation.ConversationId,
-		ExternalMsgId:       resOtt.Data.MsgId,
-		EventName:           eventName,
-		Direction:           variables.DIRECTION["send"],
-		AppId:               conversation.AppId,
-		OaId:                conversation.OaId,
-		Avatar:              conversation.Avatar,
-		SupporterId:         authUser.UserId,
-		SupporterName:       authUser.Fullname,
-		SendTime:            time.Now(),
-		SendTimestamp:       timestampTmp,
-		Content:             content,
-		Attachments:         attachments,
+		TenantId:               conversation.TenantId,
+		ParentExternalMsgId:    "",
+		MessageId:              docId,
+		MessageType:            conversation.ConversationType,
+		ConversationId:         conversation.ConversationId,
+		ExternalMsgId:          resOtt.Data.MsgId,
+		EventName:              eventName,
+		Direction:              variables.DIRECTION["send"],
+		AppId:                  conversation.AppId,
+		OaId:                   conversation.OaId,
+		Avatar:                 conversation.Avatar,
+		SupporterId:            authUser.UserId,
+		SupporterName:          authUser.Fullname,
+		SendTime:               time.Now(),
+		SendTimestamp:          timestampTmp,
+		Content:                content,
+		Attachments:            attachments,
+		ExternalConversationId: conversation.ExternalConversationId,
 	}
 	log.Info("message to es: ", message)
 
@@ -169,6 +170,9 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	if err = InsertMessage(ctx, conversation.TenantId, ES_INDEX_MESSAGE, message.AppId, docId, message); err != nil {
 		log.Error(err)
 		return
+	}
+	if err = ConversationMediaService.InsertConversationMedias(ctx, authUser, message); err != nil {
+		log.Error(err)
 	}
 
 	// TODO: update conversation => after refresh page, this conversation will appearance on top the list
