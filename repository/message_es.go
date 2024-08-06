@@ -421,7 +421,6 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 	if err != nil {
 		return
 	}
-	log.Info(fmt.Sprintf("%s", buf.Bytes()))
 	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),
