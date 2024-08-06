@@ -72,6 +72,7 @@ message MessageAttachmentsDetails {
   OttPayloadMedia payload = 2;
   string message_id = 3;
   string message_content = 4;
+  google.protobuf.Timestamp send_time = 5;
 }
 
 // get chat messages with scroll api

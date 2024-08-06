@@ -58,6 +58,7 @@ func convertMessageAttachmentToPbMessageAttachment(data model.MessageAttachments
 		AttType:        data.AttachmentType,
 		MessageId:      data.MessageId,
 		MessageContent: data.MessageContent,
+		SendTime:       timestamppb.New(data.SendTime),
 		Payload:        nil,
 	}
 	if err = util.ParseAnyToAny(data.Payload, &result.Payload); err != nil {

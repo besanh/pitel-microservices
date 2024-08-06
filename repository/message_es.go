@@ -315,6 +315,7 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 					return
 				}
 				entry.MessageId = messageEntry.MessageId
+				entry.SendTime = time.UnixMilli(messageEntry.SendTimestamp)
 				entries = append(entries, entry)
 			}
 		}
@@ -335,6 +336,7 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 					Payload:        model.OttPayloadMedia{Url: url},
 					MessageId:      messageEntry.MessageId,
 					MessageContent: messageEntry.Content,
+					SendTime:       time.UnixMilli(messageEntry.SendTimestamp),
 				}
 				entries = append(entries, entry)
 			}
