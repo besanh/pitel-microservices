@@ -438,7 +438,8 @@ func filterMediaTypes(attachmentType string) []any {
 	}
 	args := []string{attachmentType}
 	if attachmentType == "media" {
-		args = []string{"image", "video", "audio", "gif"}
+		// image/audio/video/file/link/sticker/gif/reacted/unreacted
+		args = []string{"image", "audio", "video", "file", "link", "sticker", "gif", "reacted", "unreacted"}
 	}
 	return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
 }
