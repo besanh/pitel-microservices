@@ -372,7 +372,7 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 				},
 				"query": map[string]any{
 					"bool": map[string]any{
-						"must": filterMediaTypes(filter),
+						"must": filterMediaTypes(filter.AttachmentType),
 					},
 				},
 			},
@@ -428,16 +428,16 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 	return
 }
 
-func filterMediaTypes(filter model.MessageFilter) []any {
-	if len(filter.AttachmentType) < 1 {
+func filterMediaTypes(attachmentType string) []any {
+	if len(attachmentType) < 1 {
 		return []any{
 			map[string]any{
 				"match_all": map[string]any{},
 			},
 		}
 	}
-	args := []string{filter.AttachmentType}
-	if filter.AttachmentType == "media" {
+	args := []string{attachmentType}
+	if attachmentType == "media" {
 		args = []string{"image", "video", "audio", "gif"}
 	}
 	return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
