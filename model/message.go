@@ -45,6 +45,14 @@ type AttachmentsDetails struct {
 	AttachmentFile  *OttPayloadFile  `json:"attachement_file"`
 }
 
+type MessageAttachmentsDetails struct {
+	AttachmentType string          `json:"att_type"`
+	Payload        OttPayloadMedia `json:"payload"`
+	MessageId      string          `json:"message_id"`
+	MessageContent string          `json:"message_content"`
+	SendTime       time.Time       `json:"send_time"`
+}
+
 type MessageRequest struct {
 	EventName      string                `json:"event_name"`
 	AppId          string                `json:"app_id"`
