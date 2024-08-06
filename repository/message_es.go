@@ -334,6 +334,7 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 					AttachmentType: "link",
 					Payload:        model.OttPayloadMedia{Url: url},
 					MessageId:      messageEntry.MessageId,
+					MessageContent: messageEntry.Content,
 				}
 				entries = append(entries, entry)
 			}
@@ -369,32 +370,19 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 				},
 				"query": map[string]any{
 					"bool": map[string]any{
-						"must": func() []any {
-							if filter.AttachmentType == "" {
-								return []any{
-									map[string]any{
-										"match_all": map[string]any{},
-									},
-								}
-							}
-							args := []string{filter.AttachmentType}
-							if filter.AttachmentType == "media" {
-								args = []string{"image", "video", "audio", "gif"}
-							}
-							return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
-						}(),
+						"must": filterMediaTypes(filter),
 					},
 				},
 			},
 		}
 		filters = append(filters, nested)
 	} else {
-		regexp := map[string]any{
+		regexpQuery := map[string]any{
 			"regexp": map[string]any{
 				"content": ".*(http|https)://.*",
 			},
 		}
-		filters = append(filters, regexp)
+		filters = append(filters, regexpQuery)
 	}
 
 	boolQuery := map[string]any{
@@ -436,4 +424,19 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 	defer res.Body.Close()
 	result, err = elasticsearch.ParseSearchResponse((*esapi.Response)(res))
 	return
+}
+
+func filterMediaTypes(filter model.MessageFilter) []any {
+	if len(filter.AttachmentType) < 1 {
+		return []any{
+			map[string]any{
+				"match_all": map[string]any{},
+			},
+		}
+	}
+	args := []string{filter.AttachmentType}
+	if filter.AttachmentType == "media" {
+		args = []string{"image", "video", "audio", "gif"}
+	}
+	return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
 }

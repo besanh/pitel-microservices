@@ -55,9 +55,10 @@ func convertMessageToPbMessage(data model.Message) (result *pb.Message, err erro
 
 func convertMessageAttachmentToPbMessageAttachment(data model.MessageAttachmentsDetails) (result *pb.MessageAttachmentsDetails, err error) {
 	result = &pb.MessageAttachmentsDetails{
-		AttType:   data.AttachmentType,
-		MessageId: data.MessageId,
-		Payload:   nil,
+		AttType:        data.AttachmentType,
+		MessageId:      data.MessageId,
+		MessageContent: data.MessageContent,
+		Payload:        nil,
 	}
 	if err = util.ParseAnyToAny(data.Payload, &result.Payload); err != nil {
 		return

@@ -49,6 +49,7 @@ type MessageAttachmentsDetails struct {
 	AttachmentType string          `json:"att_type"`
 	Payload        OttPayloadMedia `json:"payload"`
 	MessageId      string          `json:"message_id"`
+	MessageContent string          `json:"message_content"`
 }
 
 type MessageRequest struct {
