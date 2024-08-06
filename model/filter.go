@@ -103,6 +103,7 @@ type MessageFilter struct {
 
 	// nested attachments query
 	AttachmentType string `json:"attachment_type"`
+	SearchKeyword  string `json:"search_keyword"`
 }
 
 type ConnectionQueueFilter struct {

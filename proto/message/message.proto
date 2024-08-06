@@ -165,6 +165,7 @@ message GetMessageMediasScrollRequest {
   string scroll_id = 2;
   string conversation_id = 3;
   string attachment_type = 4;
+  string search_keyword = 5;
 }
 
 message GetMessageMediasScrollResponse {

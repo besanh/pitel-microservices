@@ -300,46 +300,50 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 	hits := body.Hits.Hits
 	respScrollId = body.ScrollId
 	entries = make([]*model.MessageAttachmentsDetails, 0)
-	if filter.AttachmentType != "link" {
-		for _, messageHit := range hits {
-			messageEntry := &model.Message{}
-			if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
-				log.Error(err)
-				return
-			}
 
-			for _, attachmentHit := range messageHit.InnerHits.Attachments.Hits.Hits {
-				entry := &model.MessageAttachmentsDetails{}
-				if err = util.ParseAnyToAny(attachmentHit.Source, entry); err != nil {
-					log.Error(err)
-					return
-				}
-				entry.MessageId = messageEntry.MessageId
-				entry.SendTime = time.UnixMilli(messageEntry.SendTimestamp)
-				entries = append(entries, entry)
-			}
+	// attachment hits
+	for _, messageHit := range hits {
+		messageEntry := &model.Message{}
+		if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
+			log.Error(err)
+			return
 		}
-	} else {
-		urlRegex := regexp.MustCompile(`https?://[^\s]+`)
-		for _, messageHit := range hits {
-			messageEntry := &model.Message{}
-			if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
+
+		for _, attachmentHit := range messageEntry.Attachments {
+			if attachmentHit == nil {
+				log.Error("not found attachment")
+				continue
+			}
+			entry := &model.MessageAttachmentsDetails{}
+			if err = util.ParseAnyToAny(attachmentHit, entry); err != nil {
 				log.Error(err)
 				return
 			}
+			entry.MessageId = messageEntry.MessageId
+			entry.SendTime = time.UnixMilli(messageEntry.SendTimestamp)
+			entries = append(entries, entry)
+		}
+	}
 
-			// Find all URLs in the content
-			urls := urlRegex.FindAllString(messageEntry.Content, -1)
-			for _, url := range urls {
-				entry := &model.MessageAttachmentsDetails{
-					AttachmentType: "link",
-					Payload:        model.OttPayloadMedia{Url: url},
-					MessageId:      messageEntry.MessageId,
-					MessageContent: messageEntry.Content,
-					SendTime:       time.UnixMilli(messageEntry.SendTimestamp),
-				}
-				entries = append(entries, entry)
+	// Find all URLs in the content
+	urlRegex := regexp.MustCompile(`https?://[^\s]+`)
+	for _, messageHit := range hits {
+		messageEntry := &model.Message{}
+		if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
+			log.Error(err)
+			return
+		}
+
+		urls := urlRegex.FindAllString(messageEntry.Content, -1)
+		for _, url := range urls {
+			entry := &model.MessageAttachmentsDetails{
+				AttachmentType: "link",
+				Payload:        model.OttPayloadMedia{Url: url},
+				MessageId:      messageEntry.MessageId,
+				MessageContent: messageEntry.Content,
+				SendTime:       time.UnixMilli(messageEntry.SendTimestamp),
 			}
+			entries = append(entries, entry)
 		}
 	}
 	return total, entries, respScrollId, nil
@@ -348,6 +352,7 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, size int, scrollDuration time.Duration) (result *model.SearchReponse, err error) {
 	filters := []map[string]any{}
 	musts := []map[string]any{}
+	shoulds := []map[string]any{}
 	if len(tenantId) > 0 {
 		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
 	}
@@ -363,34 +368,32 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 	if len(filter.ExternalMessageId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("external_message_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
 	}
-	if filter.AttachmentType != "link" {
-		nested := map[string]any{
-			"nested": map[string]any{
-				"path": "attachments",
-				"inner_hits": map[string]any{
-					"size": 100,
-				},
-				"query": map[string]any{
-					"bool": map[string]any{
-						"must": filterMediaTypes(filter.AttachmentType),
-					},
+	nested := map[string]any{
+		"nested": map[string]any{
+			"path": "attachments",
+			"query": map[string]any{
+				"bool": map[string]any{
+					"must": filterMediaTypes(filter.AttachmentType),
 				},
 			},
-		}
-		filters = append(filters, nested)
-	} else {
+		},
+	}
+	shoulds = append(shoulds, nested)
+	if filter.AttachmentType == "link" {
 		regexpQuery := map[string]any{
 			"regexp": map[string]any{
 				"content": ".*(http|https)://.*",
 			},
 		}
-		filters = append(filters, regexpQuery)
+		shoulds = append(shoulds, regexpQuery)
 	}
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{
-			"filter": filters,
-			"must":   musts,
+			"filter":               filters,
+			"must":                 musts,
+			"should":               shoulds,
+			"minimum_should_match": 1,
 		},
 	}
 

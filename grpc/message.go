@@ -214,6 +214,7 @@ func (g *GRPCMessage) GetMessageMediasWithScrollAPI(ctx context.Context, request
 	filter := model.MessageFilter{
 		ConversationId: request.GetConversationId(),
 		AttachmentType: request.GetAttachmentType(),
+		SearchKeyword:  request.GetSearchKeyword(),
 	}
 
 	limit := util.ParseLimit(request.GetLimit())
