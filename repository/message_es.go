@@ -325,25 +325,27 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 		}
 	}
 
-	// Find all URLs in the content
-	urlRegex := regexp.MustCompile(`https?://[^\s]+`)
-	for _, messageHit := range hits {
-		messageEntry := &model.Message{}
-		if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
-			log.Error(err)
-			return
-		}
-
-		urls := urlRegex.FindAllString(messageEntry.Content, -1)
-		for _, url := range urls {
-			entry := &model.MessageAttachmentsDetails{
-				AttachmentType: "link",
-				Payload:        model.OttPayloadMedia{Url: url},
-				MessageId:      messageEntry.MessageId,
-				MessageContent: messageEntry.Content,
-				SendTime:       time.UnixMilli(messageEntry.SendTimestamp),
+	if filter.AttachmentType == "link" {
+		// Find all URLs in the content
+		urlRegex := regexp.MustCompile(`https?://[^\s]+`)
+		for _, messageHit := range hits {
+			messageEntry := &model.Message{}
+			if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
+				log.Error(err)
+				return
 			}
-			entries = append(entries, entry)
+
+			urls := urlRegex.FindAllString(messageEntry.Content, -1)
+			for _, url := range urls {
+				entry := &model.MessageAttachmentsDetails{
+					AttachmentType: "link",
+					Payload:        model.OttPayloadMedia{Url: url},
+					MessageId:      messageEntry.MessageId,
+					MessageContent: messageEntry.Content,
+					SendTime:       time.UnixMilli(messageEntry.SendTimestamp),
+				}
+				entries = append(entries, entry)
+			}
 		}
 	}
 	return total, entries, respScrollId, nil
