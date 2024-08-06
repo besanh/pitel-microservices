@@ -5,8 +5,10 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -71,6 +73,30 @@ func (s *ConversationMedia) InsertConversationMedias(ctx context.Context, authUs
 			log.Error(err)
 			return
 		}
+		fileSize, err := strconv.ParseInt(data.MediaSize, 10, 64)
+		if err != nil {
+			log.Error(err)
+			fileSize = 0 // reset it to 0
+		}
+		if fileSize < 1 {
+			client := resty.New()
+			// Perform a HEAD request
+			resp, err := client.R().
+				Head(data.MediaUrl)
+			if err != nil {
+				log.Error(err)
+				return err
+			}
+			contentLength := resp.Header().Get("Content-Length")
+			if len(contentLength) > 0 {
+				fileSize, err = strconv.ParseInt(contentLength, 10, 64)
+				if err != nil {
+					log.Error(err)
+					fileSize = 0 // reset it to 0
+				}
+			}
+		}
+
 		tmp := model.ConversationMedia{
 			Base:                   model.InitBase(),
 			TenantId:               data.TenantId,
@@ -81,7 +107,7 @@ func (s *ConversationMedia) InsertConversationMedias(ctx context.Context, authUs
 			MediaType:              data.MediaType,
 			MediaHeader:            data.MediaHeader,
 			MediaUrl:               data.MediaUrl,
-			MediaSize:              data.MediaSize,
+			MediaSize:              fileSize,
 			SendTimestamp:          data.SendTimestamp,
 		}
 
@@ -106,7 +132,6 @@ func (s *ConversationMedia) InsertConversationMedias(ctx context.Context, authUs
 			log.Error(err)
 			return
 		}
-
 		tmp := model.ConversationMedia{
 			Base:                   model.InitBase(),
 			TenantId:               data.TenantId,
@@ -117,7 +142,7 @@ func (s *ConversationMedia) InsertConversationMedias(ctx context.Context, authUs
 			MediaType:              data.MediaType,
 			MediaHeader:            data.MediaHeader,
 			MediaUrl:               data.MediaUrl,
-			MediaSize:              data.MediaSize,
+			MediaSize:              0,
 			SendTimestamp:          data.SendTimestamp,
 		}
 

@@ -24,9 +24,7 @@ type (
 var ConversationMediaRepo IConversationMedia
 
 func NewConversationMedia() IConversationMedia {
-	repo := &ConversationMedia{}
-	repo.InitIndex()
-	return repo
+	return &ConversationMedia{}
 }
 
 func (repo *ConversationMedia) InitIndex() {
@@ -53,7 +51,19 @@ func (repo *ConversationMedia) GetConversationMedias(ctx context.Context, db sql
 		query = query.Where("conversation_type = ?", filter.ConversationType)
 	}
 	if len(filter.MediaType) > 0 {
-		query = query.Where("media_type = ?", filter.MediaType)
+		switch model.MediaType(filter.MediaType) {
+		case model.MediaLink, model.MediaFile, model.MediaImage, model.MediaVideo, model.MediaAudio, model.MediaGif, model.MediaSticker:
+			query = query.Where("media_type = ?", filter.MediaType)
+		case model.Media:
+			query = query.Where("media_type IN (?)", bun.In([]model.MediaType{
+				model.MediaImage,
+				model.MediaVideo,
+				model.MediaAudio,
+				model.MediaGif,
+				model.MediaSticker,
+			}))
+		default:
+		}
 	}
 	if len(filter.MediaName) > 0 {
 		query.Where(

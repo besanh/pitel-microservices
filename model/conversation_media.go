@@ -10,6 +10,7 @@ import (
 type MediaType string
 
 const (
+	Media        MediaType = "media"
 	MediaImage   MediaType = "image"
 	MediaAudio   MediaType = "audio"
 	MediaVideo   MediaType = "video"
@@ -30,7 +31,7 @@ type ConversationMedia struct {
 	MediaType              string    `json:"media_type" bun:"media_type,type:text,notnull"`
 	MediaHeader            string    `json:"media_header" bun:"media_header,type:text"`
 	MediaUrl               string    `json:"media_url" bun:"media_url,type:text"`
-	MediaSize              string    `json:"media_size" bun:"media_size,type:text"`
+	MediaSize              int64     `json:"media_size" bun:"media_size,type:integer"`
 	SendTimestamp          time.Time `json:"send_timestamp" bun:"send_timestamp,notnull"`
 }
 

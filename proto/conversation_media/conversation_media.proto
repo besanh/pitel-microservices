@@ -21,7 +21,7 @@ message ConversationMedia {
   string media_type = 9;
   string media_header = 10;
   string media_url = 11;
-  string media_size = 12;
+  int64 media_size = 12;
   google.protobuf.Timestamp send_timestamp = 13;
 }
 
