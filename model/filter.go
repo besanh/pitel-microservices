@@ -100,6 +100,9 @@ type MessageFilter struct {
 	ReadBy              json.RawMessage `json:"read_by"`
 	IsRead              string          `json:"is_read"`
 	EventNameExlucde    []string        `json:"event_name_exclude"`
+
+	// nested attachments query
+	AttachmentType string `json:"attachment_type"`
 }
 
 type ConnectionQueueFilter struct {

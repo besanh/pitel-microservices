@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/esapi"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/model"
@@ -18,6 +20,7 @@ type (
 		GetMessages(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit, offset int) (int, *[]model.Message, error)
 		GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error)
 		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.Message, respScrollId string, err error)
+		GetMessageMediasWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.MessageAttachmentsDetails, respScrollId string, err error)
 	}
 	MessageES struct {
 		ESGenericRepo[model.Message]
@@ -262,6 +265,163 @@ func (repo *MessageES) searchWithScroll(ctx context.Context, tenantId, index str
 	if err != nil {
 		return
 	}
+	client := ESClient.GetClient()
+	res, err := client.Search(
+		client.Search.WithContext(ctx),
+		client.Search.WithIndex(index),
+		client.Search.WithBody(&buf),
+		client.Search.WithTrackTotalHits(true),
+		client.Search.WithPretty(),
+		client.Search.WithScroll(scrollDuration),
+	)
+	if err != nil {
+		return
+	}
+	defer res.Body.Close()
+	result, err = elasticsearch.ParseSearchResponse((*esapi.Response)(res))
+	return
+}
+
+func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.MessageAttachmentsDetails, respScrollId string, err error) {
+	var body *model.SearchReponse
+	if len(scrollId) < 1 {
+		scrollDuration := 5 * time.Minute
+		if len(scrollDurations) > 0 {
+			scrollDuration = scrollDurations[0]
+		}
+		body, err = repo.searchMediasWithScroll(ctx, tenantId, index, filter, limit, scrollDuration)
+	} else {
+		body, err = repo.ScrollAPI(ctx, scrollId)
+	}
+	if err != nil || body == nil {
+		return
+	}
+	total = body.Hits.Total.Value
+	hits := body.Hits.Hits
+	respScrollId = body.ScrollId
+	entries = make([]*model.MessageAttachmentsDetails, 0)
+	if filter.AttachmentType != "link" {
+		for _, messageHit := range hits {
+			messageEntry := &model.Message{}
+			if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
+				log.Error(err)
+				return
+			}
+
+			for _, attachmentHit := range messageHit.InnerHits.Attachments.Hits.Hits {
+				entry := &model.MessageAttachmentsDetails{}
+				if err = util.ParseAnyToAny(attachmentHit.Source, entry); err != nil {
+					log.Error(err)
+					return
+				}
+				entry.MessageId = messageEntry.MessageId
+				entries = append(entries, entry)
+			}
+		}
+	} else {
+		urlRegex := regexp.MustCompile(`https?://[^\s]+`)
+		for _, messageHit := range hits {
+			messageEntry := &model.Message{}
+			if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
+				log.Error(err)
+				return
+			}
+
+			// Find all URLs in the content
+			urls := urlRegex.FindAllString(messageEntry.Content, -1)
+			for _, url := range urls {
+				entry := &model.MessageAttachmentsDetails{
+					AttachmentType: "link",
+					Payload:        model.OttPayloadMedia{Url: url},
+					MessageId:      messageEntry.MessageId,
+				}
+				entries = append(entries, entry)
+			}
+		}
+	}
+	return total, entries, respScrollId, nil
+}
+
+func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, size int, scrollDuration time.Duration) (result *model.SearchReponse, err error) {
+	filters := []map[string]any{}
+	musts := []map[string]any{}
+	if len(tenantId) > 0 {
+		musts = append(musts, elasticsearch.MatchQuery("_routing", index+"_"+tenantId))
+	}
+	if len(filter.AppId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("app_id", util.ParseToAnyArray([]string{filter.AppId})...))
+	}
+	if len(filter.ConversationId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("conversation_id", util.ParseToAnyArray([]string{filter.ConversationId})...))
+	}
+	if len(filter.IsRead) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("is_read", util.ParseToAnyArray([]string{filter.IsRead})...))
+	}
+	if len(filter.ExternalMessageId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("external_message_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
+	}
+	if filter.AttachmentType != "link" {
+		nested := map[string]any{
+			"nested": map[string]any{
+				"path": "attachments",
+				"inner_hits": map[string]any{
+					"size": 100,
+				},
+				"query": map[string]any{
+					"bool": map[string]any{
+						"must": func() []any {
+							if filter.AttachmentType == "" {
+								return []any{
+									map[string]any{
+										"match_all": map[string]any{},
+									},
+								}
+							}
+							args := []string{filter.AttachmentType}
+							if filter.AttachmentType == "media" {
+								args = []string{"image", "video", "audio", "gif"}
+							}
+							return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
+						}(),
+					},
+				},
+			},
+		}
+		filters = append(filters, nested)
+	} else {
+		regexp := map[string]any{
+			"regexp": map[string]any{
+				"content": ".*(http|https)://.*",
+			},
+		}
+		filters = append(filters, regexp)
+	}
+
+	boolQuery := map[string]any{
+		"bool": map[string]any{
+			"filter": filters,
+			"must":   musts,
+		},
+	}
+
+	// search
+	searchSource := map[string]any{
+		"query":   boolQuery,
+		"_source": true,
+		"size":    0,
+		"sort": []any{
+			elasticsearch.Order("send_time", false),
+		},
+	}
+	if size > 0 {
+		searchSource["size"] = size
+	}
+
+	buf, err := elasticsearch.EncodeAny(searchSource)
+	if err != nil {
+		return
+	}
+	log.Info(fmt.Sprintf("%s", buf.Bytes()))
 	client := ESClient.GetClient()
 	res, err := client.Search(
 		client.Search.WithContext(ctx),

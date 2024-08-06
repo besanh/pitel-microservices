@@ -204,3 +204,45 @@ func (g *GRPCMessage) ShareInfo(ctx context.Context, request *pb.ShareInfoReques
 	}
 	return
 }
+
+func (g *GRPCMessage) GetMessageMediasWithScrollAPI(ctx context.Context, request *pb.GetMessageMediasScrollRequest) (result *pb.GetMessageMediasScrollResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	filter := model.MessageFilter{
+		ConversationId: request.GetConversationId(),
+		AttachmentType: request.GetAttachmentType(),
+	}
+
+	limit := util.ParseLimit(request.GetLimit())
+
+	total, data, respScrollId, err := service.MessageService.GetMessageMediasWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	resultData := make([]*pb.MessageAttachmentsDetails, 0)
+	for _, item := range data {
+		tmp, err := convertMessageAttachmentToPbMessageAttachment(*item)
+		if err != nil {
+			log.Error(err)
+			result = &pb.GetMessageMediasScrollResponse{
+				Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+				Message: err.Error(),
+			}
+			return result, err
+		}
+		resultData = append(resultData, tmp)
+	}
+
+	result = &pb.GetMessageMediasScrollResponse{
+		Code:     "OK",
+		Message:  "ok",
+		Data:     resultData,
+		Total:    int32(total),
+		Limit:    int32(limit),
+		ScrollId: respScrollId,
+	}
+	return
+}

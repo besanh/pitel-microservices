@@ -67,6 +67,12 @@ message ShareInfo {
   string district = 5;
 }
 
+message MessageAttachmentsDetails {
+  string att_type = 1;
+  OttPayloadMedia payload = 2;
+  string message_id = 3;
+}
+
 // get chat messages with scroll api
 message GetMessagesScrollRequest {
   int32 limit = 1;
@@ -151,6 +157,23 @@ message ShareInfoResponse {
   string data = 3;
 }
 
+// get chat message medias with scroll api
+message GetMessageMediasScrollRequest {
+  int32 limit = 1;
+  string scroll_id = 2;
+  string conversation_id = 3;
+  string attachment_type = 4;
+}
+
+message GetMessageMediasScrollResponse {
+  string code = 1;
+  string message = 2;
+  repeated MessageAttachmentsDetails data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  string scroll_id = 6;
+}
+
 service MessageService {
   rpc GetMessagesWithScrollAPI(GetMessagesScrollRequest) returns (GetMessagesScrollResponse) {
     option (google.api.http) = {
@@ -182,6 +205,12 @@ service MessageService {
     option (google.api.http) = {
       post : "/bss-chat/v1/message/share-info"
       body : "*"
+    };
+  };
+
+  rpc GetMessageMediasWithScrollAPI(GetMessageMediasScrollRequest) returns (GetMessageMediasScrollResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/message/media/scroll"
     };
   };
 }
