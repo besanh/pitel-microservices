@@ -40,7 +40,6 @@ func InitServices() {
 	ManageQueueService = NewManageQueue()
 	ChatQueueUserService = NewChatQueueUser()
 	ShareInfoService = NewShareInfo()
-	ConversationMediaService = NewConversationMedia()
 }
 
 // MAP TENANT_ID SQL_CONN

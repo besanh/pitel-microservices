@@ -38,7 +38,6 @@ import (
 	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
 	pbChatVendor "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
 	pbConversation "github.com/tel4vn/fins-microservices/gen/proto/conversation"
-	pbConversationMedia "github.com/tel4vn/fins-microservices/gen/proto/conversation_media"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	pbMessage "github.com/tel4vn/fins-microservices/gen/proto/message"
 	pbProfile "github.com/tel4vn/fins-microservices/gen/proto/profile"
@@ -106,7 +105,6 @@ func NewGRPCServer(port string) {
 	pbChatManageQueue.RegisterChatManageQueueServiceServer(grpcServer, grpcService.NewGRPCChatManageQueue())
 	pbChatQueueUser.RegisterChatQueueUserServiceServer(grpcServer, grpcService.NewGRPCChatQueueUser())
 	pbShareInfo.RegisterShareInfoServiceServer(grpcServer, grpcService.NewGRPCShareInfo())
-	pbConversationMedia.RegisterConversationMediaServiceServer(grpcServer, grpcService.NewGRPCConversationMedia())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -212,9 +210,6 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err = pbShareInfo.RegisterShareInfoServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
-		log.Fatal(err)
-	}
-	if err = pbConversationMedia.RegisterConversationMediaServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 

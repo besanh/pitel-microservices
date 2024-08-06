@@ -226,10 +226,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 							log.Error(err)
 							continue
 						}
-						if err = ConversationMediaService.InsertConversationMedias(ctx, user.AuthUser, message); err != nil {
-							log.Error(err)
-							continue
-						}
 					}
 
 					wg.Done()

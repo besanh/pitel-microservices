@@ -171,9 +171,6 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		log.Error(err)
 		return
 	}
-	if err = ConversationMediaService.InsertConversationMedias(ctx, authUser, message); err != nil {
-		log.Error(err)
-	}
 
 	// TODO: update conversation => after refresh page, this conversation will appearance on top the list
 	conversation.UpdatedAt = time.Now().Format(time.RFC3339)
