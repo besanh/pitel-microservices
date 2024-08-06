@@ -368,25 +368,38 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 	if len(filter.ExternalMessageId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("external_message_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
 	}
+	if filter.AttachmentType == "link" {
+		regexpString := ".*(http|https)://.*"
+		if len(filter.SearchKeyword) > 0 {
+			regexpString = ".*(http|https)://.*" + filter.SearchKeyword + ".*"
+		}
+		regexpQuery := map[string]any{
+			"regexp": map[string]any{
+				"content": regexpString,
+			},
+		}
+		shoulds = append(shoulds, regexpQuery)
+	}
+	nestedMustQuery := filterMediaTypes(filter.AttachmentType)
+	if len(filter.SearchKeyword) > 0 {
+		wildcardQuery := map[string]any{
+			"wildcard": map[string]any{
+				"attachments.payload.url": "*" + filter.SearchKeyword + "*",
+			},
+		}
+		nestedMustQuery = append(nestedMustQuery, wildcardQuery)
+	}
 	nested := map[string]any{
 		"nested": map[string]any{
 			"path": "attachments",
 			"query": map[string]any{
 				"bool": map[string]any{
-					"must": filterMediaTypes(filter.AttachmentType),
+					"must": nestedMustQuery,
 				},
 			},
 		},
 	}
 	shoulds = append(shoulds, nested)
-	if filter.AttachmentType == "link" {
-		regexpQuery := map[string]any{
-			"regexp": map[string]any{
-				"content": ".*(http|https)://.*",
-			},
-		}
-		shoulds = append(shoulds, regexpQuery)
-	}
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{
