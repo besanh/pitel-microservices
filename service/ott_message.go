@@ -86,13 +86,14 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 	go func(tenants []string, timeStamp time.Time, userChan chan []model.User, doneChan chan<- bool) {
 		defer close(userChan)
 		// TODO: check queue setting
+		log.Infof("app_id: %v, process tenants: %v", data.AppId, tenants)
 		for _, tenant := range tenants {
-			if len(messageTmp.ExternalMsgId) > 0 && messageTmp.IsEcho {
-				if isExistMessage := s.checkMessageEcho(ctx, tenant, messageTmp); isExistMessage {
-					userChan <- []model.User{}
-					continue
-				}
-			}
+			// if len(messageTmp.ExternalMsgId) > 0 && messageTmp.IsEcho {
+			// 	if isExistMessage := s.checkMessageEcho(ctx, tenant, messageTmp); isExistMessage {
+			// 		userChan <- []model.User{}
+			// 		continue
+			// 	}
+			// }
 			go s.CheckChatSetting(ctx, externalConversationId, messageTmp, *chatApp, userChan, errChan, tenant)
 		}
 
@@ -378,21 +379,21 @@ func (s *OttMessage) proccessIntegrateSystems(chatAppIntegrateSystems []model.Ch
 }
 
 // Check message echo to prevent duplicate message
-func (s *OttMessage) checkMessageEcho(ctx context.Context, tenant string, message model.Message) (isExist bool) {
-	filter := model.MessageFilter{
-		TenantId:          tenant,
-		ExternalMessageId: message.ExternalMsgId,
-	}
-	_, messages, _, err := repository.MessageESRepo.SearchWithScroll(ctx, tenant, ES_INDEX_MESSAGE, filter, 1, "")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	if len(messages) > 0 {
-		isExist = true
-	}
-	return
-}
+// func (s *OttMessage) checkMessageEcho(ctx context.Context, tenant string, message model.Message) (isExist bool) {
+// 	filter := model.MessageFilter{
+// 		TenantId:          tenant,
+// 		ExternalMessageId: message.ExternalMsgId,
+// 	}
+// 	_, messages, _, err := repository.MessageESRepo.SearchWithScroll(ctx, tenant, ES_INDEX_MESSAGE, filter, 1, "")
+// 	if err != nil {
+// 		log.Error(err)
+// 		return
+// 	}
+// 	if len(messages) > 0 {
+// 		isExist = true
+// 	}
+// 	return
+// }
 
 func handlePublishEvent(ctx context.Context, isPublishToAdmin bool, user *model.User, manageQueueUser *model.ChatManageQueueUser, subscriberAdmins []string, subscribers []*Subscriber, conversation model.ConversationView, message model.Message, isNew bool) {
 	var userId string
