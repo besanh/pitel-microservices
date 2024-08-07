@@ -1,8 +1,9 @@
 package model
 
-type ElasticsearchInboxMarketingResponse struct {
-	Took     int  `json:"took"`
-	TimedOut bool `json:"timed_out"`
+type SearchReponse struct {
+	ScrollId string `json:"_scroll_id"`
+	Took     int    `json:"took"`
+	TimedOut bool   `json:"timed_out"`
 	Shards   struct {
 		Total      int `json:"total"`
 		Successful int `json:"successful"`

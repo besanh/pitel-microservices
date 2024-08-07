@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"io"
@@ -9,48 +10,52 @@ import (
 
 	"github.com/elastic/go-elasticsearch/esapi"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
-	log "github.com/sirupsen/logrus"
+
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/fins-microservices/model"
 )
 
-type Config struct {
-	Username              string
-	Password              string
-	Host                  []string
-	RetryStatuses         []int
-	MaxRetries            int
-	ResponseHeaderTimeout int
-}
+type (
+	IElasticsearchClient interface {
+		GetClient() *elasticsearch.Client
+	}
 
-type Response struct {
-	StatusCode int
-	Header     http.Header
-	Body       map[string]interface{}
-}
+	Config struct {
+		Username              string
+		Password              string
+		Host                  []string
+		RetryStatuses         []int
+		MaxRetries            int
+		ResponseHeaderTimeout int
+	}
 
-type IElasticsearchClient interface {
-	GetClient() *elasticsearch.Client
-}
+	Response struct {
+		StatusCode int
+		Header     http.Header
+		Body       map[string]any
+	}
 
-type elasticsearchClient struct {
-	config Config
-	client *elasticsearch.Client
-}
+	elasticsearchClient struct {
+		config Config
+		client *elasticsearch.Client
+	}
+)
 
 func NewElasticsearchClient(config Config) IElasticsearchClient {
 	es := &elasticsearchClient{
 		config: config,
 	}
 	if err := es.Connect(); err != nil {
-		log.Fatal(err)
+		log.Error(err)
 		return nil
 	}
 	_, err := es.GetClient().Ping()
 	if err != nil {
-		log.Fatal("Elasticsearch connection failed")
+		log.Error("elasticsearch connection failed")
 		return nil
 	} else {
-		log.Info("Elasticsearch connection successful")
+		log.Info("elasticsearch connection successful")
 	}
 	return es
 }
@@ -75,6 +80,7 @@ func (e *elasticsearchClient) Connect() error {
 func (e *elasticsearchClient) GetClient() *elasticsearch.Client {
 	return e.client
 }
+
 func ParseAnyToAny(value any, dest any) error {
 	bytes, err := json.Marshal(value)
 	if err != nil {
@@ -143,12 +149,16 @@ func TermsQuery(field string, values ...any) map[string]any {
 	}
 }
 
-func WildcardQuery(field string, value any) map[string]any {
+func WildcardQuery(field string, value any, insensitive sql.NullBool) map[string]any {
+	valueTmp := map[string]any{
+		"value": value,
+	}
+	if insensitive.Valid {
+		valueTmp["case_insensitive"] = insensitive.Bool
+	}
 	return map[string]any{
 		"wildcard": map[string]any{
-			field: map[string]any{
-				"value": value,
-			},
+			field: valueTmp,
 		},
 	}
 }
@@ -191,6 +201,22 @@ func MustQuery(queries ...map[string]any) map[string]any {
 	return query
 }
 
+func MustNotQuery(queries ...map[string]any) map[string]any {
+	query := map[string]any{
+		"must_not": map[string]any{},
+	}
+	if len(queries) == 1 {
+		query["must_not"] = queries[0]
+	} else if len(queries) > 1 {
+		var clauses []any
+		for _, subQuery := range queries {
+			clauses = append(clauses, subQuery)
+		}
+		query["must_not"] = clauses
+	}
+	return query
+}
+
 func Order(field string, isAsc bool) map[string]any {
 	order := "asc"
 	if !isAsc {
@@ -203,47 +229,20 @@ func Order(field string, isAsc bool) map[string]any {
 	}
 }
 
-func ParseSearchResponse(response *esapi.Response) (*SearchReponse, error) {
+func ParseSearchResponse(response *esapi.Response) (*model.SearchReponse, error) {
 	if response.IsError() {
 		var e map[string]any
 		if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
 			return nil, err
 		} else {
-			typeErr, _ := e["error"].(map[string]any)["type"]
-			reason, _ := e["error"].(map[string]any)["reason"]
+			typeErr := e["error"].(map[string]any)["type"]
+			reason := e["error"].(map[string]any)["reason"]
 			return nil, errors.New(util.ParseString(typeErr) + ":" + util.ParseString(reason))
 		}
 	}
-	result := SearchReponse{}
+	result := model.SearchReponse{}
 	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
 		return &result, err
 	}
 	return &result, nil
-}
-
-type SearchReponse struct {
-	Took     int  `json:"took"`
-	TimedOut bool `json:"timed_out"`
-	Shards   struct {
-		Total      int `json:"total"`
-		Successful int `json:"successful"`
-		Skipped    int `json:"skipped"`
-		Failed     int `json:"failed"`
-	} `json:"_shards"`
-	Hits struct {
-		Total struct {
-			Value    int    `json:"value"`
-			Relation string `json:"relation"`
-		} `json:"total"`
-		MaxScore interface{} `json:"max_score"`
-		Hits     []struct {
-			Index   string      `json:"_index"`
-			Type    string      `json:"_type"`
-			ID      string      `json:"_id"`
-			Score   interface{} `json:"_score"`
-			Routing string      `json:"_routing"`
-			Source  any         `json:"_source"`
-			Sort    []string    `json:"sort"`
-		} `json:"hits"`
-	} `json:"hits"`
 }

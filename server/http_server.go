@@ -4,24 +4,30 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/tel4vn/fins-microservices/common/log"
 	responsetime "github.com/tel4vn/fins-microservices/middleware/response"
+	"github.com/tel4vn/fins-microservices/middleware/trace"
+	"go.elastic.co/apm/module/apmgin/v2"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	serviceName = "github.com/tel4vn/fins-microservices"
-	version     = "v2.0.1"
+	serviceName = "test-service"
+	version     = "v1.0.5"
 )
 
 func NewHTTPServer() *gin.Engine {
 	// For Production
-	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 	engine := gin.New()
 	engine.Use(gin.Recovery())
 	engine.MaxMultipartMemory = 100 << 20
+	// APM
+	engine.Use(apmgin.Middleware(engine))
 	engine.Use(CORSMiddleware())
 	engine.Use(allowOptionsMethod())
+	engine.Use(trace.Handler)
 	engine.Use(responsetime.Handler)
 	engine.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -51,4 +57,16 @@ func allowOptionsMethod() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func Start(server *gin.Engine, port string) {
+	v := make(chan struct{})
+	go func() {
+		if err := server.Run(":" + port); err != nil {
+			log.Error("failed to start service", err)
+			close(v)
+		}
+	}()
+	log.Infof("service %v listening on port %v", serviceName, port)
+	<-v
 }

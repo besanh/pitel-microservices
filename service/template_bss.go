@@ -29,15 +29,11 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 	templateBss := model.TemplateBss{
 		Base: model.InitBase(),
 	}
-	dbCon, err := GetDBConnOfUser(*authUser)
-	if err != nil {
-		return templateBss.Base.GetId(), err
-	}
 	filter := model.TemplateBssFilter{
 		TemplateCode: []string{data.TemplateCode},
 		TemplateType: []string{data.TemplateType},
 	}
-	total, _, err := repository.TemplateBssRepo.GetTemplateBsses(ctx, dbCon, filter, 1, 0)
+	total, _, err := repository.TemplateBssRepo.GetTemplateBsses(ctx, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return templateBss.Base.GetId(), err
@@ -58,7 +54,7 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 	templateBss.Partition = joinPart
 	templateBss.Status = data.Status
 
-	if err := repository.TemplateBssRepo.Insert(ctx, dbCon, templateBss); err != nil {
+	if err := repository.TemplateBssRepo.Insert(ctx, templateBss); err != nil {
 		log.Error(err)
 		return templateBss.Base.GetId(), err
 	}
@@ -67,12 +63,7 @@ func (s *TemplateBss) InsertTemplateBss(ctx context.Context, authUser *model.Aut
 }
 
 func (s *TemplateBss) GetTemplateBsses(ctx context.Context, authUser *model.AuthUser, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error) {
-	dbCon, err := GetDBConnOfUser(*authUser)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	total, result, err = repository.TemplateBssRepo.GetTemplateBsses(ctx, dbCon, filter, limit, offset)
+	total, result, err = repository.TemplateBssRepo.GetTemplateBsses(ctx, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return 0, nil, err
@@ -82,12 +73,7 @@ func (s *TemplateBss) GetTemplateBsses(ctx context.Context, authUser *model.Auth
 }
 
 func (s *TemplateBss) GetTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string) (result *model.TemplateBss, err error) {
-	dbCon, err := GetDBConnOfUser(*authUser)
-	if err != nil {
-		return nil, err
-	}
-
-	templateBssExist, err := repository.TemplateBssRepo.GetById(ctx, dbCon, id)
+	templateBssExist, err := repository.TemplateBssRepo.GetById(ctx, id)
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -97,16 +83,11 @@ func (s *TemplateBss) GetTemplateBssById(ctx context.Context, authUser *model.Au
 }
 
 func (s *TemplateBss) PutTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string, data model.TemplateBssBodyRequest) (err error) {
-	dbCon, err := GetDBConnOfUser(*authUser)
-	if err != nil {
-		return err
-	}
-
 	filter := model.TemplateBssFilter{
 		TemplateCode: []string{data.TemplateCode},
 		TemplateType: []string{data.TemplateType},
 	}
-	total, _, err := repository.TemplateBssRepo.GetTemplateBsses(ctx, dbCon, filter, 1, 0)
+	total, _, err := repository.TemplateBssRepo.GetTemplateBsses(ctx, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -115,7 +96,7 @@ func (s *TemplateBss) PutTemplateBssById(ctx context.Context, authUser *model.Au
 		return errors.New("template code is existed")
 	}
 
-	templateBssExist, err := repository.TemplateBssRepo.GetById(ctx, dbCon, id)
+	templateBssExist, err := repository.TemplateBssRepo.GetById(ctx, id)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -134,7 +115,7 @@ func (s *TemplateBss) PutTemplateBssById(ctx context.Context, authUser *model.Au
 	templateBssExist.Partition = joinPart
 	templateBssExist.Status = data.Status
 
-	if err = repository.TemplateBssRepo.Update(ctx, dbCon, *templateBssExist); err != nil {
+	if err = repository.TemplateBssRepo.Update(ctx, *templateBssExist); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -143,18 +124,13 @@ func (s *TemplateBss) PutTemplateBssById(ctx context.Context, authUser *model.Au
 }
 
 func (s *TemplateBss) DeleteTemplateBssById(ctx context.Context, authUser *model.AuthUser, id string) (err error) {
-	dbCon, err := GetDBConnOfUser(*authUser)
-	if err != nil {
-		return err
-	}
-
-	_, err = repository.TemplateBssRepo.GetById(ctx, dbCon, id)
+	_, err = repository.TemplateBssRepo.GetById(ctx, id)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
 
-	if err = repository.TemplateBssRepo.Delete(ctx, dbCon, id); err != nil {
+	if err = repository.TemplateBssRepo.Delete(ctx, id); err != nil {
 		log.Error(err)
 		return err
 	}

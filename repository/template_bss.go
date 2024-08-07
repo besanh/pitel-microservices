@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/uptrace/bun"
 )
@@ -12,7 +11,7 @@ import (
 type (
 	ITemplateBss interface {
 		IRepo[model.TemplateBss]
-		GetTemplateBsses(ctx context.Context, db sqlclient.ISqlClientConn, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error)
+		GetTemplateBsses(ctx context.Context, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error)
 	}
 	TemplateBss struct {
 		Repo[model.TemplateBss]
@@ -25,9 +24,9 @@ func NewTemplateBss() ITemplateBss {
 	return &TemplateBss{}
 }
 
-func (repo *TemplateBss) GetTemplateBsses(ctx context.Context, db sqlclient.ISqlClientConn, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error) {
+func (repo *TemplateBss) GetTemplateBsses(ctx context.Context, filter model.TemplateBssFilter, limit, offset int) (total int, result *[]model.TemplateBss, err error) {
 	result = new([]model.TemplateBss)
-	query := db.GetDB().NewSelect().
+	query := repo.Conn.GetDB().NewSelect().
 		Model(result)
 	if len(filter.TemplateName) > 0 {
 		query.Where("? ILIKE %?%", bun.Ident("template_name"), filter.TemplateName)

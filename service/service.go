@@ -1,93 +1,87 @@
 package service
 
 import (
-	"context"
-	"errors"
 	"sync"
-	"time"
 
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/constants"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
 )
 
 func InitServices() {
-	ExampleService = NewExample()
+	AuthService = NewAuthService("")
 }
 
-// MAP TENANT_ID SQL_CONN
-var (
-	MapDBConn        map[string]sqlclient.ISqlClientConn
-	ERR_EMPTY_CONN   = errors.New("empty_conn")
-	ERR_DB_CONN_FAIL = errors.New("db_conn_fail")
-
-	// ES
-	ES_HOST     = "https://es.dev.fins.vn"
-	ES_USERNAME = "elastic"
-	ES_PASSWORD = "FinS##TEL4VN##ES#!2324"
-	ES_INDEX    = "pitel_bss_inbox_marketing"
-)
-
-type DBConfig struct {
-	Host     string
-	Port     int
-	Database string
-	Username string
-	Password string
+type DBConnection struct {
+	sync.RWMutex
+	MapConnection map[string]sqlclient.ISqlClientConn
 }
 
-func NewDBConn(tenantId string, config DBConfig) (dbConn sqlclient.ISqlClientConn, err error) {
-	sqlClientConfig := sqlclient.SqlConfig{
-		Host:         config.Host,
-		Port:         config.Port,
-		Database:     config.Database,
-		Username:     config.Username,
-		Password:     config.Password,
-		DialTimeout:  20,
-		ReadTimeout:  30,
-		WriteTimeout: 30,
-		Timeout:      30,
-		PoolSize:     10,
-		MaxIdleConns: 10,
-		MaxOpenConns: 10,
-		Driver:       sqlclient.POSTGRESQL,
-	}
-	dbConn = sqlclient.NewSqlClient(sqlClientConfig)
-	if err = dbConn.Connect(); err != nil {
-		log.Error(err)
-		err = ERR_DB_CONN_FAIL
-		return
-	}
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-		defer cancel()
-		repository.InitTables(ctx, dbConn)
-	}()
-	wg.Wait()
-	MapDBConn[tenantId] = dbConn
-	return
-}
-
-func GetDBConnOfUser(user model.AuthUser) (dbConn sqlclient.ISqlClientConn, err error) {
-	if len(user.DatabaseHost) < 1 {
-		err = ERR_EMPTY_CONN
-		return
-	}
-	dbConn, ok := MapDBConn[user.TenantId]
-	if !ok {
-		dbConn, err = NewDBConn(user.TenantId, DBConfig{
-			Host:     user.DatabaseHost,
-			Port:     user.DatabasePort,
-			Database: user.DatabaseName,
-			Username: user.DatabaseUser,
-			Password: user.DatabasePassword,
-		})
+func (db *DBConnection) GetConnection(tenant string) (client sqlclient.ISqlClientConn, err error) {
+	db.RLock()
+	defer db.RUnlock()
+	client = db.MapConnection[tenant]
+	if client == nil {
+		err = variables.NewError(constants.ERR_DB_CONNECTION_ERROR)
 		return
 	}
 	return
+}
+
+func (db *DBConnection) SetConnection(tenant string, client sqlclient.ISqlClientConn) {
+	db.Lock()
+	defer db.Unlock()
+	db.MapConnection[tenant] = client
+}
+
+var DBCons DBConnection
+
+func InitDBConnection(conn sqlclient.ISqlClientConn) {
+	DBCons = DBConnection{
+		MapConnection: make(map[string]sqlclient.ISqlClientConn),
+	}
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	// defer cancel()
+
+	// // Get tenants
+	// tenants, _, err := repository.Tem.SelectByQueryWithDB(ctx, conn, nil, 99, 0, "")
+	// if err != nil {
+	// 	log.Errorf("[MigrateDBCollections] Error get tenants: %v", err)
+	// 	return
+	// }
+
+	// for _, tenant := range tenants {
+	// 	log.Infof("[InitDBConnection] Get database setting for tenant: %v", tenant.TenantName)
+	// 	var dbCfg model.AAA_DB
+	// 	if err = util.ParseAnyToAny(tenant.DatabaseSetting, &dbCfg); err != nil {
+	// 		log.Errorf("[InitDBConnection] Error parse database setting: %v", err)
+	// 		continue
+	// 	}
+	// 	log.Infof("[InitDBConnection] Get collections for tenant: %v - database: %v", tenant.TenantName, dbCfg.DBName)
+	// 	// Handle check database exist
+	// 	var dbConfig sqlclient.SqlConfig
+	// 	var db sqlclient.ISqlClientConn
+	// 	dbConfig = sqlclient.SqlConfig{
+	// 		Host:         dbCfg.Host,
+	// 		Database:     dbCfg.DBName,
+	// 		Username:     dbCfg.Username,
+	// 		Password:     dbCfg.Password,
+	// 		Port:         dbCfg.Port,
+	// 		DialTimeout:  20,
+	// 		ReadTimeout:  30,
+	// 		WriteTimeout: 30,
+	// 		Timeout:      30,
+	// 		PoolSize:     10,
+	// 		MaxOpenConns: 20,
+	// 		MaxIdleConns: 10,
+	// 		Driver:       sqlclient.POSTGRESQL,
+	// 	}
+	// 	db, err = sqlclient.NewSqlClient(dbConfig)
+	// 	if err != nil {
+	// 		log.Errorf("[InitDBConnection] Error connect database: %v", err)
+	// 		continue
+	// 	}
+	// 	DBCons.SetConnection(tenant.Id, db)
+	// }
 }

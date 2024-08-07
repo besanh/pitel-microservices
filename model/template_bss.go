@@ -3,7 +3,7 @@ package model
 import (
 	"errors"
 
-	"github.com/tel4vn/fins-microservices/common/constants"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
 )
@@ -37,7 +37,7 @@ func (r *TemplateBssBodyRequest) Validate() error {
 	if len(r.TemplateType) < 1 {
 		return errors.New("template type is missing")
 	}
-	if !slices.Contains[[]string](constants.CHANNEL, r.TemplateType) {
+	if !slices.Contains[[]string](variables.CHANNEL, r.TemplateType) {
 		return errors.New("template type is invalid")
 	}
 	if len(r.Content) < 1 {
