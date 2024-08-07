@@ -25,6 +25,7 @@ type (
 		GetMessagesWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.Message, respScrollId string, err error)
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (result model.ReadMessageResponse, err error)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (result model.OttCodeChallenge, err error)
+		GetMessageMediasWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.MessageAttachmentsDetails, respScrollId string, err error)
 	}
 	Message struct{}
 )
@@ -145,23 +146,24 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 
 	// Store ES
 	message = model.Message{
-		TenantId:            conversation.TenantId,
-		ParentExternalMsgId: "",
-		MessageId:           docId,
-		MessageType:         conversation.ConversationType,
-		ConversationId:      conversation.ConversationId,
-		ExternalMsgId:       resOtt.Data.MsgId,
-		EventName:           eventName,
-		Direction:           variables.DIRECTION["send"],
-		AppId:               conversation.AppId,
-		OaId:                conversation.OaId,
-		Avatar:              conversation.Avatar,
-		SupporterId:         authUser.UserId,
-		SupporterName:       authUser.Fullname,
-		SendTime:            time.Now(),
-		SendTimestamp:       timestampTmp,
-		Content:             content,
-		Attachments:         attachments,
+		TenantId:               conversation.TenantId,
+		ParentExternalMsgId:    "",
+		MessageId:              docId,
+		MessageType:            conversation.ConversationType,
+		ConversationId:         conversation.ConversationId,
+		ExternalMsgId:          resOtt.Data.MsgId,
+		EventName:              eventName,
+		Direction:              variables.DIRECTION["send"],
+		AppId:                  conversation.AppId,
+		OaId:                   conversation.OaId,
+		Avatar:                 conversation.Avatar,
+		SupporterId:            authUser.UserId,
+		SupporterName:          authUser.Fullname,
+		SendTime:               time.Now(),
+		SendTimestamp:          timestampTmp,
+		Content:                content,
+		Attachments:            attachments,
+		ExternalConversationId: conversation.ExternalConversationId,
 	}
 	log.Info("message to es: ", message)
 
@@ -392,4 +394,16 @@ func (s *Message) ShareInfo(ctx context.Context, authUser *model.AuthUser, data 
 		err = errors.New(resp.String())
 		return
 	}
+}
+
+func (s *Message) GetMessageMediasWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.MessageAttachmentsDetails, respScrollId string, err error) {
+	total, messages, respScrollId, err = repository.MessageESRepo.GetMessageMediasWithScroll(ctx, authUser.TenantId, ES_INDEX_MESSAGE, filter, limit, scrollId)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	if messages == nil {
+		messages = make([]*model.MessageAttachmentsDetails, 0)
+	}
+	return
 }

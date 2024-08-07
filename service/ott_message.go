@@ -220,6 +220,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					if len(conversation.ConversationId) > 0 {
 						// Parsing conversation_id
 						message.ConversationId = conversation.ConversationId
+						message.ExternalConversationId = conversation.ExternalConversationId
 						message.MessageId = docId
 						if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, data.AppId, docId, message); err != nil {
 							log.Error(err)
@@ -245,7 +246,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					}
 
 					if user.AuthUser != nil {
-						go handlePublishEvent(false, &user, nil, subscriberAdmins, subscribers, conversation, message, isNew)
+						go handlePublishEvent(ctx, false, &user, nil, subscriberAdmins, subscribers, conversation, message, isNew)
 					}
 
 					// TODO: publish message to manager
@@ -265,13 +266,13 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 					isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
 					if isExist {
 						if (user.AuthUser != nil && user.AuthUser.UserId != manageQueueUser.UserId) || (user.AuthUser == nil && len(manageQueueUser.UserId) > 0) {
-							go handlePublishEvent(false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
+							go handlePublishEvent(ctx, false, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
 						}
 					}
 
 					// TODO: publish to admin
 					if ENABLE_PUBLISH_ADMIN {
-						go handlePublishEvent(true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
+						go handlePublishEvent(ctx, true, &user, manageQueueUser, subscriberAdmins, subscribers, conversation, message, isNew)
 					}
 
 					if ENABLE_CHAT_AUTO_SCRIPT_REPLY {
@@ -393,7 +394,7 @@ func (s *OttMessage) checkMessageEcho(ctx context.Context, tenant string, messag
 	return
 }
 
-func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser *model.ChatManageQueueUser, subscriberAdmins []string, subscribers []*Subscriber, conversation model.ConversationView, message model.Message, isNew bool) {
+func handlePublishEvent(ctx context.Context, isPublishToAdmin bool, user *model.User, manageQueueUser *model.ChatManageQueueUser, subscriberAdmins []string, subscribers []*Subscriber, conversation model.ConversationView, message model.Message, isNew bool) {
 	var userId string
 	var userIdRemove string
 	if manageQueueUser != nil {
@@ -403,13 +404,22 @@ func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser
 		userId = user.AuthUser.UserId
 		userIdRemove = user.UserIdRemove
 	}
+	// pre-process to get labels info before publishing conversation to subscribers
+	if err := GetLabelsInfo(ctx, &conversation); err != nil {
+		log.Error(err)
+		return
+	}
 
 	if isPublishToAdmin {
 		if user.IsReassignSame {
 			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, &conversation)
 			PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 		} else if user.IsReassignNew {
-			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_removed"], subscriberAdmins, true, &conversation)
+			if user.IsReopenConversation {
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_reopen"], subscriberAdmins, true, &conversation)
+			} else {
+				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_removed"], subscriberAdmins, true, &conversation)
+			}
 			PublishConversationToManyUser(variables.EVENT_CHAT["conversation_created"], subscriberAdmins, isNew, &conversation)
 			PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &message)
 		} else {
@@ -423,6 +433,9 @@ func handlePublishEvent(isPublishToAdmin bool, user *model.User, manageQueueUser
 		} else if user.IsReassignNew {
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_removed"], userIdRemove, subscribers, true, &conversation)
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], userId, subscribers, isNew, &conversation)
+			if user.IsReopenConversation {
+				PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], userId, subscribers, true, &conversation)
+			}
 			PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], userId, subscribers, &message)
 		} else {
 			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_created"], userId, subscribers, isNew, &conversation)
