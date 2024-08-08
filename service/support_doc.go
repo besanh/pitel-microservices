@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"mime/multipart"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -22,7 +23,9 @@ func UploadDoc(ctx context.Context, appId, oaId string, file *multipart.FileHead
 	fileContent.Read(byteContent)
 
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/upload"
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(30 * time.Second)
+
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetFormData(map[string]string{

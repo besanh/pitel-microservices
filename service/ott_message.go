@@ -447,7 +447,8 @@ func handlePublishEvent(ctx context.Context, isPublishToAdmin bool, user *model.
 
 func (s *OttMessage) GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any) {
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/zalo/code-challenge/" + appId
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(30 * time.Second)
 
 	resp, err := client.R().
 		SetHeader("Accept", "application/json").

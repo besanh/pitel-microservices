@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -222,7 +223,8 @@ func GetProfile(ctx context.Context, appId, oaId, userId string) (result *model.
 		"uid":    userId,
 	}
 	url := OTT_URL + "/ott/v1/zalo/profile"
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(30 * time.Second)
 	var res *resty.Response
 	res, err = client.R().
 		SetHeader("Content-Type", "application/json").

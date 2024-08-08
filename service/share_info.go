@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"mime/multipart"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -133,7 +134,8 @@ func (s *ShareInfo) PostRequestShareInfo(ctx context.Context, authUser *model.Au
 	}
 
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm"
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(1 * time.Minute)
 
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").

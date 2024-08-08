@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -43,7 +44,8 @@ func PostOttAccount(ottDomain, ottVersion string, chatApp model.ChatApp, connect
 	log.Info("post ott account: ", body)
 
 	url := ottDomain + "/ott/" + ottVersion + "/account"
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(30 * time.Second)
 
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
