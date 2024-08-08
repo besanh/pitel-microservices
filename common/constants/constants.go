@@ -6,7 +6,7 @@ type ERROR_MSG error
 const (
 	// Version
 	VERSION      = "1.0"
-	VERSION_NAME = "Bussiness Support System Inbox Marketing(BSS)"
+	VERSION_NAME = "Inbox Marketing"
 
 	// forbidden
 	ERR_UNAUTHORIZED             ERROR_CODE = "ERR_UNAUTHORIZED"
@@ -68,4 +68,13 @@ const (
 	ERR_REQUEST_NOTFOUND        ERROR_CODE = "ERR_REQUEST_NOTFOUND"
 	ERR_REQUEST_IS_EXPIRED      ERROR_CODE = "ERR_REQUEST_IS_EXPIRED"
 	ERR_REQUEST_CODE_IS_INVALID ERROR_CODE = "ERR_REQUEST_CODE_IS_INVALID"
+
+	STATE_REQUEST      string = "request"
+	STATE_VERIFY_TOKEN string = "verify_token"
+	STATE_VERIFY_CODE  string = "verify_code"
+	STATE_SUBMIT       string = "submit"
+
+	SUPERADMIN string = "superadmin"
+	ADMIN      string = "admin"
+	USER       string = "user"
 )

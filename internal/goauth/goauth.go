@@ -16,8 +16,10 @@ type (
 	IAuth interface {
 		Add(ctx context.Context, data *AuthUser) (user *AuthUser, err error)
 		Find(ctx context.Context, token string) (user *AuthUser, err error)
+		FindById(ctx context.Context, id string) (user *AuthUser, err error)
 		RefreshToken(ctx context.Context, refreshToken, token string) (user *AuthUser, err error)
 		DeleteFullWithId(ctx context.Context, id string) (err error)
+		AddUserAuth(ctx context.Context, data AuthUser) (err error)
 	}
 
 	Auth struct {
@@ -58,11 +60,11 @@ func (user *AuthUser) InitToken() {
 }
 
 const (
-	TOKEN_KEY         = "pitel_bss_chat_auth_token"
-	USER_KEY          = "pitel_bss_chat_auth_user"
-	REFRESH_TOKEN_KEY = "pitel_bss_chat_auth_refresh_token"
+	TOKEN_KEY         = "pitel_auth_token"
+	USER_KEY          = "pitel_auth_user"
+	REFRESH_TOKEN_KEY = "pitel_auth_refresh_token"
 	TOKEN_TTL         = 86400
-	// TOKEN_TTL         = 120
+	// TOKEN_TTL         = 300
 	REFRESH_TOKEN_TTL = 172800
 	TOKEN_TYPE        = "Bearer"
 )
@@ -141,6 +143,21 @@ func (g *Auth) Find(ctx context.Context, token string) (user *AuthUser, err erro
 	return
 }
 
+func (g *Auth) FindById(ctx context.Context, id string) (user *AuthUser, err error) {
+	user, err = g.getAuthUserById(ctx, id)
+	if err != nil {
+		return
+	} else if user == nil {
+		return
+	}
+	currentTime := time.Now().Local()
+	if user.ExpiredTime.Sub(currentTime) <= 0 {
+		err = errors.New("token is expired")
+		return
+	}
+	return
+}
+
 func (g *Auth) Add(ctx context.Context, data *AuthUser) (user *AuthUser, err error) {
 	user, err = g.getAuthUserById(ctx, data.Id)
 	if err != nil {
@@ -189,6 +206,10 @@ func (g *Auth) addUserAuth(ctx context.Context, data AuthUser) (err error) {
 		return
 	}
 	return
+}
+
+func (g *Auth) AddUserAuth(ctx context.Context, data AuthUser) (err error) {
+	return g.addUserAuth(ctx, data)
 }
 
 func (g *Auth) deleteAuthUser(ctx context.Context, user AuthUser) (err error) {

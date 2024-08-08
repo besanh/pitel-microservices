@@ -12,7 +12,7 @@ import (
 )
 
 var DefaultAuthSecurity = []map[string][]string{
-	{"finsAuth": {""}},
+	{"ibkAuth": {""}},
 }
 
 func NewAuthMiddleware(api hureg.APIGen) func(ctx huma.Context, next func(huma.Context)) {
@@ -20,7 +20,7 @@ func NewAuthMiddleware(api hureg.APIGen) func(ctx huma.Context, next func(huma.C
 		isAuthorizationRequired := false
 		for _, opScheme := range ctx.Operation().Security {
 			var ok bool
-			if _, ok = opScheme["finsAuth"]; ok {
+			if _, ok = opScheme["ibkAuth"]; ok {
 				isAuthorizationRequired = true
 				break
 			}

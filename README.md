@@ -1,5 +1,5 @@
 <div align="center">
-<h1>BSS Inbox Marketing API Microservices</h1>
+<h1>Inbox Marketing API Microservices</h1>
 </div>
 
 # Git Workflow
