@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
@@ -12,6 +13,8 @@ type (
 	IChatTenant interface {
 		IRepo[model.ChatTenant]
 		GetChatTenants(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatTenantFilter, limit, offset int) (total int, result *[]model.ChatTenant, err error)
+		GetByTenantId(ctx context.Context, db sqlclient.ISqlClientConn, tenantId string) (entity *model.ChatTenant, err error)
+		DeleteByTenantId(ctx context.Context, db sqlclient.ISqlClientConn, tenantId string) (err error)
 	}
 	ChatTenant struct {
 		Repo[model.ChatTenant]
@@ -43,4 +46,27 @@ func (repo *ChatTenant) GetChatTenants(ctx context.Context, db sqlclient.ISqlCli
 		return 0, result, err
 	}
 	return total, result, nil
+}
+
+func (repo *ChatTenant) GetByTenantId(ctx context.Context, db sqlclient.ISqlClientConn, tenantId string) (entity *model.ChatTenant, err error) {
+	entity = new(model.ChatTenant)
+	err = db.GetDB().NewSelect().
+		Model(entity).
+		Where("tenant_id = ?", tenantId).
+		Limit(1).
+		Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+func (repo *ChatTenant) DeleteByTenantId(ctx context.Context, db sqlclient.ISqlClientConn, tenantId string) (err error) {
+	_, err = db.GetDB().NewDelete().
+		Model((*model.ChatTenant)(nil)).
+		Where("tenant_id = ?", tenantId).
+		Exec(ctx)
+	return
 }
