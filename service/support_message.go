@@ -39,7 +39,7 @@ func sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachm
 
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm"
 	client := resty.New().
-		SetTimeout(1 * time.Minute)
+		SetTimeout(2 * time.Minute)
 
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
