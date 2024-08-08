@@ -5,9 +5,9 @@ import (
 )
 
 type (
-	BSS_User struct {
+	IBKUser struct {
 		*Base
-		bun.BaseModel     `bun:"table:bss_users,alias:u"`
+		bun.BaseModel     `bun:"table:ibk_users,alias:u"`
 		BusinessUnitId    string   `bun:"business_unit_id,type:uuid,notnull" json:"business_unit_id"`
 		UserCode          string   `bun:"user_code,type:text,notnull,unique" json:"user_code"`
 		Username          string   `bun:"username,type:text,notnull" json:"username"`
@@ -23,16 +23,16 @@ type (
 		IsSentEmail       bool     `bun:"is_sent_email,type:bool" json:"is_sent_email"`
 		RoleId            string   `bun:"role_id,type:uuid,nullzero" json:"role_id"`
 	}
-	BSS_UserInfo struct {
-		*BSS_User
-		bun.BaseModel    `bun:"table:bss_users,alias:u"`
+	IBKUserInfo struct {
+		*IBKUser
+		bun.BaseModel    `bun:"table:ibk_users,alias:u"`
 		BusinessUnitId   string `bun:"business_unit_id" json:"business_unit_id"`
 		BusinessUnitName string `bun:"business_unit_name" json:"business_unit_name"`
 		TenantId         string `bun:"tenant_id" json:"tenant_id"`
 	}
 
-	BSS_UserShortInfo struct {
-		bun.BaseModel `bun:"table:bss_users,alias:u"`
+	IBKUserShortInfo struct {
+		bun.BaseModel `bun:"table:ibk_users,alias:u"`
 		Id            string `bun:"id,pk" json:"id"`
 		UserCode      string `bun:"user_code" json:"user_code"`
 		Username      string `bun:"username" json:"username"`
@@ -41,7 +41,7 @@ type (
 )
 
 type (
-	BSS_UserQueryParam struct {
+	IBKUserQueryParam struct {
 		Keyword           string `query:"keyword"`
 		Sort              string `query:"sort"`
 		Order             string `query:"order"`
@@ -60,7 +60,7 @@ type (
 		IsActivated_Eq    bool   `query:"is_activated"`
 		IsLocked_Eq       bool   `query:"is_locked"`
 	}
-	BSS_UserBody struct {
+	IBKUserBody struct {
 		_        struct{} `json:"-" additionalProperties:"true"`
 		Username string   `json:"username" required:"true" pattern:"^[a-zA-Z0-9_-]{2,50}$" patternDescription:"alphanumeric characters only" doc:"Username"`
 		Password string   `json:"password" required:"true" minLength:"8" maxLength:"50" pattern:"^[a-zA-Z0-9!@#$%^&*]{0,50}$" doc:"Password"`
@@ -78,7 +78,7 @@ type (
 		RoleId         string   `json:"role_id" required:"false" nullable:"true" format:"uuid" doc:"Role Id"`
 	}
 
-	BSS_UserExtensionBody struct {
+	IBKUserExtensionBody struct {
 		_                 struct{} `json:"-" additionalProperties:"true"`
 		Extension         string   `json:"extension" required:"false" nullable:"true" pattern:"^[0-9]{0,8}$" doc:"Extension"`
 		ExtensionPassword string   `json:"extension_password" required:"false" doc:"Extension Password"`

@@ -53,7 +53,7 @@ func OK_Only(msgs ...string) (res *GenericResponse[any]) {
 	return
 }
 
-func Pagination[T any](data T, total int, msgs ...string) (res *PaginationResponse[T]) {
+func Pagination[T any](total int, data T, msgs ...string) (res *PaginationResponse[T]) {
 	msg := "success"
 	if len(msgs) > 0 {
 		msg = msgs[0]

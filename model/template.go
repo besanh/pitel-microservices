@@ -10,7 +10,7 @@ import (
 
 type TemplateBss struct {
 	*Base
-	bun.BaseModel `bun:"table:template_bss,alias:tbss"`
+	bun.BaseModel `bun:"table:ibk_template,alias:ibk_t"`
 	TemplateName  string `json:"template_name" bun:"template_name,type:text,notnull"`
 	TemplateCode  string `json:"template_code" bun:"template_code,type:text,notnull"`
 	TemplateType  string `json:"template_type" bun:"template_type,type:text,notnull"`

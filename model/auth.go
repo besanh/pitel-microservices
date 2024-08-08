@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/shaj13/go-guardian/v2/auth"
+	"github.com/uptrace/bun"
 )
 
 type (
@@ -28,9 +29,23 @@ type (
 		NextRequestTime time.Time     `json:"next_request_time"`
 		RemainTime      time.Duration `json:"remain_time"`
 	}
+
+	IBKUserRequest struct {
+		*Base
+		bun.BaseModel `bun:"table:ibk_requests"`
+		UserId        string    `bun:"user_id,type:uuid"`
+		Method        string    `bun:"method,type:text"`
+		Ip            string    `bun:"ip,type:text"`
+		UserAgent     string    `bun:"user_agent,type:text"`
+		Code          string    `bun:"code,type:text"`
+		Token         string    `bun:"token,type:text"`
+		InvalidCount  int       `bun:"invalid_count"`
+		ExpiredAt     time.Time `bun:"expired_at,notnull"`
+		IsActive      bool      `bun:"is_active,type:bool"`
+	}
 )
 
-type BSS_DB struct {
+type IBKDB struct {
 	DBName   string `json:"database_name"`
 	Port     int    `json:"database_port"`
 	Host     string `json:"database_host"`
@@ -68,7 +83,7 @@ type LoginResponse struct {
 type AuthUser struct {
 	*auth.DefaultUser
 	*AuthUserData
-	DB *BSS_DB
+	DB *IBKDB
 }
 
 type AuthUserData struct {

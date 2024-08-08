@@ -9,7 +9,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
-	v1 "github.com/tel4vn/fins-microservices/api/v1"
+	apiv1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -18,6 +18,7 @@ import (
 	"github.com/tel4vn/fins-microservices/internal/redis"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	authMdw "github.com/tel4vn/fins-microservices/middleware/auth"
+	"github.com/tel4vn/fins-microservices/repository"
 	"github.com/tel4vn/fins-microservices/server"
 	"github.com/tel4vn/fins-microservices/service"
 )
@@ -89,15 +90,17 @@ func RunAPIBssInboxMarketing() {
 	}
 
 	service.InitDBConnection(db)
+	service.InitServices()
+	repository.InitRepositories()
 
 	router := server.NewHTTPServer()
 	humaAPI := humagin.New(router, huma.Config{
 		OpenAPI: &huma.OpenAPI{
 			OpenAPI: "1.0.0",
 			Info: &huma.Info{
-				Title:       "BSS Inbox Marketing APIs",
+				Title:       "Inbox Marketing APIs",
 				Version:     "1.0.0",
-				Description: "BSS Inbox Marketing APIs",
+				Description: "Inbox Marketing APIs",
 				Contact: &huma.Contact{
 					Name:  "TEL4VN-Pitel",
 					URL:   "https://www.pitel.vn/",
@@ -106,7 +109,7 @@ func RunAPIBssInboxMarketing() {
 			},
 			Components: &huma.Components{
 				SecuritySchemes: map[string]*huma.SecurityScheme{
-					"bssAuth": {
+					"ibkAuth": {
 						Type:         "http",
 						Scheme:       "bearer",
 						In:           "header",
@@ -133,13 +136,13 @@ func RunAPIBssInboxMarketing() {
 					Variables:   map[string]*huma.ServerVariable{},
 				},
 				{
-					URL:         "http://localhost:8009",
+					URL:         "http://localhost:8000",
 					Description: "Local Environment",
 					Variables:   map[string]*huma.ServerVariable{},
 				},
 			},
 		},
-		OpenAPIPath:   "/docs/openapi",
+		OpenAPIPath:   "/collection/openapi",
 		DocsPath:      "",
 		Formats:       huma.DefaultFormats,
 		DefaultFormat: "application/json",
@@ -147,7 +150,10 @@ func RunAPIBssInboxMarketing() {
 	api := hureg.NewAPIGen(humaAPI)
 	api.GetHumaAPI().UseMiddleware(authMdw.NewAuthMiddleware(api))
 
-	v1.RegisterAPIAuth(api)
+	apiv1.RegisterAPIIBKAuth(api)
+	apiv1.RegisterAPIIBKUser(api)
+	apiv1.RegisterAPIIBKScope(api)
+	apiv1.RegisterAPIIBKToken(api)
 
 	log.Debug("Starting api server")
 	response.NewHumaError()
@@ -158,7 +164,7 @@ func RunAPIBssInboxMarketing() {
 		<!doctype html>
 		<html>
 			<head>
-				<title>BSS Inbox Marketing APIs</title>
+				<title>Inbox Marketing APIs</title>
 				<meta charset="utf-8" />
 				<meta
 				name="viewport"

@@ -9,7 +9,9 @@ import (
 )
 
 func InitServices() {
-	AuthService = NewAuthService("")
+	AuthService = NewAuth("")
+	IBKUserService = NewIBKUser()
+	IBKTenantService = NewIBKTenant()
 }
 
 type DBConnection struct {

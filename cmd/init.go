@@ -38,7 +38,7 @@ func initRedis() {
 }
 
 func Execute() {
-	var rootCmd = &cobra.Command{Use: "bss-inbox-marketing"}
+	var rootCmd = &cobra.Command{Use: "inbox-marketing"}
 	rootCmd.AddCommand(InitCMDAPI())
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

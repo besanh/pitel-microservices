@@ -14,8 +14,8 @@ var ESClient elasticsearch.IElasticsearchClient
 
 func InitRepositories() {
 	ExampleRepo = NewExample()
-	BssUserRepo = NewBssUser(DBConn)
-	TemplateBssRepo = NewTemplateBss()
+	IBKUserRepo = NewIBKUser(DBConn)
+	IBKTenantRepo = NewIBKTenant(DBConn)
 }
 
 func InitEsRepositories() {
