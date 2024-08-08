@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -37,7 +38,8 @@ func sendMessageToOTT(ott model.SendMessageToOtt, attachment []*model.OttAttachm
 	}
 
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm"
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(1 * time.Minute)
 
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
