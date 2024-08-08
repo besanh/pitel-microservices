@@ -163,7 +163,7 @@ func (repo *ChatIntegrateSystem) DeleteIntegrateSystemById(ctx context.Context, 
 		return err
 	}
 	_, err = tx.NewDelete().Model((*model.ChatIntegrateSystem)(nil)).
-		WherePK().
+		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
 		return err

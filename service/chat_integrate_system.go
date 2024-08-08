@@ -127,7 +127,7 @@ func (s *ChatIntegrateSystem) InsertChatIntegrateSystem(ctx context.Context, aut
 
 	if err = repository.ChatIntegrateSystemRepo.InsertIntegrateSystemTransaction(ctx, repository.DBConn, chatApps, chatIntegrateSystem, chatAppIntegrateSystems, chatTenant); err != nil {
 		log.Error(err)
-		if errTmp := repository.ChatTenantRepo.Delete(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); errTmp != nil {
+		if errTmp := repository.ChatTenantRepo.DeleteByTenantId(ctx, repository.DBConn, chatIntegrateSystem.TenantDefaultId); errTmp != nil {
 			log.Error(err)
 			return
 		}
@@ -169,7 +169,7 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context,
 		return
 	}
 
-	chatTenantExist, err := repository.ChatTenantRepo.GetById(ctx, repository.DBConn, chatIntegrateSystemExist.TenantDefaultId)
+	chatTenantExist, err := repository.ChatTenantRepo.GetByTenantId(ctx, repository.DBConn, chatIntegrateSystemExist.TenantDefaultId)
 	if err != nil {
 		log.Error(err)
 		return
@@ -182,6 +182,8 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context,
 		chatTenant.TenantName = "default"
 		chatTenant.IntegrateSystemId = uuid.NewString()
 		chatTenant.Status = true
+		tenantId := uuid.NewString()
+		chatTenant.TenantId = tenantId
 	} else {
 		filter := model.ChatIntegrateSystemFilter{
 			TenantDefaultId: data.TenantDefaultId,
@@ -199,7 +201,7 @@ func (s *ChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context,
 		chatTenant = chatTenantExist
 	}
 
-	chatIntegrateSystemExist.TenantDefaultId = chatTenant.GetId()
+	chatIntegrateSystemExist.TenantDefaultId = chatTenant.TenantId
 	chatIntegrateSystemExist.SystemName = data.SystemName
 	chatIntegrateSystemExist.VendorId = data.VendorId
 	chatIntegrateSystemExist.Status = data.Status
