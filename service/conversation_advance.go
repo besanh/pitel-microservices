@@ -316,12 +316,13 @@ func handleLabelFacebook(ctx context.Context, labelType string, chatLabel model.
 		externalUrl = "create-label"
 		externalCreateLabelResponse, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
 		if errTmp != nil {
-			log.Error(errTmp)
+			err = errTmp
+			log.Error(err)
 			if err = repository.ChatLabelRepo.Delete(ctx, repository.DBConn, chatLabel.GetId()); err != nil {
 				log.Error(err)
-				return externalLabelId, err
+				return
 			}
-			return externalLabelId, errTmp
+			return
 		}
 		if len(externalCreateLabelResponse.Id) > 0 {
 			externalLabelId = externalCreateLabelResponse.Id
@@ -330,6 +331,8 @@ func handleLabelFacebook(ctx context.Context, labelType string, chatLabel model.
 			log.Error("external label id not found")
 			return
 		}
+
+		log.Info("channel: ", labelType, "action: ", request.Action, "external label id: ", externalLabelId)
 
 		// TODO: associating a label to oa
 		facebookAssociateRequest := model.ChatExternalLabelRequest{
@@ -342,25 +345,26 @@ func handleLabelFacebook(ctx context.Context, labelType string, chatLabel model.
 		externalUrl = "associate-label"
 		_, errTmp = RequestOttLabel(ctx, labelType, externalUrl, facebookAssociateRequest)
 		if errTmp != nil {
+			err = errTmp
 			log.Error(errTmp)
 			if err = repository.ChatLabelRepo.Delete(ctx, repository.DBConn, chatLabel.GetId()); err != nil {
 				log.Error(err)
-				return externalLabelId, err
+				return
 			}
-			err = errTmp
-			return externalLabelId, errTmp
+			return
 		}
 	} else if request.Action == "delete" {
 		externalUrl = "remove-label"
 		_, errTmp := RequestOttLabel(ctx, labelType, externalUrl, facebookRequest)
 		if errTmp != nil {
-			log.Error(errTmp)
+			err = errTmp
+			log.Error(err)
 			if err = repository.ChatLabelRepo.Delete(ctx, repository.DBConn, chatLabel.GetId()); err != nil {
 				log.Error(err)
 				return externalLabelId, err
 			}
-			err = errTmp
-			return externalLabelId, errTmp
+
+			return
 		}
 	} else {
 		err = errors.New("invalid action")
