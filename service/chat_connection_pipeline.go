@@ -374,12 +374,18 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			log.Error(err)
 			return err
 		}
-		manageQueueExist, err := repository.ManageQueueRepo.GetById(ctx, repository.DBConn, chatQueueExist.ManageQueueId)
+
+		chatManagerQueueFilter := model.ChatManageQueueUserFilter{
+			TenantId: authUser.TenantId,
+			QueueId:  chatQueueExist.Id,
+		}
+		_, chatManagers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManagerQueueFilter, 1, 0)
 		if err != nil {
 			log.Error(err)
 			return err
-		} else if manageQueueExist == nil {
-			err = errors.New("manage queue " + chatQueueExist.ManageQueueId + " not found")
+		}
+		if len(*chatManagers) < 1 {
+			err = errors.New("manage queue of chat queue id " + chatQueueExist.Id + " not found")
 			log.Error(err)
 			return err
 		}
@@ -402,7 +408,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 			TenantId:     authUser.TenantId,
 			ConnectionId: connectionAppExist.Id,
 			QueueId:      chatQueueExist.Id,
-			UserId:       manageQueueExist.UserId,
+			UserId:       (*chatManagers)[0].UserId,
 		}
 		if err = repository.ManageQueueRepo.TxInsert(ctx, tx, newManageQueue); err != nil {
 			log.Error(err)
