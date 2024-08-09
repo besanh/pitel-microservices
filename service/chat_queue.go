@@ -371,10 +371,13 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 			}
 		}
 
-		if isOk && len(*chatManagers) > 0 {
-			if err = repository.ManageQueueRepo.TxBulkUpdate(ctx, tx, *chatManagers); err != nil {
-				log.Error(err)
-				return err
+		if len(*chatManagers) > 0 {
+			queueExist.ManageQueueId = (*chatManagers)[0].Id
+			if isOk {
+				if err = repository.ManageQueueRepo.TxBulkUpdate(ctx, tx, *chatManagers); err != nil {
+					log.Error(err)
+					return err
+				}
 			}
 		}
 	}
