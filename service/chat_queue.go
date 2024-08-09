@@ -381,6 +381,21 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 			}
 		}
 	}
+	if chatManagers != nil && len(*chatManagers) < 1 {
+		// insert manager for this queue
+		manageQueue := model.ChatManageQueueUser{
+			Base:     model.InitBase(),
+			TenantId: authUser.TenantId,
+			QueueId:  queueExist.GetId(),
+			UserId:   data.ChatManageQueueUser.UserId,
+		}
+		queueExist.ManageQueueId = manageQueue.GetId()
+
+		if err = repository.ManageQueueRepo.TxInsert(ctx, tx, manageQueue); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
 
 	// clear cache
 	if err = cache.RCache.Del([]string{CHAT_QUEUE_USER + "_" + authUser.TenantId}); err != nil {
