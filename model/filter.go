@@ -102,7 +102,7 @@ type MessageFilter struct {
 	EventNameExlucde    []string        `json:"event_name_exclude"`
 
 	// nested attachments query
-	AttachmentType string `json:"attachment_type"`
+	AttachmentType string `json:"attachment_type"` // image/audio/video/file/link/sticker/gif/reacted/unreacted
 	SearchKeyword  string `json:"search_keyword"`
 }
 
