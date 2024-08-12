@@ -11,9 +11,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
-	"github.com/uptrace/bun/schema"
 )
 
 const (
@@ -106,7 +106,7 @@ func (c *SqlClientConn) Connect() (err error) {
 		sqldb := sql.OpenDB(pgconn)
 		sqldb.SetMaxIdleConns(c.MaxIdleConns)
 		sqldb.SetMaxOpenConns(c.MaxOpenConns)
-		db := bun.NewDB(sqldb, schema.NewNopFormatter().Dialect(), bun.WithDiscardUnknownColumns())
+		db := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 		c.DB = db
 		return nil
 	default:

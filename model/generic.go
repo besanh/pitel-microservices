@@ -27,6 +27,16 @@ type Base struct {
 	IsDeleted bool      `bun:"is_deleted,type:bool,notnull" json:"-"`
 }
 
+type (
+	GenericFilter struct {
+		Field    string          `json:"field,omitempty" required:"false" pattern:"^[a-zA-Z0-9 _-]{0,200}$"`
+		Operator string          `json:"operator,omitempty" required:"false" pattern:"^[=<>]|IN$"`
+		Value    any             `json:"value,omitempty" required:"false" pattern:"^[a-zA-Z0-9 _-]{0,200}$"`
+		And      []GenericFilter `json:"and,omitempty"`
+		Or       []GenericFilter `json:"or,omitempty"`
+	}
+)
+
 func (b *Base) GetId() string {
 	return b.Id
 }

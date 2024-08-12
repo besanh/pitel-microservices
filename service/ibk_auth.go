@@ -54,56 +54,50 @@ func (auth *Auth) Login(ctx context.Context, body model.LoginRequest) (result *m
 	} else if !validatePassword(user.Password, body.Password) {
 		return nil, variables.NewError(constants.ERR_INVALID_USERNAME_PASSWORD)
 	}
-	// group, err := repository.AAA_GroupRepo.FindById(ctx, user.GroupId)
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, err
-	// } else if group == nil {
-	// 	return nil, variables.NewError(constants.ERR_GROUP_NOTFOUND)
-	// }
-	// bu, err := repository.AAA_BusinessUnitRepo.FindById(ctx, user.BusinessUnitId)
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, err
-	// } else if bu == nil {
-	// 	return nil, variables.NewError(constants.ERR_BUSINESS_UNIT_NOTFOUND)
-	// }
-	// tenant, err := repository.AAA_TenantRepo.FindById(ctx, bu.TenantId)
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, err
-	// } else if tenant == nil {
-	// 	return nil, variables.NewError(constants.ERR_TENANT_NOTFOUND)
-	// }
-	// tokenData := model.AuthUserData{
-	// 	TenantId:       tenant.Id,
-	// 	BusinessUnitId: bu.Id,
-	// 	Username:       user.Username,
-	// 	UserId:         user.Id,
-	// 	Level:          user.Level,
-	// 	Scopes:         user.Scopes,
-	// }
-	// id := fmt.Sprintf("%s.%s", user.Id, body.Fingerprint)
-	// goAuthUser, err := goauth.GoAuthClient.Add(ctx, &goauth.AuthUser{
-	// 	Id:          id,
-	// 	Fingerprint: body.Fingerprint,
-	// 	UserAgent:   body.UserAgent,
-	// 	UserId:      user.Id,
-	// 	Data:        tokenData,
-	// 	Level:       user.Level,
-	// })
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return nil, err
-	// }
-	// result = &model.LoginResponse{
-	// 	Token:        goAuthUser.Token,
-	// 	RefreshToken: goAuthUser.RefreshToken,
-	// 	ExpiredIn:    int(time.Until(goAuthUser.ExpiredTime).Seconds()),
-	// 	Fullname:     user.Fullname,
-	// 	TenantName:   tenant.TenantName,
-	// 	AuthUserData: &tokenData,
-	// }
+
+	bu, err := repository.IBKBusinessUnitRepo.GetById(ctx, user.BusinessUnitId)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	} else if bu == nil {
+		return nil, variables.NewError(constants.ERR_BUSINESS_UNIT_NOTFOUND)
+	}
+	tenant, err := repository.IBKTenantRepo.GetById(ctx, bu.TenantId)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	} else if tenant == nil {
+		return nil, variables.NewError(constants.ERR_TENANT_NOTFOUND)
+	}
+	tokenData := model.AuthUserData{
+		TenantId:       tenant.Id,
+		BusinessUnitId: bu.Id,
+		Username:       user.Username,
+		UserId:         user.Id,
+		Level:          user.Level,
+		Scopes:         user.Scopes,
+	}
+	id := fmt.Sprintf("%s.%s", user.Id, body.Fingerprint)
+	goAuthUser, err := goauth.GoAuthClient.Add(ctx, &goauth.AuthUser{
+		Id:          id,
+		Fingerprint: body.Fingerprint,
+		UserAgent:   body.UserAgent,
+		UserId:      user.Id,
+		Data:        tokenData,
+		Level:       user.Level,
+	})
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	result = &model.LoginResponse{
+		Token:        goAuthUser.Token,
+		RefreshToken: goAuthUser.RefreshToken,
+		ExpiredIn:    int(time.Until(goAuthUser.ExpiredTime).Seconds()),
+		Fullname:     user.Fullname,
+		TenantName:   tenant.TenantName,
+		AuthUserData: &tokenData,
+	}
 	return
 }
 
@@ -281,27 +275,27 @@ func (s *Auth) forgotPasswordRequest(ctx context.Context, body model.ForgotPassw
 }
 
 // verify token
-func (s *Auth) forgotPasswordVerifyToken(ctx context.Context, body model.ForgotPassword) (res *model.ForgotPasswordResponse, err error) {
-	request, err := repository.IBKUserRequestRepo.GetByQuery(ctx, sql_builder.EqualQuery("token", body.Token))
-	if err != nil {
-		log.Error(err)
-		return
-	} else if request == nil {
-		err = variables.NewError(constants.ERR_REQUEST_INVALID)
-		return
-	}
+// func (s *Auth) forgotPasswordVerifyToken(ctx context.Context, body model.ForgotPassword) (res *model.ForgotPasswordResponse, err error) {
+// 	request, err := repository.IBKUserRequestRepo.GetByQuery(ctx, sql_builder.EqualQuery("token", body.Token))
+// 	if err != nil {
+// 		log.Error(err)
+// 		return
+// 	} else if request == nil {
+// 		err = variables.NewError(constants.ERR_REQUEST_INVALID)
+// 		return
+// 	}
 
-	if request.ExpiredAt.Before(time.Now()) {
-		err = variables.NewError(constants.ERR_REQUEST_IS_EXPIRED)
-		return
-	}
+// 	if request.ExpiredAt.Before(time.Now()) {
+// 		err = variables.NewError(constants.ERR_REQUEST_IS_EXPIRED)
+// 		return
+// 	}
 
-	res = &model.ForgotPasswordResponse{
-		IsValid: true,
-	}
+// 	res = &model.ForgotPasswordResponse{
+// 		IsValid: true,
+// 	}
 
-	return
-}
+// 	return
+// }
 
 func (s *Auth) forgotPasswordSubmit(ctx context.Context, body model.ForgotPassword) (res *model.ForgotPasswordResponse, err error) {
 	conditions := []sql_builder.QueryCondition{

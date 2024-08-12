@@ -12,10 +12,12 @@ import (
 var DBConn sqlclient.ISqlClientConn
 var ESClient elasticsearch.IElasticsearchClient
 
-func InitRepositories() {
+func InitRepositories(db sqlclient.ISqlClientConn) {
 	ExampleRepo = NewExample()
-	IBKUserRepo = NewIBKUser(DBConn)
-	IBKTenantRepo = NewIBKTenant(DBConn)
+	IBKUserRepo = NewIBKUser(db)
+	IBKTenantRepo = NewIBKTenant(db)
+	IBKRoleRepo = NewIBKRole(db)
+	IBKBusinessUnitRepo = NewIBKBusinessUnit(db)
 }
 
 func InitEsRepositories() {
@@ -23,7 +25,16 @@ func InitEsRepositories() {
 }
 
 func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
-	if err := CreateTable(ctx, dbConn, (*model.Example)(nil)); err != nil {
+	if err := CreateTable(ctx, dbConn, (*model.IBKUser)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.IBKTenant)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.IBKRole)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.IBKBusinessUnit)(nil)); err != nil {
 		log.Error(err)
 	}
 }

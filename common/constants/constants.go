@@ -8,6 +8,9 @@ const (
 	VERSION      = "1.0"
 	VERSION_NAME = "Inbox Marketing"
 
+	AUTH_SIGNED_KEY  = "PitelSecretKey"
+	DEFAULT_PASSWORD = "Default@!#PORTAL"
+
 	// forbidden
 	ERR_UNAUTHORIZED             ERROR_CODE = "ERR_UNAUTHORIZED"
 	ERR_FORBIDDEN                ERROR_CODE = "ERR_FORBIDDEN"

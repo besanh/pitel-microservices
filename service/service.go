@@ -12,6 +12,8 @@ func InitServices() {
 	AuthService = NewAuth("")
 	IBKUserService = NewIBKUser()
 	IBKTenantService = NewIBKTenant()
+	IBKRoleService = NewIBKRole()
+	IBKBusinessUnitService = NewIBKBusinessUnit()
 }
 
 type DBConnection struct {
