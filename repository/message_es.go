@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"time"
 
 	"github.com/elastic/go-elasticsearch/esapi"
@@ -325,7 +326,7 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 		}
 	}
 
-	if filter.AttachmentType == "link" {
+	if filter.AttachmentType == "link" || filter.AttachmentType == "" {
 		// Find all URLs in the content
 		urlRegex := regexp.MustCompile(`https?://[^\s]+`)
 		for _, messageHit := range hits {
@@ -347,6 +348,9 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 				entries = append(entries, entry)
 			}
 		}
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].SendTime.After(entries[j].SendTime)
+		})
 	}
 	return total, entries, respScrollId, nil
 }
@@ -370,7 +374,7 @@ func (repo *MessageES) searchMediasWithScroll(ctx context.Context, tenantId, ind
 	if len(filter.ExternalMessageId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("external_message_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
 	}
-	if filter.AttachmentType == "link" {
+	if filter.AttachmentType == "link" || filter.AttachmentType == "" {
 		regexpString := ".*(http|https)://.*"
 		if len(filter.SearchKeyword) > 0 {
 			regexpString = ".*(http|https)://.*" + filter.SearchKeyword + ".*"
@@ -456,8 +460,7 @@ func filterMediaTypes(attachmentType string) []any {
 	}
 	args := []string{attachmentType}
 	if attachmentType == "media" {
-		// image/audio/video/file/link/sticker/gif/reacted/unreacted
-		args = []string{"image", "audio", "video", "file", "link", "sticker", "gif", "reacted", "unreacted"}
+		args = []string{"image", "audio", "video", "sticker", "gif", "reacted", "unreacted"}
 	}
 	return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
 }
