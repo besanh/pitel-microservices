@@ -1,15 +1,18 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cardinalby/hureg"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
-	apiv1 "github.com/tel4vn/fins-microservices/api/v1"
+
+	apiHandler "github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/env"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -91,7 +94,10 @@ func RunAPIBssInboxMarketing() {
 
 	service.InitDBConnection(db)
 	service.InitServices()
-	repository.InitRepositories()
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(30*time.Second))
+	defer cancel()
+	repository.InitTables(ctx, db)
+	repository.InitRepositories(db)
 
 	router := server.NewHTTPServer()
 	humaAPI := humagin.New(router, huma.Config{
@@ -121,6 +127,11 @@ func RunAPIBssInboxMarketing() {
 			},
 			Servers: []*huma.Server{
 				{
+					URL:         "http://localhost:8000",
+					Description: "Local Environment",
+					Variables:   map[string]*huma.ServerVariable{},
+				},
+				{
 					URL:         "https://api.dev.fins.vn",
 					Description: "Development Environment",
 					Variables:   map[string]*huma.ServerVariable{},
@@ -135,11 +146,6 @@ func RunAPIBssInboxMarketing() {
 					Description: "Production Environment",
 					Variables:   map[string]*huma.ServerVariable{},
 				},
-				{
-					URL:         "http://localhost:8000",
-					Description: "Local Environment",
-					Variables:   map[string]*huma.ServerVariable{},
-				},
 			},
 		},
 		OpenAPIPath:   "/collection/openapi",
@@ -150,10 +156,7 @@ func RunAPIBssInboxMarketing() {
 	api := hureg.NewAPIGen(humaAPI)
 	api.GetHumaAPI().UseMiddleware(authMdw.NewAuthMiddleware(api))
 
-	apiv1.RegisterAPIIBKAuth(api)
-	apiv1.RegisterAPIIBKUser(api)
-	apiv1.RegisterAPIIBKScope(api)
-	apiv1.RegisterAPIIBKToken(api)
+	apiHandler.InitAPI(api)
 
 	log.Debug("Starting api server")
 	response.NewHumaError()

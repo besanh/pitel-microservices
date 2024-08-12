@@ -12,7 +12,7 @@ import (
 type (
 	IIBKUser interface {
 		IRepo[model.IBKUser]
-		GetUserByUsername(ctx context.Context, userName string) (result *model.IBKUserInfo, err error)
+		GetUserByUsername(ctx context.Context, userName string) (result *model.IBKUser, err error)
 		GetInfoById(ctx context.Context, id string, params model.IBKUserQueryParam) (user *model.IBKUserInfo, err error)
 		GetInfoByQuery(ctx context.Context, params model.IBKUserQueryParam, limit, offset int, orderBy ...string) (total int, result []*model.IBKUserInfo, err error)
 	}
@@ -31,15 +31,16 @@ func NewIBKUser(conn sqlclient.ISqlClientConn) IIBKUser {
 	}
 }
 
-func (repo *IBKUser) GetUserByUsername(ctx context.Context, userName string) (result *model.IBKUserInfo, err error) {
-	result = new(model.IBKUserInfo)
+func (repo *IBKUser) GetUserByUsername(ctx context.Context, userName string) (result *model.IBKUser, err error) {
+	result = new(model.IBKUser)
 	query := repo.Conn.GetDB().NewSelect().
+		ColumnExpr("*").
 		Model(result).
-		Where("user_name = ?", userName)
+		Where("username = ?", userName).
+		Limit(1)
 	err = query.Scan(ctx)
 	if err == sql.ErrNoRows {
-		return
-	} else if err != nil {
+		err = nil
 		result = nil
 	}
 	return
@@ -52,8 +53,10 @@ func (repo *IBKUser) GetInfoByQuery(ctx context.Context, params model.IBKUserQue
 		ColumnExpr("u.*").
 		ColumnExpr("bu.id as business_unit_id, bu.business_unit_name").
 		ColumnExpr("t.id as tenant_id, t.tenant_name").
-		Join("JOIN IBK_business_units bu ON u.business_unit_id = bu.id").
-		Join("JOIN IBK_tenants t ON bu.tenant_id = t.id").
+		ColumnExpr("r.id as role_id, r.role_name").
+		Join("JOIN ibk_business_units bu ON u.business_unit_id = bu.id").
+		Join("JOIN ibk_tenants t ON bu.tenant_id = t.id").
+		Join("JOIN ibk_roles r ON r.user_id = u.id").
 		Offset(offset).
 		Limit(limit)
 	if len(params.BusinessUnitId_Eq) > 0 {
@@ -62,15 +65,12 @@ func (repo *IBKUser) GetInfoByQuery(ctx context.Context, params model.IBKUserQue
 	if len(params.TenantId_Eq) > 0 {
 		query.Where("t.id::text = ?", params.TenantId_Eq)
 	}
-	if len(params.GroupId_Eq) > 0 {
-		query.Where("gu.group_id::text = ?", params.GroupId_Eq)
-	}
 	if len(params.Keyword) > 0 {
 		query.Where("u.username LIKE ? OR u.fullname LIKE ?", "%"+params.Keyword+"%", "%"+params.Keyword+"%")
 	}
 	if len(params.RoleId_Eq) > 0 || len(params.ServiceId_Eq) > 0 {
 		subQuery := repo.Conn.GetDB().NewSelect().
-			TableExpr("IBKUser_service as us").
+			TableExpr("ibk_user_service as us").
 			Where("us.user_id = u.id")
 		if len(params.RoleId_Eq) > 0 {
 			subQuery.Where("us.role_id::text = ?", params.RoleId_Eq)
@@ -134,8 +134,10 @@ func (repo *IBKUser) GetInfoById(ctx context.Context, id string, params model.IB
 		ColumnExpr("u.*").
 		ColumnExpr("bu.id as business_unit_id, bu.business_unit_name").
 		ColumnExpr("t.id as tenant_id, t.tenant_name").
-		Join("JOIN IBK_business_units bu ON u.business_unit_id = bu.id").
-		Join("JOIN IBK_tenants t ON bu.tenant_id = t.id").
+		ColumnExpr("r.id as role_id, r.role_name").
+		Join("JOIN ibk_business_units bu ON u.business_unit_id = bu.id").
+		Join("JOIN ibk_tenants t ON bu.tenant_id = t.id").
+		Join("JOIN ibk_roles r ON r.user_id = u.id").
 		Where("u.id::text = ?", id).
 		Limit(1)
 
@@ -144,9 +146,6 @@ func (repo *IBKUser) GetInfoById(ctx context.Context, id string, params model.IB
 	}
 	if len(params.TenantId_Eq) > 0 {
 		query.Where("t.id::text = ?", params.TenantId_Eq)
-	}
-	if len(params.GroupId_Eq) > 0 {
-		query.Where("u.group_id::text = ?", params.GroupId_Eq)
 	}
 	if len(params.Keyword) > 0 {
 		query.Where("u.username LIKE ? OR u.fullname LIKE ?", "%"+params.Keyword+"%", "%"+params.Keyword+"%")

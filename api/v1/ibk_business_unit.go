@@ -13,110 +13,95 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 )
 
-type APIIBKUser struct{}
+type (
+	APIIBKBusinessUnit struct {
+	}
+)
 
-func RegisterAPIIBKUser(api hureg.APIGen) {
-	handler := &APIIBKUser{}
+func RegisterAPIIBKBusinessUnit(api hureg.APIGen) {
+	handler := &APIIBKBusinessUnit{}
 
-	group := api.AddBasePath("/inbox-marketing/v1/user")
-	tags := []string{"IBK User"}
+	group := api.AddBasePath("/inbox-marketing/v1/business-unit")
+	tags := []string{"IBK Business Unit"}
 
 	hureg.Register(group, huma.Operation{
 		Tags:        tags,
-		OperationID: "Get User",
+		OperationID: "Get Business Units",
 		Method:      http.MethodGet,
 		Path:        "",
 		Security:    authMdw.DefaultAuthSecurity,
-	}, handler.GetUser)
+	}, handler.GetBusinessUnits)
 	hureg.Register(group, huma.Operation{
 		Tags:        tags,
-		OperationID: "Create User",
+		OperationID: "Create Business Unit",
 		Method:      http.MethodPost,
 		Path:        "",
 		Security:    authMdw.DefaultAuthSecurity,
-	}, handler.CreateUser)
+	}, handler.CreateBusinessUnit)
 	hureg.Register(group, huma.Operation{
 		Tags:        tags,
-		OperationID: "Get User By Id",
+		OperationID: "Get Business Unit By Id",
 		Method:      http.MethodGet,
 		Path:        "{id}",
-	}, handler.GetUserById)
+		Security:    authMdw.DefaultAuthSecurity,
+	}, handler.GetBusinessUnitById)
 	hureg.Register(group, huma.Operation{
 		Tags:        tags,
-		OperationID: "Update User",
+		OperationID: "Update Business Unit",
 		Method:      http.MethodPut,
 		Path:        "{id}",
 		Security:    authMdw.DefaultAuthSecurity,
-	}, handler.PutUser)
+	}, handler.PutBusinessUnit)
 	hureg.Register(group, huma.Operation{
 		Tags:        tags,
-		OperationID: "Delete User",
+		OperationID: "Delete Business Unit",
 		Method:      http.MethodDelete,
 		Path:        "{id}",
 		Security:    authMdw.DefaultAuthSecurity,
-	}, handler.DeleteUser)
+	}, handler.DeleteBusinessUnit)
 }
 
-func (h *APIIBKUser) GetUser(c context.Context, req *struct {
-	model.IBKUserQueryParam
+func (h *APIIBKBusinessUnit) GetBusinessUnits(c context.Context, req *struct {
+	model.IBKBusinessUnitQueryParam
 	Limit  int `query:"limit" default:"50" min:"1" max:"2999"`
 	Offset int `query:"offset" default:"0" min:"0" max:"2999"`
-}) (res *response.PaginationResponse[[]*model.IBKUserInfo], err error) {
+}) (res *response.PaginationResponse[[]*model.IBKBusinessUnit], err error) {
 	authUser, ok := authMdw.GetUserFromContext(c)
 	if !ok {
 		err = response.ErrUnauthorized()
 		return
 	}
 
-	total, users, err := service.IBKUserService.GetUsers(c, authUser, req.IBKUserQueryParam, req.Limit, req.Offset)
+	total, businessUnits, err := service.IBKBusinessUnitService.GetBusinessUnits(c, authUser, req.IBKBusinessUnitQueryParam, req.Limit, req.Offset)
 	if err != nil {
 		log.ErrorContext(c, err)
 		return
 	}
-	res = response.Pagination(total, users)
+	res = response.Pagination(total, businessUnits)
 	return
 }
 
-func (h *APIIBKUser) GetUserById(c context.Context, req *struct {
-	Id string `path:"id" required:"true" format:"uuid"`
-}) (res *response.GenericResponse[*model.IBKUserInfo], err error) {
-	authUser, ok := authMdw.GetUserFromContext(c)
-	if !ok {
-		err = response.ErrUnauthorized()
-		return
-	}
-	user, err := service.IBKUserService.GetUserById(c, authUser, req.Id)
-	if err != nil {
-		log.ErrorContext(c, err)
-		return
-	}
-	res = response.OK(user)
-	return
-}
-
-func (h *APIIBKUser) CreateUser(c context.Context, req *struct {
-	Body model.IBKUserBody
+func (h *APIIBKBusinessUnit) CreateBusinessUnit(c context.Context, req *struct {
+	Body model.IBKBusinessUnitBody
 }) (res *response.IdResponse, err error) {
 	authUser, ok := authMdw.GetUserFromContext(c)
 	if !ok {
 		err = response.ErrUnauthorized()
 		return
 	}
-	id, err := service.IBKUserService.CreateUser(c, authUser, &req.Body)
+	id, err := service.IBKBusinessUnitService.CreateBusinessUnit(c, authUser, &req.Body)
 	if err != nil {
 		log.ErrorContext(c, err)
 		return
 	}
-
 	res = &response.IdResponse{
 		Id: id,
 	}
-
 	return
 }
 
-func (h *APIIBKUser) PutUser(c context.Context, req *struct {
-	Body model.IBKUserBody
+func (h *APIIBKBusinessUnit) PutBusinessUnit(c context.Context, req *struct {
+	Body model.IBKBusinessUnitBody
 	Id   string `path:"id" required:"true" format:"uuid"`
 }) (res *response.GenericResponse[any], err error) {
 	authUser, ok := authMdw.GetUserFromContext(c)
@@ -124,7 +109,8 @@ func (h *APIIBKUser) PutUser(c context.Context, req *struct {
 		err = response.ErrUnauthorized()
 		return
 	}
-	err = service.IBKUserService.PutUser(c, authUser, req.Id, &req.Body)
+
+	err = service.IBKBusinessUnitService.PutBusinessUnit(c, authUser, req.Id, &req.Body)
 	if err != nil {
 		log.ErrorContext(c, err)
 		return
@@ -133,7 +119,23 @@ func (h *APIIBKUser) PutUser(c context.Context, req *struct {
 	return
 }
 
-func (h *APIIBKUser) DeleteUser(c context.Context, req *struct {
+func (h *APIIBKBusinessUnit) GetBusinessUnitById(c context.Context, req *struct {
+	Id string `path:"id" required:"true" format:"uuid"`
+}) (res *response.GenericResponse[*model.IBKBusinessUnit], err error) {
+	authUser, ok := authMdw.GetUserFromContext(c)
+	if !ok {
+		err = response.ErrUnauthorized()
+		return
+	}
+	businessUnit, err := service.IBKBusinessUnitService.GetBusinessUnitById(c, authUser, req.Id)
+	if err != nil {
+		log.ErrorContext(c, err)
+		return
+	}
+	res = response.OK(businessUnit)
+	return
+}
+func (h *APIIBKBusinessUnit) DeleteBusinessUnit(c context.Context, req *struct {
 	Id string `path:"id" required:"true" format:"uuid"`
 }) (res *response.GenericResponse[any], err error) {
 	authUser, ok := authMdw.GetUserFromContext(c)
@@ -141,7 +143,7 @@ func (h *APIIBKUser) DeleteUser(c context.Context, req *struct {
 		err = response.ErrUnauthorized()
 		return
 	}
-	err = service.IBKUserService.DeleteUser(c, authUser, req.Id)
+	err = service.IBKBusinessUnitService.DeleteBusinessUnit(c, authUser, req.Id)
 	if err != nil {
 		log.ErrorContext(c, err)
 		return

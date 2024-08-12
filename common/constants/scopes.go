@@ -13,7 +13,7 @@ type API_SCOPE struct {
 }
 
 const (
-	// API AAA scopes
+	// API IBK scopes
 	SCOPE_IBK_USER                SCOPE = "ibk:user"                // View all users of your tenant
 	SCOPE_IBK_USER_EXTENSION      SCOPE = "ibk:user:extension"      // Allow create/update/delete user extensions
 	SCOPE_IBK_TENANT              SCOPE = "ibk:tenant"              // View all tenants

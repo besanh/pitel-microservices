@@ -16,7 +16,7 @@ import (
 type IRepo[T model.Model] interface {
 	GetById(ctx context.Context, id string, conditions ...sql_builder.QueryCondition) (*T, error)
 	GetByQuery(ctx context.Context, conditions ...sql_builder.QueryCondition) (entry *T, err error)
-	SelectByQuery(ctx context.Context, conditions []sql_builder.QueryCondition, limit int, offset int, orderBy string) (entries []*T, total int, err error)
+	SelectByQuery(ctx context.Context, conditions []sql_builder.QueryCondition, limit int, offset int, orderBy string) (total int, entries []*T, err error)
 
 	CreateTable(ctx context.Context) (err error)
 
@@ -128,7 +128,7 @@ func (repo *Repo[T]) Delete(ctx context.Context, id ...string) (err error) {
 	return
 }
 
-func (repo *Repo[T]) SelectByQuery(ctx context.Context, conditions []sql_builder.QueryCondition, limit int, offset int, orderBy string) (entries []*T, total int, err error) {
+func (repo *Repo[T]) SelectByQuery(ctx context.Context, conditions []sql_builder.QueryCondition, limit int, offset int, orderBy string) (total int, entries []*T, err error) {
 	entries = make([]*T, 0)
 	query := repo.Conn.GetDB().NewSelect().
 		Model(&entries).
@@ -148,9 +148,9 @@ func (repo *Repo[T]) SelectByQuery(ctx context.Context, conditions []sql_builder
 	log.Infof("query: %v", query.String())
 	total, err = query.ScanAndCount(ctx)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, 0, err
+		return 0, nil, err
 	}
-	return entries, total, nil
+	return total, entries, nil
 }
 
 func (repo *Repo[T]) GetByQuery(ctx context.Context, conditions ...sql_builder.QueryCondition) (entry *T, err error) {
