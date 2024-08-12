@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
 )
@@ -56,7 +55,7 @@ func (repo *IBKUser) GetInfoByQuery(ctx context.Context, params model.IBKUserQue
 		ColumnExpr("r.id as role_id, r.role_name").
 		Join("JOIN ibk_business_units bu ON u.business_unit_id = bu.id").
 		Join("JOIN ibk_tenants t ON bu.tenant_id = t.id").
-		Join("JOIN ibk_roles r ON r.user_id = u.id").
+		Join("JOIN ibk_roles r ON r.id = u.role_id").
 		Offset(offset).
 		Limit(limit)
 	if len(params.BusinessUnitId_Eq) > 0 {
@@ -120,7 +119,6 @@ func (repo *IBKUser) GetInfoByQuery(ctx context.Context, params model.IBKUserQue
 	}
 	query.OrderExpr(orderValue + " " + sortValue)
 
-	log.DebugfContext(ctx, "query: %s", query.String())
 	if total, err = query.ScanAndCount(ctx); err == sql.ErrNoRows {
 		result = nil
 		return
@@ -137,7 +135,7 @@ func (repo *IBKUser) GetInfoById(ctx context.Context, id string, params model.IB
 		ColumnExpr("r.id as role_id, r.role_name").
 		Join("JOIN ibk_business_units bu ON u.business_unit_id = bu.id").
 		Join("JOIN ibk_tenants t ON bu.tenant_id = t.id").
-		Join("JOIN ibk_roles r ON r.user_id = u.id").
+		Join("JOIN ibk_roles r ON r.id = u.role_id").
 		Where("u.id::text = ?", id).
 		Limit(1)
 
