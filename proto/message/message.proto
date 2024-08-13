@@ -181,10 +181,7 @@ message GetMessageMediasScrollResponse {
 // add ticket reference to message
 message PostTicketReferenceToMessageRequest {
   string message_id = 1;
-  string app_id = 2;
-  string oa_id = 3;
-  string conversation_id = 4;
-  string ticket_id = 5;
+  string ticket_id = 2;
 }
 
 message PostTicketReferenceToMessageResponse {

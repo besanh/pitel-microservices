@@ -84,11 +84,8 @@ type MessageMarkRead struct {
 }
 
 type MessagePostTicket struct {
-	AppId          string `json:"app_id"`
-	OaId           string `json:"oa_id"`
-	ConversationId string `json:"conversation_id"`
-	MessageId      string `json:"message_id"`
-	TicketId       string `json:"ticket_id"`
+	MessageId string `json:"message_id"`
+	TicketId  string `json:"ticket_id"`
 }
 
 type OaInfoMessage struct {
@@ -174,15 +171,6 @@ func (m *MessageFormRequest) ValidateMessageForm() error {
 }
 
 func (m *MessagePostTicket) ValidatePostTicket() error {
-	if len(m.ConversationId) < 1 {
-		return errors.New("conversation id is required")
-	}
-	if len(m.AppId) < 1 {
-		return errors.New("app id is required")
-	}
-	if len(m.OaId) < 1 {
-		return errors.New("oa id is required")
-	}
 	if len(m.TicketId) < 1 {
 		return errors.New("ticket id is required")
 	}

@@ -418,18 +418,6 @@ func (s *Message) PostTicketToMessage(ctx context.Context, authUser *model.AuthU
 		log.Errorf("message %s not found", data.MessageId)
 		return errors.New("message " + data.MessageId + " not found")
 	}
-	if message.ConversationId != data.ConversationId {
-		log.Error("message " + data.MessageId + " conversationId not match")
-		return errors.New("message " + data.MessageId + " conversationId not match")
-	}
-	if message.OaId != data.OaId {
-		log.Error("message " + data.MessageId + " oaId not match")
-		return errors.New("message " + data.MessageId + " oaId not match")
-	}
-	if message.AppId != data.AppId {
-		log.Error("message " + data.MessageId + " appId not match")
-		return errors.New("message " + data.MessageId + " appId not match")
-	}
 
 	message.TicketId = data.TicketId
 
