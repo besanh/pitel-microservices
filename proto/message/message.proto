@@ -179,7 +179,7 @@ message GetMessageMediasScrollResponse {
 }
 
 // add ticket reference to message
-message AddTicketReferenceToMessageRequest {
+message PostTicketReferenceToMessageRequest {
   string message_id = 1;
   string app_id = 2;
   string oa_id = 3;
@@ -187,7 +187,7 @@ message AddTicketReferenceToMessageRequest {
   string ticket_id = 5;
 }
 
-message AddTicketReferenceToMessageResponse {
+message PostTicketReferenceToMessageResponse {
   string code = 1;
   string message = 2;
 }
@@ -232,9 +232,9 @@ service MessageService {
     };
   };
 
-  rpc AddTicketReferenceToMessage(AddTicketReferenceToMessageRequest) returns (AddTicketReferenceToMessageResponse) {
+  rpc PostTicketReferenceToMessage(PostTicketReferenceToMessageRequest) returns (PostTicketReferenceToMessageResponse) {
     option (google.api.http) = {
-      put : "/bss-chat/v1/message/ticket/{message_id}"
+      post : "/bss-chat/v1/message/ticket/{message_id}"
       body : "*"
     };
   };

@@ -248,7 +248,7 @@ func (g *GRPCMessage) GetMessageMediasWithScrollAPI(ctx context.Context, request
 	return
 }
 
-func (g *GRPCMessage) AddTicketReferenceToMessage(ctx context.Context, request *pb.AddTicketReferenceToMessageRequest) (result *pb.AddTicketReferenceToMessageResponse, err error) {
+func (g *GRPCMessage) PostTicketReferenceToMessage(ctx context.Context, request *pb.PostTicketReferenceToMessageRequest) (result *pb.PostTicketReferenceToMessageResponse, err error) {
 	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -270,7 +270,7 @@ func (g *GRPCMessage) AddTicketReferenceToMessage(ctx context.Context, request *
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result = &pb.AddTicketReferenceToMessageResponse{
+	result = &pb.PostTicketReferenceToMessageResponse{
 		Code:    "OK",
 		Message: "ok",
 	}

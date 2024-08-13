@@ -217,8 +217,8 @@ func local_request_MessageService_GetMessageMediasWithScrollAPI_0(ctx context.Co
 
 }
 
-func request_MessageService_AddTicketReferenceToMessage_0(ctx context.Context, marshaler runtime.Marshaler, client MessageServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AddTicketReferenceToMessageRequest
+func request_MessageService_PostTicketReferenceToMessage_0(ctx context.Context, marshaler runtime.Marshaler, client MessageServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq PostTicketReferenceToMessageRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -242,13 +242,13 @@ func request_MessageService_AddTicketReferenceToMessage_0(ctx context.Context, m
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "message_id", err)
 	}
 
-	msg, err := client.AddTicketReferenceToMessage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.PostTicketReferenceToMessage(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_MessageService_AddTicketReferenceToMessage_0(ctx context.Context, marshaler runtime.Marshaler, server MessageServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq AddTicketReferenceToMessageRequest
+func local_request_MessageService_PostTicketReferenceToMessage_0(ctx context.Context, marshaler runtime.Marshaler, server MessageServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq PostTicketReferenceToMessageRequest
 	var metadata runtime.ServerMetadata
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
@@ -272,7 +272,7 @@ func local_request_MessageService_AddTicketReferenceToMessage_0(ctx context.Cont
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "message_id", err)
 	}
 
-	msg, err := server.AddTicketReferenceToMessage(ctx, &protoReq)
+	msg, err := server.PostTicketReferenceToMessage(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -433,7 +433,7 @@ func RegisterMessageServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("PUT", pattern_MessageService_AddTicketReferenceToMessage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_MessageService_PostTicketReferenceToMessage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -441,12 +441,12 @@ func RegisterMessageServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.message.MessageService/AddTicketReferenceToMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message/ticket/{message_id}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/proto.message.MessageService/PostTicketReferenceToMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message/ticket/{message_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_MessageService_AddTicketReferenceToMessage_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_MessageService_PostTicketReferenceToMessage_0(annotatedContext, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
@@ -454,7 +454,7 @@ func RegisterMessageServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_MessageService_AddTicketReferenceToMessage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_MessageService_PostTicketReferenceToMessage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -631,25 +631,25 @@ func RegisterMessageServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("PUT", pattern_MessageService_AddTicketReferenceToMessage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_MessageService_PostTicketReferenceToMessage_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.message.MessageService/AddTicketReferenceToMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message/ticket/{message_id}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/proto.message.MessageService/PostTicketReferenceToMessage", runtime.WithHTTPPathPattern("/bss-chat/v1/message/ticket/{message_id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_MessageService_AddTicketReferenceToMessage_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_MessageService_PostTicketReferenceToMessage_0(annotatedContext, inboundMarshaler, client, req, pathParams)
 		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
 			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_MessageService_AddTicketReferenceToMessage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_MessageService_PostTicketReferenceToMessage_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -669,7 +669,7 @@ var (
 
 	pattern_MessageService_GetMessageMediasWithScrollAPI_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"bss-chat", "v1", "message", "media", "scroll"}, ""))
 
-	pattern_MessageService_AddTicketReferenceToMessage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"bss-chat", "v1", "message", "ticket", "message_id"}, ""))
+	pattern_MessageService_PostTicketReferenceToMessage_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"bss-chat", "v1", "message", "ticket", "message_id"}, ""))
 )
 
 var (
@@ -685,5 +685,5 @@ var (
 
 	forward_MessageService_GetMessageMediasWithScrollAPI_0 = runtime.ForwardResponseMessage
 
-	forward_MessageService_AddTicketReferenceToMessage_0 = runtime.ForwardResponseMessage
+	forward_MessageService_PostTicketReferenceToMessage_0 = runtime.ForwardResponseMessage
 )

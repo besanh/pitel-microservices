@@ -131,6 +131,9 @@
             },
             "is_echo": {
                 "type": "boolean"
+            },
+            "ticket_id": {
+                "type": "keyword"
             }
         }
     },
