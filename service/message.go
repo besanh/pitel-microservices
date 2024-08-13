@@ -26,7 +26,7 @@ type (
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (result model.ReadMessageResponse, err error)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (result model.OttCodeChallenge, err error)
 		GetMessageMediasWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.MessageAttachmentsDetails, respScrollId string, err error)
-		AddTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessageAddTicket) (err error)
+		PostTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessagePostTicket) (err error)
 	}
 	Message struct{}
 )
@@ -409,7 +409,7 @@ func (s *Message) GetMessageMediasWithScrollAPI(ctx context.Context, authUser *m
 	return
 }
 
-func (s *Message) AddTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessageAddTicket) (err error) {
+func (s *Message) PostTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessagePostTicket) (err error) {
 	message, err := repository.MessageESRepo.GetMessageById(ctx, "", ES_INDEX_MESSAGE, data.MessageId)
 	if err != nil {
 		log.Error(err)

@@ -83,7 +83,7 @@ type MessageMarkRead struct {
 	ReadAll        bool     `json:"read_all"`
 }
 
-type MessageAddTicket struct {
+type MessagePostTicket struct {
 	AppId          string `json:"app_id"`
 	OaId           string `json:"oa_id"`
 	ConversationId string `json:"conversation_id"`
@@ -173,7 +173,7 @@ func (m *MessageFormRequest) ValidateMessageForm() error {
 	return nil
 }
 
-func (m *MessageAddTicket) ValidateAddTicket() error {
+func (m *MessagePostTicket) ValidatePostTicket() error {
 	if len(m.ConversationId) < 1 {
 		return errors.New("conversation id is required")
 	}
