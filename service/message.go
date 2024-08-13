@@ -415,8 +415,9 @@ func (s *Message) PostTicketToMessage(ctx context.Context, authUser *model.AuthU
 		log.Error(err)
 		return
 	} else if len(message.MessageId) < 1 {
-		log.Errorf("message %s not found", data.MessageId)
-		return errors.New("message " + data.MessageId + " not found")
+		err = errors.New("message " + data.MessageId + " not found")
+		log.Error(err)
+		return
 	}
 
 	message.TicketId = data.TicketId

@@ -98,8 +98,9 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 			return connectionApp.Id, err
 		}
 		if total > 0 {
-			log.Error(errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists"))
-			return connectionApp.Id, errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists")
+			err = errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists")
+			log.Error(err)
+			return connectionApp.Id, err
 		}
 	}
 
