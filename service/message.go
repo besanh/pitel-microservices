@@ -26,6 +26,7 @@ type (
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (result model.ReadMessageResponse, err error)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (result model.OttCodeChallenge, err error)
 		GetMessageMediasWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.MessageAttachmentsDetails, respScrollId string, err error)
+		AddTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessageAddTicket) (err error)
 	}
 	Message struct{}
 )
@@ -404,6 +405,36 @@ func (s *Message) GetMessageMediasWithScrollAPI(ctx context.Context, authUser *m
 	}
 	if messages == nil {
 		messages = make([]*model.MessageAttachmentsDetails, 0)
+	}
+	return
+}
+
+func (s *Message) AddTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessageAddTicket) (err error) {
+	message, err := repository.MessageESRepo.GetMessageById(ctx, "", ES_INDEX_MESSAGE, data.MessageId)
+	if err != nil {
+		log.Error(err)
+		return
+	} else if len(message.MessageId) < 1 {
+		log.Errorf("message %s not found", data.MessageId)
+		return errors.New("message " + data.MessageId + " not found")
+	}
+	if message.ConversationId != data.ConversationId {
+		log.Error("message " + data.MessageId + " conversationId not match")
+		return errors.New("message " + data.MessageId + " conversationId not match")
+	}
+	if message.OaId != data.OaId {
+		log.Error("message " + data.MessageId + " oaId not match")
+		return errors.New("message " + data.MessageId + " oaId not match")
+	}
+	if message.AppId != data.AppId {
+		log.Error("message " + data.MessageId + " appId not match")
+		return errors.New("message " + data.MessageId + " appId not match")
+	}
+
+	message.TicketId = data.TicketId
+
+	if err = PublishPutMessageToChatQueue(ctx, *message); err != nil {
+		return
 	}
 	return
 }

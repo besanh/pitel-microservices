@@ -37,6 +37,7 @@ type Message struct {
 	UpdatedAt              time.Time         `json:"updated_at"`
 	ShareInfo              *ShareInfo        `json:"share_info"`
 	IsEcho                 bool              `json:"is_echo"`
+	TicketId               string            `json:"ticket_id"`
 }
 
 type AttachmentsDetails struct {
@@ -80,6 +81,14 @@ type MessageMarkRead struct {
 	ReadBy         string   `json:"read_by"`
 	ReadAt         string   `json:"read_at"`
 	ReadAll        bool     `json:"read_all"`
+}
+
+type MessageAddTicket struct {
+	AppId          string `json:"app_id"`
+	OaId           string `json:"oa_id"`
+	ConversationId string `json:"conversation_id"`
+	MessageId      string `json:"message_id"`
+	TicketId       string `json:"ticket_id"`
 }
 
 type OaInfoMessage struct {
@@ -160,6 +169,25 @@ func (m *MessageFormRequest) ValidateMessageForm() error {
 
 	if len(m.Url) < 1 && m.File == nil {
 		return errors.New("url or file is required")
+	}
+	return nil
+}
+
+func (m *MessageAddTicket) ValidateAddTicket() error {
+	if len(m.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
+	if len(m.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(m.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+	if len(m.TicketId) < 1 {
+		return errors.New("ticket id is required")
+	}
+	if len(m.MessageId) < 1 {
+		return errors.New("message id is required")
 	}
 	return nil
 }
