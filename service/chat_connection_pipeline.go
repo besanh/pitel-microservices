@@ -86,19 +86,22 @@ func (s *ChatConnectionPipeline) AttachConnectionQueueToApp(ctx context.Context,
 	}
 	connectionApp.Status = data.ConnectionAppRequest.Status
 
-	connectionAppFilter := model.ChatConnectionAppFilter{
-		TenantId:       authUser.TenantId,
-		ConnectionType: data.ConnectionAppRequest.ConnectionType,
-		OaId:           oaIdFilter,
-	}
-	total, _, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionAppFilter, 1, 0)
-	if err != nil {
-		log.Error(err)
-		return connectionApp.Id, err
-	}
-	if total > 0 {
-		log.Error(errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists"))
-		return connectionApp.Id, errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists")
+	if len(oaIdFilter) > 0 {
+		connectionAppFilter := model.ChatConnectionAppFilter{
+			TenantId:       authUser.TenantId,
+			ConnectionType: data.ConnectionAppRequest.ConnectionType,
+			OaId:           oaIdFilter,
+		}
+		total, _, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, connectionAppFilter, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return connectionApp.Id, err
+		}
+		if total > 0 {
+			err = errors.New("connection app with oa_id " + connectionAppFilter.OaId + " already exists")
+			log.Error(err)
+			return connectionApp.Id, err
+		}
 	}
 
 	if err := repository.ChatConnectionPipelineRepo.InsertConnectionApp(ctx, tx, connectionApp); err != nil {

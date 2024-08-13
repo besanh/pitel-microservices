@@ -26,6 +26,7 @@ type (
 		MarkReadMessages(ctx context.Context, authUser *model.AuthUser, data model.MessageMarkRead) (result model.ReadMessageResponse, err error)
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (result model.OttCodeChallenge, err error)
 		GetMessageMediasWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.MessageAttachmentsDetails, respScrollId string, err error)
+		PostTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessagePostTicket) (err error)
 	}
 	Message struct{}
 )
@@ -404,6 +405,25 @@ func (s *Message) GetMessageMediasWithScrollAPI(ctx context.Context, authUser *m
 	}
 	if messages == nil {
 		messages = make([]*model.MessageAttachmentsDetails, 0)
+	}
+	return
+}
+
+func (s *Message) PostTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessagePostTicket) (err error) {
+	message, err := repository.MessageESRepo.GetMessageById(ctx, "", ES_INDEX_MESSAGE, data.MessageId)
+	if err != nil {
+		log.Error(err)
+		return
+	} else if len(message.MessageId) < 1 {
+		err = errors.New("message " + data.MessageId + " not found")
+		log.Error(err)
+		return
+	}
+
+	message.TicketId = data.TicketId
+
+	if err = PublishPutMessageToChatQueue(ctx, *message); err != nil {
+		return
 	}
 	return
 }
