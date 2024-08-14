@@ -357,6 +357,43 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 				return
 			}
 			if len(*chatManagers) > 0 {
+				oldChatQueue, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, connectionQueue.QueueId)
+				if err != nil {
+					log.Error(err)
+					return err
+				} else if oldChatQueue == nil {
+					err = errors.New("chat queue " + connectionQueue.QueueId + " not exist")
+					log.Error(err)
+					return err
+				}
+				manageQueue, err := repository.ManageQueueRepo.GetById(ctx, repository.DBConn, oldChatQueue.ManageQueueId)
+				if err != nil {
+					log.Error(err)
+					return err
+				} else if manageQueue == nil {
+					err = errors.New("manage queue " + oldChatQueue.ManageQueueId + " not exist")
+					log.Error(err)
+					return err
+				}
+				if len(manageQueue.ConnectionId) > 0 {
+					// create a queue manager record. So that chat queue will keep its manager id
+					newManagerQueue := model.ChatManageQueueUser{
+						Base:     model.InitBase(),
+						TenantId: authUser.TenantId,
+						QueueId:  manageQueue.QueueId,
+						UserId:   manageQueue.UserId,
+					}
+					if err = repository.ManageQueueRepo.TxInsert(ctx, tx, newManagerQueue); err != nil {
+						log.Error(err)
+						return err
+					}
+					oldChatQueue.ManageQueueId = newManagerQueue.GetId()
+					if err = repository.ChatQueueRepo.TxUpdate(ctx, tx, *oldChatQueue); err != nil {
+						log.Error(err)
+						return err
+					}
+				}
+
 				if err = repository.ManageQueueRepo.TxBulkDelete(ctx, tx, *chatManagers); err != nil {
 					log.Error(err)
 					return err
