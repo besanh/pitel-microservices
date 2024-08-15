@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"regexp"
+	"unicode/utf8"
 
 	"github.com/tel4vn/fins-microservices/common/regex"
 	"github.com/uptrace/bun"
@@ -72,7 +73,7 @@ func (m *ChatLabelRequest) Validate() error {
 		return errors.New("label name is required")
 	}
 
-	if len(m.LabelName) > 15 {
+	if utf8.RuneCountInString(m.LabelName) > 15 {
 		return errors.New("label name is no longer than 15 characters")
 	}
 	re := regexp.MustCompile(regex.REGEX_TEXT_ACCENT)
