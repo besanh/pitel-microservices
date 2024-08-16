@@ -15,7 +15,7 @@ type (
 	IChatConnectionPipeline interface {
 		UpdateConnectionApp(ctx context.Context, tx bun.Tx, entity model.ChatConnectionApp) error
 		UpdateConnectionAppStatus(ctx context.Context, dbConn sqlclient.ISqlClientConn, entity model.ChatConnectionApp) error
-		BulkUpdateConnectionApp(ctx context.Context, tx bun.Tx, entities []model.ChatConnectionApp, args ...string) error
+		BulkUpdateConnectionApp(ctx context.Context, tx bun.Tx, entities []model.ChatConnectionApp, args map[string]string) error
 		InsertConnectionApp(ctx context.Context, tx bun.Tx, entity model.ChatConnectionApp) error
 		DeleteConnectionQueue(ctx context.Context, tx bun.Tx, connectionId, queueId string) (err error)
 		BeginTx(ctx context.Context, db sqlclient.ISqlClientConn, opts *sql.TxOptions) (bun.Tx, error)
@@ -63,7 +63,7 @@ func (repo *ChatConnectionPipeline) UpdateConnectionAppStatus(ctx context.Contex
 	return err
 }
 
-func (repo *ChatConnectionPipeline) BulkUpdateConnectionApp(ctx context.Context, tx bun.Tx, entities []model.ChatConnectionApp, args ...string) error {
+func (repo *ChatConnectionPipeline) BulkUpdateConnectionApp(ctx context.Context, tx bun.Tx, entities []model.ChatConnectionApp, args map[string]string) error {
 	ids := make([]string, len(entities))
 	for i, entity := range entities {
 		ids[i] = entity.Id
@@ -72,10 +72,7 @@ func (repo *ChatConnectionPipeline) BulkUpdateConnectionApp(ctx context.Context,
 	updateQuery := tx.NewUpdate().
 		Model((*model.ChatConnectionApp)(nil)).
 		Where("id IN (?)", bun.In(ids))
-	for i := 0; i+1 < len(args); i += 2 {
-		column := args[i]
-		value := args[i+1]
-
+	for column, value := range args {
 		if value == "NULL" {
 			updateQuery.Set(fmt.Sprintf("%s = NULL", column))
 		} else {

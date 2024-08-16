@@ -522,7 +522,9 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 			return err
 		}
 		if len(*connectionApps) > 0 {
-			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id", "NULL"); err != nil {
+			args := make(map[string]string)
+			args["connection_queue_id"] = "NULL"
+			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, args); err != nil {
 				log.Error(err)
 				return err
 			}
