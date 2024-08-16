@@ -434,7 +434,7 @@ func (s *ChatQueue) UpdateChatQueueStatus(ctx context.Context, authUser *model.A
 	return
 }
 
-func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error {
+func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) (err error) {
 	queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
@@ -442,6 +442,22 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 	} else if queueExist == nil {
 		log.Error("chat queue " + id + " not found")
 		return errors.New("chat queue " + id + " not found")
+	}
+
+	// do not delete queue if there's at least a conversation active in that queue
+	allocateFilter := model.AllocateUserFilter{
+		TenantId: authUser.TenantId,
+		QueueId:  []string{id},
+	}
+	total, _, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	if total > 0 {
+		err = errors.New("unable to delete queue " + id + " because it is currently in use by a conversation")
+		log.Error(err)
+		return
 	}
 
 	tx, err := repository.ChatQueueRepo.BeginTx(ctx, repository.DBConn, nil)
