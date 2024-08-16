@@ -82,6 +82,7 @@ func (repo *ChatConnectionPipeline) BulkUpdateConnectionApp(ctx context.Context,
 			updateQuery.Set(fmt.Sprintf("%s = ?", column), value)
 		}
 	}
+	updateQuery.Set("updated_at = ?", time.Now())
 	_, err := updateQuery.Exec(ctx)
 	return err
 }
