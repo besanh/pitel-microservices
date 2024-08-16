@@ -446,8 +446,9 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 
 	// do not delete queue if there's at least a conversation active in that queue
 	allocateFilter := model.AllocateUserFilter{
-		TenantId: authUser.TenantId,
-		QueueId:  []string{id},
+		TenantId:     authUser.TenantId,
+		QueueId:      []string{id},
+		MainAllocate: "active",
 	}
 	total, _, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, 1, 0)
 	if err != nil {
@@ -523,11 +524,10 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 			return err
 		}
 		for i := range *connectionApps {
-			(*connectionApps)[i].ConnectionQueueId = ""
 			(*connectionApps)[i].UpdatedAt = currentTime
 		}
 		if len(*connectionApps) > 0 {
-			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id", "updated_at"); err != nil {
+			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id", "NULL"); err != nil {
 				log.Error(err)
 				return err
 			}
