@@ -38,6 +38,7 @@ func convertMessageToPbMessage(data model.Message) (result *pb.Message, err erro
 		UpdatedAt:           timestamppb.New(data.UpdatedAt),
 		ShareInfo:           nil,
 		IsEcho:              data.IsEcho,
+		TicketId:            data.TicketId,
 	}
 	if len(data.Attachments) > 0 {
 		if err = util.ParseAnyToAny(data.Attachments, &result.Attachments); err != nil {

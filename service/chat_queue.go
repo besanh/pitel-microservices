@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -381,6 +380,21 @@ func (s *ChatQueue) UpdateChatQueueByIdV2(ctx context.Context, authUser *model.A
 			}
 		}
 	}
+	if chatManagers != nil && len(*chatManagers) < 1 {
+		// insert manager for this queue
+		manageQueue := model.ChatManageQueueUser{
+			Base:     model.InitBase(),
+			TenantId: authUser.TenantId,
+			QueueId:  queueExist.GetId(),
+			UserId:   data.ChatManageQueueUser.UserId,
+		}
+		queueExist.ManageQueueId = manageQueue.GetId()
+
+		if err = repository.ManageQueueRepo.TxInsert(ctx, tx, manageQueue); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
 
 	// clear cache
 	if err = cache.RCache.Del([]string{CHAT_QUEUE_USER + "_" + authUser.TenantId}); err != nil {
@@ -419,7 +433,7 @@ func (s *ChatQueue) UpdateChatQueueStatus(ctx context.Context, authUser *model.A
 	return
 }
 
-func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) error {
+func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.AuthUser, id string) (err error) {
 	queueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
@@ -427,6 +441,23 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 	} else if queueExist == nil {
 		log.Error("chat queue " + id + " not found")
 		return errors.New("chat queue " + id + " not found")
+	}
+
+	// do not delete queue if there's at least a conversation active in that queue
+	allocateFilter := model.AllocateUserFilter{
+		TenantId:     authUser.TenantId,
+		QueueId:      []string{id},
+		MainAllocate: "active",
+	}
+	total, _, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	if total > 0 {
+		err = errors.New("unable to delete queue " + id + " because it is currently in use by a conversation")
+		log.Error(err)
+		return
 	}
 
 	tx, err := repository.ChatQueueRepo.BeginTx(ctx, repository.DBConn, nil)
@@ -479,7 +510,6 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 		log.Error(err)
 		return err
 	}
-	currentTime := time.Now()
 	// update field in connection apps
 	for _, connectionQueue := range *oldConnectionQueues {
 		connectionAppFilter := model.ChatConnectionAppFilter{
@@ -491,12 +521,10 @@ func (s *ChatQueue) DeleteChatQueueByIdV2(ctx context.Context, authUser *model.A
 			log.Error(err)
 			return err
 		}
-		for i := range *connectionApps {
-			(*connectionApps)[i].ConnectionQueueId = ""
-			(*connectionApps)[i].UpdatedAt = currentTime
-		}
 		if len(*connectionApps) > 0 {
-			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, "connection_queue_id", "updated_at"); err != nil {
+			args := make(map[string]string)
+			args["connection_queue_id"] = "NULL"
+			if err = repository.ChatConnectionPipelineRepo.BulkUpdateConnectionApp(ctx, tx, *connectionApps, args); err != nil {
 				log.Error(err)
 				return err
 			}

@@ -39,6 +39,7 @@ message Message {
   google.protobuf.Timestamp updated_at = 27;
   ShareInfo share_info = 28;
   bool is_echo = 29;
+  string ticket_id = 30;
 }
 
 message OttPayloadMedia {
@@ -177,6 +178,17 @@ message GetMessageMediasScrollResponse {
   string scroll_id = 6;
 }
 
+// add ticket reference to message
+message PostTicketReferenceToMessageRequest {
+  string message_id = 1;
+  string ticket_id = 2;
+}
+
+message PostTicketReferenceToMessageResponse {
+  string code = 1;
+  string message = 2;
+}
+
 service MessageService {
   rpc GetMessagesWithScrollAPI(GetMessagesScrollRequest) returns (GetMessagesScrollResponse) {
     option (google.api.http) = {
@@ -214,6 +226,13 @@ service MessageService {
   rpc GetMessageMediasWithScrollAPI(GetMessageMediasScrollRequest) returns (GetMessageMediasScrollResponse) {
     option (google.api.http) = {
       get : "/bss-chat/v1/message/media/scroll"
+    };
+  };
+
+  rpc PostTicketReferenceToMessage(PostTicketReferenceToMessageRequest) returns (PostTicketReferenceToMessageResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/message/ticket/{message_id}"
+      body : "*"
     };
   };
 }
