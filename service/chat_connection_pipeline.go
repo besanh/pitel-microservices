@@ -404,6 +404,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 
 	// select existed queue
 	var newQueueId string
+	var managerUserId string
 	if len(data.ConnectionQueueId) > 0 {
 		chatQueueExist, err := repository.ChatQueueRepo.GetById(ctx, repository.DBConn, data.ConnectionQueueId)
 		if err != nil {
@@ -456,6 +457,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 		}
 
 		newQueueId = chatQueueExist.Id
+		managerUserId = newManageQueue.UserId
 		connectionAppExist.ConnectionQueueId = connectionQueue.Id
 	} else if len(data.ConnectionQueueId) < 1 {
 		// create new queue and update it to c.app
@@ -532,6 +534,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 		}
 
 		newQueueId = chatQueue.Id
+		managerUserId = manageQueue.UserId
 		connectionAppExist.ConnectionQueueId = connectionQueue.Id
 	}
 	// update queue id for this connection app in allocate user
@@ -546,6 +549,7 @@ func (s *ChatConnectionPipeline) UpsertConnectionQueueInApp(ctx context.Context,
 	if len(*allocateUsers) > 0 && len(newQueueId) > 0 {
 		for i := range *allocateUsers {
 			(*allocateUsers)[i].QueueId = newQueueId
+			(*allocateUsers)[i].UserId = managerUserId
 		}
 		if err = repository.AllocateUserRepo.TxBulkUpdate(ctx, tx, *allocateUsers); err != nil {
 			log.Error(err)
