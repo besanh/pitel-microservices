@@ -88,12 +88,6 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 		// TODO: check queue setting
 		log.Infof("app_id: %v, process tenants: %v", data.AppId, tenants)
 		for _, tenant := range tenants {
-			// if len(messageTmp.ExternalMsgId) > 0 && messageTmp.IsEcho {
-			// 	if isExistMessage := s.checkMessageEcho(ctx, tenant, messageTmp); isExistMessage {
-			// 		userChan <- []model.User{}
-			// 		continue
-			// 	}
-			// }
 			go s.CheckChatSetting(ctx, externalConversationId, messageTmp, *chatApp, userChan, errChan, tenant)
 		}
 
@@ -137,7 +131,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 								attachmentDetail.Payload = &payload
 							}
 							message.Attachments = append(message.Attachments, &attachmentDetail)
-							message.Content = val.Payload.Name
+							// message.Content = val.Payload.Name
 						}
 					}
 
