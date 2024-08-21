@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/elastic/go-elasticsearch/esapi"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/model"
@@ -33,6 +34,22 @@ var ConversationESRepo IConversationES
 func NewConversationES() IConversationES {
 	return &ConversationES{}
 }
+
+/*
+ * script used to filter notes list in ES query
+ * int limit = params.containsKey('limit') ? (int)params['limit'] : 10;
+ * int offset = params.containsKey('offset') ? (int)params['offset'] : 0;
+ * def notes = params['_source'].containsKey('notes_list') && params['_source']['notes_list'] != null ? params['_source']['notes_list'] : [];
+ * int totalSize = notes.size();
+ * def slicedNotes = [];
+ * if (totalSize > 0) {
+ *    notes.sort((a, b) -> b['created_at'].compareTo(a['created_at']));
+ *    int end = (int) Math.min(totalSize, offset + limit);
+ *    slicedNotes = totalSize > offset ? notes.subList(offset, end) : [];
+ * }
+ * return ['notes_list': slicedNotes, 'total_size': totalSize];
+ */
+const notesListScript = "int limit = params.containsKey('limit') ? (int)params['limit'] : 10; int offset = params.containsKey('offset') ? (int)params['offset'] : 0; def notes = params['_source'].containsKey('notes_list') && params['_source']['notes_list'] != null ? params['_source']['notes_list'] : []; int totalSize = notes.size(); def slicedNotes = []; if (totalSize > 0) { notes.sort((a, b) -> b['created_at'].compareTo(a['created_at'])); int end = (int) Math.min(totalSize, offset + limit); slicedNotes = totalSize > offset ? notes.subList(offset, end) : []; } return ['notes_list': slicedNotes, 'total_size': totalSize];"
 
 func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, index string, filter model.ConversationFilter, limit, offset int) (int, *[]model.ConversationView, error) {
 	filters := []map[string]any{}
@@ -123,6 +140,17 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		}
 		filters = append(filters, bq)
 	}
+	scriptFields := map[string]any{
+		"notes_list": map[string]any{
+			"script": map[string]any{
+				"source": notesListScript,
+				"params": map[string]any{
+					"limit":  2,
+					"offset": 0,
+				},
+			},
+		},
+	}
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{
@@ -131,10 +159,11 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		},
 	}
 	searchSource := map[string]any{
-		"from":    offset,
-		"size":    limit,
-		"_source": true,
-		"query":   boolQuery,
+		"from":          offset,
+		"size":          limit,
+		"_source":       true,
+		"script_fields": scriptFields,
+		"query":         boolQuery,
 		"sort": []any{
 			elasticsearch.Order("updated_at", false),
 			elasticsearch.Order("created_at", false),
@@ -186,6 +215,20 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		data := model.ConversationView{}
 		if err := util.ParseAnyToAny(bodyHits.Source, &data); err != nil {
 			return 0, nil, err
+		}
+		// replace notes list in _source with the one in script_fields to keep only 2 latest items
+		if len(bodyHits.Fields.NotesList) > 0 {
+			hitData, ok := bodyHits.Fields.NotesList[0].(map[string]any)
+			if !ok {
+				err = errors.New("failed to convert notes list")
+				return 0, nil, err
+			}
+			notesList := &[]model.NotesList{}
+			if err = util.ParseAnyToAny(hitData["notes_list"], &notesList); err != nil {
+				log.Error(err)
+				return 0, nil, err
+			}
+			data.NotesList = notesList
 		}
 		result = append(result, data)
 	}
@@ -265,6 +308,22 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 		if err := util.ParseAnyToAny(bodyHits.Source, &data); err != nil {
 			return nil, err
 		}
+
+		// replace notes list in _source with the one in script_fields to keep only 2 latest items
+		if len(bodyHits.Fields.NotesList) > 0 {
+			hitData, ok := bodyHits.Fields.NotesList[0].(map[string]any)
+			if !ok {
+				err = errors.New("failed to convert notes list")
+				return nil, err
+			}
+			notesList := &[]model.NotesList{}
+			if err = util.ParseAnyToAny(hitData["notes_list"], &notesList); err != nil {
+				log.Error(err)
+				return nil, err
+			}
+			data.NotesList = notesList
+		}
+
 		result = data
 	}
 	return &result, nil
@@ -292,6 +351,21 @@ func (repo *ConversationES) SearchWithScroll(ctx context.Context, tenantId, inde
 		entry := &model.ConversationView{}
 		if err = util.ParseAnyToAny(hit.Source, entry); err != nil {
 			return
+		}
+
+		// replace notes list in _source with the one in script_fields to keep only 2 latest items
+		if len(hit.Fields.NotesList) > 0 {
+			hitData, ok := hit.Fields.NotesList[0].(map[string]any)
+			if !ok {
+				err = errors.New("failed to convert notes list")
+				return
+			}
+			notesList := &[]model.NotesList{}
+			if err = util.ParseAnyToAny(hitData["notes_list"], &notesList); err != nil {
+				log.Error(err)
+				return
+			}
+			entry.NotesList = notesList
 		}
 		entries = append(entries, entry)
 	}
@@ -392,16 +466,11 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 	}
 	scriptFields := map[string]any{
 		"notes_list": map[string]any{
-			"script": []map[string]any{
-				{
-					"source": `
-						 def notes = params["_source"].containsKey("notes_list") && params["_source"]["notes_list"] != null ? params["_source"]["notes_list"] : [];
-						  if (notes.size() > 0) {
-							notes.sort((a, b) -> b["created_at"].compareTo(a["created_at"]));
-							return notes.size() > 2 ? notes.subList(0, 2) : notes;
-						  }
-						  return notes;
-					`,
+			"script": map[string]any{
+				"source": notesListScript,
+				"params": map[string]any{
+					"limit":  2,
+					"offset": 0,
 				},
 			},
 		},
@@ -472,20 +541,7 @@ func (repo *ConversationES) GetNotesList(ctx context.Context, tenantId, index st
 	scriptFields := map[string]any{
 		"notes_list": map[string]any{
 			"script": map[string]any{
-				/*
-					int limit = params.containsKey('limit') ? (int)params['limit'] : 10;
-					int offset = params.containsKey('offset') ? (int)params['offset'] : 0;
-					def notes = params['_source'].containsKey('notes_list') && params['_source']['notes_list'] != null ? params['_source']['notes_list'] : [];
-					int totalSize = notes.size();
-					def slicedNotes = [];
-					if (totalSize > 0) {
-						notes.sort((a, b) -> b['created_at'].compareTo(a['created_at']));
-						int end = (int) Math.min(totalSize, offset + limit);
-						slicedNotes = totalSize > offset ? notes.subList(offset, end) : [];
-					}
-					return ['notes_list': slicedNotes, 'total_size': totalSize];
-				*/
-				"source": "int limit = params.containsKey('limit') ? (int)params['limit'] : 10; int offset = params.containsKey('offset') ? (int)params['offset'] : 0; def notes = params['_source'].containsKey('notes_list') && params['_source']['notes_list'] != null ? params['_source']['notes_list'] : []; int totalSize = notes.size(); def slicedNotes = []; if (totalSize > 0) { notes.sort((a, b) -> b['created_at'].compareTo(a['created_at'])); int end = (int) Math.min(totalSize, offset + limit); slicedNotes = totalSize > offset ? notes.subList(offset, end) : []; } return ['notes_list': slicedNotes, 'total_size': totalSize];",
+				"source": notesListScript,
 				"params": map[string]any{
 					"limit":  limit,
 					"offset": offset,
@@ -531,7 +587,11 @@ func (repo *ConversationES) GetNotesList(ctx context.Context, tenantId, index st
 		err = errors.New("not found any notes list")
 		return
 	}
-	hitData := hit.Fields.NotesList[0].(map[string]any)
+	hitData, ok := hit.Fields.NotesList[0].(map[string]any)
+	if !ok {
+		err = errors.New("failed to convert notes list")
+		return
+	}
 	total = int(hitData["total_size"].(float64))
 	entries = make([]*model.NotesList, 0)
 	if err = util.ParseAnyToAny(hitData["notes_list"], &entries); err != nil {
