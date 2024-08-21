@@ -248,6 +248,17 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 	}
 	musts = append(musts, elasticsearch.MatchQuery("_id", id))
 
+	scriptFields := map[string]any{
+		"notes_list": map[string]any{
+			"script": map[string]any{
+				"source": notesListScript,
+				"params": map[string]any{
+					"limit":  2,
+					"offset": 0,
+				},
+			},
+		},
+	}
 	boolQuery := map[string]any{
 		"bool": map[string]any{
 			"filter": filters,
@@ -255,10 +266,11 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 		},
 	}
 	searchSource := map[string]any{
-		"from":    0,
-		"size":    1,
-		"_source": true,
-		"query":   boolQuery,
+		"from":          0,
+		"size":          1,
+		"_source":       true,
+		"script_fields": scriptFields,
+		"query":         boolQuery,
 		"sort": []any{
 			elasticsearch.Order("updated_at", false),
 			elasticsearch.Order("created_at", false),
