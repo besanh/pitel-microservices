@@ -205,6 +205,14 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 				}
 				return
 			}
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				log.Error(err)
+				result = &pb.GetConversationsByManagerResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return
+			}
 			resultData = append(resultData, tmp)
 		}
 	}

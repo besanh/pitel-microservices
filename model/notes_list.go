@@ -38,16 +38,3 @@ func (r *ConversationNoteRequest) Validate() error {
 	}
 	return nil
 }
-
-func (r *ConversationNoteRequest) ValidateDelete() error {
-	if len(r.AppId) < 1 {
-		return errors.New("app id is required")
-	}
-	if len(r.OaId) < 1 {
-		return errors.New("oa id is required")
-	}
-	if len(r.ConversationId) < 1 {
-		return errors.New("conversation id is required")
-	}
-	return nil
-}

@@ -95,10 +95,6 @@ func (g *GRPCNotesList) DeleteNoteInConversationById(ctx context.Context, reques
 		AppId:          request.GetAppId(),
 		OaId:           request.GetOaId(),
 	}
-	if err = payload.ValidateDelete(); err != nil {
-		log.Error(err)
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
 
 	err = service.NotesListService.DeleteNoteInConversationById(ctx, user, request.GetNoteId(), payload)
 	if err != nil {

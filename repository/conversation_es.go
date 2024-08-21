@@ -263,7 +263,6 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 		if err := util.ParseAnyToAny(bodyHits.Source, &data); err != nil {
 			return nil, err
 		}
-
 		result = data
 	}
 	return &result, nil
@@ -292,7 +291,6 @@ func (repo *ConversationES) SearchWithScroll(ctx context.Context, tenantId, inde
 		if err = util.ParseAnyToAny(hit.Source, entry); err != nil {
 			return
 		}
-
 		entries = append(entries, entry)
 	}
 	return total, entries, respScrollId, nil
