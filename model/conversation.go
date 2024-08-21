@@ -25,6 +25,7 @@ type Conversation struct {
 	Major                  bool            `json:"major"`
 	Following              bool            `json:"following"`
 	Labels                 json.RawMessage `json:"labels"`
+	NotesList              *[]NotesList    `json:"notes_list"`
 	IsDone                 bool            `json:"is_done"`
 	IsDoneAt               time.Time       `json:"is_done_at"`
 	IsDoneBy               string          `json:"is_done_by"`
@@ -48,6 +49,7 @@ type ConversationView struct {
 	Major                  bool            `json:"major"`
 	Following              bool            `json:"following"`
 	Labels                 json.RawMessage `json:"labels"`
+	NotesList              *[]NotesList    `json:"notes_list"`
 	IsDone                 bool            `json:"is_done"`
 	IsDoneAt               string          `json:"is_done_at"`
 	IsDoneBy               string          `json:"is_done_by"`
@@ -74,6 +76,7 @@ type ConversationCustomView struct {
 	Major                  bool         `json:"major"`
 	Following              bool         `json:"following"`
 	Labels                 *[]ChatLabel `json:"labels"`
+	NotesList              *[]NotesList `json:"notes_list"`
 	IsDone                 bool         `json:"is_done"`
 	IsDoneAt               string       `json:"is_done_at"`
 	IsDoneBy               string       `json:"is_done_by"`
@@ -87,6 +90,13 @@ type ConversationCustomView struct {
 type ConversationQueue struct {
 	DocId        string
 	Conversation Conversation
+}
+
+type NotesList struct {
+	Id        string    `json:"id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ElasticsearchChatResponse struct {
@@ -144,6 +154,13 @@ type ConversationStatusRequest struct {
 	AppId          string `json:"app_id"`
 	ConversationId string `json:"conversation_id"`
 	Status         string `json:"status"`
+}
+
+type ConversationNoteRequest struct {
+	Content        string `json:"content"`
+	ConversationId string `json:"conversation_id"`
+	AppId          string `json:"app_id"`
+	OaId           string `json:"oa_id"`
 }
 
 func (m *ConversationLabelRequest) Validate() error {
@@ -207,6 +224,35 @@ func (r *ConversationStatusRequest) Validate() error {
 
 	if !slices.Contains([]string{"done", "reopen"}, r.Status) {
 		return errors.New("status is invalid")
+	}
+	return nil
+}
+
+func (r *ConversationNoteRequest) Validate() error {
+	if len(r.Content) < 1 {
+		return errors.New("content is required")
+	}
+	if len(r.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(r.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+	if len(r.ConversationId) < 1 {
+		return errors.New("conversation id is required")
+	}
+	return nil
+}
+
+func (r *ConversationNoteRequest) ValidateDelete() error {
+	if len(r.AppId) < 1 {
+		return errors.New("app id is required")
+	}
+	if len(r.OaId) < 1 {
+		return errors.New("oa id is required")
+	}
+	if len(r.ConversationId) < 1 {
+		return errors.New("conversation id is required")
 	}
 	return nil
 }

@@ -101,6 +101,34 @@
             },
             "label": {
                 "type": "nested"
+            },
+            "notes_list": {
+                "properties": {
+                    "id": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "content": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "created_at": {
+                        "type": "date"
+                    },
+                    "updated_at": {
+                        "type": "date"
+                    }
+                }
             }
         }
     },

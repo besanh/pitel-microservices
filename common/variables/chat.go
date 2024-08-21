@@ -87,6 +87,9 @@ var (
 		"conversation_remove_labels":      "conversation_remove_labels",
 		"conversation_user_put_major":     "conversation_user_put_major",
 		"conversation_user_put_following": "conversation_user_put_following",
+		"conversation_add_note":           "conversation_add_note",
+		"conversation_update_note":        "conversation_update_note",
+		"conversation_delete_note":        "conversation_delete_note",
 	}
 
 	STATUS_CONVERSATION []string = []string{

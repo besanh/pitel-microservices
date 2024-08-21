@@ -84,6 +84,7 @@ var (
 	ENABLE_PUBLISH_ADMIN             bool          = false
 	ENABLE_CHAT_AUTO_SCRIPT_REPLY    bool          = false
 	ENABLE_CHAT_POLICY_SETTINGS      bool          = false
+	CONVERSATION_NOTES_LIST_LIMIT    int           = 1000
 	AAA_HOST                         string        = ""
 	CHAT_INTEGRATE_SYSTEM            string        = "chat_integrate_system"
 	CHAT_INTEGRATE_SYSTEM_EXPIRE     time.Duration = 1 * time.Hour
