@@ -195,3 +195,55 @@ func PublishMessageToManyUser(eventType string, subscribers []string, message *m
 	}
 	wg.Wait()
 }
+
+func PublishNotesListToOneUser(eventType string, subscriber string, subscribers []*Subscriber, isNew bool, note *model.NotesList) {
+	var wg sync.WaitGroup
+	if isNew && note != nil && len(subscriber) > 0 {
+		event := model.Event{
+			EventName: eventType,
+			EventData: &model.EventData{
+				NotesList: note,
+			},
+		}
+
+		isExist := BinarySearchSubscriber(subscriber, subscribers)
+		if isExist {
+			wg.Add(1)
+			var mu sync.Mutex
+			mu.Lock()
+			go func(userUuid string, event model.Event) {
+				defer wg.Done()
+				if err := PublishMessageToOne(userUuid, event); err != nil {
+					log.Error(err)
+					return
+				}
+			}(subscriber, event)
+			mu.Unlock()
+		}
+	}
+	wg.Wait()
+}
+
+func PublishNotesListToManyUser(eventType string, subscribers []string, isNew bool, note *model.NotesList) {
+	var wg sync.WaitGroup
+	if isNew && note != nil && len(subscribers) > 0 {
+		event := model.Event{
+			EventName: eventType,
+			EventData: &model.EventData{
+				NotesList: note,
+			},
+		}
+		wg.Add(1)
+		var mu sync.Mutex
+		mu.Lock()
+		go func(userUuids []string, event model.Event) {
+			defer wg.Done()
+			if err := PublishMessageToMany(userUuids, event); err != nil {
+				log.Error(err)
+				return
+			}
+		}(subscribers, event)
+		mu.Unlock()
+	}
+	wg.Wait()
+}

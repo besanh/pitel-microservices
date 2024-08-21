@@ -31,11 +31,6 @@ type ConversationServiceClient interface {
 	GetConversationById(ctx context.Context, in *GetConversationByIdRequest, opts ...grpc.CallOption) (*GetConversationByIdResponse, error)
 	PutLabelToConversation(ctx context.Context, in *PutLabelToConversationRequest, opts ...grpc.CallOption) (*PutLabelToConversationResponse, error)
 	UpdaterUserPreferenceConversation(ctx context.Context, in *UpdaterUserPreferenceConversationRequest, opts ...grpc.CallOption) (*UpdaterUserPreferenceConversationResponse, error)
-	// notes list
-	InsertNoteInConversation(ctx context.Context, in *PostNoteInConversationRequest, opts ...grpc.CallOption) (*PostNoteInConversationResponse, error)
-	UpdateNoteInConversationById(ctx context.Context, in *PutNoteInConversationRequest, opts ...grpc.CallOption) (*PutNoteInConversationResponse, error)
-	DeleteNoteInConversationById(ctx context.Context, in *DeleteNoteInConversationRequest, opts ...grpc.CallOption) (*DeleteNoteInConversationResponse, error)
-	GetConversationNotesList(ctx context.Context, in *GetConversationNotesListRequest, opts ...grpc.CallOption) (*GetConversationNotesListResponse, error)
 }
 
 type conversationServiceClient struct {
@@ -127,42 +122,6 @@ func (c *conversationServiceClient) UpdaterUserPreferenceConversation(ctx contex
 	return out, nil
 }
 
-func (c *conversationServiceClient) InsertNoteInConversation(ctx context.Context, in *PostNoteInConversationRequest, opts ...grpc.CallOption) (*PostNoteInConversationResponse, error) {
-	out := new(PostNoteInConversationResponse)
-	err := c.cc.Invoke(ctx, "/proto.conversation.ConversationService/InsertNoteInConversation", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *conversationServiceClient) UpdateNoteInConversationById(ctx context.Context, in *PutNoteInConversationRequest, opts ...grpc.CallOption) (*PutNoteInConversationResponse, error) {
-	out := new(PutNoteInConversationResponse)
-	err := c.cc.Invoke(ctx, "/proto.conversation.ConversationService/UpdateNoteInConversationById", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *conversationServiceClient) DeleteNoteInConversationById(ctx context.Context, in *DeleteNoteInConversationRequest, opts ...grpc.CallOption) (*DeleteNoteInConversationResponse, error) {
-	out := new(DeleteNoteInConversationResponse)
-	err := c.cc.Invoke(ctx, "/proto.conversation.ConversationService/DeleteNoteInConversationById", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *conversationServiceClient) GetConversationNotesList(ctx context.Context, in *GetConversationNotesListRequest, opts ...grpc.CallOption) (*GetConversationNotesListResponse, error) {
-	out := new(GetConversationNotesListResponse)
-	err := c.cc.Invoke(ctx, "/proto.conversation.ConversationService/GetConversationNotesList", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ConversationServiceServer is the server API for ConversationService service.
 // All implementations should embed UnimplementedConversationServiceServer
 // for forward compatibility
@@ -176,11 +135,6 @@ type ConversationServiceServer interface {
 	GetConversationById(context.Context, *GetConversationByIdRequest) (*GetConversationByIdResponse, error)
 	PutLabelToConversation(context.Context, *PutLabelToConversationRequest) (*PutLabelToConversationResponse, error)
 	UpdaterUserPreferenceConversation(context.Context, *UpdaterUserPreferenceConversationRequest) (*UpdaterUserPreferenceConversationResponse, error)
-	// notes list
-	InsertNoteInConversation(context.Context, *PostNoteInConversationRequest) (*PostNoteInConversationResponse, error)
-	UpdateNoteInConversationById(context.Context, *PutNoteInConversationRequest) (*PutNoteInConversationResponse, error)
-	DeleteNoteInConversationById(context.Context, *DeleteNoteInConversationRequest) (*DeleteNoteInConversationResponse, error)
-	GetConversationNotesList(context.Context, *GetConversationNotesListRequest) (*GetConversationNotesListResponse, error)
 }
 
 // UnimplementedConversationServiceServer should be embedded to have forward compatible implementations.
@@ -213,18 +167,6 @@ func (UnimplementedConversationServiceServer) PutLabelToConversation(context.Con
 }
 func (UnimplementedConversationServiceServer) UpdaterUserPreferenceConversation(context.Context, *UpdaterUserPreferenceConversationRequest) (*UpdaterUserPreferenceConversationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdaterUserPreferenceConversation not implemented")
-}
-func (UnimplementedConversationServiceServer) InsertNoteInConversation(context.Context, *PostNoteInConversationRequest) (*PostNoteInConversationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InsertNoteInConversation not implemented")
-}
-func (UnimplementedConversationServiceServer) UpdateNoteInConversationById(context.Context, *PutNoteInConversationRequest) (*PutNoteInConversationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateNoteInConversationById not implemented")
-}
-func (UnimplementedConversationServiceServer) DeleteNoteInConversationById(context.Context, *DeleteNoteInConversationRequest) (*DeleteNoteInConversationResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteNoteInConversationById not implemented")
-}
-func (UnimplementedConversationServiceServer) GetConversationNotesList(context.Context, *GetConversationNotesListRequest) (*GetConversationNotesListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetConversationNotesList not implemented")
 }
 
 // UnsafeConversationServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -400,78 +342,6 @@ func _ConversationService_UpdaterUserPreferenceConversation_Handler(srv interfac
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ConversationService_InsertNoteInConversation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PostNoteInConversationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConversationServiceServer).InsertNoteInConversation(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.conversation.ConversationService/InsertNoteInConversation",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConversationServiceServer).InsertNoteInConversation(ctx, req.(*PostNoteInConversationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ConversationService_UpdateNoteInConversationById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PutNoteInConversationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConversationServiceServer).UpdateNoteInConversationById(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.conversation.ConversationService/UpdateNoteInConversationById",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConversationServiceServer).UpdateNoteInConversationById(ctx, req.(*PutNoteInConversationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ConversationService_DeleteNoteInConversationById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteNoteInConversationRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConversationServiceServer).DeleteNoteInConversationById(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.conversation.ConversationService/DeleteNoteInConversationById",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConversationServiceServer).DeleteNoteInConversationById(ctx, req.(*DeleteNoteInConversationRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ConversationService_GetConversationNotesList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetConversationNotesListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConversationServiceServer).GetConversationNotesList(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.conversation.ConversationService/GetConversationNotesList",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConversationServiceServer).GetConversationNotesList(ctx, req.(*GetConversationNotesListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ConversationService_ServiceDesc is the grpc.ServiceDesc for ConversationService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -514,22 +384,6 @@ var ConversationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdaterUserPreferenceConversation",
 			Handler:    _ConversationService_UpdaterUserPreferenceConversation_Handler,
-		},
-		{
-			MethodName: "InsertNoteInConversation",
-			Handler:    _ConversationService_InsertNoteInConversation_Handler,
-		},
-		{
-			MethodName: "UpdateNoteInConversationById",
-			Handler:    _ConversationService_UpdateNoteInConversationById_Handler,
-		},
-		{
-			MethodName: "DeleteNoteInConversationById",
-			Handler:    _ConversationService_DeleteNoteInConversationById_Handler,
-		},
-		{
-			MethodName: "GetConversationNotesList",
-			Handler:    _ConversationService_GetConversationNotesList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

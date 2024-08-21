@@ -24,9 +24,6 @@ type SearchReponse struct {
 			Routing string   `json:"_routing"`
 			Source  any      `json:"_source"`
 			Sort    []string `json:"sort"`
-			Fields  struct {
-				NotesList []any `json:"notes_list"`
-			} `json:"fields"`
 		} `json:"hits"`
 	} `json:"hits"`
 }

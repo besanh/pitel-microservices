@@ -32,7 +32,6 @@ func convertConversationViewToPbConversationView(data *model.ConversationView) (
 		LatestMessageContent:   data.LatestMessageContent,
 		LatestMessageDirection: data.LatestMessageDirection,
 		ExternalConversationId: data.ExternalConversationId,
-		NotesList:              nil,
 	}
 	if data.ShareInfo != nil {
 		if err = util.ParseAnyToAny(data.ShareInfo, &result.ShareInfo); err != nil {
@@ -40,9 +39,6 @@ func convertConversationViewToPbConversationView(data *model.ConversationView) (
 		}
 	}
 	if err = util.ParseStringToAny(string(data.Labels), &result.Labels); err != nil {
-		return
-	}
-	if result.NotesList, err = convertNotesListToPbNotesList(data.NotesList); err != nil {
 		return
 	}
 	return
@@ -70,7 +66,6 @@ func convertConversationToPbConversation(data *model.Conversation) (result *pb.C
 		CreatedAt:              data.CreatedAt,
 		UpdatedAt:              data.UpdatedAt,
 		ExternalConversationId: data.ExternalConversationId,
-		NotesList:              nil,
 	}
 	if data.ShareInfo != nil {
 		if err = util.ParseAnyToAny(data.ShareInfo, &result.ShareInfo); err != nil {
@@ -79,25 +74,6 @@ func convertConversationToPbConversation(data *model.Conversation) (result *pb.C
 	}
 	if err = util.ParseStringToAny(string(data.Labels), &result.Labels); err != nil {
 		return
-	}
-	if result.NotesList, err = convertNotesListToPbNotesList(data.NotesList); err != nil {
-		return
-	}
-	return
-}
-
-func convertNotesListToPbNotesList(data *[]model.NotesList) (result []*pb.NotesList, err error) {
-	if data == nil {
-		return
-	}
-	for _, note := range *data {
-		tmp := &pb.NotesList{
-			Id:        note.Id,
-			Content:   note.Content,
-			CreatedAt: timestamppb.New(note.CreatedAt),
-			UpdatedAt: timestamppb.New(note.UpdatedAt),
-		}
-		result = append(result, tmp)
 	}
 	return
 }

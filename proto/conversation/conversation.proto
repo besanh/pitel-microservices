@@ -33,7 +33,6 @@ message ConversationCustomView {
   string latest_message_content = 21;
   string latest_message_direction = 22;
   string external_conversation_id = 23;
-  repeated NotesList notes_list = 24;
 }
 
 message ConversationView {
@@ -60,7 +59,6 @@ message ConversationView {
   string latest_message_content = 21;
   string latest_message_direction = 22;
   string external_conversation_id = 23;
-  repeated NotesList notes_list = 24;
 }
 
 message Conversation {
@@ -84,7 +82,6 @@ message Conversation {
   string created_at = 18;
   string updated_at = 19;
   string external_conversation_id = 20;
-  repeated NotesList notes_list = 24;
 }
 
 message ShareInfo {
@@ -109,13 +106,6 @@ message ChatLabel {
   google.protobuf.Timestamp created_at = 11;
   google.protobuf.Timestamp updated_at = 12;
   string id = 13;
-}
-
-message NotesList {
-  string id = 1;
-  string content = 2;
-  google.protobuf.Timestamp created_at = 3;
-  google.protobuf.Timestamp updated_at = 4;
 }
 
 // get conversations
@@ -286,65 +276,6 @@ message UpdaterUserPreferenceConversationResponse {
   string message = 2;
 }
 
-// create note
-message PostNoteInConversationRequest {
-  string content = 1;
-  string conversation_id = 2;
-  string app_id = 3;
-  string oa_id = 4;
-}
-
-message PostNoteInConversationResponse {
-  string code = 1;
-  string message = 2;
-  string id = 3;
-}
-
-// update note by id
-message PutNoteInConversationRequest {
-  string note_id = 1;
-  string content = 2;
-  string conversation_id = 3;
-  string app_id = 4;
-  string oa_id = 5;
-}
-
-message PutNoteInConversationResponse {
-  string code = 1;
-  string message = 2;
-}
-
-// delete note by id
-message DeleteNoteInConversationRequest {
-  string note_id = 1;
-  string conversation_id = 2;
-  string app_id = 3;
-  string oa_id = 4;
-}
-
-message DeleteNoteInConversationResponse {
-  string code = 1;
-  string message = 2;
-}
-
-// get conversations with scroll
-message GetConversationNotesListRequest {
-  int32 limit = 1;
-  int32 offset = 2;
-  string conversation_id = 3;
-  string app_id = 4;
-  string oa_id = 5;
-}
-
-message GetConversationNotesListResponse {
-  string code = 1;
-  string message = 2;
-  repeated NotesList data = 3;
-  int32 total = 4;
-  int32 limit = 5;
-  int32 offset = 6;
-}
-
 service ConversationService {
   rpc GetConversations(GetConversationsRequest) returns (GetConversationsResponse) {
     option (google.api.http) = {
@@ -401,33 +332,6 @@ service ConversationService {
     option (google.api.http) = {
       put : "/bss-chat/v1/conversation/preference"
       body : "*"
-    };
-  };
-
-  // notes list
-  rpc InsertNoteInConversation(PostNoteInConversationRequest) returns (PostNoteInConversationResponse) {
-    option (google.api.http) = {
-      post : "/bss-chat/v1/conversation/notes-list"
-      body : "*"
-    };
-  };
-
-  rpc UpdateNoteInConversationById(PutNoteInConversationRequest) returns (PutNoteInConversationResponse) {
-    option (google.api.http) = {
-      put : "/bss-chat/v1/conversation/notes-list/{note_id}"
-      body : "*"
-    };
-  };
-
-  rpc DeleteNoteInConversationById(DeleteNoteInConversationRequest) returns (DeleteNoteInConversationResponse) {
-    option (google.api.http) = {
-      delete : "/bss-chat/v1/conversation/notes-list/{note_id}"
-    };
-  };
-
-  rpc GetConversationNotesList(GetConversationNotesListRequest) returns (GetConversationNotesListResponse) {
-    option (google.api.http) = {
-      get : "/bss-chat/v1/conversation/notes-list"
     };
   };
 }
