@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"time"
 
 	"github.com/uptrace/bun"
 )
@@ -14,6 +15,17 @@ type NotesList struct {
 	ConversationId string `json:"conversation_id" bun:"conversation_id,type:text,notnull"`
 	AppId          string `json:"app_id" bun:"app_id,type:text,notnull"`
 	OaId           string `json:"oa_id" bun:"oa_id,type:text,notnull"`
+}
+
+type NotesListView struct {
+	Id             string    `json:"id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	TenantId       string    `json:"tenant_id"`
+	Content        string    `json:"content"`
+	ConversationId string    `json:"conversation_id"`
+	AppId          string    `json:"app_id"`
+	OaId           string    `json:"oa_id"`
 }
 
 type ConversationNoteRequest struct {

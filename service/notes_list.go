@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -68,6 +69,14 @@ func (s *NotesList) InsertNoteInConversation(ctx context.Context, authUser *mode
 		log.Error(err)
 		return
 	}
+	convertedNote := model.NotesListView{
+		CreatedAt: newEntry.CreatedAt,
+		UpdatedAt: newEntry.UpdatedAt,
+	}
+	if err = util.ParseAnyToAny(newEntry, &convertedNote); err != nil {
+		log.Error(err)
+		return
+	}
 
 	filter := model.AllocateUserFilter{
 		AppId:          data.AppId,
@@ -92,9 +101,9 @@ func (s *NotesList) InsertNoteInConversation(ctx context.Context, authUser *mode
 			log.Error(err)
 			return
 		}
-		PublishEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_created"], eventNotesList, &newEntry, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
+		PublishEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_created"], eventNotesList, convertedNote, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
 	} else {
-		PublishEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_created"], eventNotesList, &newEntry, variables.ADMIN_LEVEL)
+		PublishEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_created"], eventNotesList, convertedNote, variables.ADMIN_LEVEL)
 	}
 	return
 }
@@ -124,6 +133,14 @@ func (s *NotesList) UpdateNoteInConversationById(ctx context.Context, authUser *
 		log.Error(err)
 		return
 	}
+	convertedNote := model.NotesListView{
+		CreatedAt: noteExist.CreatedAt,
+		UpdatedAt: noteExist.UpdatedAt,
+	}
+	if err = util.ParseAnyToAny(noteExist, &convertedNote); err != nil {
+		log.Error(err)
+		return
+	}
 
 	filter := model.AllocateUserFilter{
 		AppId:          data.AppId,
@@ -148,9 +165,9 @@ func (s *NotesList) UpdateNoteInConversationById(ctx context.Context, authUser *
 			log.Error(err)
 			return
 		}
-		PublishEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_updated"], eventNotesList, noteExist, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
+		PublishEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_updated"], eventNotesList, convertedNote, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
 	} else {
-		PublishEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_updated"], eventNotesList, noteExist, variables.ADMIN_LEVEL)
+		PublishEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_updated"], eventNotesList, convertedNote, variables.ADMIN_LEVEL)
 	}
 	return
 }
@@ -166,6 +183,14 @@ func (s *NotesList) DeleteNoteInConversationById(ctx context.Context, authUser *
 		log.Error(err)
 		return
 	}
+	convertedNote := model.NotesListView{
+		CreatedAt: noteExist.CreatedAt,
+		UpdatedAt: noteExist.UpdatedAt,
+	}
+	if err = util.ParseAnyToAny(noteExist, &convertedNote); err != nil {
+		log.Error(err)
+		return
+	}
 
 	filter := model.AllocateUserFilter{
 		AppId:          data.AppId,
@@ -190,9 +215,9 @@ func (s *NotesList) DeleteNoteInConversationById(ctx context.Context, authUser *
 			log.Error(err)
 			return
 		}
-		PublishEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_removed"], eventNotesList, noteExist, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
+		PublishEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_removed"], eventNotesList, convertedNote, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
 	} else {
-		PublishEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_removed"], eventNotesList, noteExist, variables.ADMIN_LEVEL)
+		PublishEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_removed"], eventNotesList, convertedNote, variables.ADMIN_LEVEL)
 	}
 	return
 }
