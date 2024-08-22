@@ -9,7 +9,7 @@ import (
  * send event note to high level subscribers
  */
 func (s *NotesList) publishNotesListEventToHighLevel(authUser *model.AuthUser, manageQueueUser *model.ChatManageQueueUser, eventName, eventDataType string, note *model.NotesList, levels ...string) {
-	var subscribers map[string][]string
+	subscribers := make(map[string][]string)
 	for sub := range WsSubscribers.Subscribers {
 		if sub.TenantId == authUser.TenantId {
 			if _, ok := subscribers["default"]; !ok {
@@ -21,7 +21,9 @@ func (s *NotesList) publishNotesListEventToHighLevel(authUser *model.AuthUser, m
 				if _, ok := subscribers[level]; !ok {
 					subscribers[level] = []string{}
 				}
-				subscribers[level] = append(subscribers[level], sub.Id)
+				if sub.Level == level {
+					subscribers[level] = append(subscribers[level], sub.Id)
+				}
 			}
 		}
 	}
