@@ -1,24 +1,26 @@
-name: CICD For BSS Chat
+name: CICD For Pitel BSS Chat
 
 on:
   push:
     branches:
       - 'dev_fins_bss_chat'
+      - 'prod_bss_chat'
 
 env:
-  docker_image: tel4vn/dev_fins_bss_chat_service
-  repository_folder: /home/fins/project/microservices/fins-bss-chat
+  TARGET_BRANCH: ${{ github.ref_name }}
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dev_fins_bss_chat_service
+  REPOSITORY_FOLDER: /home/pitel/fins-bss-chat
 
 jobs:
-  build-test:
-    runs-on: ubuntu-latest
+  branch_build_test:
+    runs-on: cicd-main-01
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.21.x'
+          go-version: "1.22.x"
 
       - name: Install dependencies
         run: go get .
@@ -29,15 +31,53 @@ jobs:
       - name: Test with the Go CLI
         run: go test ./... -coverprofile=coverage.out
 
-  publish-docker-hub:
-    runs-on: ubuntu-latest
-    needs: build-test
-    steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+  branch_build_setup:
+    runs-on: cicd-main-01
+    needs: [branch_build_test]
+    outputs:
+      gh_branch_name: ${{ steps.set_env_variables.outputs.TARGET_BRANCH }}
+      gh_buildx_driver: ${{ steps.set_env_variables.outputs.BUILDX_DRIVER }}
+      gh_buildx_version: ${{ steps.set_env_variables.outputs.BUILDX_VERSION }}
+      gh_buildx_platforms: ${{ steps.set_env_variables.outputs.BUILDX_PLATFORMS }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    steps:
+      - id: set_env_variables
+        name: Set Environment Variables
+        run: |
+          if [ "${{ env.TARGET_BRANCH }}" == "prod_bss_chat" ] ]; then
+            echo "BUILDX_DRIVER=cloud" >> $GITHUB_OUTPUT
+            echo "BUILDX_VERSION=develop:latest" >> $GITHUB_OUTPUT
+            echo "BUILDX_PLATFORMS=linux/amd64" >> $GITHUB_OUTPUT
+            echo "BUILDX_ENDPOINT" >> $GITHUB_OUTPUT
+          else
+            echo "BUILDX_DRIVER=docker-container" >> $GITHUB_OUTPUT
+            echo "BUILDX_VERSION=latest" >> $GITHUB_OUTPUT
+            echo "BUILDX_PLATFORMS=linux/amd64" >> $GITHUB_OUTPUT
+            echo "BUILDX_ENDPOINT=" >> $GITHUB_OUTPUT
+          fi
+          echo "TARGET_BRANCH=${{ env.TARGET_BRANCH }}" >> $GITHUB_OUTPUT
+
+  branch_build_push:
+    runs-on: cicd-main-01
+    needs: [branch_build_setup]
+    env:
+      BRANCH_TAG: develop
+      TARGET_BRANCH: ${{ needs.branch_build_setup.outputs.gh_branch_name }}
+      BUILDX_DRIVER: ${{ needs.branch_build_setup.outputs.gh_buildx_driver }}
+      BUILDX_VERSION: ${{ needs.branch_build_setup.outputs.gh_buildx_version }}
+      BUILDX_PLATFORMS: ${{ needs.branch_build_setup.outputs.gh_buildx_platforms }}
+      BUILDX_ENDPOINT: ${{ needs.branch_build_setup.outputs.gh_buildx_endpoint }}
+    steps:
+      - name: Set Docker Tag
+        run: |
+          if [ "${{ env.TARGET_BRANCH }}" == "prod_bss_chat" ]; then
+            TAG=production-bss-chat
+          elif [ "${{ env.TARGET_BRANCH }}" == "dev_fins_bss_chat" ]; then
+            TAG=develop-bss-chat
+          else
+            TAG=${{ env.BRANCH_TAG }}
+          fi
+          echo "BRANCH_TAG=${TAG}" >> $GITHUB_ENV
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -45,11 +85,32 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
         with:
+          driver: ${{ env.BUILDX_DRIVER }}
+          version: ${{ env.BUILDX_VERSION }}
+          endpoint: ${{ env.BUILDX_ENDPOINT }}
+
+      - name: Setup Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=raw,value=${{ env.BRANCH_TAG }}-latest,enable=true
+            type=raw,value=${{ env.BRANCH_TAG }}-{{date 'X'}},enable=true
+
+      - name: Build and Push to Docker Hub
+        uses: docker/build-push-action@v5.3.0
+        with:
+          platforms: ${{ env.BUILDX_PLATFORMS }}
           push: true
-          tags: ${{ env.docker_image }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+        env:
+          DOCKER_BUILDKIT: 1
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: send telegram message on push
         uses: appleboy/telegram-action@master
@@ -69,15 +130,16 @@ jobs:
             *Message:*
             Push Image to Docker Hub via GitHub Actions
             *Image:*
-            ${{ env.docker_image }}:latest
+            ${{ env.DOCKER_IMAGE }}:${{ env.BRANCH_TAG }}-latest
 
-  deploy:
+  branch_build_deploy:
     runs-on: fins-dev-cloud
-    needs: publish-docker-hub
+    needs: branch_build_push
+    if: github.ref == 'refs/heads/dev_fins_bss_chat'
     steps:
       - name: deploy docker-compose
         run: |
-          cd ${{ env.repository_folder }}
+          cd ${{ env.REPOSITORY_FOLDER }}
           docker compose pull && docker compose down && docker compose up -d
 
       - name: send telegram message on push
@@ -98,4 +160,4 @@ jobs:
             *Message:*
             Deploy docker compose
             *Image:*
-            ${{ env.docker_image }}:latest
+            ${{ env.DOCKER_IMAGE }}:latest
