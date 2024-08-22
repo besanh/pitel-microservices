@@ -3,12 +3,11 @@ name: CICD For Pitel BSS Chat
 on:
   push:
     branches:
-      - 'dev_fins_bss_chat'
       - 'prod_bss_chat'
 
 env:
   TARGET_BRANCH: ${{ github.ref_name }}
-  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dev_fins_bss_chat_service
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/prod_bss_chat
   REPOSITORY_FOLDER: /home/pitel/fins-bss-chat
 
 jobs:
@@ -135,7 +134,7 @@ jobs:
   branch_build_deploy:
     runs-on: fins-dev-cloud
     needs: branch_build_push
-    if: github.ref == 'refs/heads/dev_fins_bss_chat'
+    if: github.ref == 'refs/heads/prod_bss_chat'
     steps:
       - name: deploy docker-compose
         run: |
