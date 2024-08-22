@@ -19,6 +19,8 @@ type (
 	ManageQueue struct{}
 )
 
+var ManageQueueService IManageQueue
+
 func NewManageQueue() IManageQueue {
 	return &ManageQueue{}
 }
@@ -36,7 +38,7 @@ func (s *ManageQueue) PostManageQueue(ctx context.Context, authUser *model.AuthU
 	manageQueue.TenantId = authUser.TenantId
 	manageQueue.ConnectionId = data.ConnectionId
 	manageQueue.QueueId = data.QueueId
-	manageQueue.ManageId = data.ManageId
+	manageQueue.UserId = data.UserId
 
 	queueExist, err := repository.ChatQueueRepo.GetById(ctx, dbCon, data.QueueId)
 	if err != nil {
@@ -112,7 +114,7 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 			TenantId:     authUser.TenantId,
 			ConnectionId: data.ConnectionId,
 			QueueId:      data.QueueId,
-			ManageId:     data.ManageId,
+			UserId:       data.UserId,
 		}
 		if err = repository.ManageQueueRepo.Insert(ctx, dbCon, manageQueueNew); err != nil {
 			log.Error(err)
@@ -121,7 +123,7 @@ func (s *ManageQueue) UpdateManageQueueById(ctx context.Context, authUser *model
 	} else {
 		// TODO: move to transaction
 		manageQueueExist.QueueId = data.QueueId
-		manageQueueExist.ManageId = data.ManageId
+		manageQueueExist.UserId = data.UserId
 		manageQueueExist.UpdatedAt = time.Now()
 		if err = repository.ManageQueueRepo.Update(ctx, dbCon, *manageQueueExist); err != nil {
 			log.Error(err)

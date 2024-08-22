@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,9 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		c.JSON(response.ServiceUnavailableMsg(err))
 		return
 	}
+
 	log.Info("ott get message body: ", jsonBody)
+
 	messageType, _ := jsonBody["type"].(string)
 	eventName, _ := jsonBody["event_name"].(string)
 	appId, _ := jsonBody["app_id"].(string)
@@ -59,6 +62,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 	isEchoTmp, _ := jsonBody["is_echo"].(string)
 
 	var isEcho bool
+	var err error
 	if len(isEchoTmp) > 0 {
 		var err error
 		isEcho, err = strconv.ParseBool(isEchoTmp)
@@ -109,17 +113,21 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		oaInfoMessageCode, _ := oaInfoMessageTmp["code"].(float64)
 		oaInfoMessage := model.OaInfoMessage{}
 		if oaInfoMessageCode == 200 {
-			if err := util.ParseAnyToAny(oaInfoMessageTmp, &oaInfoMessage); err != nil {
+			if err = util.ParseAnyToAny(oaInfoMessageTmp, &oaInfoMessage); err != nil {
+				log.Error(err)
 				c.JSON(response.ServiceUnavailableMsg(err))
 				return
 			}
 		} else if oaInfoMessageCode != 200 {
-			log.Error("get oa info error: ", oaInfoMessageTmp)
-			c.JSON(response.BadRequestMsg("get oa info error"))
+			err := fmt.Errorf("get oa info error: %v", oaInfoMessageTmp)
+			log.Error(err)
+			c.JSON(response.ServiceUnavailableMsg(err.Error()))
 			return
 		}
 		if len(oaInfoMessage.ConnectionId) < 1 {
-			c.JSON(response.BadRequestMsg("connection_id is required"))
+			err = fmt.Errorf("connection_id is required")
+			log.Error(err)
+			c.JSON(response.ServiceUnavailableMsg(err.Error()))
 			return
 		}
 
@@ -140,7 +148,7 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 			Source: "authen",
 		}
 		isUpdateFromOtt := true
-		if err := h.connectionAppService.UpdateChatConnectionAppById(c, &authUser, oaInfoMessage.ConnectionId, connectionAppRequest, isUpdateFromOtt); err != nil {
+		if err = h.connectionAppService.UpdateChatConnectionAppById(c, &authUser, oaInfoMessage.ConnectionId, connectionAppRequest, isUpdateFromOtt); err != nil {
 			c.JSON(response.ServiceUnavailableMsg(err))
 			return
 		}
@@ -151,8 +159,9 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		return
 	} else {
 		if slices.Contains(variables.EVENT_NAME_EXCLUDE, eventName) {
-			log.Error("event name " + eventName + " is not support")
-			c.JSON(response.ServiceUnavailableMsg(errors.New("event name " + eventName + " is not support")))
+			err = fmt.Errorf("event name " + eventName + " is not support")
+			log.Error(err)
+			c.JSON(response.ServiceUnavailableMsg(err.Error()))
 			return
 		}
 		if messageType == "face" {
@@ -177,7 +186,9 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 		}
 
 		if !slices.Contains([]string{"facebook", "zalo"}, messageType) {
-			c.JSON(response.ServiceUnavailableMsg(errors.New("message type " + messageType + " is not support")))
+			err = errors.New("message type " + messageType + " is not support")
+			log.Error(err)
+			c.JSON(response.ServiceUnavailableMsg(err.Error()))
 			return
 		}
 		code, result := h.ottMessageService.GetOttMessage(c, message)
@@ -189,10 +200,9 @@ func (h *OttMessage) GetOttMessage(c *gin.Context) {
 func (h *OttMessage) GetCodeChallenge(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
 		c.JSON(response.BadRequestMsg("app_id is required"))

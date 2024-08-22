@@ -7,6 +7,7 @@ import (
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type IRepo[T model.Model] interface {
@@ -17,6 +18,14 @@ type IRepo[T model.Model] interface {
 	CreateTable(ctx context.Context, db sqlclient.ISqlClientConn) (err error)
 	SelectByQuery(ctx context.Context, db sqlclient.ISqlClientConn, params []model.Param, limit int, offset int) (entries *[]T, total int, err error)
 	BulkInsert(ctx context.Context, db sqlclient.ISqlClientConn, entities []T) error
+	TxInsert(ctx context.Context, tx bun.Tx, entity T) error
+	TxBulkInsert(ctx context.Context, tx bun.Tx, entities []T) error
+	TxUpdate(ctx context.Context, tx bun.Tx, entity T) error
+	TxBulkUpdate(ctx context.Context, tx bun.Tx, entities []T) error
+	TxDelete(ctx context.Context, tx bun.Tx, entity T) error
+	TxBulkDelete(ctx context.Context, tx bun.Tx, entities []T) error
+	BeginTx(ctx context.Context, db sqlclient.ISqlClientConn, opts *sql.TxOptions) (bun.Tx, error)
+	CommitTx(ctx context.Context, tx bun.Tx) error
 }
 
 type Repo[T model.Model] struct {
@@ -101,4 +110,68 @@ func (r *Repo[T]) BulkInsert(ctx context.Context, db sqlclient.ISqlClientConn, e
 		Model(&entities).
 		Exec(ctx)
 	return
+}
+
+func (r *Repo[T]) TxInsert(ctx context.Context, tx bun.Tx, entity T) (err error) {
+	entity.SetCreatedAt(time.Now())
+	_, err = tx.NewInsert().
+		Model(&entity).
+		Exec(ctx)
+	return
+}
+
+func (r *Repo[T]) TxBulkInsert(ctx context.Context, tx bun.Tx, entities []T) (err error) {
+	_, err = tx.NewInsert().
+		Model(&entities).
+		Exec(ctx)
+	return
+}
+
+func (r *Repo[T]) TxUpdate(ctx context.Context, tx bun.Tx, entity T) (err error) {
+	entity.SetUpdatedAt(time.Now())
+	_, err = tx.NewUpdate().
+		Model(&entity).
+		WherePK().
+		Exec(ctx)
+	return
+}
+
+func (r *Repo[T]) TxBulkUpdate(ctx context.Context, tx bun.Tx, entities []T) (err error) {
+	_, err = tx.NewUpdate().
+		Model(&entities).
+		Bulk().
+		Exec(ctx)
+	return
+}
+
+func (r *Repo[T]) TxDelete(ctx context.Context, tx bun.Tx, entity T) (err error) {
+	_, err = tx.NewDelete().
+		Model(&entity).
+		WherePK().
+		Exec(ctx)
+	return
+}
+
+func (r *Repo[T]) TxBulkDelete(ctx context.Context, tx bun.Tx, entities []T) (err error) {
+	_, err = tx.NewDelete().
+		Model(&entities).
+		Where("id IN (?)", bun.In(r.getIds(entities))).
+		Exec(ctx)
+	return
+}
+
+func (r *Repo[T]) getIds(entities []T) (result []string) {
+	result = make([]string, len(entities))
+	for i, entity := range entities {
+		result[i] = entity.GetId()
+	}
+	return
+}
+
+func (r *Repo[T]) BeginTx(ctx context.Context, db sqlclient.ISqlClientConn, opts *sql.TxOptions) (bun.Tx, error) {
+	return db.GetDB().BeginTx(ctx, opts)
+}
+
+func (r *Repo[T]) CommitTx(ctx context.Context, tx bun.Tx) error {
+	return tx.Commit()
 }

@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package proto.chatRole;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message PostChatRoleRequest {
+    string role_name = 1;
+    bool status = 2;
+    ChatRoleSetting setting = 3;
+}
+
+message ChatRoleSetting {
+    bool assign_conversation = 1;
+    bool reassign_conversation = 2;
+    bool make_done = 3;
+    bool add_label = 4;
+    bool remove_label = 5;
+    bool major = 6;
+    bool following = 7;
+    bool submit_form = 8;
+}
+
+message PostChatRoleResponse {
+    string code = 1;
+    string message = 2;
+    string id = 3;
+}
+
+service ChatRoleService {
+    rpc PostChatRole(PostChatRoleRequest) returns (PostChatRoleResponse) {
+        option (google.api.http) = {
+            post : "/bss-chat/v1/chat-role",
+            body: "*"
+        };
+    }
+}

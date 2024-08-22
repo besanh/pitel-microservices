@@ -1,0 +1,183 @@
+syntax = "proto3";
+
+package proto.chatEmail;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatEmailData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string oa_id = 5;
+  string email_subject = 6;
+  repeated string email_recipient = 7;
+  string email_content = 8;
+  string email_server = 9;
+  string email_username = 10;
+  string email_password = 11;
+  string email_port = 12;
+  string email_encrypt_type = 13;
+  string email_request_type = 14;
+  bool email_status = 15;
+}
+
+message ChatEmailCustomData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string oa_id = 5;
+  string email_subject = 6;
+  repeated string email_recipient = 7;
+  string email_content = 8;
+  string email_server = 9;
+  string email_username = 10;
+  string email_password = 11;
+  string email_port = 12;
+  string email_encrypt_type = 13;
+  string email_request_type = 14;
+  bool email_status = 15;
+  string connection_name = 16;
+  string connection_type = 17;
+  OaInfo oa_info = 18;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string status = 4;
+  int32 created_timestamp = 5;
+  int32 updated_timestamp = 6;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string status = 4;
+  int32 created_timestamp = 5;
+  int32 updated_timestamp = 6;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+// get chat emails
+message GetChatEmailsRequest {
+  string status = 1;
+  string tenant_id = 2;
+  string oa_id = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+}
+
+message GetChatEmailsResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatEmailCustomData data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get email by id
+message GetEmailByIdRequest { string id = 1; }
+
+message GetEmailByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatEmailData data = 3;
+}
+
+// create email
+message PostChatEmailRequest {
+  string oa_id = 1;
+  string email_subject = 2;
+  repeated string email_recipient = 3;
+  string email_content = 4;
+  string email_server = 5;
+  string email_username = 6;
+  string email_password = 7;
+  string email_port = 8;
+  string email_encrypt_type = 9;
+  bool email_status = 10;
+  string email_request_type = 11;
+}
+
+message PostChatEmailResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update email by id
+message PutChatEmailRequest {
+  string id = 1;
+  string oa_id = 2;
+  string email_subject = 3;
+  repeated string email_recipient = 4;
+  string email_content = 5;
+  string email_server = 6;
+  string email_username = 7;
+  string email_password = 8;
+  string email_port = 9;
+  string email_encrypt_type = 10;
+  bool email_status = 11;
+  string email_request_type = 12;
+}
+
+message PutChatEmailResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete email by id
+message DeleteChatEmailRequest { string id = 1; }
+
+message DeleteChatEmailResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatEmailService {
+  rpc GetChatEmails(GetChatEmailsRequest) returns (GetChatEmailsResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-email"
+    };
+  };
+
+  rpc GetChatEmailById(GetEmailByIdRequest) returns (GetEmailByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-email/{id}"
+    };
+  };
+
+  rpc InsertChatEmail(PostChatEmailRequest) returns (PostChatEmailResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-email"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatEmailById(PutChatEmailRequest) returns (PutChatEmailResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-email/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatEmailById(DeleteChatEmailRequest) returns (DeleteChatEmailResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-email/{id}"
+    };
+  };
+}

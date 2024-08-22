@@ -6,12 +6,13 @@ import (
 
 	"github.com/tel4vn/fins-microservices/internal/sqlclient"
 	"github.com/tel4vn/fins-microservices/model"
+	"github.com/uptrace/bun"
 )
 
 type (
 	IChatApp interface {
 		IRepo[model.ChatApp]
-		GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AppFilter, limit, offset int) (int, *[]model.ChatApp, error)
+		GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatAppFilter, limit, offset int) (int, *[]model.ChatApp, error)
 	}
 	ChatApp struct {
 		Repo[model.ChatApp]
@@ -24,9 +25,10 @@ func NewChatApp() IChatApp {
 	return &ChatApp{}
 }
 
-func (s *ChatApp) GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.AppFilter, limit, offset int) (int, *[]model.ChatApp, error) {
+func (s *ChatApp) GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, filter model.ChatAppFilter, limit, offset int) (int, *[]model.ChatApp, error) {
 	result := new([]model.ChatApp)
-	query := db.GetDB().NewSelect().Model(result)
+	query := db.GetDB().NewSelect().Model(result).
+		Relation("ChatAppIntegrateSystems")
 	if len(filter.AppName) > 0 {
 		query.Where("app_name = ?", filter.AppName)
 	}
@@ -34,10 +36,20 @@ func (s *ChatApp) GetChatApp(ctx context.Context, db sqlclient.ISqlClientConn, f
 		query.Where("status = ?", filter.Status)
 	}
 	if len(filter.AppType) > 0 {
-		query.Where("info_app :: jsonb -> ? ->> 'status' = 'active'", filter.AppType)
+		if len(filter.Status) > 0 {
+			query.Where("info_app :: jsonb -> ? ->> 'status' = 'active'", filter.AppType)
+		} else {
+			query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where("info_app :: jsonb -> ? ->> 'status' = 'active'", filter.AppType).
+					WhereOr("info_app :: jsonb -> ? ->> 'status' = 'deactive'", filter.AppType)
+			})
+		}
 	}
-	if len(filter.DefaultApp) > 0 {
-		query.Where("default_app = ?", filter.DefaultApp)
+	if len(filter.AppId) > 0 {
+		query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("info_app :: jsonb -> 'facebook' ->> 'app_id' = ?", filter.AppId).
+				WhereOr("info_app :: jsonb -> 'zalo' ->> 'app_id' = ?", filter.AppId)
+		})
 	}
 	if limit > 0 {
 		query.Limit(limit).Offset(offset)

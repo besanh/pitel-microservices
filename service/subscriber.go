@@ -35,13 +35,13 @@ func NewSubscriberService() *SubscriberService {
 
 func (s *SubscriberService) AddSubscriber(ctx context.Context, authUser *model.AuthUser, subscriber *Subscriber) (err error) {
 	subscriber.Id = authUser.UserId
-	subscriber.BusinessUnitId = authUser.BusinessUnitId
 	subscriber.TenantId = authUser.TenantId
 	subscriber.UserId = authUser.UserId
 	subscriber.Username = authUser.Username
 	subscriber.Level = authUser.Level
-	subscriber.Services = authUser.Services
 	subscriber.Source = authUser.Source
+	subscriber.RoleId = authUser.RoleId
+	subscriber.ApiUrl = authUser.ApiUrl
 	subscriber.SubscribeAt = time.Now()
 
 	WsSubscribers.AddSubscriber(ctx, subscriber)

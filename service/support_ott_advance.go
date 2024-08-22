@@ -3,7 +3,10 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"slices"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
@@ -14,6 +17,16 @@ import (
 )
 
 func GenerateConversationId(appId, oaId, conversationId string) (newConversationId string) {
+	if len(appId) == 0 {
+		log.Error("app id cannot be empty")
+		return
+	} else if len(oaId) == 0 {
+		log.Error("oa id cannot be empty")
+		return
+	} else if len(conversationId) == 0 {
+		log.Error("conversation id cannot be empty")
+		return
+	}
 	newConversationId = appId + "_" + oaId + "_" + conversationId
 	return
 }
@@ -44,63 +57,88 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 	return manageQueueUser, nil
 }
 
-func RoundRobinUserOnline(ctx context.Context, conversationId string, queueUsers *[]model.ChatQueueUser) (*Subscriber, error) {
-	userLive := Subscriber{}
+func RoundRobinUserOnline(ctx context.Context, tenantId, externalConversationId string, queueUsers *[]model.ChatQueueUser) (userLive *Subscriber, err error) {
 	userLives := []Subscriber{}
 	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
 	if err != nil {
 		log.Error(err)
-		return &userLive, err
+		return
+	}
+	filter := model.AllocateUserFilter{
+		TenantId:               tenantId,
+		ExternalConversationId: externalConversationId,
+		QueueId:                []string{(*queueUsers)[0].QueueId},
+	}
+	_, currentAllocatedUsers, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	totalValidSubscribers, err := countOnlineSubscribers(tenantId, subscribers, queueUsers, "user", "agent")
+	if err != nil {
+		return
 	}
 	for _, item := range subscribers {
 		s := Subscriber{}
-		if err := json.Unmarshal([]byte(item), &s); err != nil {
+		if err = json.Unmarshal([]byte(item), &s); err != nil {
 			log.Error(err)
-			return &userLive, err
+			return
 		}
-		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) {
+		if (s.Level == "user" || s.Level == "agent") && CheckInLive(*queueUsers, s.Id) && s.TenantId == tenantId {
+			if totalValidSubscribers > 1 && len(*currentAllocatedUsers) > 0 {
+				if (*currentAllocatedUsers)[0].UserId == s.UserId {
+					continue
+				}
+			}
 			userLives = append(userLives, s)
 		}
 	}
 	if len(userLives) > 0 {
 		index, userAllocate := GetUserIsRoundRobin(userLives)
-		userLive = *userAllocate
+		userLive = userAllocate
 		userLive.IsAssignRoundRobin = true
-		userPrevious := Subscriber{}
-		if index == 0 {
-			userPrevious = userLives[len(userLives)-1]
-		} else {
-			userPrevious = userLives[index-1]
-		}
-		userPrevious.IsAssignRoundRobin = false
-
-		// Update current
-		jsonByteUserLive, err := json.Marshal(&userLive)
-		if err != nil {
-			log.Error(err)
-			return &userLive, err
-		}
-		if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userLive.Id, string(jsonByteUserLive)); err != nil {
-			log.Error(err)
-			return &userLive, err
-		}
-
-		// Update previous
-		if userPrevious.Id != userLive.Id {
-			jsonByteUserLivePrevious, err := json.Marshal(&userPrevious)
-			if err != nil {
-				log.Error(err)
-				return &userLive, err
+		// Check len > 1 for assign online 1 user
+		if len(userLives) > 1 {
+			userPrevious := Subscriber{}
+			if index == 0 {
+				userPrevious = userLives[len(userLives)-1]
+			} else {
+				userPrevious = userLives[index-1]
 			}
-			if err := cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
+			userPrevious.IsAssignRoundRobin = false
+
+			// Update current
+			jsonByteUserLive, errTmp := json.Marshal(&userLive)
+			if errTmp != nil {
+				log.Error(errTmp)
+				err = errTmp
+				return
+			}
+			if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userLive.Id, string(jsonByteUserLive)); err != nil {
 				log.Error(err)
-				return &userLive, err
+				return
+			}
+
+			// Update previous
+			if userPrevious.Id != userLive.Id {
+				jsonByteUserLivePrevious, errTmp := json.Marshal(&userPrevious)
+				if errTmp != nil {
+					log.Error(errTmp)
+					err = errTmp
+					return
+				}
+				if err = cache.RCache.HSetRaw(ctx, BSS_SUBSCRIBERS, userPrevious.Id, string(jsonByteUserLivePrevious)); err != nil {
+					log.Error(err)
+					return
+				}
 			}
 		}
-		return &userLive, nil
-	} else {
-		return &userLive, fmt.Errorf("no user online")
+		return
 	}
+
+	// Because if no user online, conversation will assign to manager
+	return
 }
 
 func GetUserIsRoundRobin(userLives []Subscriber) (int, *Subscriber) {
@@ -159,11 +197,15 @@ func CacheConnection(ctx context.Context, connectionId string, conversation mode
 	}
 	if connectionExist != nil {
 		if connectionExist.ConnectionType == "zalo" && conversation.ConversationType == "zalo" {
-			conversation.OaName = connectionExist.OaInfo.Zalo[0].OaName
-			conversation.OaAvatar = connectionExist.OaInfo.Zalo[0].Avatar
+			if len(connectionExist.OaInfo.Zalo) > 0 {
+				conversation.OaName = connectionExist.OaInfo.Zalo[0].OaName
+				conversation.OaAvatar = connectionExist.OaInfo.Zalo[0].Avatar
+			}
 		} else if connectionExist.ConnectionType == "facebook" && conversation.ConversationType == "facebook" {
-			conversation.OaName = connectionExist.OaInfo.Facebook[0].OaName
-			conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
+			if len(connectionExist.OaInfo.Facebook) > 0 {
+				conversation.OaName = connectionExist.OaInfo.Facebook[0].OaName
+				conversation.OaAvatar = connectionExist.OaInfo.Facebook[0].Avatar
+			}
 		}
 	}
 
@@ -181,7 +223,8 @@ func GetProfile(ctx context.Context, appId, oaId, userId string) (result *model.
 		"uid":    userId,
 	}
 	url := OTT_URL + "/ott/v1/zalo/profile"
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(30 * time.Second)
 	var res *resty.Response
 	res, err = client.R().
 		SetHeader("Content-Type", "application/json").
@@ -203,31 +246,34 @@ func GetProfile(ctx context.Context, appId, oaId, userId string) (result *model.
 	return
 }
 
-func CheckConfigAppCache(ctx context.Context, appId string) (isExist bool, err error) {
+func CheckConfigAppCache(ctx context.Context, appId string) (chatApp *model.ChatApp, err error) {
 	chatAppCache := cache.RCache.Get(CHAT_APP + "_" + appId)
 	if chatAppCache != nil {
-		isExist = true
+		if err := json.Unmarshal([]byte(chatAppCache.(string)), &chatApp); err != nil {
+			log.Error(err)
+			return chatApp, err
+		}
 	} else {
-		filter := model.AppFilter{
+		filter := model.ChatAppFilter{
 			AppId:  appId,
 			Status: "active",
 		}
-		total, chatApp, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
+		total, chatApps, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
 		if err != nil {
-			return isExist, err
+			return chatApp, err
 		} else if total > 0 {
-			isExist = true
+			chatApp = &(*chatApps)[0]
 			if err = cache.RCache.Set(CHAT_APP+"_"+appId, chatApp, CHAT_APP_EXPIRE); err != nil {
-				return isExist, err
+				return chatApp, err
 			}
 		} else {
-			return isExist, fmt.Errorf("app %s not found", appId)
+			return chatApp, fmt.Errorf("app %s not found", appId)
 		}
 	}
 	return
 }
 
-func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionType string) (connectionApp model.ChatConnectionApp, err error) {
+func GetConfigConnectionAppCache(ctx context.Context, tenantId, appId, oaId, connectionType string) (connectionApp model.ChatConnectionApp, err error) {
 	connectionAppCache := cache.RCache.Get(CHAT_CONNECTION + "_" + appId + "_" + oaId)
 	if connectionAppCache != nil {
 		var tmp model.ChatConnectionApp
@@ -254,7 +300,7 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 			return
 		}
 
-		if err = cache.RCache.Set(CHAT_CONNECTION+"_"+appId+"_"+oaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
+		if err = cache.RCache.Set(CHAT_CONNECTION+"_"+connectionApp.TenantId+"_"+appId+"_"+oaId, (*connections)[0], CHAT_CONNECTION_EXPIRE); err != nil {
 			log.Error(err)
 			return
 		}
@@ -264,15 +310,69 @@ func GetConfigConnectionAppCache(ctx context.Context, appId, oaId, connectionTyp
 	return
 }
 
-func PublishPutConversationToChatQueue(ctx context.Context, conversation model.Conversation) (err error) {
+func PublishPutConversationToChatQueue(ctx context.Context, conversation model.ConversationQueue) (err error) {
 	var b []byte
 	if b, err = json.Marshal(conversation); err != nil {
 		log.Error(err)
 		return
 	}
-	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_QUEUE_NAME, b); err != nil {
+	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_CONVERSATION_QUEUE_NAME, b); err != nil {
 		log.Error(err)
 		return
+	}
+	return
+}
+
+func PublishPutMessageToChatQueue(ctx context.Context, message model.Message) (err error) {
+	var b []byte
+	if b, err = json.Marshal(message); err != nil {
+		log.Error(err)
+		return
+	}
+	if err = queue.RMQ.Client.PublishBytes(BSS_CHAT_MESSAGE_QUEUE_NAME, b); err != nil {
+		log.Error(err)
+		return
+	}
+	return
+}
+
+func CacheChatRouting(ctx context.Context, chatRoutingId string) (chatRouting *model.ChatRouting, err error) {
+	chatRoutingCache := cache.RCache.Get(CHAT_ROUTING + "_" + chatRoutingId)
+	if chatRoutingCache != nil {
+		if err = json.Unmarshal([]byte(chatRoutingCache.(string)), &chatRouting); err != nil {
+			log.Error(err)
+			return
+		}
+	} else {
+		chatRouting, err = repository.ChatRoutingRepo.GetById(ctx, repository.DBConn, chatRoutingId)
+		if err != nil {
+			log.Error(err)
+			return
+		} else if chatRouting == nil {
+			err = errors.New("chat routing " + chatRoutingId + " not found")
+			log.Error(err)
+			return
+		}
+
+		if err = cache.RCache.Set(CHAT_ROUTING+"_"+chatRoutingId, chatRouting, CHAT_ROUTING_EXPIRE); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+
+	return
+}
+
+func countOnlineSubscribers(tenantId string, subscribers map[string]string, queueUsers *[]model.ChatQueueUser, levels ...string) (result int, err error) {
+	for _, item := range subscribers {
+		s := Subscriber{}
+		if err = json.Unmarshal([]byte(item), &s); err != nil {
+			log.Error(err)
+			return
+		}
+		if slices.Contains(levels, s.Level) && CheckInLive(*queueUsers, s.Id) && s.TenantId == tenantId {
+			result++
+		}
 	}
 	return
 }

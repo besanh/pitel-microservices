@@ -12,13 +12,13 @@ type ChatManageQueueUser struct {
 	TenantId      string `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	ConnectionId  string `json:"connection_id" bun:"connection_id,type:uuid,nullzero,default:null"`
 	QueueId       string `json:"queue_id" bun:"queue_id,type:uuid,notnull"`
-	ManageId      string `json:"manage_id" bun:"manage_id,type:uuid,notnull"`
+	UserId        string `json:"user_id" bun:"user_id,type:uuid,notnull"`
 }
 
 type ChatManageQueueUserRequest struct {
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
-	ManageId     string `json:"manage_id"`
+	UserId       string `json:"user_id"`
 	IsNew        bool   `json:"is_new"`
 }
 
@@ -26,8 +26,8 @@ func (m *ChatManageQueueUserRequest) Validate() (err error) {
 	if len(m.QueueId) < 1 {
 		err = errors.New("queue id is required")
 	}
-	if len(m.ManageId) < 1 {
-		err = errors.New("manage id is required")
+	if len(m.UserId) < 1 {
+		err = errors.New("user id is required")
 	}
 
 	return

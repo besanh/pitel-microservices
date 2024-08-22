@@ -4,8 +4,13 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/tel4vn/fins-microservices/model"
 )
+
+type GoAuthInfo interface {
+	auth.Info
+}
 
 func GetUser(c *gin.Context) (*model.AuthUser, bool) {
 	tmp, isExist := c.Get("user")
@@ -25,4 +30,17 @@ func GetUserFromContext(ctx context.Context) (*model.AuthUser, bool) {
 	} else {
 		return nil, false
 	}
+}
+
+func NewGoAuthUser(userId, username, tenantId, roleId, level, systemId, secretKey string) GoAuthInfo {
+	user := &model.AuthUser{
+		TenantId:  tenantId,
+		UserId:    userId,
+		Username:  username,
+		RoleId:    roleId,
+		Level:     level,
+		SystemId:  systemId,
+		SecretKey: secretKey,
+	}
+	return user
 }

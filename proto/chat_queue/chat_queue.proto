@@ -1,6 +1,6 @@
-syntax="proto3";
+syntax = "proto3";
 
-package proto.chat_queue;
+package proto.chatQueue;
 
 option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
 
@@ -9,24 +9,232 @@ import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 import "buf/validate/validate.proto";
 
-message ChatQueueBodyRequest {
-    string queue_name = 1;
-    string description = 2;
-    string chat_routing_id = 3;
-    bool status = 4;
+message ChatQueue {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string queue_name = 5;
+  string description = 6;
+  string chat_routing_id = 7;
+  ChatRouting chat_routing = 8;
+  repeated ConnectionQueue chat_connection_queue = 9;
+  repeated ChatQueueUser chat_queue_user = 10;
+  string manage_queue_id = 11;
+  ChatManageQueueUser manage_queue_user = 12;
+  string status = 13;
 }
 
-message ChatQueueResponse {
-    string code = 1;
-    string message = 2;
-    string id = 3;
+message ChatRouting {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string routing_name = 4;
+  string routing_alias = 5;
+  bool status = 6;
+}
+
+message ConnectionQueue {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string connection_id = 5;
+  ChatConnectionApp chat_connection_app = 6;
+  string queue_id = 7;
+  ChatQueue chat_queue = 8;
+}
+
+message ChatQueueUser {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string queue_id = 5;
+  ChatQueue chat_queue = 6;
+  string user_id = 7;
+  string source = 8;
+  string fullname = 9;
+}
+
+message ChatManageQueueUser {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string connection_id = 5;
+  string queue_id = 6;
+  string user_id = 7;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string status = 5;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string avatar = 5;
+  string status = 6;
+}
+
+message ChatConnectionApp {
+  string id = 1;
+  string tenant_id = 2;
+  google.protobuf.Timestamp CreatedAt = 3;
+  google.protobuf.Timestamp UpdatedAt = 4;
+  string connection_name = 5;
+  string connection_type = 6;
+  string chat_app_id = 7;
+  string connection_queue_id = 8;
+  ConnectionQueue connection_queue = 9;
+  OaInfo oa_info = 10;
+  string status = 11;
+  ChatApp chat_app = 12;
+}
+
+message ChatApp {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string app_name = 4;
+}
+
+message ChatManageQueueUserRequest {
+  string user_id = 1;
+  bool is_new = 2;
+}
+
+message ChatQueueRequest {
+  string queue_name = 1;
+  string description = 2;
+  string chat_routing_id = 3;
+  string status = 4;
+}
+
+message ChatQueueUserRequest {
+  repeated string user_id = 1;
+}
+
+// get chat queues
+message GetChatQueuesRequest {
+  string queue_name = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+  repeated string queue_id = 4;
+}
+
+message GetChatQueuesResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatQueue data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get queue by id
+message GetChatQueueByIdRequest { string id = 1; }
+
+message GetChatQueueByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatQueue data = 3;
+}
+
+// create queue
+message PostChatQueueRequest {
+  ChatQueueRequest chat_queue = 1;
+  ChatQueueUserRequest chat_queue_user = 2;
+  ChatManageQueueUserRequest chat_manage_queue_user = 3;
+}
+
+message PostChatQueueResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update queue by id
+message PutChatQueueRequest {
+  string id = 1;
+  ChatQueueRequest chat_queue = 2;
+  ChatQueueUserRequest chat_queue_user = 3;
+  ChatManageQueueUserRequest chat_manage_queue_user = 4;
+}
+
+message PutChatQueueResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// update queue status by id
+message PutChatQueueStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+message PutChatQueueStatusResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete queue by id
+message DeleteChatQueueRequest { string id = 1; }
+
+message DeleteChatQueueResponse {
+  string code = 1;
+  string message = 2;
 }
 
 service ChatQueueService {
-    rpc InsertChatQueue(ChatQueueBodyRequest) returns (ChatQueueResponse) {
-        option (google.api.http) = {
-            post : "/bss-chat/v1/chat-queue",
-            body: "*"
-        };
+  rpc GetChatQueues(GetChatQueuesRequest) returns (GetChatQueuesResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-queue"
     };
+  };
+
+  rpc GetChatQueueById(GetChatQueueByIdRequest) returns (GetChatQueueByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-queue/{id}"
+    };
+  };
+
+  rpc InsertChatQueue(PostChatQueueRequest) returns (PostChatQueueResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-queue"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatQueueById(PutChatQueueRequest) returns (PutChatQueueResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-queue/{id}"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatQueueStatusById(PutChatQueueStatusRequest) returns (PutChatQueueStatusResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-queue/status/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatQueueById(DeleteChatQueueRequest) returns (DeleteChatQueueResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-queue/{id}"
+    };
+  };
 }

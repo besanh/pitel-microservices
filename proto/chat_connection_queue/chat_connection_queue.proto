@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package proto.chatConnectionQueue;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ConnectionQueue {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string connection_id = 5;
+  google.protobuf.NullValue chat_connection_app = 6;
+  string queue_id = 7;
+  google.protobuf.NullValue chat_queue = 8;
+}
+
+// get connection queue by id
+message GetChatConnectionQueueByIdRequest {
+  string id = 1;
+}
+
+message GetChatConnectionQueueByIdResponse {
+  string code = 1;
+  string message = 2;
+  ConnectionQueue data = 3;
+}
+
+service ChatConnectionQueueService {
+  rpc GetChatConnectionQueueById(GetChatConnectionQueueByIdRequest) returns (GetChatConnectionQueueByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-connection-queue/{id}"
+    };
+  };
+}

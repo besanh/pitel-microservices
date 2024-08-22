@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package proto.shareInfo;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message GetShareInfoRequest {
+    string oa_id = 1;
+    string app_id = 2;
+    string share_type = 3;
+    int32 limit = 4;
+    int32 offset = 5;
+}
+
+message GetShareInfoResponse {
+    string code = 1;
+    string message = 2;
+    repeated ShareInfo data = 3;
+    int32 total = 4;
+    int32 limit = 5;
+    int32 offset = 6;
+}
+
+message GetShareInfoByIdRequest {
+    string id = 1;
+}
+
+message ShareInfo {
+    string id = 1;
+    google.protobuf.Timestamp created_at = 2;
+    google.protobuf.Timestamp updated_at = 3;
+    string oa_id = 4;
+    string app_id = 5;
+    string share_type = 6;
+    string share_info = 7;
+}
+
+message ShareForm {
+    FacebookForm facebook = 1;
+    ZaloForm zalo = 2;
+}
+
+message FacebookForm {}
+
+message ZaloForm {
+    string app_id = 1;
+    string title = 2;
+    string subtitle = 3;
+    string image_name = 4;
+    string image_url = 5;
+}
+
+message GetShareInfoByIdResponse {
+    string code = 1;
+    string message = 2;
+    ShareInfo data = 3;
+}
+
+// Submit send to ott
+message PostShareInfoRequest {
+    string share_type = 1;
+    string event_name = 2;
+    string app_id = 3;
+    string oa_id = 4;
+    string external_user_id = 5;
+}
+
+message PostShareInfoResponse {
+    string code = 1;
+    string message = 2;
+}
+
+message DeleteShareInfoRequest {
+    string id = 1;
+}
+
+message DeleteShareInfoResponse {
+    string code = 1;
+    string message = 2;
+}
+
+service ShareInfoService {
+    // Submit send to ott
+    rpc PostShareInfo (PostShareInfoRequest) returns (PostShareInfoResponse) {
+        option (google.api.http) = {
+            post : "/bss-chat/v1/share-info",
+            body : "*"
+        };
+    };
+    rpc GetShareInfos (GetShareInfoRequest) returns (GetShareInfoResponse) {
+        option (google.api.http) = {
+            get : "/bss-chat/v1/share-info"
+        };
+    };
+    rpc GetShareInfoById (GetShareInfoByIdRequest) returns (GetShareInfoByIdResponse) {
+        option (google.api.http) = {
+            get: "/bss-chat/v1/share-info/{id}"
+        };
+    };
+    rpc DeleteShareInfoById (DeleteShareInfoRequest) returns (DeleteShareInfoResponse) {
+        option (google.api.http) = {
+            delete: "/bss-chat/v1/share-info/{id}"
+        };
+    };
+}

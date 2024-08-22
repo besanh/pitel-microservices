@@ -9,7 +9,6 @@ import (
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
-	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
@@ -71,29 +70,15 @@ func (handler *WebSocket) Subscribe(ctx *gin.Context) {
 }
 
 func (handler *WebSocket) subscribe(c *gin.Context, wsCon *websocket.Conn) error {
-	if len(c.Query("source")) < 1 {
-		return errors.New("source is required")
+	res := api.AuthMiddlewareNew(c)
+	if res == nil {
+		return errors.New("unauthorized")
 	}
-	if len(c.Query("token")) < 1 {
-		return errors.New("token is required")
-	}
-
 	s := &service.Subscriber{
 		Message: make(chan []byte, service.WsSubscribers.SubscriberMessageBuffer),
 		CloseSlow: func() {
 			wsCon.Close(websocket.StatusPolicyViolation, "connection too slow")
 		},
-	}
-
-	bssAuthRequest := model.BssAuthRequest{
-		Token:   c.Query("token"),
-		AuthUrl: c.Query("auth_url"),
-		Source:  c.Query("source"),
-	}
-
-	res := api.AAAMiddleware(c, bssAuthRequest)
-	if res == nil {
-		return errors.New("token is invalid")
 	}
 
 	if err := handler.subscriber.AddSubscriber(c, res.Data, s); err != nil {

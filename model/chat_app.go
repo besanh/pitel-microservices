@@ -7,20 +7,24 @@ import (
 	"github.com/uptrace/bun"
 )
 
+/**
+* app_name outside use for management, helping to track
+* app_name inside use for creating account ott
+ */
 type ChatApp struct {
 	*Base
-	bun.BaseModel `bun:"table:chat_app,alias:ca"`
-	AppName       string   `json:"app_name" bun:"app_name,type:text,notnull"`
-	Status        string   `json:"status" bun:"status,notnull"`
-	DefaultApp    string   `json:"default_app" bun:"default_app,type:text,notnull"`
-	InfoApp       *InfoApp `json:"info_app" bun:"info_app,type:jsonb,notnull"`
+	bun.BaseModel           `bun:"table:chat_app,alias:ca"`
+	AppName                 string                    `json:"app_name" bun:"app_name,type:text,notnull"`
+	Status                  string                    `json:"status" bun:"status,notnull"`
+	InfoApp                 *InfoApp                  `json:"info_app" bun:"info_app,type:jsonb,notnull"`
+	ChatAppIntegrateSystems []*ChatAppIntegrateSystem `json:"chat_app_integrate_systems" bun:"rel:has-many,join:id=chat_app_id"`
 }
 
 type ChatAppRequest struct {
-	AppName    string   `json:"app_name"`
-	Status     string   `json:"status"` //active/deactive
-	DefaultApp string   `json:"default_app"`
-	InfoApp    *InfoApp `json:"info_app"`
+	AppName   string   `json:"app_name"`
+	Status    string   `json:"status"` //active/deactive
+	InfoApp   *InfoApp `json:"info_app"`
+	SystemIds []string `json:"system_ids"`
 }
 
 type InfoApp struct {
@@ -32,15 +36,12 @@ type Zalo struct {
 	AppId     string `json:"app_id"`
 	AppName   string `json:"app_name"`
 	AppSecret string `json:"app_secret"`
-	Status    string `json:"status"` //active/deactive
-	Active    bool   `json:"active"`
 }
 
 type Facebook struct {
 	AppId     string `json:"app_id"`
 	AppName   string `json:"app_name"`
 	AppSecret string `json:"app_secret"`
-	Status    string `json:"status"`
 }
 
 func (m *ChatAppRequest) Validate() error {
@@ -48,13 +49,16 @@ func (m *ChatAppRequest) Validate() error {
 		return errors.New("app name is required")
 	}
 
-	if len(m.DefaultApp) < 1 {
-		return errors.New("default app is required")
-	}
-
 	var countOk int
 
-	if m.InfoApp.Zalo != nil && m.InfoApp.Zalo.Status == "active" {
+	if m.InfoApp.Zalo != nil && m.InfoApp.Facebook != nil {
+		return errors.New("only one info app is allowed")
+	}
+	if m.InfoApp.Zalo == nil && m.InfoApp.Facebook == nil {
+		return errors.New("info app is required")
+	}
+
+	if m.InfoApp.Zalo != nil {
 		if len(m.InfoApp.Zalo.AppId) < 1 {
 			return errors.New("app id is required")
 		}
@@ -64,16 +68,10 @@ func (m *ChatAppRequest) Validate() error {
 		if len(m.InfoApp.Zalo.AppSecret) < 1 {
 			return errors.New("app secret is required")
 		}
-		if len(m.InfoApp.Zalo.Status) < 1 {
-			return errors.New("status is required")
-		}
-		if !slices.Contains([]string{"active", "deactive"}, m.InfoApp.Zalo.Status) {
-			return errors.New("status zalo " + m.InfoApp.Zalo.Status + " is not supported")
-		}
 		countOk += 1
 	}
 
-	if m.InfoApp.Facebook != nil && m.InfoApp.Facebook.Status == "active" {
+	if m.InfoApp.Facebook != nil {
 		if len(m.InfoApp.Facebook.AppId) < 1 {
 			return errors.New("app id is required")
 		}
@@ -82,12 +80,6 @@ func (m *ChatAppRequest) Validate() error {
 		}
 		if len(m.InfoApp.Facebook.AppSecret) < 1 {
 			return errors.New("app secret is required")
-		}
-		if len(m.InfoApp.Facebook.Status) < 1 {
-			return errors.New("status is required")
-		}
-		if !slices.Contains([]string{"active", "deactive"}, m.InfoApp.Facebook.Status) {
-			return errors.New("status facebook " + m.InfoApp.Facebook.Status + " is not supported")
 		}
 		countOk += 1
 	}

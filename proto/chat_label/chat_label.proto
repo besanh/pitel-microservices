@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package proto.chatLabel;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatLabel {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string app_id = 5;
+  string oa_id = 6;
+  string label_name = 7;
+  string label_type = 8;
+  string external_label_id = 9;
+  string label_color = 10;
+  bool label_status = 11;
+  string created_by = 12;
+  string updated_by = 13;
+}
+
+// get chat labels
+message GetChatLabelsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string status = 3;
+  string is_search_exactly = 4;
+  string app_id = 5;
+  string oa_id = 6;
+  string label_type = 7;
+  string label_name = 8;
+  string label_color = 9;
+  string external_label_id = 10;
+}
+
+message GetChatLabelsResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatLabel data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get label by id
+message GetChatLabelByIdRequest { string id = 1; }
+
+message GetChatLabelByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatLabel data = 3;
+}
+
+// create label
+message PostChatLabelRequest {
+  string app_id = 1;
+  string oa_id = 2;
+  string label_name = 3;
+  string label_color = 4;
+}
+
+message PostChatLabelResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update label by id
+message PutChatLabelRequest {
+  string id = 1;
+  string app_id = 2;
+  string oa_id = 3;
+  string label_name = 4;
+  string label_color = 5;
+}
+
+message PutChatLabelResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete label by id
+message DeleteChatLabelRequest { string id = 1; }
+
+message DeleteChatLabelResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatLabelService {
+  rpc GetChatLabels(GetChatLabelsRequest) returns (GetChatLabelsResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-label"
+    };
+  };
+
+  rpc GetChatLabelById(GetChatLabelByIdRequest) returns (GetChatLabelByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-label/{id}"
+    };
+  };
+
+  rpc InsertChatLabel(PostChatLabelRequest) returns (PostChatLabelResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-label"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatLabelById(PutChatLabelRequest) returns (PutChatLabelResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-label/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatLabelById(DeleteChatLabelRequest) returns (DeleteChatLabelResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-label/{id}"
+    };
+  };
+}

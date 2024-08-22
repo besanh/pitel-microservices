@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -214,7 +215,7 @@ func DetectKeywordsAndExecutePlannedAutoScript(ctx context.Context, user model.U
 /*
  * Handle detect agents online status then executing the first matching script
  */
-func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) error {
+func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView) (err error) {
 	if conversation == nil {
 		return errors.New("not found conversation")
 	}
@@ -223,10 +224,77 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 		return nil
 	}
 
+	queueUserExist := make(map[string]struct{})
+	queueUserExistCache, errTmp := cache.RCache.HGet(CHAT_QUEUE_USER+"_"+user.AuthUser.TenantId, conversation.ExternalConversationId)
+	if errTmp != nil && !errors.Is(errTmp, redis.Nil) {
+		err = errTmp
+		log.Error(err)
+		return
+	}
+	if len(queueUserExistCache) > 0 {
+		if err = json.Unmarshal([]byte(queueUserExistCache), &queueUserExist); err != nil {
+			log.Error("failed to unmarshal: ", err)
+			return
+		}
+	} else {
+		queueUserFilter := model.ChatQueueUserFilter{
+			TenantId: user.AuthUser.TenantId,
+			QueueId:  []string{user.QueueId},
+		}
+		_, queueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, queueUserFilter, -1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if len(*queueUsers) < 1 {
+			err = errors.New("not found any users in chat queue user")
+			log.Error(err)
+			return err
+		}
+		_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, model.ChatManageQueueUserFilter{
+			TenantId: user.AuthUser.UserId,
+			QueueId:  user.QueueId,
+		}, 1, 0)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if len(*manageQueueUser) < 1 {
+			err = errors.New("not found manager of queue " + user.QueueId)
+			log.Error(err)
+			return err
+		}
+		// add manager's id to the map
+		queueUserExist[(*manageQueueUser)[0].UserId] = struct{}{}
+
+		for _, item := range *queueUsers {
+			queueUserExist[item.UserId] = struct{}{}
+		}
+
+		// set to cache
+		jsonByte, err := json.Marshal(&queueUserExist)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		if err = cache.RCache.HSetRaw(ctx, CHAT_QUEUE_USER+"_"+user.AuthUser.TenantId, conversation.ExternalConversationId, string(jsonByte)); err != nil {
+			log.Error(err)
+			return err
+		}
+	}
+	if len(queueUserExist) < 1 {
+		err = errors.New("not found any users in chat queue user")
+		log.Error(err)
+		return
+	}
+
 	// check if subscribers' level is agent/user
 	userLive := false
 	for s := range WsSubscribers.Subscribers {
-		if s.Level == "user" || s.Level == "agent" {
+		if s.TenantId == user.AuthUser.TenantId && (s.Level == "user" || s.Level == "agent") {
+			if _, ok := queueUserExist[s.UserId]; !ok {
+				continue
+			}
 			userLive = true
 			break
 		}
@@ -234,7 +302,7 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	if userLive {
 		// has online agents -> do nothing
 		log.Info("not executed offline auto script because agents are online")
-		return nil
+		return
 	}
 
 	filter := model.ChatAutoScriptFilter{
@@ -249,9 +317,9 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 	key := GenerateChatAutoScriptId(filter.TenantId, filter.Channel, conversation.AppId, filter.OaId, filter.TriggerEvent)
 	chatAutoScriptsCache := cache.RCache.Get(key)
 	if chatAutoScriptsCache != nil {
-		if err := json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
+		if err = json.Unmarshal([]byte(chatAutoScriptsCache.(string)), &chatAutoScripts); err != nil {
 			log.Error(err)
-			return err
+			return
 		}
 	} else {
 		total, scripts, err := repository.ChatAutoScriptRepo.GetChatAutoScripts(ctx, repository.DBConn, filter, 0, 0)
@@ -273,23 +341,24 @@ func ExecutePlannedAutoScriptWhenAgentsOffline(ctx context.Context, user model.U
 
 	chatAutoScripts = mergeActionScripts(chatAutoScripts)
 	if len(*chatAutoScripts) == 0 {
-		return nil
+		return
 	}
 	// try to execute the first script
 	script := (*chatAutoScripts)[0]
 
-	if err := executeScriptActions(ctx, user, message, conversation, script); err != nil {
-		return err
+	if err = executeScriptActions(ctx, user, message, conversation, script); err != nil {
+		return
 	}
-	return nil
+	return
 }
 
 /*
  * Handle chat auto script's logics
  */
-func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView, script model.ChatAutoScriptView) error {
+func executeScriptActions(ctx context.Context, user model.User, message model.Message, conversation *model.ConversationView, script model.ChatAutoScriptView) (err error) {
 	if conversation == nil {
-		return errors.New("not found conversation")
+		err = errors.New("conversation not found")
+		return
 	}
 
 	subscribers := make([]string, 0)
@@ -303,21 +372,23 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 	for _, action := range script.ActionScript.Actions {
 		switch action.Type {
 		case string(model.MoveToExistedScript):
-			if err := executeScript(ctx, user, message, conversation, action.ChatScriptId, 3); err != nil {
-				return err
+			if err = executeScript(ctx, user, message, conversation, action.ChatScriptId, 3); err != nil {
+				return
 			}
 		case string(model.SendMessage):
-			if err := executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", action.Content, nil); err != nil {
-				return err
+			if err = executeSendScriptedMessage(ctx, user, conversation, timestamp, "text", action.Content, nil); err != nil {
+				return
 			}
 		case string(model.AddLabels):
 			for _, labelId := range action.AddLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
-				if err != nil {
-					return err
+				label, errTmp := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
+				if errTmp != nil {
+					err = errTmp
+					return
 				}
 				if label == nil {
-					return errors.New("not found label")
+					err = errors.New("label " + labelId + " not found")
+					return
 				}
 
 				request := model.ConversationLabelRequest{
@@ -342,59 +413,64 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 						return err
 					}
 
-					newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, labelId)
-					if err != nil {
-						return err
+					newLabels, errTmp := UpdateConversationLabelList(conversation.Labels, conversation.ConversationType, request.Action, labelId)
+					if errTmp != nil {
+						err = errTmp
+						return
 					}
-					conversation.Label = newLabels
+					conversation.Labels = newLabels
 				} else if conversation.ConversationType == "facebook" {
 					if len(label.ExternalLabelId) < 1 {
 						// request fb to create new external label id
 						request.Action = "create"
-						externalLabelId, err := handleLabelFacebook(ctx, repository.DBConn, conversation.ConversationType, *label, request)
-						if err != nil {
-							return err
+						externalLabelId, errTmp := handleLabelFacebook(ctx, conversation.ConversationType, *label, request)
+						if errTmp != nil {
+							err = errTmp
+							return
 						}
 						// update external label id
 						label.ExternalLabelId = externalLabelId
 						label.UpdatedBy = user.AuthUser.UserId
-						if err := repository.ChatLabelRepo.Update(ctx, repository.DBConn, *label); err != nil {
-							return err
+						if err = repository.ChatLabelRepo.Update(ctx, repository.DBConn, *label); err != nil {
+							return
 						}
 						// update external label id to request
 						request.ExternalLabelId = externalLabelId
 					}
 					//switch to update
 					request.Action = "update"
-					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-						return err
+					if _, err = PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+						return
 					}
 
-					newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, request.ExternalLabelId)
-					if err != nil {
-						return err
+					newLabels, errTmp := UpdateConversationLabelList(conversation.Labels, conversation.ConversationType, request.Action, request.ExternalLabelId)
+					if errTmp != nil {
+						err = errTmp
+						return
 					}
-					conversation.Label = newLabels
+					conversation.Labels = newLabels
 				}
 			}
 
-			tmp := conversation.Label
-			if err := GetLabelsInfo(ctx, conversation); err != nil {
-				return err
+			tmp := conversation.Labels
+			if err = GetLabelsInfo(ctx, conversation); err != nil {
+				return
 			}
 			if len(action.AddLabels) > 0 {
 				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_add_labels"], subscribers, true, conversation)
 			}
 			// wipe out labels detailed info and set it to label ids list
-			conversation.Label = tmp
+			conversation.Labels = tmp
 		case string(model.RemoveLabels):
 			for _, labelId := range action.RemoveLabels {
-				label, err := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
-				if err != nil {
-					return err
+				label, errTmp := repository.ChatLabelRepo.GetById(ctx, repository.DBConn, labelId)
+				if errTmp != nil {
+					err = errTmp
+					return
 				}
 				if label == nil {
-					return errors.New("not found label")
+					err = errors.New("label " + labelId + " not found")
+					return
 				}
 
 				request := model.ConversationLabelRequest{
@@ -410,47 +486,50 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 
 				if conversation.ConversationType == "zalo" {
 					request.Action = "delete"
-					if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-						return err
+					if _, err = PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+						return
 					}
 
-					newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, labelId)
-					if err != nil {
-						return err
+					newLabels, errTmp := UpdateConversationLabelList(conversation.Labels, conversation.ConversationType, request.Action, labelId)
+					if errTmp != nil {
+						err = errTmp
+						return
 					}
-					conversation.Label = newLabels
+					conversation.Labels = newLabels
 				} else if conversation.ConversationType == "facebook" {
 					if len(label.ExternalLabelId) > 0 {
 						request.Action = "delete"
-						if _, err := PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
-							return err
+						if _, err = PutLabelToConversation(ctx, user.AuthUser, message.MessageType, request); err != nil {
+							return
 						}
 
-						newLabels, err := UpdateConversationLabelList(conversation.Label, conversation.ConversationType, request.Action, label.ExternalLabelId)
-						if err != nil {
-							return err
+						newLabels, errTmp := UpdateConversationLabelList(conversation.Labels, conversation.ConversationType, request.Action, label.ExternalLabelId)
+						if errTmp != nil {
+							err = errTmp
+							return
 						}
-						conversation.Label = newLabels
+						conversation.Labels = newLabels
 					} else {
 						// do nothing
 					}
 				}
 			}
 
-			tmp := conversation.Label
-			if err := GetLabelsInfo(ctx, conversation); err != nil {
-				return err
+			tmp := conversation.Labels
+			if err = GetLabelsInfo(ctx, conversation); err != nil {
+				return
 			}
 			if len(action.RemoveLabels) > 0 {
 				PublishConversationToManyUser(variables.EVENT_CHAT["conversation_remove_labels"], subscribers, true, conversation)
 			}
 			// wipe out labels detailed info and set it to label ids list
-			conversation.Label = tmp
+			conversation.Labels = tmp
 		default:
-			return errors.New("invalid action type")
+			err = errors.New("invalid action type")
+			return
 		}
 	}
-	return nil
+	return
 }
 
 /*
@@ -460,8 +539,14 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	if conversationView == nil {
 		return errors.New("not found conversation")
 	}
-	if err := CheckOutOfChatWindowTime(ctx, conversationView.TenantId, conversationView.ConversationType, conversationView.UpdatedAt); err != nil {
-		return err
+	if ENABLE_CHAT_POLICY_SETTINGS {
+		conversationTime := conversationView.UpdatedAt
+		if len(conversationTime) < 1 {
+			conversationTime = conversationView.CreatedAt
+		}
+		if err := CheckOutOfChatWindowTime(ctx, conversationView.TenantId, conversationView.ConversationType, conversationTime); err != nil {
+			return err
+		}
 	}
 
 	if util.ContainKeywords(content, variables.PERSONALIZATION_KEYWORDS) {
@@ -471,7 +556,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 		content = strings.ReplaceAll(content, "{{customer_name}}", customerName)
 	}
 
-	// >send message to ott
+	// send message to ott
 	ottMessage := model.SendMessageToOtt{
 		Type:          conversationView.ConversationType,
 		EventName:     eventName,
@@ -495,7 +580,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	scriptedMessage := model.Message{
 		TenantId:            conversationView.TenantId,
 		ParentExternalMsgId: "",
-		Id:                  docId,
+		MessageId:           docId,
 		MessageType:         conversationView.ConversationType,
 		ConversationId:      conversationView.ConversationId,
 		ExternalMsgId:       resOtt.Data.MsgId,
@@ -514,7 +599,7 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 	log.Info("message to es: ", scriptedMessage)
 
 	// Should to queue
-	if err := InsertES(ctx, conversationView.TenantId, ES_INDEX, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
+	if err := InsertMessage(ctx, conversationView.TenantId, ES_INDEX_MESSAGE, scriptedMessage.AppId, docId, scriptedMessage); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -526,7 +611,11 @@ func executeSendScriptedMessage(ctx context.Context, user model.User, conversati
 		log.Error(err)
 		return err
 	}
-	if err = PublishPutConversationToChatQueue(ctx, conversation); err != nil {
+	conversationQueue := model.ConversationQueue{
+		DocId:        conversation.ConversationId,
+		Conversation: conversation,
+	}
+	if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -606,17 +695,30 @@ func executeScript(ctx context.Context, user model.User, message model.Message, 
 	return nil
 }
 
-func GetLabelsInfo(ctx context.Context, conversation *model.ConversationView) error {
-	if !reflect.DeepEqual(conversation.Label, "") {
-		var labels []map[string]string
-		if err := json.Unmarshal([]byte(conversation.Label), &labels); err != nil {
-			log.Error(err)
-			return err
+func GetLabelsInfo(ctx context.Context, conversation *model.ConversationView) (err error) {
+	if !reflect.DeepEqual(conversation.Labels, "") {
+		labels := []any{}
+		if conversation.Labels != nil {
+			if err = json.Unmarshal(conversation.Labels, &labels); err != nil {
+				log.Error(err)
+				return
+			}
 		}
-		chatLabelIds := []string{}
+
 		if len(labels) > 0 {
+			chatLabelIds := []string{}
 			for _, item := range labels {
-				chatLabelIds = append(chatLabelIds, item["label_id"])
+				itm := map[string]string{}
+				if err = util.ParseAnyToAny(item, &itm); err != nil {
+					log.Error(err)
+					return err
+				}
+				// check if conversation has already had labels info
+				if _, ok := itm["label_name"]; ok {
+					return
+				}
+
+				chatLabelIds = append(chatLabelIds, itm["label_id"])
 			}
 			if len(chatLabelIds) > 0 {
 				_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
@@ -632,18 +734,18 @@ func GetLabelsInfo(ctx context.Context, conversation *model.ConversationView) er
 						log.Error(err)
 						return err
 					}
-					conversation.Label = tmp
+					conversation.Labels = tmp
 				} else {
-					conversation.Label = []byte("[]")
+					conversation.Labels = []byte("[]")
 				}
 			} else {
-				conversation.Label = []byte("[]")
+				conversation.Labels = []byte("[]")
 			}
 		} else {
-			conversation.Label = []byte("[]")
+			conversation.Labels = []byte("[]")
 		}
 	} else {
-		conversation.Label = []byte("[]")
+		conversation.Labels = []byte("[]")
 	}
 	return nil
 }

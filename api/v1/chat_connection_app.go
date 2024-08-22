@@ -32,7 +32,7 @@ func NewChatConnectionApp(engine *gin.Engine, chatConnectionAppService service.I
 func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
 	limit := util.ParseLimit(c.Query("limit"))
@@ -45,7 +45,7 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 		Status:         c.Query("status"),
 	}
 
-	total, result, err := handler.chatConnectionAppService.GetChatConnectionApp(c, res.Data, filter, limit, offset)
+	total, result, err := handler.chatConnectionAppService.GetChatConnectionApps(c, res.Data, filter, limit, offset)
 	if err != nil {
 		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
@@ -56,10 +56,9 @@ func (handler *ChatConnectionApp) GetChatConnectionApp(c *gin.Context) {
 func (handler *ChatConnectionApp) InsertChatConnectionApp(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	var data model.ChatConnectionAppRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
@@ -88,10 +87,9 @@ func (handler *ChatConnectionApp) InsertChatConnectionApp(c *gin.Context) {
 func (handler *ChatConnectionApp) GetChatConnectionAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -113,10 +111,9 @@ func (handler *ChatConnectionApp) GetChatConnectionAppById(c *gin.Context) {
 func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))
@@ -149,10 +146,9 @@ func (handler *ChatConnectionApp) UpdateChatConnectionAppById(c *gin.Context) {
 func (handler *ChatConnectionApp) DeleteChatConnectionAppById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	id := c.Param("id")
 	if len(id) < 1 {
 		c.JSON(response.BadRequestMsg("id is required"))

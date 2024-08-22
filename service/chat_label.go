@@ -16,10 +16,11 @@ type (
 		GetChatLabelById(ctx context.Context, authUser *model.AuthUser, id string) (chatLabel *model.ChatLabel, err error)
 		UpdateChatLabelById(ctx context.Context, authUser *model.AuthUser, id string, request *model.ChatLabelRequest) (err error)
 		DeleteChatLabelById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
-		HandleChatLabelExternal(ctx context.Context, authUser *model.AuthUser, id string, request *model.ChatExternalLabelRequest) (err error)
 	}
 	ChatLabel struct{}
 )
+
+var ChatLabelService IChatLabel
 
 func NewChatLabel() IChatLabel {
 	return &ChatLabel{}
@@ -235,8 +236,4 @@ func (s *ChatLabel) DeleteChatLabelById(ctx context.Context, authUser *model.Aut
 	}
 
 	return nil
-}
-
-func (s *ChatLabel) HandleChatLabelExternal(ctx context.Context, authUser *model.AuthUser, id string, request *model.ChatExternalLabelRequest) (err error) {
-	return
 }

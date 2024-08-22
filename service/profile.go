@@ -17,6 +17,8 @@ type (
 	Profile struct{}
 )
 
+var ProfileService IProfile
+
 func NewProfile() IProfile {
 	return &Profile{}
 }
@@ -63,7 +65,11 @@ func (s *Profile) GetUpdateProfileByUserId(ctx context.Context, authUser *model.
 					return response.ServiceUnavailableMsg(err.Error())
 				}
 
-				if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+				conversationQueue := model.ConversationQueue{
+					DocId:        conversationExist.ConversationId,
+					Conversation: *conversationExist,
+				}
+				if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 					log.Error(err)
 					return response.ServiceUnavailableMsg(err.Error())
 				}

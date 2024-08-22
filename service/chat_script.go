@@ -26,6 +26,8 @@ type (
 	ChatScript struct{}
 )
 
+var ChatScriptService IChatScript
+
 func NewChatScript() IChatScript {
 	return &ChatScript{}
 }

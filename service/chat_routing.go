@@ -23,6 +23,8 @@ type (
 	ChatRouting struct{}
 )
 
+var ChatRoutingService IChatRouting
+
 func NewChatRouting() IChatRouting {
 	return &ChatRouting{}
 }
@@ -43,7 +45,6 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	}
 
 	_, chatRountings, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbConn, model.ChatRoutingFilter{
-		TenantId:     authUser.TenantId,
 		RoutingAlias: data.RoutingAlias,
 		Status: sql.NullBool{
 			Valid: true,
@@ -63,7 +64,6 @@ func (s *ChatRouting) InsertChatRouting(ctx context.Context, authUser *model.Aut
 	chatRouting.RoutingName = data.RoutingName
 	chatRouting.RoutingAlias = data.RoutingAlias
 	chatRouting.Status = data.Status
-	chatRouting.TenantId = authUser.TenantId
 
 	if err := repository.ChatRoutingRepo.Insert(ctx, dbConn, chatRouting); err != nil {
 		log.Error(err)
@@ -78,7 +78,6 @@ func (s *ChatRouting) GetChatRoutings(ctx context.Context, authUser *model.AuthU
 		log.Error(err)
 		return 0, nil, err
 	}
-	filter.TenantId = authUser.TenantId
 
 	total, chatRoutings, err := repository.ChatRoutingRepo.GetChatRoutings(ctx, dbCon, filter, limit, offset)
 	if err != nil {

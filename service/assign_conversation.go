@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
@@ -16,19 +19,22 @@ import (
 
 type (
 	IAssignConversation interface {
-		GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (int, any)
-		GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (int, any)
-		AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) (int, any)
+		GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (*model.AllocateUser, error)
+		GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (result []model.ChatQueueUserView, err error)
+		AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) error
 	}
 	AssignConversation struct{}
 )
+
+var AssignConversationService IAssignConversation
 
 func NewAssignConversation() IAssignConversation {
 	return &AssignConversation{}
 }
 
-func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (int, any) {
+func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model.AuthUser, data model.UserInQueueFilter) (result []model.ChatQueueUserView, err error) {
 	filter := model.ChatConnectionAppFilter{
+		TenantId:       authUser.TenantId,
 		AppId:          data.AppId,
 		OaId:           data.OaId,
 		ConnectionType: data.ConversationType,
@@ -36,21 +42,23 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if len(*connections) < 1 {
 		log.Errorf("connection not found")
-		return response.ServiceUnavailableMsg("connection not found")
+		err = errors.New("connection not found")
+		return
 	}
 
 	// TODO: find connection_queue
 	connectionQueueExist, err := repository.ConnectionQueueRepo.GetById(ctx, repository.DBConn, (*connections)[0].ConnectionQueueId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	} else if connectionQueueExist == nil {
 		log.Errorf("connection queue not found")
-		return response.ServiceUnavailableMsg("connection queue not found")
+		err = errors.New("connection queue not found")
+		return
 	}
 
 	filterChatManageQueueUser := model.ChatManageQueueUserFilter{
@@ -60,7 +68,7 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	_, manageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filterChatManageQueueUser, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
 	var queueIds []string
@@ -78,89 +86,86 @@ func (s *AssignConversation) GetUserInQueue(ctx context.Context, authUser *model
 	_, userInQueues, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filterUserInQueue, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
-	result := []model.ChatQueueUserView{}
+	result = []model.ChatQueueUserView{}
 	if len(*userInQueues) > 0 {
 		for _, item := range *userInQueues {
-			result = append(result, model.ChatQueueUserView{
-				TenantId: item.TenantId,
-				QueueId:  item.QueueId,
-				UserId:   item.UserId,
-			})
+			tmp := model.ChatQueueUserView{}
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				log.Error(err)
+				return
+			}
+			tmp.Id = item.Id
+			result = append(result, tmp)
 		}
 	}
-	if authUser.Source == "authen" {
-		if authUser.Level == "manager" || authUser.Level == "admin" {
-			chatManageQueueUserFiler := model.ChatManageQueueUserFilter{
-				TenantId: authUser.TenantId,
-				QueueId:  connectionQueueExist.QueueId,
-			}
-			_, chatManageQueueUsers, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManageQueueUserFiler, 1, 0)
-			if err != nil {
+	if authUser.Level == "manager" || authUser.Level == "admin" {
+		chatManageQueueUserFiler := model.ChatManageQueueUserFilter{
+			TenantId: authUser.TenantId,
+			QueueId:  connectionQueueExist.QueueId,
+		}
+		_, chatManageQueueUsers, errTmp := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, chatManageQueueUserFiler, 1, 0)
+		if errTmp != nil {
+			log.Error(errTmp)
+			return
+		}
+		if len(*chatManageQueueUsers) > 0 {
+			tmp := model.ChatQueueUserView{}
+			if err = util.ParseAnyToAny((*chatManageQueueUsers)[0], &tmp); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return
 			}
-			if len(*chatManageQueueUsers) > 0 {
-				result = append(result, model.ChatQueueUserView{
-					TenantId: (*chatManageQueueUsers)[0].TenantId,
-					QueueId:  (*chatManageQueueUsers)[0].QueueId,
-					UserId:   (*chatManageQueueUsers)[0].ManageId,
-				})
-			}
+			tmp.Id = (*chatManageQueueUsers)[0].Id
+			result = append(result, tmp)
 		}
 	}
 
-	return response.OK(result)
+	return
 }
 
-func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (int, any) {
-	filter := model.ConversationFilter{
-		ConversationId: []string{conversationId},
-		TenantId:       authUser.TenantId,
-	}
-	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
+func (s *AssignConversation) GetUserAssigned(ctx context.Context, authUser *model.AuthUser, conversationId string, status string) (result *model.AllocateUser, err error) {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, "", conversationId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
+	} else if conversationExist == nil {
+		err = errors.New("conversation " + conversationId + " not found")
+		log.Error(err)
+		return
 	}
 
-	if len(*conversations) < 1 {
-		log.Errorf("conversation %s not found", conversationId)
-		return response.ServiceUnavailableMsg("conversation " + conversationId + " not found")
-	}
-
-	conversationFilter := model.UserAllocateFilter{
-		ConversationId: (*conversations)[0].ConversationId,
+	conversationFilter := model.AllocateUserFilter{
+		TenantId:       authUser.TenantId,
+		ConversationId: conversationId,
 		MainAllocate:   status,
 	}
-	_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
-
+	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
-
-	if len(*userAllocates) < 1 {
-		return response.OK(nil)
+	if len(*userAllocates) > 0 {
+		result = &(*userAllocates)[0]
 	}
-	return response.OK((*userAllocates)[0])
+	return
 }
 
-func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) (int, any) {
+func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser *model.AuthUser, data *model.AssignConversation) (err error) {
 	filter := model.ConversationFilter{
-		ConversationId: []string{data.ConversationId},
 		TenantId:       authUser.TenantId,
+		ConversationId: []string{data.ConversationId},
 	}
 	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if len(*conversations) < 1 {
-		log.Errorf("conversation not found")
-		return response.ServiceUnavailableMsg("conversation not found")
+		err = fmt.Errorf("conversation %s not found", data.ConversationId)
+		log.Error(err)
+		return
 	}
 
 	for k, conv := range *conversations {
@@ -173,7 +178,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 				"seen",
 			},
 		}
-		_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
+		_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
 		if err != nil {
 			log.Error(err)
 			break
@@ -184,7 +189,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			TenantId:       conv.TenantId,
 			ConversationId: conv.ConversationId,
 		}
-		_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
+		_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 		if err != nil {
 			log.Error(err)
 			break
@@ -201,40 +206,81 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 		(*conversations)[k] = conv
 	}
 
-	allocateFilter := model.UserAllocateFilter{
-		ConversationId: (*conversations)[0].ConversationId,
-		MainAllocate:   data.Status,
+	conversationEvent := &model.ConversationView{}
+	if err = util.ParseAnyToAny((*conversations)[0], conversationEvent); err != nil {
+		log.Error(err)
+		return
 	}
-	_, userAllocates, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, allocateFilter, -1, 0)
+	if conversationEvent.Labels != nil && !reflect.DeepEqual(conversationEvent.Labels, "") {
+		var labels []map[string]string
+		if err = json.Unmarshal([]byte(conversationEvent.Labels), &labels); err != nil {
+			log.Error(err)
+			return
+		}
+		chatLabelIds := []string{}
+		if len(labels) > 0 {
+			for _, item := range labels {
+				chatLabelIds = append(chatLabelIds, item["label_id"])
+			}
+			if len(chatLabelIds) > 0 {
+				_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+					LabelIds: chatLabelIds,
+				}, -1, 0)
+				if errTmp != nil {
+					err = errTmp
+					log.Error(err)
+					return
+				}
+				if len(*chatLabelExist) > 0 {
+					tmp, errTmp := json.Marshal((*chatLabelExist))
+					if errTmp != nil {
+						err = errTmp
+						log.Error(err)
+						return
+					}
+					conversationEvent.Labels = tmp
+				}
+			}
+		}
+	}
+
+	allocateFilter := model.AllocateUserFilter{
+		TenantId:               authUser.TenantId,
+		ExternalConversationId: (*conversations)[0].ExternalConversationId,
+		MainAllocate:           data.Status,
+	}
+	_, userAllocates, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, allocateFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
 	if len(*userAllocates) < 1 {
-		userAllocate := model.UserAllocate{
-			Base:               model.InitBase(),
-			TenantId:           (*conversations)[0].TenantId,
-			AppId:              (*conversations)[0].AppId,
-			OaId:               (*conversations)[0].OaId,
-			UserId:             data.UserId,
-			QueueId:            data.QueueId,
-			AllocatedTimestamp: time.Now().UnixMilli(),
-			MainAllocate:       "active",
-			ConnectionId:       (*conversations)[0].ConversationId,
+		userAllocate := model.AllocateUser{
+			Base:                   model.InitBase(),
+			TenantId:               (*conversations)[0].TenantId,
+			AppId:                  (*conversations)[0].AppId,
+			OaId:                   (*conversations)[0].OaId,
+			ConversationId:         (*conversations)[0].ConversationId,
+			ExternalConversationId: (*conversations)[0].ExternalConversationId,
+			UserId:                 data.UserId,
+			QueueId:                data.QueueId,
+			AllocatedTimestamp:     time.Now().UnixMilli(),
+			MainAllocate:           "active",
+			ConnectionId:           (*conversations)[0].ConversationId,
 		}
 		log.Infof("conversation %s allocated to user %s", (*conversations)[0].ConversationId, data.UserId)
-		if err := repository.UserAllocateRepo.Insert(ctx, repository.DBConn, userAllocate); err != nil {
+		if err = repository.AllocateUserRepo.Insert(ctx, repository.DBConn, userAllocate); err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg("can not insert to user allocate")
+			return
 		}
 	}
 
 	userIdAssigned := (*userAllocates)[0].UserId
 	(*userAllocates)[0].UserId = data.UserId
-	if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*userAllocates)[0]); err != nil {
+	if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*userAllocates)[0]); err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg("can not update to user allocate")
+		return
 	}
 
 	// TODO: clear cache
@@ -242,7 +288,7 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	if userAllocateCache != nil {
 		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId((*userAllocates)[0].AppId, (*userAllocates)[0].OaId, (*userAllocates)[0].ConversationId)}); err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+			return
 		}
 	}
 
@@ -254,26 +300,8 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 				break
 			}
 		}
-		var conversationEvent model.ConversationView
-		if err := util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, &conversationEvent)
 
-		// TODO: publish message
-		// filterMessage := model.MessageFilter{
-		// 	TenantId:       (*conversations)[0].TenantId,
-		// 	ConversationId: (*conversations)[0].ConversationId,
-		// }
-		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
-		// if err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
-		// if len(*messages) > 0 {
-		// 	PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], userIdAssigned, subscribers, &(*messages)[0])
-		// }
+		PublishConversationToOneUser(variables.EVENT_CHAT["conversation_unassigned"], userIdAssigned, subscribers, true, conversationEvent)
 	}
 
 	// Event user_assigned
@@ -281,16 +309,17 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	manageQueueUser, err := GetManageQueueUser(ctx, (*userAllocates)[0].QueueId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err)
+		return
 	} else if len(manageQueueUser.Id) < 1 {
 		log.Error("queue " + (*userAllocates)[0].QueueId + " not found")
-		return response.ServiceUnavailableMsg("queue " + (*userAllocates)[0].QueueId + " not found")
+		err = errors.New("queue " + (*userAllocates)[0].QueueId + " not found")
+		return
 	}
 	for s := range WsSubscribers.Subscribers {
 		if s.TenantId == manageQueueUser.TenantId && s.Level == "admin" {
 			userUuids = append(userUuids, s.Id)
 		}
-		if s.TenantId == manageQueueUser.TenantId && manageQueueUser.ManageId == s.Id && s.Level == "manager" && s.Id != authUser.UserId {
+		if s.TenantId == manageQueueUser.TenantId && manageQueueUser.UserId == s.Id && s.Level == "manager" && s.Id != authUser.UserId {
 			userUuids = append(userUuids, s.Id)
 		}
 		if s.TenantId == manageQueueUser.TenantId && s.Id == data.UserId {
@@ -299,17 +328,11 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 	}
 
 	if len(userUuids) > 0 {
-		conversationEvent := model.ConversationView{}
-		if err := util.ParseAnyToAny((*conversations)[0], &conversationEvent); err != nil {
-			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
-		}
-
 		filterMessage := model.MessageFilter{
 			TenantId:       conversationEvent.TenantId,
 			ConversationId: conversationEvent.ConversationId,
 		}
-		_, message, err := repository.MessageESRepo.GetMessages(ctx, conversationEvent.TenantId, ES_INDEX, filterMessage, 1, 0)
+		_, message, err := repository.MessageESRepo.GetMessages(ctx, conversationEvent.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
 		if err != nil {
 			log.Error(err)
 		}
@@ -322,22 +345,8 @@ func (s *AssignConversation) AllocateConversation(ctx context.Context, authUser 
 			conversationEvent.LatestMessageDirection = (*message)[0].Direction
 		}
 
-		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, &conversationEvent)
-
-		// TODO: publish message
-		// filterMessage := model.MessageFilter{
-		// 	TenantId:       (*conversations)[0].TenantId,
-		// 	ConversationId: (*conversations)[0].ConversationId,
-		// }
-		// _, messages, err := repository.MessageESRepo.GetMessages(ctx, (*conversations)[0].TenantId, ES_INDEX, filterMessage, 1, 0)
-		// if err != nil {
-		// 	log.Error(err)
-		// 	return response.ServiceUnavailableMsg(err.Error())
-		// }
-		// if len(*messages) > 0 {
-		// 	PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], userUuids, &(*messages)[0])
-		// }
+		PublishConversationToManyUser(variables.EVENT_CHAT["conversation_assigned"], userUuids, true, conversationEvent)
 	}
 
-	return response.OKResponse()
+	return
 }

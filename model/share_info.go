@@ -11,7 +11,7 @@ type ShareInfoForm struct {
 	*Base
 	bun.BaseModel `bun:"table:chat_share_info,alias:csi"`
 	TenantId      string    `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	ConnectionId  string    `json:"connection_id" bun:"connection_id,type:uuid,notnull"`
+	ConnectionId  string    `json:"connection_id" bun:"connection_id,type:uuid,default:null"`
 	ShareType     string    `json:"share_type" bun:"share_type,type:text,notnull"` //zalo,fb,....
 	ShareForm     ShareForm `json:"share_form" bun:"share_form,type:jsonb,notnull"`
 }
@@ -36,7 +36,6 @@ type ShareInfoFormSubmitRequest struct {
 	AppId          string `json:"app_id"`
 	OaId           string `json:"oa_id"`
 	ExternalUserId string `json:"external_user_id"`
-	// ConnectionId   string `json:"connection_id"`
 }
 
 type ShareForm struct {
@@ -85,9 +84,9 @@ func (s *ShareInfoFormRequest) ValidateUpdate() (err error) {
 	if len(s.OaId) < 1 {
 		return errors.New("oa id is required")
 	}
-	if len(s.ImageUrl) < 1 && s.Files == nil {
-		return errors.New("image_url or file is required")
-	}
+	// if len(s.ImageUrl) < 1 && s.Files == nil {
+	// 	return errors.New("image_url or file is required")
+	// }
 	return
 }
 
@@ -104,8 +103,5 @@ func (s *ShareInfoFormSubmitRequest) Validate() (err error) {
 	if len(s.ExternalUserId) < 1 {
 		return errors.New("external_user_id is required")
 	}
-	// if len(s.ConnectionId) < 1 {
-	// 	return errors.New("connection_id is required")
-	// }
 	return
 }

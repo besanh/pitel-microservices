@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
 	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
@@ -11,100 +12,193 @@ import (
 	"github.com/tel4vn/fins-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type GRPCApp struct {
-	pb.UnimplementedAppServer
+type GRPCChatApp struct {
+	pb.UnimplementedChatAppServiceServer
 }
 
-func NewGRPCApp() *GRPCApp {
-	return &GRPCApp{}
+func NewGRPCChatApp() *GRPCChatApp {
+	return &GRPCChatApp{}
 }
 
-func (g *GRPCApp) InsertApp(ctx context.Context, req *pb.ChatAppBodyRequest) (result *pb.AppResponse, err error) {
-	authUser, ok := auth.GetUserFromContext(ctx)
+func (g *GRPCChatApp) PostChatApp(ctx context.Context, req *pb.PostChatAppRequest) (result *pb.PostChatAppResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	var payload model.ChatAppRequest
-	if err = util.ParseAnyToAny(req, &payload); err != nil {
-		result = &pb.AppResponse{
-			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
-			Message: err.Error(),
-		}
-		return
+	if (user.GetLevel() != "superadmin") && len(user.SecretKey) < 1 {
+		return nil, status.Errorf(codes.PermissionDenied, response.ERR_PERMISSION_DENIED)
 	}
 
-	if err = payload.Validate(); err != nil {
-		result = &pb.AppResponse{
-			Code:    response.MAP_ERR_RESPONSE[response.ERR_VALIDATION_FAILED].Code,
-			Message: err.Error(),
-		}
-		return
+	payload := model.ChatAppRequest{}
+	if err := util.ParseAnyToAny(req, &payload); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	id, err := service.NewChatApp().InsertChatApp(ctx, authUser, payload)
+	if err := payload.Validate(); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	id, err := service.ChatAppService.InsertChatApp(ctx, user, payload)
 	if err != nil {
-		result = &pb.AppResponse{
-			Code:    response.MAP_ERR_RESPONSE[response.ERR_INSERT_FAILED].Code,
-			Message: err.Error(),
-		}
-		return
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	result = &pb.AppResponse{
+	result = &pb.PostChatAppResponse{
 		Code:    "OK",
 		Message: "ok",
 		Id:      id,
 	}
-	return result, nil
+	return
 }
 
-func (s *GRPCApp) GetApp(ctx context.Context, req *pb.AppRequest) (result *pb.AppGetResponse, err error) {
-	authUser, ok := auth.GetUserFromContext(ctx)
+func (g *GRPCChatApp) GetChatApps(ctx context.Context, req *pb.GetChatAppRequest) (result *pb.GetChatAppResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
 	}
 
-	filter := model.AppFilter{
-		AppName: req.AppName,
-		Status:  req.Status,
+	payload := model.ChatAppFilter{}
+	if err := util.ParseAnyToAny(req, &payload); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
-	limit := util.ParseLimit(req.GetLimit())
-	offset := util.ParseOffset(req.GetOffset())
+	limit, offset := req.GetLimit(), req.GetOffset()
 
-	total, apps, err := service.NewChatApp().GetChatApp(ctx, authUser, filter, limit, offset)
+	total, chatApps, err := service.ChatAppService.GetChatApp(ctx, user, payload, int(limit), int(offset))
 	if err != nil {
-		result = &pb.AppGetResponse{
-			Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
-			Message: err.Error(),
-		}
-		return
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	data := make([]*pb.GetChatAppData, 0)
+	if err = util.ParseAnyToAny(chatApps, &data); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	var data []*structpb.Struct
-	if total > 0 {
-		for _, item := range *apps {
-			element := map[string]any{
-				"app_name":   item.AppName,
-				"status":     item.Status,
-				"id":         item.Id,
-				"created_at": item.CreatedAt,
-				"updated_at": item.UpdatedAt,
-			}
-			tmp, _ := util.ToStructPb(element)
-			data = append(data, tmp)
-		}
-	}
-
-	result = &pb.AppGetResponse{
+	result = &pb.GetChatAppResponse{
 		Code:    "OK",
 		Message: "ok",
 		Data:    data,
 		Total:   int32(total),
 	}
+	return
+}
 
+func (g *GRPCChatApp) GetChatAppById(ctx context.Context, req *pb.GetChatAppByIdRequest) (result *pb.GetChatAppByIdResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	chatApp, err := service.ChatAppService.GetChatAppById(ctx, user, req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	data := &pb.GetChatAppData{}
+	if err = util.ParseAnyToAny(chatApp, &data); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result = &pb.GetChatAppByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+		Data:    data,
+	}
+	return
+}
+
+func (g *GRPCChatApp) UpdateChatAppById(ctx context.Context, req *pb.UpdateChatAppByIdRequest) (result *pb.UpdateChatAppByIdResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	if (user.GetLevel() != "superadmin") && len(user.SecretKey) < 1 {
+		return nil, status.Errorf(codes.PermissionDenied, response.ERR_PERMISSION_DENIED)
+	}
+
+	payload := model.ChatAppRequest{}
+	if err := util.ParseAnyToAny(req, &payload); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	if err = payload.Validate(); err != nil {
+		log.Error(err)
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	err = service.ChatAppService.UpdateChatAppById(ctx, user, req.GetId(), payload)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result = &pb.UpdateChatAppByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+	}
+	return
+}
+
+func (g *GRPCChatApp) DeleteChatAppById(ctx context.Context, req *pb.DeleteChatAppByIdRequest) (result *pb.DeleteChatAppByIdResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	err = service.ChatAppService.DeleteChatAppById(ctx, user, req.GetId())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result = &pb.DeleteChatAppByIdResponse{
+		Code:    "OK",
+		Message: "ok",
+	}
+	return
+}
+
+func (g *GRPCChatApp) GetChatAppAssign(ctx context.Context, req *pb.GetChatAppAssignRequest) (result *pb.GetChatAppAssignResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	chatApps, err := service.ChatAppService.GetChatAppAssign(ctx, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	data := make([]*pb.ChatAppAssignData, 0)
+	if len(chatApps) > 0 {
+		for _, item := range chatApps {
+			var tmp pb.ChatAppAssignData
+			if err = util.ParseAnyToAny(item, &tmp); err != nil {
+				result = &pb.GetChatAppAssignResponse{
+					Code:    response.MAP_ERR_RESPONSE[response.ERR_GET_FAILED].Code,
+					Message: err.Error(),
+				}
+				return result, nil
+			}
+			tmp.CreatedAt = &timestamppb.Timestamp{
+				Seconds: item.CreatedAt.Unix(),
+			}
+			tmp.UpdatedAt = &timestamppb.Timestamp{
+				Seconds: item.UpdatedAt.Unix(),
+			}
+			data = append(data, &tmp)
+		}
+	}
+
+	result = &pb.GetChatAppAssignResponse{
+		Code:    "OK",
+		Message: "ok",
+		Data:    data,
+	}
 	return
 }

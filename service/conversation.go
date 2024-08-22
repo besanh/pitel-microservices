@@ -22,16 +22,19 @@ import (
 type (
 	IConversation interface {
 		InsertConversation(ctx context.Context, conversation model.Conversation) (id string, err error)
-		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
-		GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any)
-		GetConversationsByManage(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any)
+		GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, result []model.ConversationCustomView, err error)
+		GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (total int, result []model.ConversationCustomView, respScrollId string, err error)
+		GetConversationsByHighLevel(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, conversations *[]model.ConversationView, err error)
+		GetConversationsByHighLevelWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (total int, conversations []*model.ConversationView, respScrollId string, err error)
 		UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any)
 		UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, id, updatedBy, status string) error
-		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any)
+		GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (result *model.Conversation, err error)
 		UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error
 	}
 	Conversation struct{}
 )
+
+var ConversationService IConversation
 
 func NewConversation() IConversation {
 	return &Conversation{}
@@ -50,16 +53,16 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 		log.Error(err)
 		return docId, err
 	}
-	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX, conversation.TenantId); err != nil {
+	if isExisted, err := repository.ESRepo.CheckAliasExist(ctx, ES_INDEX_MESSAGE, conversation.TenantId); err != nil {
 		log.Error(err)
 		return docId, err
 	} else if !isExisted {
-		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX, conversation.TenantId); err != nil {
+		if err := repository.ESRepo.CreateAlias(ctx, ES_INDEX_MESSAGE, conversation.TenantId); err != nil {
 			log.Error(err)
 			return docId, err
 		}
 	}
-	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX, conversation.AppId, docId, esDoc); err != nil {
+	if err := repository.ESRepo.InsertLog(ctx, conversation.TenantId, ES_INDEX_MESSAGE, conversation.AppId, docId, esDoc); err != nil {
 		log.Error(err)
 		return docId, err
 	}
@@ -67,21 +70,21 @@ func (s *Conversation) InsertConversation(ctx context.Context, conversation mode
 	return docId, nil
 }
 
-func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (int, any) {
+func (s *Conversation) GetConversations(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit, offset int) (total int, result []model.ConversationCustomView, err error) {
 	conversationIds := []string{}
-	conversationFilter := model.UserAllocateFilter{
+	conversationFilter := model.AllocateUserFilter{
 		TenantId: authUser.TenantId,
 		UserId:   []string{authUser.UserId},
 	}
-	if filter.IsDone.Valid {
+	if filter.IsDone.Valid && filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"
 	} else {
 		conversationFilter.MainAllocate = "active"
 	}
-	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if total > 0 {
 		for _, item := range *userAllocations {
@@ -90,14 +93,14 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 	}
 	if len(conversationIds) < 1 {
 		log.Error("list conversation not found")
-		return response.Pagination(nil, 0, limit, offset)
+		return
 	}
 	filter.ConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
-	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, "", ES_INDEX_CONVERSATION, filter, limit, offset)
+	_, conversations, err := repository.ConversationESRepo.GetConversations(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
 	var conversationCustomViews []model.ConversationCustomView
@@ -112,9 +115,9 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 					"seen",
 				},
 			}
-			_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
-			if err != nil {
-				log.Error(err)
+			_, messages, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
 				break
 			}
 			conv.TotalUnRead = int64(len(*messages))
@@ -123,9 +126,9 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 			}
-			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
-			if err != nil {
-				log.Error(err)
+			_, message, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
+			if errTmp != nil {
+				log.Error(errTmp)
 				break
 			}
 			if len(*message) > 0 {
@@ -141,57 +144,62 @@ func (s *Conversation) GetConversations(ctx context.Context, authUser *model.Aut
 
 			// TODO: parse label
 			var conversationCustomView model.ConversationCustomView
-			if err := util.ParseAnyToAny((*conversations)[k], &conversationCustomView); err != nil {
+			if err = util.ParseAnyToAny((*conversations)[k], &conversationCustomView); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return
 			}
-
-			if !reflect.DeepEqual((*conversations)[k].Label, "") {
-				var labels []map[string]string
-				if err = json.Unmarshal([]byte((*conversations)[k].Label), &labels); err != nil {
+			labels := []any{}
+			if (*conversations)[k].Labels != nil {
+				if err = json.Unmarshal([]byte((*conversations)[k].Labels), &labels); err != nil {
 					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
+					return
 				}
+			}
+			if len(labels) > 0 {
 				chatLabelIds := []string{}
-				if len(labels) > 0 {
-					for _, item := range labels {
-						chatLabelIds = append(chatLabelIds, item["label_id"])
+				for _, item := range labels {
+					var tmp map[string]string
+					if err := util.ParseAnyToAny(item, &tmp); err != nil {
+						log.Error(err)
+						continue
 					}
-					if len(chatLabelIds) > 0 {
-						_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
-							LabelIds: chatLabelIds,
-						}, -1, 0)
-						if err != nil {
-							log.Error(err)
-							return response.ServiceUnavailableMsg(err.Error())
-						}
-						if len(*chatLabelExist) > 0 {
-							conversationCustomView.Label = chatLabelExist
-						}
+					chatLabelIds = append(chatLabelIds, tmp["label_id"])
+				}
+				if len(chatLabelIds) > 0 {
+					_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+						LabelIds: chatLabelIds,
+					}, -1, 0)
+					if errTmp != nil {
+						log.Error(errTmp)
+						return
+					}
+					if len(*chatLabelExist) > 0 {
+						conversationCustomView.Labels = chatLabelExist
 					}
 				}
 			}
 			conversationCustomViews = append(conversationCustomViews, conversationCustomView)
 		}
 	}
-	return response.Pagination(conversationCustomViews, len(conversationCustomViews), limit, offset)
+	result = conversationCustomViews
+	return
 }
 
-func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (int, any) {
+func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.ConversationFilter, limit int, scrollId string) (total int, result []model.ConversationCustomView, respScrollId string, err error) {
 	conversationIds := []string{}
-	conversationFilter := model.UserAllocateFilter{
+	conversationFilter := model.AllocateUserFilter{
 		TenantId: authUser.TenantId,
 		UserId:   []string{authUser.UserId},
 	}
-	if filter.IsDone.Valid {
+	if filter.IsDone.Valid && filter.IsDone.Bool {
 		conversationFilter.MainAllocate = "deactive"
 	} else {
 		conversationFilter.MainAllocate = "active"
 	}
-	total, userAllocations, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, conversationFilter, -1, 0)
+	total, userAllocations, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, conversationFilter, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 	if total > 0 {
 		for _, item := range *userAllocations {
@@ -200,14 +208,14 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 	}
 	if len(conversationIds) < 1 {
 		log.Error("list conversation not found")
-		return response.Pagination(nil, 0, limit, 0)
+		return
 	}
 	filter.ConversationId = conversationIds
 	filter.TenantId = authUser.TenantId
 	_, conversations, respScrollId, err := repository.ConversationESRepo.SearchWithScroll(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, filter, limit, scrollId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
+		return
 	}
 
 	conversationCustomViews := make([]model.ConversationCustomView, 0)
@@ -222,8 +230,9 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 					"seen",
 				},
 			}
-			_, messages, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filter, -1, 0)
-			if err != nil {
+			_, messages, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filter, -1, 0)
+			if errTmp != nil {
+				err = errTmp
 				log.Error(err)
 				break
 			}
@@ -233,8 +242,9 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 				TenantId:       conv.TenantId,
 				ConversationId: conv.ConversationId,
 			}
-			_, message, err := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX, filterMessage, 1, 0)
-			if err != nil {
+			_, message, errTmp := repository.MessageESRepo.GetMessages(ctx, conv.TenantId, ES_INDEX_MESSAGE, filterMessage, 1, 0)
+			if errTmp != nil {
+				err = errTmp
 				log.Error(err)
 				break
 			}
@@ -251,16 +261,16 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 
 			// TODO: parse label
 			var conversationCustomView model.ConversationCustomView
-			if err := util.ParseAnyToAny(conversations[k], &conversationCustomView); err != nil {
+			if err = util.ParseAnyToAny(conversations[k], &conversationCustomView); err != nil {
 				log.Error(err)
-				return response.ServiceUnavailableMsg(err.Error())
+				return
 			}
 
-			if !reflect.DeepEqual(conversations[k].Label, "") {
+			if conversations[k].Labels != nil && !reflect.DeepEqual(conversations[k].Labels, "") {
 				var labels []map[string]string
-				if err = json.Unmarshal([]byte(conversations[k].Label), &labels); err != nil {
+				if err = json.Unmarshal([]byte(conversations[k].Labels), &labels); err != nil {
 					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
+					return
 				}
 				chatLabelIds := []string{}
 				if len(labels) > 0 {
@@ -268,15 +278,16 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 						chatLabelIds = append(chatLabelIds, item["label_id"])
 					}
 					if len(chatLabelIds) > 0 {
-						_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+						_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
 							LabelIds: chatLabelIds,
 						}, -1, 0)
-						if err != nil {
+						if errTmp != nil {
+							err = errTmp
 							log.Error(err)
-							return response.ServiceUnavailableMsg(err.Error())
+							return
 						}
 						if len(*chatLabelExist) > 0 {
-							conversationCustomView.Label = chatLabelExist
+							conversationCustomView.Labels = chatLabelExist
 						}
 					}
 				}
@@ -284,22 +295,19 @@ func (s *Conversation) GetConversationsWithScrollAPI(ctx context.Context, authUs
 			conversationCustomViews = append(conversationCustomViews, conversationCustomView)
 		}
 	}
-	result := map[string]any{
-		"conversations": conversationCustomViews,
-		"scroll_id":     respScrollId,
-	}
-	return response.Pagination(result, len(conversationCustomViews), limit, 0)
+	total = len(conversationCustomViews)
+	result = conversationCustomViews
+	return
 }
 
-func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, id string, data model.ShareInfo) (int, any) {
-	newConversationId := GenerateConversationId(appId, oaId, id)
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, newConversationId)
+func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *model.AuthUser, appId, oaId, conversationId string, data model.ShareInfo) (int, any) {
+	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found with app_id %s", newConversationId, appId)
-		return response.NotFoundMsg("conversation " + newConversationId + " not found")
+		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
+		return response.NotFoundMsg("conversation " + conversationId + " not found")
 	}
 	conversationExist.Username = data.Fullname
 	conversationExist.ShareInfo = &data
@@ -309,32 +317,34 @@ func (s *Conversation) UpdateConversationById(ctx context.Context, authUser *mod
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	esDoc := map[string]any{}
-	if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+	if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 
 	// IMPROVE: should we update direction es or use queue ?
-	if err := repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, newConversationId, esDoc); err != nil {
+	if err = repository.ESRepo.UpdateDocById(ctx, ES_INDEX_CONVERSATION, appId, conversationId, esDoc); err != nil {
 		log.Error(err)
 		return response.ServiceUnavailableMsg(err.Error())
 	}
 	return response.OKResponse()
 }
-func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId, updatedBy, status string) error {
+func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *model.AuthUser, appId, conversationId, updatedBy, status string) (err error) {
 	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found", conversationId)
-		return errors.New("conversation " + conversationId + " not found")
+		err = errors.New("conversation " + conversationId + " not found")
+		log.Error(err.Error())
+		return
 	}
 
 	if status != "reopen" {
 		if conversationExist.IsDone {
-			log.Errorf("conversation %s is done", conversationId)
-			return errors.New("conversation " + conversationId + " is done")
+			err = errors.New("conversation " + conversationId + " is done")
+			log.Error(err.Error())
+			return
 		}
 	}
 
@@ -344,87 +354,126 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 
 	// Update User allocate
-	filter := model.UserAllocateFilter{
+	filter := model.AllocateUserFilter{
 		AppId:          appId,
 		ConversationId: conversationId,
 		MainAllocate:   statusAllocate,
 	}
-	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	_, allocateUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	}
-	if len(*userAllocate) < 1 {
-		log.Errorf("conversation %s not found with active user", conversationId)
-		return errors.New("conversation " + conversationId + " not found with active user")
+	if len(*allocateUser) < 1 {
+		err = errors.New("conversation " + conversationId + " not found with active user")
+		log.Error(err.Error())
+		return
 	}
 
-	userAllocateTmp := (*userAllocate)[0]
+	allocateUserTmp := (*allocateUser)[0]
 
 	if status == "done" {
-		userAllocateTmp.MainAllocate = "deactive"
-		userAllocateTmp.AllocatedTimestamp = time.Now().UnixMilli()
-		userAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
+		allocateUserTmp.MainAllocate = "deactive"
+		allocateUserTmp.AllocatedTimestamp = time.Now().UnixMilli()
+		allocateUserTmp.UpdatedAt = time.Now()
+		if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, allocateUserTmp); err != nil {
 			log.Error(err)
-			return err
+			return
 		}
 		conversationExist.IsDone = true
 		conversationExist.IsDoneBy = updatedBy
 		conversationExist.IsDoneAt = time.Now()
 	} else if status == "reopen" {
-		userAllocateTmp.MainAllocate = "active"
-		userAllocateTmp.AllocatedTimestamp = time.Now().UnixMilli()
-		userAllocateTmp.UpdatedAt = time.Now()
-		if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, userAllocateTmp); err != nil {
+		allocateUserTmp.MainAllocate = "active"
+		allocateUserTmp.AllocatedTimestamp = time.Now().UnixMilli()
+		allocateUserTmp.UpdatedAt = time.Now()
+		if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, allocateUserTmp); err != nil {
 			log.Error(err)
-			return err
+			return
 		}
 
 		conversationExist.IsDone = false
 		conversationExist.IsDoneBy = ""
-		isDoneAt, err := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
-		if err != nil {
+		isDoneAt, errTmp := time.Parse(time.RFC3339, "0001-01-01T00:00:00Z")
+		if errTmp != nil {
+			err = errTmp
 			log.Error(err)
-			return err
+			return
 		}
 		conversationExist.IsDoneAt = isDoneAt
 	}
 
 	if slices.Contains([]string{"done", "reopen"}, status) {
-		tmpBytes, err := json.Marshal(conversationExist)
-		if err != nil {
+		tmpBytes, errTmp := json.Marshal(conversationExist)
+		if errTmp != nil {
+			err = errTmp
 			log.Error(err)
-			return err
+			return
 		}
 		esDoc := map[string]any{}
-		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+		if err = json.Unmarshal(tmpBytes, &esDoc); err != nil {
 			log.Error(err)
-			return err
+			return
 		}
 
-		if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+		conversationQueue := model.ConversationQueue{
+			DocId:        conversationExist.ConversationId,
+			Conversation: *conversationExist,
+		}
+		if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 			log.Error(err)
-			if err := repository.UserAllocateRepo.Update(ctx, repository.DBConn, (*userAllocate)[0]); err != nil {
+			if err = repository.AllocateUserRepo.Update(ctx, repository.DBConn, (*allocateUser)[0]); err != nil {
 				log.Error(err)
 			}
-			return err
+			return
 		}
 	}
 
 	// TODO: clear cache
-	userAllocateCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId))
-	if userAllocateCache != nil {
+	allocateUserCache := cache.RCache.Get(USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId))
+	if allocateUserCache != nil {
 		if err = cache.RCache.Del([]string{USER_ALLOCATE + "_" + GenerateConversationId(conversationExist.AppId, conversationExist.OaId, conversationExist.ExternalUserId)}); err != nil {
 			log.Error(err)
-			return err
+			return
 		}
 	}
 
 	conversationConverted := &model.ConversationView{}
-	if err := util.ParseAnyToAny(conversationExist, conversationConverted); err != nil {
+	if err = util.ParseAnyToAny(conversationExist, conversationConverted); err != nil {
 		log.Error(err)
-		return err
+		return
+	}
+	if conversationConverted.Labels != nil && !reflect.DeepEqual(conversationConverted.Labels, "") {
+		var labels []map[string]string
+		if err = json.Unmarshal([]byte(conversationConverted.Labels), &labels); err != nil {
+			log.Error(err)
+			return
+		}
+		chatLabelIds := []string{}
+		if len(labels) > 0 {
+			for _, item := range labels {
+				chatLabelIds = append(chatLabelIds, item["label_id"])
+			}
+			if len(chatLabelIds) > 0 {
+				_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+					LabelIds: chatLabelIds,
+				}, -1, 0)
+				if errTmp != nil {
+					err = errTmp
+					log.Error(err)
+					return
+				}
+				if len(*chatLabelExist) > 0 {
+					tmp, errTmp := json.Marshal((*chatLabelExist))
+					if errTmp != nil {
+						err = errTmp
+						log.Error(err)
+						return
+					}
+					conversationConverted.Labels = tmp
+				}
+			}
+		}
 	}
 
 	// TODO: get message to display, otherwise use api get conversation to get latest message
@@ -437,10 +486,10 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		// 	"seen",
 		// },
 	}
-	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX, filterMessage, -1, 0)
+	_, messages, err := repository.MessageESRepo.GetMessages(ctx, conversationExist.TenantId, ES_INDEX_MESSAGE, filterMessage, -1, 0)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	}
 	if len(*messages) > 0 {
 		conversationConverted.LatestMessageContent = (*messages)[0].Content
@@ -451,14 +500,13 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
-	// Event to manager
-	manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+	manageQueueUser, err := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	} else if len(manageQueueUser.Id) < 1 {
-		log.Error("queue " + userAllocateTmp.QueueId + " not found")
-		return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+		log.Error("queue " + allocateUserTmp.QueueId + " not found")
+		return errors.New("queue " + allocateUserTmp.QueueId + " not found")
 	}
 
 	var subscribers []*Subscriber
@@ -476,13 +524,31 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		}
 	}
 
-	// Event to manager
-	isExist := BinarySearchSlice(manageQueueUser.ManageId, subscriberManagers)
-	if isExist && (manageQueueUser.ManageId != conversationExist.IsDoneBy) {
+	// If user is not admin or manager
+	if !slices.Contains(subscriberManagers, authUser.UserId) && !slices.Contains(subscriberAdmins, authUser.UserId) {
 		if status == "done" {
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], authUser.UserId, subscribers, true, conversationConverted)
 		} else if status == "reopen" {
-			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.ManageId, subscribers, true, conversationConverted)
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], authUser.UserId, subscribers, true, conversationConverted)
+		}
+	}
+
+	// If user is admin or manager
+	if (!slices.Contains(subscriberManagers, allocateUserTmp.UserId) || !slices.Contains(subscriberAdmins, allocateUserTmp.UserId)) && authUser.UserId != allocateUserTmp.UserId {
+		if status == "done" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], allocateUserTmp.UserId, subscribers, true, conversationConverted)
+		} else if status == "reopen" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], allocateUserTmp.UserId, subscribers, true, conversationConverted)
+		}
+	}
+
+	// Event to manager
+	isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
+	if isExist {
+		if status == "done" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_done"], manageQueueUser.UserId, subscribers, true, conversationConverted)
+		} else if status == "reopen" {
+			PublishConversationToOneUser(variables.EVENT_CHAT["conversation_reopen"], manageQueueUser.UserId, subscribers, true, conversationConverted)
 		}
 
 		// PublishMessageToOneUser(variables.EVENT_CHAT["message_created"], manageQueueUser.ManageId, subscribers, &(*messages)[0])
@@ -499,24 +565,25 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		// PublishMessageToManyUser(variables.EVENT_CHAT["message_created"], subscriberAdmins, &(*messages)[0])
 	}
 
-	return nil
+	return
 }
 
-func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (int, any) {
-	conversationExist, err := repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
+func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.AuthUser, appId, conversationId string) (result *model.Conversation, err error) {
+	result, err = repository.ConversationESRepo.GetConversationById(ctx, authUser.TenantId, ES_INDEX_CONVERSATION, appId, conversationId)
 	if err != nil {
 		log.Error(err)
-		return response.ServiceUnavailableMsg(err.Error())
-	} else if len(conversationExist.ConversationId) < 1 {
-		log.Errorf("conversation %s not found with app_id %s", conversationId, appId)
-		return response.ServiceUnavailableMsg("conversation " + conversationId + " with app_id " + appId + " not found")
+		return
+	} else if len(result.ConversationId) < 1 {
+		err = errors.New("conversation " + conversationId + " with app_id " + appId + " not found")
+		log.Error(err)
+		return
 	}
 
-	if !reflect.DeepEqual(conversationExist.Label, "") {
+	if result.Labels != nil && !reflect.DeepEqual(result.Labels, "") {
 		var labels []map[string]string
-		if err = json.Unmarshal([]byte(conversationExist.Label), &labels); err != nil {
+		if err = json.Unmarshal([]byte(result.Labels), &labels); err != nil {
 			log.Error(err)
-			return response.ServiceUnavailableMsg(err.Error())
+			return
 		}
 		chatLabelIds := []string{}
 		if len(labels) > 0 {
@@ -524,34 +591,36 @@ func (s *Conversation) GetConversationById(ctx context.Context, authUser *model.
 				chatLabelIds = append(chatLabelIds, item["label_id"])
 			}
 			if len(chatLabelIds) > 0 {
-				_, chatLabelExist, err := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
+				_, chatLabelExist, errTmp := repository.ChatLabelRepo.GetChatLabels(ctx, repository.DBConn, model.ChatLabelFilter{
 					LabelIds: chatLabelIds,
 				}, -1, 0)
-				if err != nil {
+				if errTmp != nil {
+					err = errTmp
 					log.Error(err)
-					return response.ServiceUnavailableMsg(err.Error())
+					return
 				}
 				if len(*chatLabelExist) > 0 {
-					tmp, err := json.Marshal(*chatLabelExist)
-					if err != nil {
+					tmp, errTmp := json.Marshal(*chatLabelExist)
+					if errTmp != nil {
+						err = errTmp
 						log.Error(err)
-						return response.ServiceUnavailableMsg(err.Error())
+						return
 					}
-					conversationExist.Label = tmp
+					result.Labels = tmp
 				} else {
-					conversationExist.Label = []byte("[]")
+					result.Labels = []byte("[]")
 				}
 			} else {
-				conversationExist.Label = []byte("[]")
+				result.Labels = []byte("[]")
 			}
 		} else {
-			conversationExist.Label = []byte("[]")
+			result.Labels = []byte("[]")
 		}
 	} else {
-		conversationExist.Label = []byte("[]")
+		result.Labels = []byte("[]")
 	}
 
-	return response.OK(conversationExist)
+	return
 }
 
 func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, authUser *model.AuthUser, preferRequest model.ConversationPreferenceRequest) error {
@@ -564,7 +633,7 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return errors.New("conversation " + preferRequest.ConversationId + " not found")
 	}
 
-	filter := model.UserAllocateFilter{
+	filter := model.AllocateUserFilter{
 		AppId:          preferRequest.AppId,
 		ConversationId: preferRequest.ConversationId,
 		MainAllocate:   "active",
@@ -579,7 +648,11 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 	default:
 	}
 
-	if err = PublishPutConversationToChatQueue(ctx, *conversationExist); err != nil {
+	conversationQueue := model.ConversationQueue{
+		DocId:        conversationExist.ConversationId,
+		Conversation: *conversationExist,
+	}
+	if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -590,21 +663,21 @@ func (s *Conversation) UpdateUserPreferenceConversation(ctx context.Context, aut
 		return err
 	}
 
-	_, userAllocate, err := repository.UserAllocateRepo.GetUserAllocates(ctx, repository.DBConn, filter, 1, 0)
+	_, allocateUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	if len(*userAllocate) > 0 {
-		userAllocateTmp := (*userAllocate)[0]
+	if len(*allocateUser) > 0 {
+		allocateUserTmp := (*allocateUser)[0]
 		// Event to manager
-		manageQueueUser, err := GetManageQueueUser(ctx, userAllocateTmp.QueueId)
+		manageQueueUser, err := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
 		if err != nil {
 			log.Error(err)
 			return err
 		} else if len(manageQueueUser.Id) < 1 {
-			log.Error("queue " + userAllocateTmp.QueueId + " not found")
-			return errors.New("queue " + userAllocateTmp.QueueId + " not found")
+			log.Error("queue " + allocateUserTmp.QueueId + " not found")
+			return errors.New("queue " + allocateUserTmp.QueueId + " not found")
 		}
 		s.publishConversationEventToManagerAndAdmin(authUser, manageQueueUser, variables.PREFERENCE_EVENT[preferRequest.PreferenceType], conversationConverted)
 	} else {

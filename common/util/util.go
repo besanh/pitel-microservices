@@ -27,7 +27,7 @@ func ParseLimit(limit any) int {
 		val = ParseInt(fmt.Sprintf("%d", limit))
 	}
 	if val < 0 {
-		val = 0
+		val, _ = strconv.Atoi(fmt.Sprintf("%s", limit))
 	} else if val > MAX_LIMIT {
 		val = MAX_LIMIT
 	}

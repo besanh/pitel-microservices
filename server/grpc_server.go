@@ -16,13 +16,32 @@ import (
 	v1 "github.com/tel4vn/fins-microservices/api/v1"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
-	pbAuthSource "github.com/tel4vn/fins-microservices/gen/proto/auth_source"
-	pbApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
+	pbAssignConversation "github.com/tel4vn/fins-microservices/gen/proto/assign_conversation"
+	pbChatApp "github.com/tel4vn/fins-microservices/gen/proto/chat_app"
+	pbChatAuth "github.com/tel4vn/fins-microservices/gen/proto/chat_auth"
+	pbChatAutoScript "github.com/tel4vn/fins-microservices/gen/proto/chat_auto_script"
+	pbChatConnectionApp "github.com/tel4vn/fins-microservices/gen/proto/chat_connection_app"
+	pbChatConnectionPipeline "github.com/tel4vn/fins-microservices/gen/proto/chat_connection_pipeline"
+	pbConnectionQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_connection_queue"
+	pbChatEmail "github.com/tel4vn/fins-microservices/gen/proto/chat_email"
+	pbChatIntegrateSystem "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
+	pbChatLabel "github.com/tel4vn/fins-microservices/gen/proto/chat_label"
+	pbChatManageQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_manage_queue"
+	pbChatMessageSample "github.com/tel4vn/fins-microservices/gen/proto/chat_message_sample"
+	pbChatPolicySetting "github.com/tel4vn/fins-microservices/gen/proto/chat_policy_setting"
 	pbChatQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
-	pbChatQueuAgent "github.com/tel4vn/fins-microservices/gen/proto/chat_queue_agent"
+	pbChatQueueUser "github.com/tel4vn/fins-microservices/gen/proto/chat_queue_user"
+	pbChatRole "github.com/tel4vn/fins-microservices/gen/proto/chat_role"
 	pbChatRouting "github.com/tel4vn/fins-microservices/gen/proto/chat_routing"
-	pbConnection "github.com/tel4vn/fins-microservices/gen/proto/connection_app"
+	pbChatScript "github.com/tel4vn/fins-microservices/gen/proto/chat_script"
+	pbChatTenant "github.com/tel4vn/fins-microservices/gen/proto/chat_tenant"
+	pbChatUser "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
+	pbChatVendor "github.com/tel4vn/fins-microservices/gen/proto/chat_vendor"
+	pbConversation "github.com/tel4vn/fins-microservices/gen/proto/conversation"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
+	pbMessage "github.com/tel4vn/fins-microservices/gen/proto/message"
+	pbProfile "github.com/tel4vn/fins-microservices/gen/proto/profile"
+	pbShareInfo "github.com/tel4vn/fins-microservices/gen/proto/share_info"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
 	"github.com/tel4vn/fins-microservices/service"
 
@@ -56,16 +75,37 @@ func NewGRPCServer(port string) {
 	// Setup gRPC
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(
-			grpcMiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(authMiddleware.AuthMdw.GRPCAuthMiddleware)),
+			grpcMiddleware.ChainUnaryServer(authMiddleware.GRPCAuthInterceptor, grpcauth.UnaryServerInterceptor(authMiddleware.GRPCAuthMiddleware)),
 		),
 	)
 	pbExample.RegisterExampleServiceServer(grpcServer, grpcService.NewGRPCExample())
-	pbAuthSource.RegisterAuthSourceServiceServer(grpcServer, grpcService.NewGRPCAuthSoure())
-	pbApp.RegisterAppServer(grpcServer, grpcService.NewGRPCApp())
-	pbConnection.RegisterConnectionAppServer(grpcServer, grpcService.NewGRPCChatConnectionApp())
-	pbChatRouting.RegisterChatRoutingServer(grpcServer, grpcService.NewGRPCChatRouting())
+	pbChatIntegrateSystem.RegisterChatIntegrateSystemServer(grpcServer, grpcService.NewGRPCChatIntegrateSystem())
+	pbChatRole.RegisterChatRoleServiceServer(grpcServer, grpcService.NewChatRole())
+	pbChatUser.RegisterChatUserServiceServer(grpcServer, grpcService.NewGRPCChatUser())
+	pbChatAuth.RegisterChatAuthServiceServer(grpcServer, grpcService.NewGRPCChatAuth())
+	pbChatAuth.RegisterChatTokenServiceServer(grpcServer, grpcService.NewGRPCChatToken())
+	pbChatTenant.RegisterChatTenantServiceServer(grpcServer, grpcService.NewGRPCChatTenant())
+	pbChatVendor.RegisterChatVendorServiceServer(grpcServer, grpcService.NewGRPCChatVendor())
+	pbChatApp.RegisterChatAppServiceServer(grpcServer, grpcService.NewGRPCChatApp())
+	pbAssignConversation.RegisterAssignConversationServiceServer(grpcServer, grpcService.NewGRPCAssignConversation())
+	pbChatMessageSample.RegisterMessageSampleServiceServer(grpcServer, grpcService.NewGRPCChatMessageSample())
+	pbChatScript.RegisterChatScriptServiceServer(grpcServer, grpcService.NewGRPCChatScript())
+	pbChatAutoScript.RegisterChatAutoScriptServiceServer(grpcServer, grpcService.NewGRPCChatAutoScript())
+	pbChatEmail.RegisterChatEmailServiceServer(grpcServer, grpcService.NewGRPCChatEmail())
+	pbChatConnectionPipeline.RegisterChatConnectionPipelineServiceServer(grpcServer, grpcService.NewGRPCChatConnectionPipeline())
+	pbChatConnectionApp.RegisterChatConnectionAppServiceServer(grpcServer, grpcService.NewGRPCChatConnectionApp())
 	pbChatQueue.RegisterChatQueueServiceServer(grpcServer, grpcService.NewGRPCChatQueue())
-	pbChatQueuAgent.RegisterQueueAgentServiceServer(grpcServer, grpcService.NewGRPCChatQueueAgent())
+	pbConversation.RegisterConversationServiceServer(grpcServer, grpcService.NewGRPCConversation())
+	pbMessage.RegisterMessageServiceServer(grpcServer, grpcService.NewGRPCMessage())
+	pbChatLabel.RegisterChatLabelServiceServer(grpcServer, grpcService.NewGRPCChatLabel())
+	pbChatPolicySetting.RegisterChatPolicySettingServiceServer(grpcServer, grpcService.NewGRPCChatPolicySetting())
+	pbChatRouting.RegisterChatRoutingServiceServer(grpcServer, grpcService.NewGRPCChatRouting())
+	pbProfile.RegisterProfileServiceServer(grpcServer, grpcService.NewGRPCProfile())
+	pbConnectionQueue.RegisterChatConnectionQueueServiceServer(grpcServer, grpcService.NewGRPCChatConnectionQueue())
+	pbChatManageQueue.RegisterChatManageQueueServiceServer(grpcServer, grpcService.NewGRPCChatManageQueue())
+	pbChatQueueUser.RegisterChatQueueUserServiceServer(grpcServer, grpcService.NewGRPCChatQueueUser())
+	pbShareInfo.RegisterShareInfoServiceServer(grpcServer, grpcService.NewGRPCShareInfo())
+
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
 
@@ -77,7 +117,7 @@ func NewGRPCServer(port string) {
 			Marshaler: &runtime.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
 					UseProtoNames:   true,
-					EmitUnpopulated: false,
+					EmitUnpopulated: true,
 				},
 				UnmarshalOptions: protojson.UnmarshalOptions{
 					DiscardUnknown: true,
@@ -87,30 +127,126 @@ func NewGRPCServer(port string) {
 	)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	// setting up a dial up for gRPC service by specifying endpoint/target url
-	if err := pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	var err error
+	if err = pbExample.RegisterExampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbAuthSource.RegisterAuthSourceServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbApp.RegisterAppHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatIntegrateSystem.RegisterChatIntegrateSystemHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbConnection.RegisterConnectionAppHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatRole.RegisterChatRoleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatRouting.RegisterChatRoutingHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatUser.RegisterChatUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatQueue.RegisterChatQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatAuth.RegisterChatAuthServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
-	if err := pbChatQueuAgent.RegisterQueueAgentServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+	if err = pbChatAuth.RegisterChatTokenServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
+	if err = pbChatVendor.RegisterChatVendorServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatTenant.RegisterChatTenantServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatApp.RegisterChatAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbAssignConversation.RegisterAssignConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatMessageSample.RegisterMessageSampleServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatScript.RegisterChatScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatAutoScript.RegisterChatAutoScriptServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatEmail.RegisterChatEmailServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatConnectionApp.RegisterChatConnectionAppServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatConnectionPipeline.RegisterChatConnectionPipelineServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatQueue.RegisterChatQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbConversation.RegisterConversationServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbMessage.RegisterMessageServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatPolicySetting.RegisterChatPolicySettingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatLabel.RegisterChatLabelServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatRouting.RegisterChatRoutingServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbProfile.RegisterProfileServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbConnectionQueue.RegisterChatConnectionQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatManageQueue.RegisterChatManageQueueServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatQueueUser.RegisterChatQueueUserServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbShareInfo.RegisterShareInfoServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+
 	// Creating a normal HTTP server
 	httpServer := NewHTTPServer()
-	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", gin.WrapH(mux))
+	httpServer.Group("bss-chat/*{grpc_gateway}").Any("", func(c *gin.Context) {
+		switch {
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload") && c.Request.Method == "POST":
+			v1.APIChatVendorHandler.HandlePostChatVendorLogoUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-vendor/upload/") && c.Request.Method == "PUT":
+			v1.APIChatVendorHandler.HandlePutChatVendorLogoUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload") && c.Request.Method == "POST":
+			v1.APIChatMessageSampleHandler.HandlePostChatMessageSampleUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-sample/upload/") && c.Request.Method == "PUT":
+			v1.APIChatMessageSampleHandler.HandlePutChatMessageSampleUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload") && c.Request.Method == "POST":
+			v1.APIChatScript.HandlePostChatScriptUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/") && c.Request.Method == "PUT":
+			v1.APIChatScript.HandlePutChatScriptUpload(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/message/send") && c.Request.Method == "POST":
+			v1.APIMessage.HandlePostSendMessage(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/config") && c.Request.Method == "POST":
+			v1.APIShareInfo.HandlePostConfigForm(c) // create form
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/image/") && c.Request.Method == "GET":
+			v1.APIShareInfo.HandleGetImageShareInfo(c)
+		case strings.HasPrefix(c.Request.RequestURI, "/bss-chat/v1/share-info/") && c.Request.Method == "PUT":
+			v1.APIShareInfo.HandlePutShareInfoById(c)
+		default:
+			gin.WrapH(mux)(c)
+		}
+	})
+
+	v1.APIChatVendorHandler = v1.NewChatVendor()
+	v1.APIChatMessageSampleHandler = v1.NewChatMessageSample()
+	v1.APIChatScript = v1.NewAPIChatScript()
+	v1.APIMessage = v1.NewAPIMessage()
+	v1.APIShareInfo = v1.NewAPIShareInfo()
 	v1.NewOttMessage(httpServer, service.NewOttMessage(), service.NewChatConnectionApp(), service.NewConversation())
 	v1.NewMessage(httpServer, service.NewMessage())
 	v1.NewWebSocket(httpServer, service.NewSubscriberService())
@@ -150,7 +286,6 @@ func NewGRPCServer(port string) {
 	} else if err != nil {
 		panic(err)
 	}
-
 }
 
 func newHTTPandGRPC(httpHand http.Handler, grpcHandler http.Handler) http.Handler {
@@ -173,15 +308,13 @@ func handleMatchHeaders(key string) (string, bool) {
 func handleMetadata(ctx context.Context, r *http.Request) metadata.MD {
 	md := make(map[string]string)
 	md["tenant_id"] = r.Header.Get("X-Tenant-Id")
-	md["business_unit_id"] = r.Header.Get("X-Business-Unit-Id")
 	md["user_id"] = r.Header.Get("X-User-Id")
 	md["username"] = r.Header.Get("X-Username")
-	md["services"] = strings.Join(r.Header["X-Services"], ",")
-	md["database_name"] = r.Header.Get("X-Database-Name")
-	md["database_host"] = r.Header.Get("X-Database-Host")
-	md["database_port"] = r.Header.Get("X-Database-Port")
-	md["database_user"] = r.Header.Get("X-Database-User")
-	md["database_password"] = r.Header.Get("X-Database-Password")
+	md["level"] = r.Header.Get("X-User-Level")
+	md["role_id"] = r.Header.Get("X-Role-Id")
+	md["secret_key"] = r.Header.Get("secret-key")
+	md["system_id"] = r.Header.Get("system-key")
+
 	return metadata.New(md)
 }
 

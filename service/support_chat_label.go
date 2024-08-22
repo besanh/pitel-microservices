@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -19,7 +20,9 @@ func RequestOttLabel(ctx context.Context, requestType, suffixUrl string, request
 	}
 	chatLabelAfterRequest.UserId = request.ExternalUserId
 	url := OTT_URL + "/ott/" + OTT_VERSION + "/crm/" + requestType + "/" + suffixUrl
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(1 * time.Minute)
+
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(chatLabelAfterRequest).

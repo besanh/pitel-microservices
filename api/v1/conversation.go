@@ -29,7 +29,6 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 		Group.GET("manager", handler.GetConversationsByManager)
 		Group.PUT(":app_id/:oa_id/:id", handler.UpdateConversation)
 		Group.POST("status", handler.UpdateStatusConversation)
-		Group.PATCH(":id/reassign", handler.ReassignConversation)
 		Group.GET(":app_id/:oa_id/:id", handler.GetConversationById)
 		Group.PUT("label/:label_type", handler.PutLabelToConversation)
 		Group.PUT("preference", handler.UpdateUserPreferenceConversation)
@@ -39,10 +38,9 @@ func NewConversation(engine *gin.Engine, conversationService service.IConversati
 func (handler *Conversation) GetConversations(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 
@@ -73,17 +71,20 @@ func (handler *Conversation) GetConversations(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
-	c.JSON(code, result)
+	total, result, err := handler.conversationService.GetConversations(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.Pagination(result, total, limit, offset))
 }
 
 func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	limit := util.ParseLimit(c.Query("limit"))
 	scrollId := c.Query("scroll_id")
 
@@ -114,17 +115,24 @@ func (handler *Conversation) GetConversationsWithScrollAPI(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversationsWithScrollAPI(c, res.Data, filter, limit, scrollId)
-	c.JSON(code, result)
+	total, data, respScrollId, err := handler.conversationService.GetConversationsWithScrollAPI(c, res.Data, filter, limit, scrollId)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	result := map[string]any{
+		"conversations": data,
+		"scroll_id":     respScrollId,
+	}
+	c.JSON(response.Pagination(result, total, limit, 0))
 }
 
 func (handler *Conversation) UpdateConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
 		c.JSON(response.BadRequestMsg("app_id is required"))
@@ -156,10 +164,9 @@ func (handler *Conversation) UpdateConversation(c *gin.Context) {
 func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	jsonBody := make(map[string]any, 0)
 	if err := c.ShouldBindJSON(&jsonBody); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))
@@ -187,10 +194,9 @@ func (handler *Conversation) UpdateStatusConversation(c *gin.Context) {
 func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	limit := util.ParseLimit(c.Query("limit"))
 	offset := util.ParseOffset(c.Query("offset"))
 	isDone := sql.NullBool{}
@@ -220,32 +226,20 @@ func (handler *Conversation) GetConversationsByManager(c *gin.Context) {
 		Following:      following,
 	}
 
-	code, result := handler.conversationService.GetConversationsByManage(c, res.Data, filter, limit, offset)
-	c.JSON(code, result)
-}
-
-func (hanlder *Conversation) ReassignConversation(c *gin.Context) {
-	res := api.AuthMiddleware(c)
-	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+	total, result, err := handler.conversationService.GetConversationsByHighLevel(c, res.Data, filter, limit, offset)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
 		return
 	}
-
-	id := c.Param("id")
-	if len(id) < 1 {
-		c.JSON(response.BadRequestMsg("id is required"))
-		return
-	}
-
+	c.JSON(response.Pagination(result, total, limit, offset))
 }
 
 func (handler *Conversation) GetConversationById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	appId := c.Param("app_id")
 	if len(appId) < 1 {
 		c.JSON(response.BadRequestMsg("app_id is required"))
@@ -264,17 +258,20 @@ func (handler *Conversation) GetConversationById(c *gin.Context) {
 		return
 	}
 
-	code, result := handler.conversationService.GetConversationById(c, res.Data, appId, conversationId)
-	c.JSON(code, result)
+	result, err := handler.conversationService.GetConversationById(c, res.Data, appId, conversationId)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+	c.JSON(response.OK(result))
 }
 
 func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	labelType := c.Param("label_type")
 	if len(labelType) < 1 {
 		c.JSON(response.BadRequestMsg("label_type is required"))
@@ -310,10 +307,9 @@ func (handler *Conversation) PutLabelToConversation(c *gin.Context) {
 func (handler *Conversation) UpdateUserPreferenceConversation(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	preferenceRequest := model.ConversationPreferenceRequest{}
 	if err := c.ShouldBindJSON(&preferenceRequest); err != nil {
 		c.JSON(response.BadRequestMsg(err.Error()))

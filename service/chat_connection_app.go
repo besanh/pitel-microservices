@@ -15,13 +15,15 @@ import (
 type (
 	IChatConnectionApp interface {
 		InsertChatConnectionApp(ctx context.Context, authUser *model.AuthUser, data model.ChatConnectionAppRequest) (string, error)
-		GetChatConnectionApp(ctx context.Context, authUser *model.AuthUser, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error)
+		GetChatConnectionApps(ctx context.Context, authUser *model.AuthUser, filter model.ChatConnectionAppFilter, limit, offset int) (int, *[]model.ChatConnectionAppView, error)
 		GetChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string) (model.ChatConnectionApp, error)
 		UpdateChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatConnectionAppRequest, isUpdateFromOtt bool) (err error)
 		DeleteChatConnectionAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
 	}
 	ChatConnectionApp struct{}
 )
+
+var ChatConnectionAppService IChatConnectionApp
 
 func NewChatConnectionApp() IChatConnectionApp {
 	return &ChatConnectionApp{}
@@ -56,22 +58,15 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 		}
 	}
 
-	filter := model.AppFilter{
-		AppType:    data.ConnectionType,
-		DefaultApp: "active",
+	filter := model.ChatAppFilter{
+		AppType: data.ConnectionType,
 	}
 	_, app, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
 		log.Error(err)
 		return connectionApp.Id, err
 	}
-	if len(*app) > 0 {
-		if data.ConnectionType == "facebook" {
-			connectionApp.AppId = (*app)[0].InfoApp.Facebook.AppId
-		} else if data.ConnectionType == "zalo" {
-			connectionApp.AppId = (*app)[0].InfoApp.Zalo.AppId
-		}
-	} else {
+	if len(*app) < 1 {
 		log.Error("app with type " + data.ConnectionType + " not found")
 		return connectionApp.Id, errors.New("app not found")
 	}
@@ -168,7 +163,7 @@ func (s *ChatConnectionApp) InsertChatConnectionApp(ctx context.Context, authUse
 	return connectionApp.Id, nil
 }
 
-func (s *ChatConnectionApp) GetChatConnectionApp(ctx context.Context, authUser *model.AuthUser, filter model.ChatConnectionAppFilter, limit, offset int) (total int, connectionApps *[]model.ChatConnectionAppView, err error) {
+func (s *ChatConnectionApp) GetChatConnectionApps(ctx context.Context, authUser *model.AuthUser, filter model.ChatConnectionAppFilter, limit, offset int) (total int, connectionApps *[]model.ChatConnectionAppView, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)

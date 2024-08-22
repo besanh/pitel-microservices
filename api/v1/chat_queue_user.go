@@ -27,10 +27,9 @@ func NewChatQueueUser(engine *gin.Engine, chatQueueUser service.IChatQueueUser) 
 func (h *ChatQueueUser) InsertChatQueueUser(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	var data model.ChatQueueUserRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)
@@ -60,10 +59,9 @@ func (h *ChatQueueUser) InsertChatQueueUser(c *gin.Context) {
 func (h *ChatQueueUser) UpdateChatQueueUserById(c *gin.Context) {
 	res := api.AuthMiddleware(c)
 	if res == nil {
-		c.JSON(response.ServiceUnavailableMsg("token is invalid"))
+		c.JSON(response.Unauthorized())
 		return
 	}
-
 	var data model.ChatQueueUserRequest
 	if err := c.ShouldBind(&data); err != nil {
 		log.Error(err)

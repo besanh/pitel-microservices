@@ -1,0 +1,223 @@
+syntax = "proto3";
+
+package proto.chatConnectionApp;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatConnectionApp {
+  string id = 1;
+  string tenant_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string connection_name = 5;
+  string connection_type = 6;
+  string chat_app_id = 7;
+  string connection_queue_id = 8;
+  ConnectionQueue connection_queue = 9;
+  OaInfo oa_info = 10;
+  string status = 11;
+}
+
+message ConnectionQueue {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string connection_id = 5;
+  ChatConnectionApp chat_connection_app = 6;
+  string queue_id = 7;
+  ChatQueue chat_queue = 8;
+}
+
+message ChatQueue {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string queue_name = 5;
+  string description = 6;
+  string chat_routing_id = 7;
+  google.protobuf.Struct chat_routing = 8;
+  repeated ConnectionQueue chat_connection_queue = 9;
+  repeated google.protobuf.Struct chat_queue_user = 10;
+  string manage_queue_id = 11;
+  google.protobuf.Struct manage_queue_user = 12;
+  string status = 13;
+}
+
+message ChatConnectionAppView {
+  string id = 1;
+  string tenant_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string connection_name = 5;
+  string connection_type = 6;
+  string chat_app_id = 7;
+  string connection_queue_id = 8;
+  ConnectionQueue connection_queue = 9;
+  OaInfo oa_info = 10;
+  string status = 11;
+  string share_form_uuid = 12;
+  ShareInfoForm share_info_form = 13;
+}
+
+message ShareInfoForm {
+  ShareFormZalo zalo = 1;
+}
+
+message ShareFormZalo {
+  string app_id = 1;
+  string image_name = 2;
+  string image_url = 3;
+  string oa_id = 4;
+  string subtitle = 5;
+  string title = 6;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string status = 5;
+  string avatar = 6;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string access_token = 5;
+  string avatar = 6;
+  int32 expire = 7;
+  string status = 8;
+}
+
+// get chat connection apps
+message GetChatConnectionAppsRequest {
+  string status = 1;
+  string tenant_id = 2;
+  string oa_id = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+  string chat_app_id = 6;
+  string connection_name = 7;
+  string connection_type = 8;
+  string queue_id = 9;
+  string connection_queue_id = 10;
+}
+
+message GetChatConnectionAppsResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatConnectionAppView data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get connection app by id
+message GetChatConnectionAppByIdRequest { string id = 1; }
+
+message GetChatConnectionAppByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatConnectionApp data = 3;
+}
+
+// create connection app
+message PostChatConnectionAppRequest {
+  string id = 1;
+  string connection_name = 2;
+  string connection_type = 3;
+  string queue_id = 4;
+  string connection_queue_id = 5;
+  OaInfo oa_info = 6;
+  string status = 7;
+  string oa_id = 8;
+  string chat_app_id = 9;
+  string oa_name = 10;
+  int64 code = 11;
+  string message = 12;
+}
+
+message PostChatConnectionAppResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update connection app by id
+message PutChatConnectionAppRequest {
+  string id = 1;
+  string connection_id = 2;
+  string connection_name = 3;
+  string connection_type = 4;
+  string queue_id = 5;
+  string connection_queue_id = 6;
+  OaInfo oa_info = 7;
+  string status = 8;
+  string chat_app_id = 9;
+  string app_id = 10;
+  string oa_name = 11;
+  int64 code = 12;
+  string message = 13;
+}
+
+message PutChatConnectionAppResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete connection app by id
+message DeleteChatConnectionAppRequest { string id = 1; }
+
+message DeleteChatConnectionAppResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatConnectionAppService {
+  rpc GetChatConnectionApps(GetChatConnectionAppsRequest) returns (GetChatConnectionAppsResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-connection-app"
+    };
+  };
+
+  rpc GetChatConnectionAppById(GetChatConnectionAppByIdRequest) returns (GetChatConnectionAppByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-connection-app/{id}"
+    };
+  };
+
+  rpc InsertChatConnectionApp(PostChatConnectionAppRequest) returns (PostChatConnectionAppResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-connection-app"
+      body : "*"
+    };
+  };
+
+  rpc UpdateChatConnectionAppById(PutChatConnectionAppRequest) returns (PutChatConnectionAppResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-connection-app/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteChatConnectionAppById(DeleteChatConnectionAppRequest) returns (DeleteChatConnectionAppResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-connection-app/{id}"
+    };
+  };
+}

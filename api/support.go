@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/middleware/auth"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
 	"nhooyr.io/websocket"
@@ -22,7 +24,7 @@ const (
 	USER_INFO    = "user_info"
 )
 
-func AuthMiddleware(c *gin.Context) *model.AAAResponse {
+func AuthMiddleware(c *gin.Context) *model.ChatResponse {
 	bssAuthRequest := model.BssAuthRequest{
 		Token:   c.Query("token"),
 		AuthUrl: c.Query("auth-url"),
@@ -38,6 +40,13 @@ func AuthMiddleware(c *gin.Context) *model.AAAResponse {
 	}
 
 	res := AAAMiddleware(c, bssAuthRequest)
+	if res == nil {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return nil
+	}
 
 	return res
 }
@@ -57,7 +66,7 @@ func MoveTokenToHeader() gin.HandlerFunc {
 	}
 }
 
-func AAAMiddleware(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse) {
+func AAAMiddleware(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse) {
 	if len(bssAuthRequest.Token) < 10 {
 		return nil
 	}
@@ -77,7 +86,7 @@ func AAAMiddleware(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 	return
 }
 
-func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse, err error) {
+func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse, err error) {
 	body := map[string]string{
 		"token": bssAuthRequest.Token,
 	}
@@ -98,7 +107,7 @@ func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *
 	return result, nil
 }
 
-func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.AAAResponse, err error) {
+func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *model.ChatResponse, err error) {
 	clientInfo := resty.New()
 	urlInfo := bssAuthRequest.AuthUrl + "/v1/crm/auth/auth-info"
 	res, err := clientInfo.R().
@@ -159,14 +168,12 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 		userInfo.UnitUuid, _ = resp["unit_uuid"].(string)
 		userInfo.UnitName, _ = resp["unit_name"].(string)
 		userInfo.RoleUuid, _ = resp["role_uuid"].(string)
-		userInfo.Extension, _ = resp["extension"].(string)
-		userInfo.ExtensionUuid, _ = resp["extension_uuid"].(string)
 
 		cache.RCache.Set(USER_INFO+"_"+bssAuthRequest.Token, userInfo, 3*time.Minute)
 	}
 
 	if len(userInfo.UserUuid) > 1 {
-		result = &model.AAAResponse{
+		result = &model.ChatResponse{
 			Data: &model.AuthUser{
 				TenantId: userInfo.DomainUuid,
 				UserId:   userInfo.UserUuid,
@@ -174,7 +181,6 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 				Level:    userInfo.Level,
 				Source:   bssAuthRequest.Source,
 				Token:    bssAuthRequest.Token,
-				UnitUuid: userInfo.UnitUuid,
 				Fullname: userInfo.FirstName + " " + userInfo.MiddleName + " " + userInfo.LastName,
 			},
 		}
@@ -195,4 +201,55 @@ func WriteTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn,
 		return fmt.Errorf("failed to write message: %w", err)
 	}
 	return nil
+}
+
+func AuthMiddlewareNew(c *gin.Context) (result *model.ChatResponse) {
+	if len(c.Query("token")) < 1 || len(c.Query("system-key")) < 1 {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	result = auth.ChatMiddleware(c, c.Query("token"), c.Query("system-key"))
+	if result == nil {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	return
+}
+
+func AuthMiddlewareNewVersion(c *gin.Context) (result *model.ChatResponse) {
+	if len(c.GetHeader("authorization")) < 1 || len(c.GetHeader("system-key")) < 1 {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+
+	parts := strings.Split(c.GetHeader("authorization"), " ")
+
+	// Check if the header is in the expected format
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	token := parts[1]
+
+	result = auth.ChatMiddleware(c, token, c.GetHeader("system-key"))
+	if result == nil {
+		c.JSON(http.StatusUnauthorized, map[string]any{
+			"error": http.StatusText(http.StatusUnauthorized),
+		})
+		c.Abort()
+		return
+	}
+	return
 }

@@ -1,0 +1,337 @@
+syntax = "proto3";
+
+package proto.conversation;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ConversationCustomView {
+  string tenant_id = 1;
+  string conversation_id = 2;
+  string conversation_type = 3;
+  string app_id = 4;
+  string oa_id = 5;
+  string oa_name = 6;
+  string oa_avatar = 7;
+  ShareInfo share_info = 8;
+  string external_user_id = 9;
+  string username = 10;
+  string avatar = 11;
+  bool major = 12;
+  bool following = 13;
+  repeated ChatLabel labels = 14;
+  bool is_done = 15;
+  string is_done_at = 16;
+  string is_done_by = 17;
+  string created_at = 18;
+  string updated_at = 19;
+  int32 total_unread = 20;
+  string latest_message_content = 21;
+  string latest_message_direction = 22;
+  string external_conversation_id = 23;
+}
+
+message ConversationView {
+  string tenant_id = 1;
+  string conversation_id = 2;
+  string conversation_type = 3;
+  string app_id = 4;
+  string oa_id = 5;
+  string oa_name = 6;
+  string oa_avatar = 7;
+  ShareInfo share_info = 8;
+  string external_user_id = 9;
+  string username = 10;
+  string avatar = 11;
+  bool major = 12;
+  bool following = 13;
+  repeated ChatLabel labels = 14;
+  bool is_done = 15;
+  string is_done_at = 16;
+  string is_done_by = 17;
+  string created_at = 18;
+  string updated_at = 19;
+  int32 total_unread = 20;
+  string latest_message_content = 21;
+  string latest_message_direction = 22;
+  string external_conversation_id = 23;
+}
+
+message Conversation {
+  string tenant_id = 1;
+  string conversation_id = 2;
+  string conversation_type = 3;
+  string app_id = 4;
+  string oa_id = 5;
+  string oa_name = 6;
+  string oa_avatar = 7;
+  ShareInfo share_info = 8;
+  string external_user_id = 9;
+  string username = 10;
+  string avatar = 11;
+  bool major = 12;
+  bool following = 13;
+  repeated ChatLabel labels = 14;
+  bool is_done = 15;
+  google.protobuf.Timestamp is_done_at = 16;
+  string is_done_by = 17;
+  string created_at = 18;
+  string updated_at = 19;
+  string external_conversation_id = 20;
+}
+
+message ShareInfo {
+  string fullname = 1;
+  string phone_number = 2;
+  string address = 3;
+  string city = 4;
+  string district = 5;
+}
+
+message ChatLabel {
+  string tenant_id = 1;
+  string app_id = 2;
+  string oa_id = 3;
+  string label_name = 4;
+  string label_type = 5;
+  string external_label_id = 6;
+  string label_color = 7;
+  bool label_status = 8;
+  string created_by = 9;
+  string updated_by = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+  string id = 13;
+}
+
+// get conversations
+message GetConversationsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string is_done = 3;
+  string major = 4;
+  string following = 5;
+  repeated string app_id = 6;
+  repeated string conversation_id = 7;
+  string username = 8;
+  string phone_number = 9;
+  string email = 10;
+}
+
+message GetConversationsResponse {
+  string code = 1;
+  string message = 2;
+  repeated ConversationCustomView data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get conversations by manager
+message GetConversationsByManagerRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string is_done = 3;
+  string major = 4;
+  string following = 5;
+  repeated string app_id = 6;
+  repeated string conversation_id = 7;
+  string username = 8;
+  string phone_number = 9;
+  string email = 10;
+}
+
+message GetConversationsByManagerResponse {
+  string code = 1;
+  string message = 2;
+  repeated ConversationView data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get conversations by manager with scroll
+message GetConversationsByManagerWithScrollAPIRequest {
+  int32 limit = 1;
+  string scroll_id = 2;
+  string is_done = 3;
+  string major = 4;
+  string following = 5;
+  repeated string app_id = 6;
+  repeated string conversation_id = 7;
+  string username = 8;
+  string phone_number = 9;
+  string email = 10;
+}
+
+message GetConversationsByManagerWithScrollAPIResponse {
+  string code = 1;
+  string message = 2;
+  repeated ConversationView data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  string scroll_id = 6;
+}
+
+// get conversations with scroll
+message GetConversationsWithScrollAPIRequest {
+  int32 limit = 1;
+  string scroll_id = 2;
+  string is_done = 3;
+  string major = 4;
+  string following = 5;
+  repeated string app_id = 6;
+  repeated string conversation_id = 7;
+  string username = 8;
+  string phone_number = 9;
+  string email = 10;
+}
+
+message GetConversationsWithScrollAPIResponse {
+  string code = 1;
+  string message = 2;
+  repeated ConversationCustomView data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  string scroll_id = 6;
+}
+
+// update conversation
+message PutConversationRequest {
+  string app_id = 1;
+  string oa_id = 2;
+  string id = 3;
+  string fullname = 4;
+  string phone_number = 5;
+  string address = 6;
+  string city = 7;
+  string district = 8;
+}
+
+message PutConversationResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// update queue status
+message PutConversationStatusRequest {
+  string app_id = 1;
+  string conversation_id = 2;
+  string status = 3;
+}
+
+message PutConversationStatusResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// get conversation by id
+message GetConversationByIdRequest {
+  string app_id = 1;
+  string oa_id = 2;
+  string id = 3;
+}
+
+message GetConversationByIdResponse {
+  string code = 1;
+  string message = 2;
+  Conversation data = 3;
+}
+
+// put label
+message PutLabelToConversationRequest {
+  string label_type = 1;
+  string app_id = 2;
+  string oa_id = 3;
+  string label_name = 4;
+  string label_id = 5;
+  string external_label_id = 6;
+  string external_user_id = 7;
+  string conversation_id = 8;
+  string action = 9; // create, update, remove label
+  string label_color = 10;
+}
+
+message PutLabelToConversationResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// preference
+message UpdaterUserPreferenceConversationRequest {
+  string app_id = 1;
+  string oa_id = 2;
+  string conversation_id = 3;
+  string preference_value = 4;
+  string preference_type = 5; // major, following
+}
+
+message UpdaterUserPreferenceConversationResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ConversationService {
+  rpc GetConversations(GetConversationsRequest) returns (GetConversationsResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/conversation"
+    };
+  };
+
+  rpc GetConversationsWithScrollAPI(GetConversationsWithScrollAPIRequest) returns (GetConversationsWithScrollAPIResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/conversation/scroll"
+    };
+  };
+
+  rpc GetConversationsByManager(GetConversationsByManagerRequest) returns (GetConversationsByManagerResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/conversation/manager"
+    };
+  };
+
+  rpc GetConversationsByManagerWithScrollAPI(GetConversationsByManagerWithScrollAPIRequest) returns (GetConversationsByManagerWithScrollAPIResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/conversation/manager/scroll"
+    };
+  };
+
+  rpc UpdateConversation(PutConversationRequest) returns (PutConversationResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/conversation/{app_id}/{oa_id}/{id}"
+      body : "*"
+    };
+  };
+
+  rpc UpdateStatusConversation(PutConversationStatusRequest) returns (PutConversationStatusResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/conversation/status"
+      body : "*"
+    };
+  };
+
+  rpc GetConversationById(GetConversationByIdRequest) returns (GetConversationByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/conversation/{app_id}/{oa_id}/{id}"
+    };
+  };
+
+  rpc PutLabelToConversation(PutLabelToConversationRequest) returns (PutLabelToConversationResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/conversation/label/{label_type}"
+      body : "*"
+    };
+  };
+
+  rpc UpdaterUserPreferenceConversation(UpdaterUserPreferenceConversationRequest) returns (UpdaterUserPreferenceConversationResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/conversation/preference"
+      body : "*"
+    };
+  };
+}

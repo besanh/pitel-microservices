@@ -14,28 +14,29 @@ import (
 
 type ChatConnectionApp struct {
 	bun.BaseModel     `bun:"table:chat_connection_app,alias:cca"`
-	Id                string           `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	Id                string           `bun:"id,pk,type:uuid,notnull"`
 	TenantId          string           `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
 	CreatedAt         time.Time        `json:"created_at" bun:"created_at,notnull"`
 	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`
 	ConnectionName    string           `json:"connection_name" bun:"connection_name,type:text,notnull"`
 	ConnectionType    string           `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId             string           `json:"app_id" bun:"app_id,type:text,notnull"`
+	ChatAppId         string           `json:"chat_app_id" bun:"chat_app_id,type:uuid,notnull"`
 	ConnectionQueueId string           `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,default:null"`
 	ConnectionQueue   *ConnectionQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
 	OaInfo            OaInfo           `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
 	Status            string           `json:"status" bun:"status,notnull"`
+	ChatApp           *ChatApp         `json:"chat_app" bun:"rel:has-one,join:chat_app_id=id"`
 }
 
 type ChatConnectionAppView struct {
 	bun.BaseModel     `bun:"table:chat_connection_app,alias:cca"`
 	Id                string           `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
 	TenantId          string           `json:"tenant_id" bun:"tenant_id,type:uuid,notnull"`
-	CreatedAt         time.Time        `json:"created_at" bun:"created_at,notnull"`
-	UpdatedAt         time.Time        `json:"updated_at" bun:"updated_at,notnull"`
+	CreatedAt         time.Time        `bun:"created_at,notnull"`
+	UpdatedAt         time.Time        `bun:"updated_at,notnull"`
 	ConnectionName    string           `json:"connection_name" bun:"connection_name,type:text,notnull"`
 	ConnectionType    string           `json:"connection_type" bun:"connection_type,type:text,notnull"`
-	AppId             string           `json:"app_id" bun:"app_id,type:text,notnull"`
+	ChatAppId         string           `json:"chat_app_id" bun:"chat_app_id,type:uuid,notnull"`
 	ConnectionQueueId string           `json:"connection_queue_id" bun:"connection_queue_id,type:uuid,default:null"`
 	ConnectionQueue   *ConnectionQueue `json:"connection_queue" bun:"rel:has-one,join:connection_queue_id=id"`
 	OaInfo            OaInfo           `json:"oa_info" bun:"oa_info,type:jsonb,notnull"`
@@ -45,41 +46,45 @@ type ChatConnectionAppView struct {
 }
 
 type OaInfo struct {
-	Zalo []struct {
-		AppId               string `json:"app_id"`
-		OaId                string `json:"oa_id"`
-		OaName              string `json:"oa_name"`
-		UrlOa               string `json:"url_oa"`
-		Avatar              string `json:"avatar"`
-		Cover               string `json:"cover"`
-		CateName            string `json:"cate_name"`
-		Status              string `json:"status"`
-		AccessToken         string `json:"access_token"`
-		Expire              int64  `json:"expire"`
-		TokenCreatedAt      string `json:"token_created_at"`
-		TokenExpiresIn      int64  `json:"token_expires_in"`
-		TokenTimeRemainning int64  `json:"token_time_remaining"`
-		CreatedTimestamp    int64  `json:"created_timestamp"`
-		UpdatedTimestamp    int64  `json:"updated_timestamp"`
-		IsNotify            bool   `json:"is_notify"`
-	} `json:"zalo"`
-	Facebook []struct {
-		AppId               string `json:"app_id"`
-		OaId                string `json:"oa_id"`
-		OaName              string `json:"oa_name"`
-		UrlOa               string `json:"url_oa"`
-		Avatar              string `json:"avatar"`
-		Cover               string `json:"cover"`
-		AccessToken         string `json:"access_token"`
-		Expire              int64  `json:"expire"`
-		TokenCreatedAt      string `json:"token_created_at"`
-		TokenExpiresIn      int64  `json:"token_expires_in"`
-		TokenTimeRemainning int64  `json:"token_time_remaining"`
-		Status              string `json:"status"`
-		CreatedTimestamp    int64  `json:"created_timestamp"`
-		UpdatedTimestamp    int64  `json:"updated_timestamp"`
-		IsNotify            bool   `json:"is_notify"`
-	} `json:"facebook"`
+	Zalo     []ZaloInfo     `json:"zalo"`
+	Facebook []FacebookInfo `json:"facebook"`
+}
+
+type ZaloInfo struct {
+	AppId               string `json:"app_id"`
+	OaId                string `json:"oa_id"`
+	OaName              string `json:"oa_name"`
+	UrlOa               string `json:"url_oa"`
+	Avatar              string `json:"avatar"`
+	Cover               string `json:"cover"`
+	CateName            string `json:"cate_name"`
+	Status              string `json:"status"`
+	AccessToken         string `json:"access_token"`
+	Expire              int64  `json:"expire"`
+	TokenCreatedAt      string `json:"token_created_at"`
+	TokenExpiresIn      int64  `json:"token_expires_in"`
+	TokenTimeRemainning int64  `json:"token_time_remaining"`
+	CreatedTimestamp    int64  `json:"created_timestamp"`
+	UpdatedTimestamp    int64  `json:"updated_timestamp"`
+	IsNotify            bool   `json:"is_notify"`
+}
+
+type FacebookInfo struct {
+	AppId               string `json:"app_id"`
+	OaId                string `json:"oa_id"`
+	OaName              string `json:"oa_name"`
+	UrlOa               string `json:"url_oa"`
+	Avatar              string `json:"avatar"`
+	Cover               string `json:"cover"`
+	AccessToken         string `json:"access_token"`
+	Expire              int64  `json:"expire"`
+	TokenCreatedAt      string `json:"token_created_at"`
+	TokenExpiresIn      int64  `json:"token_expires_in"`
+	TokenTimeRemainning int64  `json:"token_time_remaining"`
+	Status              string `json:"status"`
+	CreatedTimestamp    int64  `json:"created_timestamp"`
+	UpdatedTimestamp    int64  `json:"updated_timestamp"`
+	IsNotify            bool   `json:"is_notify"`
 }
 
 type ChatConnectionAppRequest struct {
@@ -103,6 +108,7 @@ type ChatConnectionAppRequest struct {
 	TokenCreatedAt      string `json:"token_created_at"`
 	TokenExpiresIn      int64  `json:"token_expires_in"`
 	TokenTimeRemainning int64  `json:"token_time_remaining"`
+	ChatAppId           string `json:"chat_app_id"`
 }
 
 type AccessInfo struct {

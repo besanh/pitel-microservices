@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package proto.chatMessageSample;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatMessageSampleData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string keyword = 5;
+  string theme = 6;
+  string connection_id = 7;
+  ChatConnectionApp connection_app = 8;
+  string channel = 9;
+  string content = 10;
+  string created_by = 11;
+  string updated_by = 12;
+  string image_url = 13;
+}
+
+message ChatConnectionApp {
+  string id = 1;
+  string tenant_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  string connection_name = 5;
+  string connection_type = 6;
+  string chat_app_id = 7;
+  string connection_queue_id = 8;
+  OaInfo oa_info = 9;
+  string status = 10;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string status = 5;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string avatar = 5;
+  string status = 6;
+}
+
+// get chat message samples
+message GetChatMessageSamplesRequest {
+  string connection_id = 1;
+  string channel = 2;
+  string oa_id = 3;
+  string keyword = 4;
+  string tenant_id = 5;
+  int32 limit = 6;
+  int32 offset = 7;
+}
+
+message GetChatMessageSamplesResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatMessageSampleData data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get sample by id
+message GetMessageSampleByIdRequest { string id = 1; }
+
+message GetMessageSampleByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatMessageSampleData data = 3;
+}
+
+// create sample
+message PostMessageSampleRequest {
+  string keyword = 1;
+  string theme = 2;
+  string connection_id = 3;
+  string channel = 4;
+  string content = 5;
+}
+
+message PostMessageSampleResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update sample by id
+message PutMessageSampleRequest {
+  string id = 1;
+  string keyword = 2;
+  string theme = 3;
+  string connection_id = 4;
+  string channel = 5;
+  string content = 6;
+}
+
+message PutMessageSampleResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete sample by id
+message DeleteMessageSampleRequest { string id = 1; }
+
+message DeleteMessageSampleResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service MessageSampleService {
+  rpc GetChatMessageSamples(GetChatMessageSamplesRequest) returns (GetChatMessageSamplesResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-sample"
+    };
+  };
+
+  rpc GetMessageSampleById(GetMessageSampleByIdRequest) returns (GetMessageSampleByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-sample/{id}"
+    };
+  };
+
+  rpc InsertMessageSample(PostMessageSampleRequest) returns (PostMessageSampleResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-sample"
+      body : "*"
+    };
+  };
+
+  rpc UpdateMessageSampleById(PutMessageSampleRequest) returns (PutMessageSampleResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-sample/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteMessageSampleById(DeleteMessageSampleRequest) returns (DeleteMessageSampleResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-sample/{id}"
+    };
+  };
+}

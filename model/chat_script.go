@@ -2,10 +2,11 @@ package model
 
 import (
 	"errors"
+	"mime/multipart"
+
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
-	"mime/multipart"
 )
 
 type ChatScript struct {

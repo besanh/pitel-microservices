@@ -2,6 +2,9 @@ package v1
 
 import (
 	"database/sql"
+	"strconv"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -9,11 +12,25 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/service"
-	"strconv"
 )
 
-type ChatScript struct {
-	chatScriptService service.IChatScript
+type (
+	IAPIChatScript interface {
+		HandlePostChatScriptUpload(c *gin.Context)
+		HandlePutChatScriptUpload(c *gin.Context)
+	}
+
+	ChatScript struct {
+		chatScriptService service.IChatScript
+	}
+)
+
+var APIChatScript IAPIChatScript
+
+func NewAPIChatScript() IAPIChatScript {
+	return &ChatScript{
+		chatScriptService: service.NewChatScript(),
+	}
 }
 
 func NewChatScript(engine *gin.Engine, chatScriptService service.IChatScript) {
@@ -206,4 +223,68 @@ func (handler *ChatScript) DeleteChatScriptById(c *gin.Context) {
 		return
 	}
 	c.JSON(response.OKResponse())
+}
+
+func (handler *ChatScript) HandlePutChatScriptUpload(c *gin.Context) {
+	res := api.AuthMiddlewareNewVersion(c)
+	if res == nil {
+		return
+	}
+
+	id := strings.TrimPrefix(c.Request.RequestURI, "/bss-chat/v1/chat-script/upload/")
+	if id == "" {
+		c.JSON(response.BadRequestMsg("id is empty"))
+		return
+	}
+
+	var chatScriptRequest model.ChatScriptRequest
+	err := c.ShouldBind(&chatScriptRequest)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	if err := chatScriptRequest.Validate(); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	err = handler.chatScriptService.UpdateChatScriptById(c, res.Data, id, chatScriptRequest, chatScriptRequest.File)
+	if err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OKResponse())
+}
+
+func (handler *ChatScript) HandlePostChatScriptUpload(c *gin.Context) {
+	res := api.AuthMiddlewareNewVersion(c)
+	if res == nil {
+		return
+	}
+
+	var chatScriptRequest model.ChatScriptRequest
+	err := c.ShouldBind(&chatScriptRequest)
+	if err != nil {
+		log.Error(err)
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	if err := chatScriptRequest.Validate(); err != nil {
+		c.JSON(response.BadRequestMsg(err.Error()))
+		return
+	}
+
+	id, err := handler.chatScriptService.InsertChatScript(c, res.Data, chatScriptRequest, chatScriptRequest.File)
+	if err != nil {
+		c.JSON(response.ServiceUnavailableMsg(err.Error()))
+		return
+	}
+
+	c.JSON(response.OK(map[string]any{
+		"id": id,
+	}))
 }

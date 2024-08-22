@@ -23,6 +23,8 @@ type (
 	ChatEmail struct{}
 )
 
+var ChatEmailService IChatEmail
+
 func NewChatEmail() IChatEmail {
 	repo := &ChatEmail{}
 	return repo
@@ -127,37 +129,38 @@ func (s *ChatEmail) GetChatEmailById(ctx context.Context, authUser *model.AuthUs
 	return chatEmail, nil
 }
 
-func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.AuthUser, id string, request model.ChatEmailRequest) error {
-	dbCon, err := HandleGetDBConSource(authUser)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-
+func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.AuthUser, id string, request model.ChatEmailRequest) (err error) {
 	// Check oa exist
 	filterConnection := model.ChatConnectionAppFilter{
 		TenantId: authUser.TenantId,
 		OaId:     request.OaId,
 	}
-	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, dbCon, filterConnection, 1, 0)
+	_, connections, err := repository.ChatConnectionAppRepo.GetChatConnectionApp(ctx, repository.DBConn, filterConnection, 1, 0)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	}
 	if len(*connections) < 1 {
-		log.Error("oa " + request.OaId + " not found")
-		return errors.New("oa " + request.OaId + " not found")
+		err = errors.New("oa " + request.OaId + " not found")
+		log.Error(err)
+		return
+	} else if len(*connections) > 1 {
+		err = errors.New("oa " + request.OaId + " not unique")
+		log.Error(err)
+		return
 	}
 
-	chatEmailExist, err := repository.NewChatEmail().GetById(ctx, dbCon, id)
+	chatEmailExist, err := repository.NewChatEmail().GetById(ctx, repository.DBConn, id)
 	if err != nil {
 		log.Error(err)
-		return err
+		return
 	} else if chatEmailExist == nil {
-		log.Error("chat email " + id + " not found")
-		return errors.New("chat email " + id + " not found")
+		err = errors.New("chat email " + id + " not found")
+		log.Error(err)
+		return
 	}
 
+	chatEmailExist.OaId = request.OaId
 	chatEmailExist.EmailRecipient = request.EmailRecipient
 	chatEmailExist.EmailSubject = request.EmailSubject
 	chatEmailExist.EmailContent = request.EmailContent
@@ -178,11 +181,11 @@ func (s *ChatEmail) UpdateChatEmailById(ctx context.Context, authUser *model.Aut
 		chatEmailExist.EmailEncryptType = "tls"
 	}
 
-	if err = repository.NewChatEmail().Update(ctx, dbCon, *chatEmailExist); err != nil {
+	if err = repository.NewChatEmail().Update(ctx, repository.DBConn, *chatEmailExist); err != nil {
 		log.Error(err)
-		return err
+		return
 	}
-	return nil
+	return
 }
 
 func (s *ChatEmail) DeleteChatEmailById(ctx context.Context, authUser *model.AuthUser, id string) error {

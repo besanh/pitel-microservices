@@ -1,0 +1,232 @@
+syntax = "proto3";
+
+package proto.chatIntegrateSystem;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+// Request get chat integrate system
+message GetChatIntegrateSystemRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+    string system_name = 3;
+    string vendor_name = 4;
+    string status = 5;
+    string system_id = 6;
+    string tenant_default_id = 7;
+    string chat_app_id = 8;
+    string server_name = 9;
+    string ip = 10;
+}
+
+// Response get chat integrate system
+message GetChatIntegrateSystemResponse {
+    string code = 1;
+    string message = 2;
+    repeated ChatIntegrateSystemData data = 3;
+    int32 total = 4;
+}
+
+message ChatIntegrateSystemData {
+    string id = 1;
+    string system_name = 2;
+    string system_id = 3;
+    string tenant_default_id = 4;
+    string vendor_id = 5;
+    bool status = 6;
+    InfoSystem info_system = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp updated_at = 9;
+    repeated ChatAppIntegrateSystem chat_app_integrate_systems = 10;
+}
+
+message InfoSystem {
+    string token = 1;
+    string api_url = 2;
+    string password = 3;
+    string username = 4;
+    string auth_type = 5;
+    string api_auth_url = 6;
+    string websocket_url = 7;
+    string api_get_user_url = 8;
+    string api_get_user_detail_url = 9;
+    string server_name = 10;
+    string ip = 11;
+}
+
+message ChatAppIntegrateSystem {
+    string id = 1;
+    string chat_app_id = 2;
+    string chat_integrate_system_id = 3;
+    ChatApp chat_app = 4;
+}
+
+message ChatApp {
+    string id = 1;
+    string app_name = 2;
+    string status = 3;
+    ChatInfoApp info_app = 4;
+}
+
+message ChatInfoApp {
+    ChatAppZalo zalo = 1;
+    ChatAppFacebook facebook = 2;
+}
+
+message ChatAppZalo {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message ChatAppFacebook {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message PostInfoSystem {
+    string auth_type = 1;
+    string username = 2;
+    string password = 3;
+    string token = 4;
+    string websocket_url = 5;
+    string api_url = 6;
+    string api_auth_url = 7;
+    string api_get_user_url = 8;
+    string api_get_user_detail_url = 9;
+    repeated string chat_app_ids = 10;
+    repeated PostChatAppRequest chat_apps = 11;
+    string server_name = 12;
+    string ip = 13;
+}
+
+message PostChatAppRequest {
+    string app_name = 1;
+    string status = 2;
+    PostChatInfoApp info_app = 3;
+    repeated string system_ids = 4;
+}
+
+// Request post chat integrate system
+message PostChatIntegrateSystemRequest {
+    string system_name = 1;
+    string vendor_id = 2;
+    bool status = 3;
+    string auth_type = 4;
+    string username = 5;
+    string password = 6;
+    string token = 7;
+    string websocket_url = 8;
+    string api_url = 9;
+    string api_auth_url = 10;
+    string api_get_user_url = 11;
+    string api_get_user_detail_url = 12;
+    repeated string chat_app_ids = 13;
+    repeated ChatAppRequest chat_apps = 14;
+    string tenant_default_id = 15;
+    string server_name = 16;
+    string ip = 17;
+}
+
+message ChatAppRequest {
+    string app_name = 1;
+    string status = 2;
+    PostChatInfoApp info_app = 3;
+    repeated string system_ids = 4;
+}
+
+message PostChatInfoApp {
+    PostChatAppZalo zalo = 1;
+    PostChatAppFacebook facebook = 2;
+}
+
+message PostChatAppZalo {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+message PostChatAppFacebook {
+    string app_id = 1;
+    string app_secret = 2;
+    string app_name = 3;
+}
+
+// Response post chat integrate system
+message PostChatIntegrateSystemResponse {
+    string code = 1;
+    string message = 2;
+    string id = 3;
+    string system_id = 4;
+}
+
+// Response get chat integrate system by id
+message GetChatIntegrateSystemByIdResponse {
+    string code = 1;
+    string message = 2;
+    ChatIntegrateSystemData data = 3;
+}
+
+// Request get chat integrate system by id
+message GetChatIntegrateSystemByIdRequest {
+    string id = 1;
+}
+
+message PutChatIntegrateSystemRequest {
+    string id = 1;
+    string system_name = 2;
+    string vendor_id = 3;
+    bool status = 4;
+    string auth_type = 5;
+    string username = 6;
+    string password = 7;
+    string token = 8;
+    string websocket_url = 9;
+    string api_url = 10;
+    string api_auth_url = 11;
+    string api_get_user_url = 12;
+    string api_get_user_detail_url = 13;
+    repeated string chat_app_ids = 14;
+    string tenant_default_id = 15;
+    string server_name = 16;
+    string ip = 17;
+}
+
+service ChatIntegrateSystem {
+    rpc GetChatIntegrateSystems(GetChatIntegrateSystemRequest) returns (GetChatIntegrateSystemResponse) {
+        option (google.api.http) = {
+            get : "/bss-chat/v1/chat-integrate-system"
+        };
+    }
+
+    rpc PostChatIntegrateSystem(PostChatIntegrateSystemRequest) returns (PostChatIntegrateSystemResponse) {
+        option (google.api.http) = {
+            post : "/bss-chat/v1/chat-integrate-system"
+            body : "*"
+        };
+    }
+
+    rpc GetChatIntegrateSystemById(GetChatIntegrateSystemByIdRequest) returns (GetChatIntegrateSystemByIdResponse) {
+        option (google.api.http) = {
+            get : "/bss-chat/v1/chat-integrate-system/{id}"
+        };
+    }
+
+    rpc UpdateChatIntegrateSystemById(PutChatIntegrateSystemRequest) returns (PostChatIntegrateSystemResponse) {
+        option (google.api.http) = {
+            put : "/bss-chat/v1/chat-integrate-system/{id}"
+            body : "*"
+        };
+    }
+
+    rpc DeleteChatIntegrateSystemById(GetChatIntegrateSystemByIdRequest) returns (PostChatIntegrateSystemResponse) {
+        option (google.api.http) = {
+            delete : "/bss-chat/v1/chat-integrate-system/{id}"
+        };
+    }
+}

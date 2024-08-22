@@ -1,12 +1,12 @@
 ## Builder
-FROM golang:1.21-alpine as builder
+FROM golang:1.22-alpine as builder
 WORKDIR /go/src/pitel-api
 COPY . .
 RUN go get .
 RUN go build -o app.exe .
 
 ## Start from the latest golang base image
-FROM golang:1.21-alpine
+FROM golang:1.22-alpine
 WORKDIR /app
 ARG LOG_DIR=/app/tmp
 RUN mkdir -p ${LOG_DIR}

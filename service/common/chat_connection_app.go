@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/log"
@@ -10,23 +11,23 @@ import (
 
 func PostOttAccount(ottDomain, ottVersion string, chatApp model.ChatApp, connectionApp model.ChatConnectionApp) error {
 	accountInfo := model.OttAccount{}
-	if chatApp.InfoApp.Facebook != nil && chatApp.InfoApp.Facebook.Status == "active" && len(connectionApp.OaInfo.Facebook) > 0 {
+	if chatApp.InfoApp.Facebook != nil && len(connectionApp.OaInfo.Facebook) > 0 {
 		accountInfo.Type = "face"
 		accountInfo.AppId = chatApp.InfoApp.Facebook.AppId
-		accountInfo.AppName = chatApp.InfoApp.Facebook.AppName
+		accountInfo.AppName = chatApp.AppName
 		accountInfo.AppSecret = chatApp.InfoApp.Facebook.AppSecret
 		accountInfo.OaId = connectionApp.OaInfo.Facebook[0].OaId
 		accountInfo.OaName = connectionApp.OaInfo.Facebook[0].OaName
 		accountInfo.AccessToken = connectionApp.OaInfo.Facebook[0].AccessToken
-		accountInfo.Status = chatApp.InfoApp.Facebook.Status
-	} else if chatApp.InfoApp.Zalo != nil && chatApp.InfoApp.Zalo.Status == "active" && len(connectionApp.OaInfo.Zalo) > 0 {
+		accountInfo.Status = "true"
+	} else if chatApp.InfoApp.Zalo != nil && len(connectionApp.OaInfo.Zalo) > 0 {
 		accountInfo.Type = "zalo"
 		accountInfo.AppId = chatApp.InfoApp.Zalo.AppId
-		accountInfo.AppName = chatApp.InfoApp.Zalo.AppName
+		accountInfo.AppName = chatApp.AppName
 		accountInfo.AppSecret = chatApp.InfoApp.Zalo.AppSecret
 		accountInfo.OaId = connectionApp.OaInfo.Zalo[0].OaId
 		accountInfo.OaName = connectionApp.OaInfo.Zalo[0].OaName
-		accountInfo.Status = chatApp.InfoApp.Zalo.Status
+		accountInfo.Status = "true"
 	}
 
 	body := map[string]string{
@@ -43,7 +44,8 @@ func PostOttAccount(ottDomain, ottVersion string, chatApp model.ChatApp, connect
 	log.Info("post ott account: ", body)
 
 	url := ottDomain + "/ott/" + ottVersion + "/account"
-	client := resty.New()
+	client := resty.New().
+		SetTimeout(30 * time.Second)
 
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").

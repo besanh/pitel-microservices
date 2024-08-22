@@ -11,13 +11,12 @@ type AuthSourceFilter struct {
 	Status   sql.NullBool
 }
 
-type AppFilter struct {
-	AppId      string `json:"app_id"`
-	AppName    string `json:"app_name"`
-	OaId       string `json:"oa_id"`
-	AppType    string `json:"app_type"`
-	Status     string `json:"status"`
-	DefaultApp string `json:"default_app"`
+type ChatAppFilter struct {
+	AppId   string `json:"app_id"`
+	AppName string `json:"app_name"`
+	OaId    string `json:"oa_id"`
+	AppType string `json:"app_type"`
+	Status  string `json:"status"`
 }
 
 type ChatConnectionAppFilter struct {
@@ -46,34 +45,36 @@ type ChatQueueUserFilter struct {
 }
 
 type ChatRoutingFilter struct {
-	TenantId     string       `json:"tenant_id"`
 	RoutingName  string       `json:"routing_name"`
 	RoutingAlias string       `json:"routing_alias"`
 	Status       sql.NullBool `json:"status"`
 }
 
 type ConversationFilter struct {
-	AppId          []string     `json:"app_id"`
-	TenantId       string       `json:"tenant_id"`
-	ConversationId []string     `json:"conversation_id"`
-	Username       string       `json:"username"`
-	PhoneNumber    string       `json:"phone_number"`
-	Email          string       `json:"email"`
-	Insensitive    string       `json:"insensitive"`
-	IsDone         sql.NullBool `json:"is_done"`
-	Major          sql.NullBool `json:"major"`
-	Following      sql.NullBool `json:"following"`
+	AppId                  []string     `json:"app_id"`
+	TenantId               string       `json:"tenant_id"`
+	ConversationId         []string     `json:"conversation_id"`
+	ExternalConversationId []string     `json:"external_conversation_id"`
+	Username               string       `json:"username"`
+	PhoneNumber            string       `json:"phone_number"`
+	Email                  string       `json:"email"`
+	Insensitive            string       `json:"insensitive"`
+	IsDone                 sql.NullBool `json:"is_done"`
+	Major                  sql.NullBool `json:"major"`
+	Following              sql.NullBool `json:"following"`
 }
 
-type UserAllocateFilter struct {
-	TenantId       string   `json:"tenant_id"`
-	AppId          string   `json:"app_id"`
-	OaId           string   `json:"oa_id"`
-	ConversationId string   `json:"conversation_id"`
-	UserId         []string `json:"user_id"`
-	QueueId        []string `json:"queue_id"`
-	AllocatedTime  int64    `json:"allocated_time"`
-	MainAllocate   string   `json:"main_allocate"`
+type AllocateUserFilter struct {
+	TenantId               string   `json:"tenant_id"`
+	AppId                  string   `json:"app_id"`
+	OaId                   string   `json:"oa_id"`
+	ConversationId         string   `json:"conversation_id"`
+	ExternalConversationId string   `json:"external_conversation_id"`
+	UserId                 []string `json:"user_id"`
+	QueueId                []string `json:"queue_id"`
+	AllocatedTime          int64    `json:"allocated_time"`
+	MainAllocate           string   `json:"main_allocate"`
+	ConnectionId           string   `json:"connection_id"`
 }
 
 type MessageFilter struct {
@@ -82,6 +83,7 @@ type MessageFilter struct {
 	ParentMessageId     string          `json:"parent_message_id"`
 	ConversationId      string          `json:"conversation_id"`
 	ParentExternalMsgId string          `json:"parent_external_msg_id"`
+	ExternalMessageId   string          `json:"external_message_id"`
 	MessageType         string          `json:"message_type"`
 	EventName           string          `json:"event_name"`
 	Direction           string          `json:"direction"`
@@ -98,6 +100,10 @@ type MessageFilter struct {
 	ReadBy              json.RawMessage `json:"read_by"`
 	IsRead              string          `json:"is_read"`
 	EventNameExlucde    []string        `json:"event_name_exclude"`
+
+	// nested attachments query
+	AttachmentType string `json:"attachment_type"` // image/audio/video/file/link/sticker/gif/reacted/unreacted
+	SearchKeyword  string `json:"search_keyword"`
 }
 
 type ConnectionQueueFilter struct {
@@ -126,7 +132,7 @@ type ChatManageQueueUserFilter struct {
 	TenantId     string `json:"tenant_id"`
 	ConnectionId string `json:"connection_id"`
 	QueueId      string `json:"queue_id"`
-	ManageId     string `json:"manage_id"`
+	UserId       string `json:"user_id"`
 }
 
 type UserInQueueFilter struct {
@@ -182,6 +188,55 @@ type ChatAutoScriptFilter struct {
 }
 
 type ChatPolicyFilter struct {
-	TenantId       string `json:"tenant_id"`
-	ConnectionType string `json:"connection_type"`
+	TenantId       string   `json:"tenant_id"`
+	ConnectionType string   `json:"connection_type"`
+	ExcludedIds    []string `json:"excluded_ids"`
+}
+
+type ChatIntegrateSystemFilter struct {
+	SystemName      string       `json:"system_name"`
+	VendorName      string       `json:"vendor_name"`
+	Status          sql.NullBool `json:"status"`
+	SystemId        string       `json:"system_id"`
+	TenantDefaultId string       `json:"tenant_default_id"`
+	ServerName      string       `json:"server_name"`
+}
+
+type ChatVendorFilter struct {
+	VendorName string       `json:"vendor_name"`
+	VendorType string       `json:"vendor_type"`
+	Status     sql.NullBool `json:"status"`
+}
+
+type ChatRoleFilter struct {
+	RoleName string       `json:"role_name"`
+	Status   sql.NullBool `json:"status"`
+}
+
+type ChatUserFilter struct {
+	Username string       `json:"username"`
+	Level    string       `json:"level"`
+	Status   sql.NullBool `json:"status"`
+	Fullname string       `json:"fullname"`
+	RoleId   string       `json:"role_id"`
+}
+
+type ChatTenantFilter struct {
+	TenantName string       `json:"tenant_name"`
+	Status     sql.NullBool `json:"status"`
+}
+
+type ChatAppIntegrateSystemFilter struct {
+	ChatAppId             string `json:"chat_app_id"`
+	ChatIntegrateSystemId string `json:"chat_integrate_system_id"`
+}
+
+type ConversationMediaFilter struct {
+	TenantId               string `json:"tenant_id"`
+	ConversationId         string `json:"conversation_id"`
+	ExternalConversationId string `json:"external_conversation_id"`
+	ConversationType       string `json:"conversation_type"`
+	MediaType              string `json:"media_type"`
+	MediaName              string `json:"media_name"`
+	SendTimestamp          string `json:"send_timestamp"`
 }

@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+package proto.chatConnectionPipeline;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatConnectionPipelineData {
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string status = 5;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string url_oa = 4;
+  string access_token = 5;
+  string avatar = 6;
+  int32 expire = 7;
+  string status = 8;
+}
+
+// create app
+message PostChatConnectionAppRequest {
+  string id = 1;
+  string connection_name = 2;
+  string connection_type = 3;
+  string queue_id = 4;
+  string connection_queue_id = 5;
+  OaInfo oa_info = 6;
+  string status = 7;
+  string chat_app_id = 8;
+}
+
+// create queue & attach it to app
+message ChatConnectionPipelineQueueRequest {
+  PostChatConnectionAppRequest connection_app_request = 1;
+
+  // for selecting existed queue
+  string connection_queue_id = 2;
+
+  // for creating new queue
+  // queue request
+  ChatQueueRequest chat_queue = 3;
+  // queue user request
+  ChatQueueUserRequest chat_queue_user = 4;
+  // manage queue user request
+  ChatManageQueueUserRequest chat_manage_queue_user = 5;
+}
+
+message ChatManageQueueUserRequest {
+//  string connection_id = 1;
+//  string queue_id = 2;
+  string user_id = 1;
+  bool is_new = 2;
+}
+
+message ChatQueueRequest {
+  string queue_name = 1;
+  string description = 2;
+//  repeated string connection_id = 3;
+  string chat_routing_id = 3;
+  string status = 4;
+}
+
+message ChatQueueUserRequest {
+//    string queue_id = 1;
+  repeated string user_id = 1;
+}
+
+message ChatConnectionPipelineQueueResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// edit queue in c.app
+message UpsertQueueInConnectionAppByIdRequest {
+  string id = 1;
+
+  // for selecting existed queue
+  string connection_queue_id = 2;
+
+  // for creating new queue
+  // queue request
+  ChatQueueRequest chat_queue = 3;
+  // queue user request
+  ChatQueueUserRequest chat_queue_user = 4;
+  // manage queue user request
+  ChatManageQueueUserRequest chat_manage_queue_user = 5;
+}
+
+message UpsertQueueInConnectionAppByIdResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// update connection app status by id
+message PutChatConnectionAppStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+message PutChatConnectionAppStatusResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service ChatConnectionPipelineService {
+  rpc AttachConnectionQueueToApp(ChatConnectionPipelineQueueRequest) returns (ChatConnectionPipelineQueueResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-connection-pipeline"
+      body : "*"
+    };
+  };
+
+  rpc UpsertQueueInConnectionAppById(UpsertQueueInConnectionAppByIdRequest) returns (UpsertQueueInConnectionAppByIdResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-connection-pipeline/edit/{id}"
+      body : "*"
+    };
+  };
+
+   rpc UpdateChatConnectionAppStatusById(PutChatConnectionAppStatusRequest) returns (PutChatConnectionAppStatusResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-connection-pipeline/edit/status/{id}"
+      body : "*"
+    };
+  };
+}

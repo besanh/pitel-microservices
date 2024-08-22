@@ -12,14 +12,17 @@ import (
 type (
 	IChatApp interface {
 		InsertChatApp(ctx context.Context, authUser *model.AuthUser, data model.ChatAppRequest) (string, error)
-		GetChatApp(ctx context.Context, authUser *model.AuthUser, filter model.AppFilter, limit, offset int) (int, *[]model.ChatApp, error)
+		GetChatApp(ctx context.Context, authUser *model.AuthUser, filter model.ChatAppFilter, limit, offset int) (int, *[]model.ChatApp, error)
 		GetChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (app model.ChatApp, err error)
 		UpdateChatAppById(ctx context.Context, authUser *model.AuthUser, id string, data model.ChatAppRequest) (err error)
 		DeleteChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (err error)
+		GetChatAppAssign(ctx context.Context, authUser *model.AuthUser) (result []*model.ChatApp, err error)
 	}
 	ChatApp struct {
 	}
 )
+
+var ChatAppService IChatApp
 
 func NewChatApp() IChatApp {
 	return &ChatApp{}
@@ -35,9 +38,8 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 		return app.Base.GetId(), err
 	}
 
-	filter := model.AppFilter{
+	filter := model.ChatAppFilter{
 		AppName: data.AppName,
-		Status:  data.Status,
 	}
 	_, chatApps, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, 1, 0)
 	if err != nil {
@@ -50,7 +52,6 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 	app.AppName = data.AppName
 	app.InfoApp = data.InfoApp
 	app.Status = data.Status
-	app.DefaultApp = data.DefaultApp
 
 	if err := repository.ChatAppRepo.Insert(ctx, dbCon, app); err != nil {
 		log.Error(err)
@@ -60,20 +61,20 @@ func (s *ChatApp) InsertChatApp(ctx context.Context, authUser *model.AuthUser, d
 	return app.Base.GetId(), nil
 }
 
-func (s *ChatApp) GetChatApp(ctx context.Context, authUser *model.AuthUser, filter model.AppFilter, limit, offset int) (int, *[]model.ChatApp, error) {
+func (s *ChatApp) GetChatApp(ctx context.Context, authUser *model.AuthUser, filter model.ChatAppFilter, limit, offset int) (total int, apps *[]model.ChatApp, err error) {
 	dbCon, err := HandleGetDBConSource(authUser)
 	if err != nil {
 		log.Error(err)
-		return 0, nil, err
+		return
 	}
 
-	total, apps, err := repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, limit, offset)
+	total, apps, err = repository.ChatAppRepo.GetChatApp(ctx, dbCon, filter, limit, offset)
 	if err != nil {
 		log.Error(err)
 		return 0, nil, err
 	}
 
-	return total, apps, nil
+	return
 }
 
 func (s *ChatApp) GetChatAppById(ctx context.Context, authUser *model.AuthUser, id string) (app model.ChatApp, err error) {
@@ -105,15 +106,27 @@ func (s *ChatApp) UpdateChatAppById(ctx context.Context, authUser *model.AuthUse
 		return err
 	}
 
+	filter := model.ChatAppFilter{
+		AppName: data.AppName,
+	}
+	_, chatApps, err := repository.ChatAppRepo.GetChatApp(ctx, repository.DBConn, filter, 1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	} else if len(*chatApps) > 1 {
+		log.Errorf("app name %s already exists", data.AppName)
+		return errors.New("app name " + data.AppName + " already exists")
+	}
 	chatAppExist.AppName = data.AppName
 	chatAppExist.InfoApp = data.InfoApp
 	chatAppExist.Status = data.Status
-	chatAppExist.DefaultApp = data.DefaultApp
+
 	err = repository.ChatAppRepo.Update(ctx, dbCon, *chatAppExist)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
+
 	return nil
 }
 
@@ -135,4 +148,26 @@ func (s *ChatApp) DeleteChatAppById(ctx context.Context, authUser *model.AuthUse
 		return err
 	}
 	return nil
+}
+
+func (s *ChatApp) GetChatAppAssign(ctx context.Context, authUser *model.AuthUser) (result []*model.ChatApp, err error) {
+	filter := model.ChatIntegrateSystemFilter{
+		SystemId: authUser.SystemId,
+	}
+	_, chatIntegrateSystem, err := repository.ChatIntegrateSystemRepo.GetIntegrateSystems(ctx, repository.DBConn, filter, -1, 0)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	if len(*chatIntegrateSystem) > 0 {
+		for _, item := range *chatIntegrateSystem {
+			if len(item.ChatAppIntegrateSystems) > 0 {
+				for _, item2 := range item.ChatAppIntegrateSystems {
+					result = append(result, item2.ChatApp)
+				}
+			}
+		}
+	}
+	return
 }
