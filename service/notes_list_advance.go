@@ -6,35 +6,37 @@ import (
 )
 
 /*
- * send event note to manager and admin subscribers
+ * send event note to high level subscribers
  */
-func (s *NotesList) publishNotesListEventToManagerAndAdmin(authUser *model.AuthUser, manageQueueUser *model.ChatManageQueueUser, eventName string, note *model.NotesList) {
-	var subscribers []*Subscriber
-	var subscriberAdmins []string
-	var subscriberManagers []string
+func (s *NotesList) publishNotesListEventToHighLevel(authUser *model.AuthUser, manageQueueUser *model.ChatManageQueueUser, eventName, eventDataType string, note *model.NotesList, levels ...string) {
+	var subscribers map[string][]string
 	for sub := range WsSubscribers.Subscribers {
 		if sub.TenantId == authUser.TenantId {
-			subscribers = append(subscribers, sub)
-			if sub.Level == "admin" {
-				subscriberAdmins = append(subscriberAdmins, sub.Id)
+			if _, ok := subscribers["default"]; !ok {
+				subscribers["default"] = []string{}
 			}
-			if sub.Level == "manager" {
-				subscriberManagers = append(subscriberManagers, sub.Id)
+			subscribers["default"] = append(subscribers["default"], sub.Id)
+			// high level subscriber
+			for _, level := range levels {
+				if _, ok := subscribers[level]; !ok {
+					subscribers[level] = []string{}
+				}
+				subscribers[level] = append(subscribers[level], sub.Id)
 			}
 		}
 	}
 
 	if manageQueueUser != nil {
 		// Event to manager
-		isExist := BinarySearchSlice(manageQueueUser.UserId, subscriberManagers)
+		isExist := BinarySearchSlice(manageQueueUser.UserId, subscribers[variables.MANAGER_LEVEL])
 		if isExist && len(manageQueueUser.UserId) > 0 {
-			go PublishNotesListToOneUser(variables.EVENT_CHAT[eventName], manageQueueUser.UserId, subscribers, true, note)
+			go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, manageQueueUser.UserId, subscribers["default"], true, note)
 		}
 	}
 
 	// Event to admin
-	if ENABLE_PUBLISH_ADMIN && len(subscriberAdmins) > 0 {
-		go PublishNotesListToManyUser(variables.EVENT_CHAT[eventName], subscriberAdmins, true, note)
+	if ENABLE_PUBLISH_ADMIN && len(subscribers[variables.ADMIN_LEVEL]) > 0 {
+		go PublishWsEventToManyUser(variables.EVENT_CHAT[eventName], eventDataType, subscribers[variables.ADMIN_LEVEL], true, note)
 	}
-	go PublishNotesListToOneUser(variables.EVENT_CHAT[eventName], authUser.UserId, subscribers, true, note)
+	go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, authUser.UserId, subscribers["default"], true, note)
 }

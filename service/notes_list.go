@@ -20,16 +20,13 @@ type (
 	NotesList struct{}
 )
 
-var (
-	ErrOutOfCharacterLimit = errors.New("out of character limit")
-	NotesListService       INotesList
-)
+var NotesListService INotesList
 
 func NewNotesList() INotesList {
 	return &NotesList{}
 }
 
-const maxNoteCharacterLimit = 100
+const eventNotesList = "notes_list"
 
 func (s *NotesList) InsertNoteInConversation(ctx context.Context, authUser *model.AuthUser, data *model.ConversationNoteRequest) (id string, err error) {
 	notesListFilter := model.ConversationNotesListFilter{
@@ -45,12 +42,7 @@ func (s *NotesList) InsertNoteInConversation(ctx context.Context, authUser *mode
 	}
 	if total > CONVERSATION_NOTES_LIST_LIMIT {
 		err = errors.New("out of limit of notes list in conversation")
-		log.Error(err.Error())
-		return
-	}
-	if len(data.Content) > maxNoteCharacterLimit {
-		err = ErrOutOfCharacterLimit
-		log.Error(err.Error())
+		log.Error(err)
 		return
 	}
 
@@ -60,7 +52,7 @@ func (s *NotesList) InsertNoteInConversation(ctx context.Context, authUser *mode
 		return
 	} else if len(conversationExist.ConversationId) < 1 {
 		err = errors.New("conversation " + data.ConversationId + " not found")
-		log.Error(err.Error())
+		log.Error(err)
 		return
 	}
 	newEntry := model.NotesList{
@@ -90,18 +82,19 @@ func (s *NotesList) InsertNoteInConversation(ctx context.Context, authUser *mode
 	if len(*allocateUser) > 0 {
 		allocateUserTmp := (*allocateUser)[0]
 		// Event to manager
-		manageQueueUser, err := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
-		if err != nil {
+		manageQueueUser, errTmp := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
+		if errTmp != nil {
+			err = errTmp
 			log.Error(err)
-			return id, err
+			return
 		} else if len(manageQueueUser.Id) < 1 {
 			err = errors.New("queue " + allocateUserTmp.QueueId + " not found")
 			log.Error(err)
-			return id, err
+			return
 		}
-		s.publishNotesListEventToManagerAndAdmin(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_created"], &newEntry)
+		s.publishNotesListEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_created"], eventNotesList, &newEntry, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
 	} else {
-		s.publishNotesListEventToManagerAndAdmin(authUser, nil, variables.EVENT_CHAT["conversation_note_created"], &newEntry)
+		s.publishNotesListEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_created"], eventNotesList, &newEntry, variables.ADMIN_LEVEL)
 	}
 	return
 }
@@ -113,7 +106,7 @@ func (s *NotesList) UpdateNoteInConversationById(ctx context.Context, authUser *
 		return
 	} else if noteExist == nil {
 		err = errors.New("note " + id + " not found")
-		log.Error(err.Error())
+		log.Error(err)
 		return
 	}
 
@@ -123,12 +116,7 @@ func (s *NotesList) UpdateNoteInConversationById(ctx context.Context, authUser *
 		return
 	} else if len(conversationExist.ConversationId) < 1 {
 		err = errors.New("conversation " + data.ConversationId + " not found")
-		log.Error(err.Error())
-		return
-	}
-	if len(data.Content) > maxNoteCharacterLimit {
-		err = ErrOutOfCharacterLimit
-		log.Error(err.Error())
+		log.Error(err)
 		return
 	}
 	noteExist.Content = data.Content
@@ -150,18 +138,19 @@ func (s *NotesList) UpdateNoteInConversationById(ctx context.Context, authUser *
 	if len(*allocateUser) > 0 {
 		allocateUserTmp := (*allocateUser)[0]
 		// Event to manager
-		manageQueueUser, err := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
-		if err != nil {
+		manageQueueUser, errTmp := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
+		if errTmp != nil {
+			err = errTmp
 			log.Error(err)
-			return err
+			return
 		} else if len(manageQueueUser.Id) < 1 {
 			err = errors.New("queue " + allocateUserTmp.QueueId + " not found")
 			log.Error(err)
-			return err
+			return
 		}
-		s.publishNotesListEventToManagerAndAdmin(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_updated"], noteExist)
+		s.publishNotesListEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_updated"], eventNotesList, noteExist, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
 	} else {
-		s.publishNotesListEventToManagerAndAdmin(authUser, nil, variables.EVENT_CHAT["conversation_note_updated"], noteExist)
+		s.publishNotesListEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_updated"], eventNotesList, noteExist, variables.ADMIN_LEVEL)
 	}
 	return
 }
@@ -191,18 +180,19 @@ func (s *NotesList) DeleteNoteInConversationById(ctx context.Context, authUser *
 	if len(*allocateUser) > 0 {
 		allocateUserTmp := (*allocateUser)[0]
 		// Event to manager
-		manageQueueUser, err := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
-		if err != nil {
+		manageQueueUser, errTmp := GetManageQueueUser(ctx, allocateUserTmp.QueueId)
+		if errTmp != nil {
+			err = errTmp
 			log.Error(err)
-			return err
+			return
 		} else if len(manageQueueUser.Id) < 1 {
 			err = errors.New("queue " + allocateUserTmp.QueueId + " not found")
 			log.Error(err)
-			return err
+			return
 		}
-		s.publishNotesListEventToManagerAndAdmin(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_removed"], noteExist)
+		s.publishNotesListEventToHighLevel(authUser, manageQueueUser, variables.EVENT_CHAT["conversation_note_removed"], eventNotesList, noteExist, variables.MANAGER_LEVEL, variables.ADMIN_LEVEL)
 	} else {
-		s.publishNotesListEventToManagerAndAdmin(authUser, nil, variables.EVENT_CHAT["conversation_note_removed"], noteExist)
+		s.publishNotesListEventToHighLevel(authUser, nil, variables.EVENT_CHAT["conversation_note_removed"], eventNotesList, noteExist, variables.ADMIN_LEVEL)
 	}
 	return
 }

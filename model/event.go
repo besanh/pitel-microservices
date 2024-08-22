@@ -11,3 +11,8 @@ type EventData struct {
 	ShareInfo    any `json:"share_info"`
 	NotesList    any `json:"notes_list"`
 }
+
+type WsEvent struct {
+	EventName string         `json:"event_name"`
+	EventData map[string]any `json:"event_data"`
+}
