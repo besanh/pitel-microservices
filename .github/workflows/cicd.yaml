@@ -135,7 +135,7 @@ jobs:
   branch_build_deploy:
     runs-on: fins-dev-cloud
     needs: branch_build_push
-    if: github.ref == 'refs/heads/dev_fins_bss_chat'
+    if: github.ref == 'refs/heads/pitel-bss-chat'
     steps:
       - name: deploy docker-compose
         run: |
