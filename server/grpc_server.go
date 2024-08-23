@@ -40,7 +40,6 @@ import (
 	pbConversation "github.com/tel4vn/fins-microservices/gen/proto/conversation"
 	pbExample "github.com/tel4vn/fins-microservices/gen/proto/example"
 	pbMessage "github.com/tel4vn/fins-microservices/gen/proto/message"
-	pbNotesList "github.com/tel4vn/fins-microservices/gen/proto/notes_list"
 	pbProfile "github.com/tel4vn/fins-microservices/gen/proto/profile"
 	pbShareInfo "github.com/tel4vn/fins-microservices/gen/proto/share_info"
 	grpcService "github.com/tel4vn/fins-microservices/grpc"
@@ -106,7 +105,6 @@ func NewGRPCServer(port string) {
 	pbChatManageQueue.RegisterChatManageQueueServiceServer(grpcServer, grpcService.NewGRPCChatManageQueue())
 	pbChatQueueUser.RegisterChatQueueUserServiceServer(grpcServer, grpcService.NewGRPCChatQueueUser())
 	pbShareInfo.RegisterShareInfoServiceServer(grpcServer, grpcService.NewGRPCShareInfo())
-	pbNotesList.RegisterNotesListServiceServer(grpcServer, grpcService.NewGRPCNotesList())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -212,9 +210,6 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err = pbShareInfo.RegisterShareInfoServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
-		log.Fatal(err)
-	}
-	if err = pbNotesList.RegisterNotesListServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 

@@ -56,7 +56,6 @@ func RunMainService() {
 	service.ENABLE_PUBLISH_ADMIN = env.GetBoolENV("ENABLE_PUBLISH_ADMIN", false)
 	service.ENABLE_CHAT_AUTO_SCRIPT_REPLY = env.GetBoolENV("ENABLE_CHAT_AUTO_SCRIPT_REPLY", false)
 	service.ENABLE_CHAT_POLICY_SETTINGS = env.GetBoolENV("ENABLE_CHAT_POLICY_SETTINGS", false)
-	service.CONVERSATION_NOTES_LIST_LIMIT = env.GetIntENV("CONVERSATION_NOTES_LIST_LIMIT", 1000)
 	service.AAA_HOST = env.GetStringENV("AAA_HOST", "https://aaa.dev.fins.vn")
 	service.InitServices()
 

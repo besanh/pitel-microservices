@@ -64,13 +64,6 @@ type ConversationFilter struct {
 	Following              sql.NullBool `json:"following"`
 }
 
-type ConversationNotesListFilter struct {
-	TenantId       string `json:"tenant_id"`
-	ConversationId string `json:"conversation_id"`
-	AppId          string `json:"app_id"`
-	OaId           string `json:"oa_id"`
-}
-
 type AllocateUserFilter struct {
 	TenantId               string   `json:"tenant_id"`
 	AppId                  string   `json:"app_id"`
