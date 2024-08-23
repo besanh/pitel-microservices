@@ -196,8 +196,6 @@ func PublishMessageToManyUser(eventType string, subscribers []string, message *m
 	}
 	wg.Wait()
 }
-<<<<<<< HEAD
-=======
 
 func PublishWsEventToOneUser(eventType, eventDataType string, subscriber string, subscribers []string, isNew bool, data any) {
 	var wg sync.WaitGroup
@@ -323,4 +321,3 @@ func renameFields(data any) (any, error) {
 
 	return dataMap, nil
 }
->>>>>>> 0a5034305d2ac969b31bdc6c2e4f81fb80da60ad
