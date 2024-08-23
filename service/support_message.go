@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"sync"
 	"time"
 
@@ -195,3 +196,131 @@ func PublishMessageToManyUser(eventType string, subscribers []string, message *m
 	}
 	wg.Wait()
 }
+<<<<<<< HEAD
+=======
+
+func PublishWsEventToOneUser(eventType, eventDataType string, subscriber string, subscribers []string, isNew bool, data any) {
+	var wg sync.WaitGroup
+	if isNew && data != nil && len(subscriber) > 0 {
+		event := model.WsEvent{
+			EventName: eventType,
+			EventData: map[string]any{
+				eventDataType: data,
+			},
+		}
+
+		isExist := BinarySearchSlice(subscriber, subscribers)
+		if isExist {
+			wg.Add(1)
+			var mu sync.Mutex
+			mu.Lock()
+			go func(userUuid string, event model.WsEvent) {
+				defer wg.Done()
+				if err := PublishMessageToOne(userUuid, event); err != nil {
+					log.Error(err)
+					return
+				}
+			}(subscriber, event)
+			mu.Unlock()
+		}
+	}
+	wg.Wait()
+}
+
+func PublishWsEventToManyUser(eventType, eventDataType string, subscribers []string, isNew bool, data any) {
+	var wg sync.WaitGroup
+	if isNew && data != nil && len(subscribers) > 0 {
+		event := model.WsEvent{
+			EventName: eventType,
+			EventData: map[string]any{
+				eventDataType: data,
+			},
+		}
+		wg.Add(1)
+		var mu sync.Mutex
+		mu.Lock()
+		go func(userUuids []string, event model.WsEvent) {
+			defer wg.Done()
+			if err := PublishMessageToMany(userUuids, event); err != nil {
+				log.Error(err)
+				return
+			}
+		}(subscribers, event)
+		mu.Unlock()
+	}
+	wg.Wait()
+}
+
+/*
+ * send event note to high level subscribers
+ */
+func PublishEventToHighLevel(authUser *model.AuthUser, manageQueueUser *model.ChatManageQueueUser, eventName, eventDataType string, data any, levels ...string) {
+	// default send it to admin
+	if len(levels) < 1 {
+		levels = append(levels, variables.ADMIN_LEVEL)
+	}
+
+	convertedData, err := renameFields(data)
+	if err != nil {
+		log.Error(err)
+	}
+
+	subscribers := make(map[string][]string)
+	for sub := range WsSubscribers.Subscribers {
+		if sub.TenantId == authUser.TenantId {
+			if _, ok := subscribers["default"]; !ok {
+				subscribers["default"] = []string{}
+			}
+			subscribers["default"] = append(subscribers["default"], sub.Id)
+			// high level subscriber
+			for _, level := range levels {
+				if _, ok := subscribers[level]; !ok {
+					subscribers[level] = []string{}
+				}
+				if sub.Level == level {
+					subscribers[level] = append(subscribers[level], sub.Id)
+				}
+			}
+		}
+	}
+
+	if manageQueueUser != nil {
+		// Event to manager
+		isExist := BinarySearchSlice(manageQueueUser.UserId, subscribers[variables.MANAGER_LEVEL])
+		if isExist && len(manageQueueUser.UserId) > 0 {
+			go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, manageQueueUser.UserId, subscribers["default"], true, convertedData)
+		}
+	}
+
+	// Event to admin
+	if ENABLE_PUBLISH_ADMIN && len(subscribers[variables.ADMIN_LEVEL]) > 0 {
+		go PublishWsEventToManyUser(variables.EVENT_CHAT[eventName], eventDataType, subscribers[variables.ADMIN_LEVEL], true, convertedData)
+	}
+	go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, authUser.UserId, subscribers["default"], true, convertedData)
+}
+
+func renameFields(data any) (any, error) {
+	// Use reflection to inspect the struct
+	val := reflect.ValueOf(data)
+	kind := val.Kind()
+	switch kind {
+	case reflect.Struct:
+	case reflect.Map:
+	default:
+		return data, nil
+	}
+	// Convert struct to a map
+	dataMap := make(map[string]any)
+	if err := util.ParseAnyToAny(&data, &dataMap); err != nil {
+		return data, err
+	}
+	if _, ok := dataMap["CreatedAt"]; ok {
+		dataMap["created_at"] = dataMap["CreatedAt"]
+	}
+	if _, ok := dataMap["UpdatedAt"]; ok {
+		dataMap["updated_at"] = dataMap["UpdatedAt"]
+	}
+
+	return dataMap, nil
+}
+>>>>>>> 0a5034305d2ac969b31bdc6c2e4f81fb80da60ad
