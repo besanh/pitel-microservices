@@ -40,6 +40,7 @@ func InitServices() {
 	ManageQueueService = NewManageQueue()
 	ChatQueueUserService = NewChatQueueUser()
 	ShareInfoService = NewShareInfo()
+	NotesListService = NewNotesList()
 }
 
 // MAP TENANT_ID SQL_CONN
@@ -84,7 +85,7 @@ var (
 	ENABLE_PUBLISH_ADMIN             bool          = false
 	ENABLE_CHAT_AUTO_SCRIPT_REPLY    bool          = false
 	ENABLE_CHAT_POLICY_SETTINGS      bool          = false
-	AAA_HOST                         string        = ""
+	CONVERSATION_NOTES_LIST_LIMIT    int           = 1000
 	CHAT_INTEGRATE_SYSTEM            string        = "chat_integrate_system"
 	CHAT_INTEGRATE_SYSTEM_EXPIRE     time.Duration = 1 * time.Hour
 	CHAT_APP_INTEGRATE_SYSTEM        string        = "chat_app_integrate_system"

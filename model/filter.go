@@ -240,3 +240,10 @@ type ConversationMediaFilter struct {
 	MediaName              string `json:"media_name"`
 	SendTimestamp          string `json:"send_timestamp"`
 }
+
+type ConversationNotesListFilter struct {
+	TenantId       string `json:"tenant_id"`
+	ConversationId string `json:"conversation_id"`
+	AppId          string `json:"app_id"`
+	OaId           string `json:"oa_id"`
+}
