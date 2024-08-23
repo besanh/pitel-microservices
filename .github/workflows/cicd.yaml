@@ -8,7 +8,7 @@ on:
 
 env:
   TARGET_BRANCH: ${{ github.ref_name }}
-  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/pitel_bss_chat
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/pitel-bss-chat
   REPOSITORY_FOLDER: /home/pitel/fins-bss-chat
 
 jobs:
