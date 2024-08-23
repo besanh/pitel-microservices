@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"sync"
 	"time"
 
@@ -257,6 +258,11 @@ func PublishEventToHighLevel(authUser *model.AuthUser, manageQueueUser *model.Ch
 		levels = append(levels, variables.ADMIN_LEVEL)
 	}
 
+	convertedData, err := renameFields(data)
+	if err != nil {
+		log.Error(err)
+	}
+
 	subscribers := make(map[string][]string)
 	for sub := range WsSubscribers.Subscribers {
 		if sub.TenantId == authUser.TenantId {
@@ -280,13 +286,38 @@ func PublishEventToHighLevel(authUser *model.AuthUser, manageQueueUser *model.Ch
 		// Event to manager
 		isExist := BinarySearchSlice(manageQueueUser.UserId, subscribers[variables.MANAGER_LEVEL])
 		if isExist && len(manageQueueUser.UserId) > 0 {
-			go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, manageQueueUser.UserId, subscribers["default"], true, data)
+			go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, manageQueueUser.UserId, subscribers["default"], true, convertedData)
 		}
 	}
 
 	// Event to admin
 	if ENABLE_PUBLISH_ADMIN && len(subscribers[variables.ADMIN_LEVEL]) > 0 {
-		go PublishWsEventToManyUser(variables.EVENT_CHAT[eventName], eventDataType, subscribers[variables.ADMIN_LEVEL], true, data)
+		go PublishWsEventToManyUser(variables.EVENT_CHAT[eventName], eventDataType, subscribers[variables.ADMIN_LEVEL], true, convertedData)
 	}
-	go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, authUser.UserId, subscribers["default"], true, data)
+	go PublishWsEventToOneUser(variables.EVENT_CHAT[eventName], eventDataType, authUser.UserId, subscribers["default"], true, convertedData)
+}
+
+func renameFields(data any) (any, error) {
+	// Use reflection to inspect the struct
+	val := reflect.ValueOf(data)
+	kind := val.Kind()
+	switch kind {
+	case reflect.Struct:
+	case reflect.Map:
+	default:
+		return data, nil
+	}
+	// Convert struct to a map
+	dataMap := make(map[string]any)
+	if err := util.ParseAnyToAny(&data, &dataMap); err != nil {
+		return data, err
+	}
+	if _, ok := dataMap["CreatedAt"]; ok {
+		dataMap["created_at"] = dataMap["CreatedAt"]
+	}
+	if _, ok := dataMap["UpdatedAt"]; ok {
+		dataMap["updated_at"] = dataMap["UpdatedAt"]
+	}
+
+	return dataMap, nil
 }
