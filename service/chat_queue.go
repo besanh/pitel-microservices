@@ -103,7 +103,7 @@ func (s *ChatQueue) GetChatQueues(ctx context.Context, authUser *model.AuthUser,
 
 func (s *ChatQueue) GetChatQueueById(ctx context.Context, authUser *model.AuthUser, id string) (*model.ChatQueue, error) {
 	dbCon, err := HandleGetDBConSource(authUser)
-	if err == ERR_EMPTY_CONN {
+	if err == ErrEmptyConn {
 		log.Error(err)
 		return nil, err
 	}
