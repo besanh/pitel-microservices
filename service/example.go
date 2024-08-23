@@ -30,7 +30,7 @@ func NewExample() IExample {
 
 func (c *Example) GetExamples(ctx context.Context, authUser *model.AuthUser, queryParams []model.Param, limit int, offset int) (examples *[]model.Example, total int, err error) {
 	dbConn, err := GetDBConnOfUser(*authUser)
-	if err == ERR_EMPTY_CONN {
+	if err == ErrEmptyConn {
 		return nil, 0, errors.New(response.ERR_EMPTY_CONN)
 	}
 	queryParams = append(queryParams, model.Param{
@@ -48,7 +48,7 @@ func (c *Example) GetExamples(ctx context.Context, authUser *model.AuthUser, que
 
 func (c *Example) GetExampleById(ctx context.Context, authUser *model.AuthUser, id string) (result model.Example, err error) {
 	dbConn, err := GetDBConnOfUser(*authUser)
-	if err == ERR_EMPTY_CONN {
+	if err == ErrEmptyConn {
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return
 	}
@@ -66,7 +66,7 @@ func (c *Example) GetExampleById(ctx context.Context, authUser *model.AuthUser, 
 
 func (c *Example) PostExample(ctx context.Context, authUser *model.AuthUser, example model.Example) (err error) {
 	dbConn, err := GetDBConnOfUser(*authUser)
-	if err == ERR_EMPTY_CONN {
+	if err == ErrEmptyConn {
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return
 	}
@@ -83,7 +83,7 @@ func (c *Example) PostExample(ctx context.Context, authUser *model.AuthUser, exa
 
 func (c *Example) PutExample(ctx context.Context, authUser *model.AuthUser, id string, example model.Example) (err error) {
 	dbConn, err := GetDBConnOfUser(*authUser)
-	if err == ERR_EMPTY_CONN {
+	if err == ErrEmptyConn {
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return
 	}
@@ -106,7 +106,7 @@ func (c *Example) PutExample(ctx context.Context, authUser *model.AuthUser, id s
 
 func (c *Example) DeleteExampleById(ctx context.Context, authUser *model.AuthUser, id string) (err error) {
 	dbConn, err := GetDBConnOfUser(*authUser)
-	if err == ERR_EMPTY_CONN {
+	if err == ErrEmptyConn {
 		err = errors.New(response.ERR_EMPTY_CONN)
 		return
 	}

@@ -46,8 +46,8 @@ func InitServices() {
 var (
 	SECRET_KEY_SUPERADMIN string = ""
 	MapDBConn             map[string]sqlclient.ISqlClientConn
-	ERR_EMPTY_CONN        = errors.New("empty_conn")
-	ERR_DB_CONN_FAIL      = errors.New("db_conn_fail")
+	ErrEmptyConn          error = errors.New("empty_conn")
+	ErrDBConnFail         error = errors.New("db_conn_fail")
 
 	// ES
 	ES_INDEX_MESSAGE      string = "" //             = "pitel_bss_chat"
@@ -181,7 +181,7 @@ func NewDBConn(tenantId string, config DBConfig) (dbConn sqlclient.ISqlClientCon
 	dbConn = sqlclient.NewSqlClient(sqlClientConfig)
 	if err = dbConn.Connect(); err != nil {
 		log.Error(err)
-		err = ERR_DB_CONN_FAIL
+		err = ErrDBConnFail
 		return
 	}
 	var wg sync.WaitGroup

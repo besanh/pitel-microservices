@@ -509,8 +509,6 @@ func executeScriptActions(ctx context.Context, user model.User, message model.Me
 							return
 						}
 						conversation.Labels = newLabels
-					} else {
-						// do nothing
 					}
 				}
 			}
