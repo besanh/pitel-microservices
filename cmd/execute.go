@@ -19,11 +19,10 @@ import (
 )
 
 type Config struct {
-	Port       string
-	gRPCPort   string
-	AAA_Adress string
-	LogLevel   string
-	LogFile    string
+	Port     string
+	gRPCPort string
+	LogLevel string
+	LogFile  string
 }
 
 var config Config

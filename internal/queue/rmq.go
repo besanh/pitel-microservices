@@ -22,7 +22,11 @@ type Rcfg struct {
 	DB       int
 }
 
-var RMQ *RMQConnection
+var (
+	RMQ                *RMQConnection
+	ErrQueueIsExist    error = errors.New("queue is existed")
+	ErrQUeueIsNotExist error = errors.New("queue is not existed")
+)
 
 const (
 	tag           = "rmq"
@@ -102,16 +106,11 @@ func logErrors(errChan <-chan error) {
 	}
 }
 
-var (
-	ERR_QUEUE_IS_EXIST     = errors.New("queue is existed")
-	ERR_QUEUE_IS_NOT_EXIST = errors.New("queue is not existed")
-)
-
 func (srv *RMQServer) AddQueue(name string, handler rmq.ConsumerFunc, numConsumers int) error {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	if _, ok := srv.Queues[name]; ok {
-		return ERR_QUEUE_IS_EXIST
+		return ErrQueueIsExist
 	}
 	queue, err := srv.conn.OpenQueue(name)
 	if err != nil {
@@ -170,7 +169,7 @@ func (srv *RMQServer) RemoveQueue(name string) error {
 	srv.mu.Lock()
 	defer srv.mu.Unlock()
 	if _, ok := srv.Queues[name]; !ok {
-		return ERR_QUEUE_IS_NOT_EXIST
+		return ErrQUeueIsNotExist
 	}
 	q, err := srv.conn.OpenQueue(name)
 	if err != nil {
