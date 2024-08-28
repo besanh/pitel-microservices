@@ -12,6 +12,7 @@ import (
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
 )
@@ -349,7 +350,7 @@ func (s *OttMessage) getAllocateUser(ctx context.Context, tenantId, conversation
 
 	if strings.ToLower(chatSetting.RoutingAlias) == "random" {
 		for s := range WsSubscribers.Subscribers {
-			if (s.Level == "user" || s.Level == "agent") && s.TenantId == tenantId {
+			if (s.Level == "user" || s.Level == "agent") && s.TenantId == tenantId && s.Status == variables.USER_STATUS_ONLINE {
 				userLives = append(userLives, *s)
 			}
 		}

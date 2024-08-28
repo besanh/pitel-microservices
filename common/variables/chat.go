@@ -124,4 +124,18 @@ var (
 		"major":     "conversation_user_put_major",
 		"following": "conversation_user_put_following",
 	}
+
+	EVENT_USER_STATUS map[string]string = map[string]string{
+		"user_status_updated": "user_status_updated",
+	}
+
+	USER_STATUSES []string = []string{
+		USER_STATUS_ONLINE,
+		USER_STATUS_OFFLINE,
+	}
+)
+
+const (
+	USER_STATUS_ONLINE  string = "active"
+	USER_STATUS_OFFLINE string = "inactive"
 )
