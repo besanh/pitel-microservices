@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"sync"
 	"time"
 
@@ -297,9 +298,18 @@ func PublishEventToHighLevel(authUser *model.AuthUser, manageQueueUser *model.Ch
 }
 
 func renameFields(data any) (any, error) {
+	// Use reflection to inspect the struct
+	val := reflect.ValueOf(data)
+	kind := val.Kind()
+	switch kind {
+	case reflect.Struct:
+	case reflect.Map:
+	default:
+		return data, nil
+	}
 	// Convert struct to a map
 	dataMap := make(map[string]any)
-	if err := util.ParseAnyToAny(data, &dataMap); err != nil {
+	if err := util.ParseAnyToAny(&data, &dataMap); err != nil {
 		return data, err
 	}
 	if _, ok := dataMap["CreatedAt"]; ok {
