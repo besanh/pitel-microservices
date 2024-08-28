@@ -151,6 +151,7 @@ type (
 		ConnectionId       string      `json:"connection_id"` // use for allocate
 		RoleId             string      `json:"role_id"`
 		ApiUrl             string      `json:"api_url"`
+		Status             string      `json:"status"`
 	}
 
 	Subscribers struct {
