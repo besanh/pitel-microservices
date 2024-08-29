@@ -197,6 +197,17 @@ message PutChatIntegrateSystemRequest {
     string ip = 17;
 }
 
+// Response put/delete chat integrate system
+message PutChatIntegrateSystemResponse {
+    string code = 1;
+    string message = 2;
+}
+
+message DeleteChatIntegrateSystemResponse {
+    string code = 1;
+    string message = 2;
+}
+
 service ChatIntegrateSystem {
     rpc GetChatIntegrateSystems(GetChatIntegrateSystemRequest) returns (GetChatIntegrateSystemResponse) {
         option (google.api.http) = {
@@ -217,14 +228,14 @@ service ChatIntegrateSystem {
         };
     }
 
-    rpc UpdateChatIntegrateSystemById(PutChatIntegrateSystemRequest) returns (PostChatIntegrateSystemResponse) {
+    rpc UpdateChatIntegrateSystemById(PutChatIntegrateSystemRequest) returns (PutChatIntegrateSystemResponse) {
         option (google.api.http) = {
             put : "/bss-chat/v1/chat-integrate-system/{id}"
             body : "*"
         };
     }
 
-    rpc DeleteChatIntegrateSystemById(GetChatIntegrateSystemByIdRequest) returns (PostChatIntegrateSystemResponse) {
+    rpc DeleteChatIntegrateSystemById(GetChatIntegrateSystemByIdRequest) returns (DeleteChatIntegrateSystemResponse) {
         option (google.api.http) = {
             delete : "/bss-chat/v1/chat-integrate-system/{id}"
         };
