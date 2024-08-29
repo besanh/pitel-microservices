@@ -24,8 +24,8 @@ type ConversationNoteRequest struct {
 }
 
 func (r *ConversationNoteRequest) Validate() error {
-	if len(r.Content) < 1 || len(r.Content) > 100 {
-		return errors.New("content must have number of characters between 1 and 100")
+	if len(r.Content) < 1 {
+		return errors.New("content is required")
 	}
 	if len(r.AppId) < 1 {
 		return errors.New("app id is required")

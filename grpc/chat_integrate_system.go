@@ -182,7 +182,7 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystemById(ctx context.Context
 	return
 }
 
-func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, req *pb.PutChatIntegrateSystemRequest) (result *pb.PostChatIntegrateSystemResponse, err error) {
+func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, req *pb.PutChatIntegrateSystemRequest) (result *pb.PutChatIntegrateSystemResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -214,21 +214,21 @@ func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Cont
 	err = service.ChatIntegrateSystemService.UpdateChatIntegrateSystemById(ctx, authUser, req.GetId(), &payload)
 	if err != nil {
 		log.Error(err)
-		result = &pb.PostChatIntegrateSystemResponse{
+		result = &pb.PutChatIntegrateSystemResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_PUT_FAILED].Code,
 			Message: err.Error(),
 		}
 		return result, nil
 	}
 
-	result = &pb.PostChatIntegrateSystemResponse{
+	result = &pb.PutChatIntegrateSystemResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
 	return
 }
 
-func (g *GRPCChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Context, req *pb.GetChatIntegrateSystemByIdRequest) (result *pb.PostChatIntegrateSystemResponse, err error) {
+func (g *GRPCChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Context, req *pb.GetChatIntegrateSystemByIdRequest) (result *pb.DeleteChatIntegrateSystemResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -237,14 +237,14 @@ func (g *GRPCChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Cont
 	err = service.ChatIntegrateSystemService.DeleteChatIntegrateSystemById(ctx, authUser, req.GetId())
 	if err != nil {
 		log.Error(err)
-		result = &pb.PostChatIntegrateSystemResponse{
+		result = &pb.DeleteChatIntegrateSystemResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DELETE_FAILED].Code,
 			Message: err.Error(),
 		}
 		return result, nil
 	}
 
-	result = &pb.PostChatIntegrateSystemResponse{
+	result = &pb.DeleteChatIntegrateSystemResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
