@@ -62,6 +62,9 @@ type ConversationFilter struct {
 	IsDone                 sql.NullBool `json:"is_done"`
 	Major                  sql.NullBool `json:"major"`
 	Following              sql.NullBool `json:"following"`
+	ConversationType       []string     `json:"conversation_type"`
+	OaName                 string       `json:"oa_name"`
+	LabelIds               []string     `json:"label_ids"`
 }
 
 type AllocateUserFilter struct {
