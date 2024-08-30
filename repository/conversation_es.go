@@ -59,13 +59,19 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	}
 	if len(filter.Username) > 0 {
 		// Search like
-		filters = append(filters, elasticsearch.WildcardQuery("username", "*"+filter.Username, insensitive))
+		filters = append(filters, elasticsearch.WildcardQuery("username", "*"+filter.Username+"*", insensitive))
 	}
 	if len(filter.PhoneNumber) > 0 {
-		filters = append(filters, elasticsearch.WildcardQuery("phone_number", "*"+filter.PhoneNumber, sql.NullBool{}))
+		filters = append(filters, elasticsearch.WildcardQuery("phone_number", "*"+filter.PhoneNumber+"*", sql.NullBool{}))
 	}
 	if len(filter.Email) > 0 {
-		filters = append(filters, elasticsearch.WildcardQuery("email", "*"+filter.Email, insensitive))
+		filters = append(filters, elasticsearch.WildcardQuery("email", "*"+filter.Email+"*", insensitive))
+	}
+	if len(filter.ConversationType) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("conversation_type", util.ParseToAnyArray(filter.ConversationType)...))
+	}
+	if len(filter.OaName) > 0 {
+		filters = append(filters, elasticsearch.WildcardQuery("oa_name", "*"+filter.OaName+"*", insensitive))
 	}
 	if filter.IsDone.Valid {
 		bq := map[string]any{
@@ -319,13 +325,19 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 	}
 	if len(filter.Username) > 0 {
 		// Search like
-		filters = append(filters, elasticsearch.WildcardQuery("username", "*"+filter.Username, insensitive))
+		filters = append(filters, elasticsearch.WildcardQuery("username", "*"+filter.Username+"*", insensitive))
 	}
 	if len(filter.PhoneNumber) > 0 {
-		filters = append(filters, elasticsearch.WildcardQuery("phone_number", "*"+filter.PhoneNumber, sql.NullBool{}))
+		filters = append(filters, elasticsearch.WildcardQuery("phone_number", "*"+filter.PhoneNumber+"*", sql.NullBool{}))
 	}
 	if len(filter.Email) > 0 {
-		filters = append(filters, elasticsearch.WildcardQuery("email", "*"+filter.Email, insensitive))
+		filters = append(filters, elasticsearch.WildcardQuery("email", "*"+filter.Email+"*", insensitive))
+	}
+	if len(filter.ConversationType) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("conversation_type", util.ParseToAnyArray(filter.ConversationType)...))
+	}
+	if len(filter.OaName) > 0 {
+		filters = append(filters, elasticsearch.WildcardQuery("oa_name", "*"+filter.OaName+"*", insensitive))
 	}
 	if filter.IsDone.Valid {
 		bq := map[string]any{
