@@ -99,7 +99,7 @@
             "updated_at": {
                 "type": "keyword"
             },
-            "label": {
+            "labels": {
                 "type": "nested"
             }
         }
