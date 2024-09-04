@@ -73,6 +73,15 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 	if len(filter.OaName) > 0 {
 		filters = append(filters, elasticsearch.WildcardQuery("oa_name", "*"+filter.OaName+"*", insensitive))
 	}
+	if len(filter.LabelIds) > 0 {
+		nested := map[string]any{
+			"nested": map[string]any{
+				"path":  "labels",
+				"query": elasticsearch.TermsQuery("labels.label_id.keyword", util.ParseToAnyArray(filter.LabelIds)...),
+			},
+		}
+		filters = append(filters, nested)
+	}
 	if filter.IsDone.Valid {
 		bq := map[string]any{
 			"bool": map[string]any{
@@ -338,6 +347,15 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 	}
 	if len(filter.OaName) > 0 {
 		filters = append(filters, elasticsearch.WildcardQuery("oa_name", "*"+filter.OaName+"*", insensitive))
+	}
+	if len(filter.LabelIds) > 0 {
+		nested := map[string]any{
+			"nested": map[string]any{
+				"path":  "labels",
+				"query": elasticsearch.TermsQuery("labels.label_id.keyword", util.ParseToAnyArray(filter.LabelIds)...),
+			},
+		}
+		filters = append(filters, nested)
 	}
 	if filter.IsDone.Valid {
 		bq := map[string]any{
