@@ -5,13 +5,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/coder/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/tel4vn/fins-microservices/api"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/service"
 	"golang.org/x/time/rate"
-	"nhooyr.io/websocket"
 )
 
 type WebSocket struct {

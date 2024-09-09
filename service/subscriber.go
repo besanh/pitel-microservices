@@ -94,5 +94,4 @@ func (s *SubscriberService) SetStatusForSubscriber(subscriber *Subscriber, id st
 	}
 	// keep old user's setting for status
 	subscriber.Status = subscriberExist.Status
-	return
 }
