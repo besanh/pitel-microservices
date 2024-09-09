@@ -50,46 +50,46 @@ var (
 	ErrEmptyConn          error = errors.New("empty_conn")
 	ErrDBConnFail         error = errors.New("db_conn_fail")
 
+	ORIGIN_LIST []string = []string{"localhost:*", "*.tel4vn.com"}
+
 	// ES
-	ES_INDEX_MESSAGE      string = "" //             = "pitel_bss_chat"
-	ES_INDEX_CONVERSATION string = "" // = "pitel_bss_conversation"
+	ES_INDEX_MESSAGE      string = "pitel_bss_message"
+	ES_INDEX_CONVERSATION string = "pitel_bss_conversation"
 
 	// Redis
-	CONVERSATION               string        = "conversation"
-	CONVERSATION_EXPIRE        time.Duration = 30 * time.Minute
-	CHAT_QUEUE                 string        = "chat_queue"
-	CHAT_QUEUE_EXPIRE          time.Duration = 30 * time.Minute
-	CHAT_ROUTING               string        = "chat_routing"
-	CHAT_ROUTING_EXPIRE        time.Duration = 1 * time.Hour
-	CHAT_QUEUE_USER            string        = "chat_queue_user"
-	CHAT_QUEUE_USER_EXPIRE     time.Duration = 10 * time.Minute
-	CHAT_APP                   string        = "chat_app"
-	CHAT_APP_EXPIRE            time.Duration = 6 * time.Hour
-	USER_ALLOCATE              string        = "user_allocate"
-	USER_ALLOCATE_EXPIRE       time.Duration = 1 * time.Hour
-	MANAGE_QUEUE_USER          string        = "manage_queue_user"
-	MANAGE_QUEUE_USER_EXPIRE   time.Duration = 1 * time.Hour
-	CHAT_CONNECTION            string        = "chat_connection"
-	CHAT_CONNECTION_EXPIRE     time.Duration = 5 * time.Minute
-	CHAT_AUTO_SCRIPT           string        = "chat_auto_script"
-	CHAT_AUTO_SCRIPT_EXPIRE    time.Duration = 30 * time.Minute
-	CHAT_POLICY_SETTING        string        = "chat_policy_setting"
-	CHAT_POLICY_SETTING_EXPIRE time.Duration = 24 * time.Hour // a day since policies are rarely changed
-
-	ORIGIN_LIST = []string{"localhost:*", "*.tel4vn.com"}
-
-	OTT_URL                          string        = ""
-	OTT_VERSION                      string        = ""
-	API_SHARE_INFO_HOST              string        = ""
-	API_DOC                          string        = ""
-	ENABLE_PUBLISH_ADMIN             bool          = false
-	ENABLE_CHAT_AUTO_SCRIPT_REPLY    bool          = false
-	ENABLE_CHAT_POLICY_SETTINGS      bool          = false
-	CONVERSATION_NOTES_LIST_LIMIT    int           = 1000
+	CONVERSATION                     string        = "conversation"
+	CONVERSATION_EXPIRE              time.Duration = 30 * time.Minute
+	CHAT_QUEUE                       string        = "chat_queue"
+	CHAT_QUEUE_EXPIRE                time.Duration = 30 * time.Minute
+	CHAT_ROUTING                     string        = "chat_routing"
+	CHAT_ROUTING_EXPIRE              time.Duration = 1 * time.Hour
+	CHAT_QUEUE_USER                  string        = "chat_queue_user"
+	CHAT_QUEUE_USER_EXPIRE           time.Duration = 10 * time.Minute
+	CHAT_APP                         string        = "chat_app"
+	CHAT_APP_EXPIRE                  time.Duration = 6 * time.Hour
+	USER_ALLOCATE                    string        = "user_allocate"
+	USER_ALLOCATE_EXPIRE             time.Duration = 1 * time.Hour
+	MANAGE_QUEUE_USER                string        = "manage_queue_user"
+	MANAGE_QUEUE_USER_EXPIRE         time.Duration = 1 * time.Hour
+	CHAT_CONNECTION                  string        = "chat_connection"
+	CHAT_CONNECTION_EXPIRE           time.Duration = 5 * time.Minute
+	CHAT_AUTO_SCRIPT                 string        = "chat_auto_script"
+	CHAT_AUTO_SCRIPT_EXPIRE          time.Duration = 30 * time.Minute
+	CHAT_POLICY_SETTING              string        = "chat_policy_setting"
+	CHAT_POLICY_SETTING_EXPIRE       time.Duration = 24 * time.Hour // a day since policies are rarely changed
 	CHAT_INTEGRATE_SYSTEM            string        = "chat_integrate_system"
 	CHAT_INTEGRATE_SYSTEM_EXPIRE     time.Duration = 1 * time.Hour
 	CHAT_APP_INTEGRATE_SYSTEM        string        = "chat_app_integrate_system"
 	CHAT_APP_INTEGRATE_SYSTEM_EXPIRE time.Duration = 1 * time.Hour
+
+	OTT_URL                       string = ""
+	OTT_VERSION                   string = ""
+	API_SHARE_INFO_HOST           string = ""
+	API_DOC                       string = ""
+	ENABLE_PUBLISH_ADMIN          bool   = false
+	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool   = false
+	ENABLE_CHAT_POLICY_SETTINGS   bool   = false
+	CONVERSATION_NOTES_LIST_LIMIT int    = 1000
 
 	// Storage
 	S3_ENDPOINT    string = ""
@@ -123,6 +123,9 @@ var (
 	// Queue
 	BSS_CHAT_CONVERSATION_QUEUE_NAME string = "bss_chat_conversation_request_queue"
 	BSS_CHAT_MESSAGE_QUEUE_NAME      string = "bss_chat_message_request_queue"
+
+	// RabbitMQ stream
+	RABBITMQ_STREAM_NAME string = ""
 )
 
 type (
