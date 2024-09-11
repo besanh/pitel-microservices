@@ -6,17 +6,17 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
-	"github.com/tel4vn/fins-microservices/common/env"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
-	"github.com/tel4vn/fins-microservices/internal/goauth"
-	"github.com/tel4vn/fins-microservices/internal/queue"
-	"github.com/tel4vn/fins-microservices/internal/rabbitmq"
-	streamclient "github.com/tel4vn/fins-microservices/internal/rabbitmq/stream-client"
-	"github.com/tel4vn/fins-microservices/internal/redis"
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
-	authMdw "github.com/tel4vn/fins-microservices/middleware/auth"
-	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/common/env"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/internal/elasticsearch"
+	"github.com/tel4vn/pitel-microservices/internal/goauth"
+	"github.com/tel4vn/pitel-microservices/internal/queue"
+	"github.com/tel4vn/pitel-microservices/internal/rabbitmq"
+	streamclient "github.com/tel4vn/pitel-microservices/internal/rabbitmq/stream-client"
+	"github.com/tel4vn/pitel-microservices/internal/redis"
+	"github.com/tel4vn/pitel-microservices/internal/sqlclient"
+	authMdw "github.com/tel4vn/pitel-microservices/middleware/auth"
+	"github.com/tel4vn/pitel-microservices/repository"
 )
 
 type Config struct {

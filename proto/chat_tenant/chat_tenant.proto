@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto.chatRole;
 
-option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+option go_package = "github.com/tel4vn/pitel-microservices/gen/proto/pb;pb";
 
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";

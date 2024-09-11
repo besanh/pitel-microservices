@@ -13,15 +13,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/amqp"
 	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/stream"
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
-	"github.com/tel4vn/fins-microservices/common/util"
-	"github.com/tel4vn/fins-microservices/common/variables"
-	"github.com/tel4vn/fins-microservices/internal/queue"
-	streamclient "github.com/tel4vn/fins-microservices/internal/rabbitmq/stream-client"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/response"
+	"github.com/tel4vn/pitel-microservices/common/util"
+	"github.com/tel4vn/pitel-microservices/common/variables"
+	"github.com/tel4vn/pitel-microservices/internal/queue"
+	streamclient "github.com/tel4vn/pitel-microservices/internal/rabbitmq/stream-client"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/repository"
 	"golang.org/x/exp/slices"
 )
 
@@ -49,7 +49,7 @@ var OttMessageService IOttMessage
 func NewOttMessage() IOttMessage {
 	s := &OttMessage{}
 	s.InitRedisPubSubQueueRequest()
-	s.InitRabbitMQRequest()
+	// s.InitRabbitMQRequest()
 	return s
 }
 

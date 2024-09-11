@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/log"
 )
 
 type Config struct {

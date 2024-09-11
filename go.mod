@@ -1,4 +1,4 @@
-module github.com/tel4vn/fins-microservices
+module github.com/tel4vn/pitel-microservices
 
 go 1.22.0
 

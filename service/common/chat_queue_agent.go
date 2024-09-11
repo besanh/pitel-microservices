@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/model"
 )
 
 func CheckUserExist(id string, Users []string) bool {

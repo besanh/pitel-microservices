@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_script"
-	"github.com/tel4vn/fins-microservices/model"
+	pb "github.com/tel4vn/pitel-microservices/gen/proto/chat_script"
+	"github.com/tel4vn/pitel-microservices/model"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/model"
 )
 
 func UploadDoc(ctx context.Context, appId, oaId string, file *multipart.FileHeader) (fileUrl string, err error) {

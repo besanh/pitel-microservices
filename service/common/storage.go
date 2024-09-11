@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/storage"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/internal/storage"
 )
 
 func UploadImageToStorage(ctx context.Context, filePath string) (bool, error) {

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/log"
 )
 
 type Model interface {

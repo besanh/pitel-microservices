@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/log"
 
 	"github.com/redis/go-redis/v9"
 )

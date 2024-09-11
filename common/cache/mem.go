@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/jellydator/ttlcache/v3"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/util"
 )
 
 type (

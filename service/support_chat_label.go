@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/util"
+	"github.com/tel4vn/pitel-microservices/model"
 )
 
 func RequestOttLabel(ctx context.Context, requestType, suffixUrl string, request model.ChatExternalLabelRequest) (result model.ChatExternalLabelResponse, err error) {

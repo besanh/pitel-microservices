@@ -3,7 +3,7 @@ package util
 import (
 	"encoding/json"
 
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/log"
 )
 
 func ConvertToBytes(message any) ([]byte, error) {

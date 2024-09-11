@@ -4,10 +4,10 @@ import (
 	"context"
 	"regexp"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/internal/elasticsearch"
+	"github.com/tel4vn/pitel-microservices/internal/sqlclient"
+	"github.com/tel4vn/pitel-microservices/model"
 )
 
 var DBConn sqlclient.ISqlClientConn
