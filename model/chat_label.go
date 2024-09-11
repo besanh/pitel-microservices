@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"unicode/utf8"
 
-	"github.com/tel4vn/fins-microservices/common/regex"
+	"github.com/tel4vn/pitel-microservices/common/regex"
 	"github.com/uptrace/bun"
 )
 

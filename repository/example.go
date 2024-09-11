@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/model"
 )
 
 type (

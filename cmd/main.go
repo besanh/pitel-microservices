@@ -6,16 +6,16 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/spf13/cobra"
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/env"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/minio"
-	"github.com/tel4vn/fins-microservices/internal/redis"
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
-	"github.com/tel4vn/fins-microservices/internal/storage"
-	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/server"
-	"github.com/tel4vn/fins-microservices/service"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/env"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/internal/minio"
+	"github.com/tel4vn/pitel-microservices/internal/redis"
+	"github.com/tel4vn/pitel-microservices/internal/sqlclient"
+	"github.com/tel4vn/pitel-microservices/internal/storage"
+	"github.com/tel4vn/pitel-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/server"
+	"github.com/tel4vn/pitel-microservices/service"
 )
 
 var cmdMain = &cobra.Command{

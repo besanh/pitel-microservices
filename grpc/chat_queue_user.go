@@ -3,12 +3,12 @@ package grpc
 import (
 	"context"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
-	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_queue_user"
-	"github.com/tel4vn/fins-microservices/middleware/auth"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/service"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/response"
+	pb "github.com/tel4vn/pitel-microservices/gen/proto/chat_queue_user"
+	"github.com/tel4vn/pitel-microservices/middleware/auth"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

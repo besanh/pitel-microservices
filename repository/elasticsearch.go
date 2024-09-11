@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/elastic/go-elasticsearch/esapi"
-	// rabbitmq "github.com/tel4vn/fins-microservices/internal/rabbitmq/driver"
+	// rabbitmq "github.com/tel4vn/pitel-microservices/internal/rabbitmq/driver"
 )
 
 type (

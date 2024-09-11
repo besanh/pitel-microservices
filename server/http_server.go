@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"time"
 
-	responsetime "github.com/tel4vn/fins-microservices/middleware/response"
+	responsetime "github.com/tel4vn/pitel-microservices/middleware/response"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	serviceName = "github.com/tel4vn/fins-microservices"
+	serviceName = "github.com/tel4vn/pitel-microservices"
 	version     = "v2.0.1"
 )
 

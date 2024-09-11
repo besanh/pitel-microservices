@@ -1,5 +1,5 @@
 version: v1
-name: github.com/tel4vn/fins-microservices
+name: github.com/tel4vn/pitel-microservices
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/bufbuild/protovalidate

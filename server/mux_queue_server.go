@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/hibiken/asynq"
-	"github.com/tel4vn/fins-microservices/common/env"
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/env"
+	"github.com/tel4vn/pitel-microservices/common/log"
 )
 
 func NewMuxServer() {
