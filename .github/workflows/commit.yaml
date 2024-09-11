@@ -10,22 +10,22 @@ on:
 
 jobs:
   notify:
-    runs-on: ubuntu-latest
+    runs-on: cicd-main-01
     steps:
       - name: send telegram message on push
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{secrets.TELEGRAM_TOKEN}}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            *Repository:*
-            ${{ github.repository }} [link](https://github.com/${{ github.repository }})
-            *Branch:*
-            ${{ github.ref_name }}
-            *Actor:*
-            ${{ github.actor }}
-            *Commit:*
-            https://github.com/${{ github.repository }}/commit/${{github.sha}}
-            *Message:*
-            Action: ${{ github.event_name }} - Commit: ${{ github.event.commits[0].message }}
+            Repository:
+            [${{ github.repository }}](https://github.com/${{ github.repository }})
+            Branch:
+            `${{ github.ref_name }}`
+            Actor:
+            `${{ github.actor }}`
+            Commit:
+            [Commit Link](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            Message:
+            Action: `${{ github.event_name }}` - Commit: `${{ github.event.commits[0].message }}`

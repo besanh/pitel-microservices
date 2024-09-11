@@ -119,18 +119,18 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            *Repository:*
+            Repository:
             ${{ github.repository }} [link](https://github.com/${{ github.repository }})
-            *Branch:*
-            ${{ github.ref_name }}
-            *Commit:*
-            https://github.com/${{ github.repository }}/commit/${{github.sha}}
-            *Repo Action URL:*
-            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
-            *Message:*
+            Branch:
+            `${{ github.ref_name }}`
+            Commit:
+            [Commit Link](https://github.com/${{ github.repository }}/commit/${{github.sha}})
+            Repo Action URL:
+            [Commit Link](https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}})
+            Message:
             Push Image to Docker Hub via GitHub Actions
-            *Image:*
-            ${{ env.DOCKER_IMAGE }}:${{ env.BRANCH_TAG }}-latest
+            Image:
+            `${{ env.DOCKER_IMAGE }}:${{ env.BRANCH_TAG }}-latest`
 
   branch_build_deploy:
     runs-on: fins-dev-cloud
@@ -149,15 +149,15 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            *Repository:*
+            Repository:
             ${{ github.repository }} [link](https://github.com/${{ github.repository }})
-            *Branch:*
-            ${{ github.ref_name }}
-            *Commit:*
-            https://github.com/${{ github.repository }}/commit/${{github.sha}}
-            *Repo Action URL:*
-            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
-            *Message:*
+            Branch:
+            `${{ github.ref_name }}`
+            Commit:
+            [Commit Link](https://github.com/${{ github.repository }}/commit/${{github.sha}})
+            Repo Action URL:
+            [Commit Link](https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}})
+            Message:
             Deploy docker compose
-            *Image:*
-            ${{ env.DOCKER_IMAGE }}:latest
+            Image:
+            `${{ env.DOCKER_IMAGE }}:latest`
