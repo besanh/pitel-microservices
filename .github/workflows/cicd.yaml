@@ -13,7 +13,7 @@ env:
 
 jobs:
   branch_build_test:
-    runs-on: cicd-main-01
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +32,7 @@ jobs:
         run: go test ./... -coverprofile=coverage.out
 
   branch_build_setup:
-    runs-on: cicd-main-01
+    runs-on: ubuntu-latest
     needs: [branch_build_test]
     outputs:
       gh_branch_name: ${{ steps.set_env_variables.outputs.TARGET_BRANCH }}
@@ -58,7 +58,7 @@ jobs:
           echo "TARGET_BRANCH=${{ env.TARGET_BRANCH }}" >> $GITHUB_OUTPUT
 
   branch_build_push:
-    runs-on: cicd-main-01
+    runs-on: ubuntu-latest
     needs: [branch_build_setup]
     env:
       BRANCH_TAG: develop
@@ -119,28 +119,28 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            *Repository:*
+            Repository:
             ${{ github.repository }} [link](https://github.com/${{ github.repository }})
-            *Branch:*
-            ${{ github.ref_name }}
-            *Commit:*
-            https://github.com/${{ github.repository }}/commit/${{github.sha}}
-            *Repo Action URL:*
-            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
-            *Message:*
+            Branch:
+            `${{ github.ref_name }}`
+            Commit:
+            [Commit Link](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            Repo Action URL:
+            [Commit Link](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            Message:
             Push Image to Docker Hub via GitHub Actions
-            *Image:*
-            ${{ env.DOCKER_IMAGE }}:${{ env.BRANCH_TAG }}-latest
+            Image:
+            `${{ env.DOCKER_IMAGE }}:${{ env.BRANCH_TAG }}-latest`
 
   branch_build_deploy:
     runs-on: fins-dev-cloud
     needs: branch_build_push
-    if: github.ref == 'refs/heads/pitel-bss-chat'
+    if: github.ref == 'refs/heads/dev_fins_bss_chat'
     steps:
       - name: deploy docker-compose
         run: |
           cd ${{ env.REPOSITORY_FOLDER }}
-          docker compose pull && docker compose down && docker compose up -d
+          docker compose pull && docker compose up -d
 
       - name: send telegram message on push
         uses: appleboy/telegram-action@master
@@ -149,15 +149,15 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           format: markdown
           message: |
-            *Repository:*
+            Repository:
             ${{ github.repository }} [link](https://github.com/${{ github.repository }})
-            *Branch:*
-            ${{ github.ref_name }}
-            *Commit:*
-            https://github.com/${{ github.repository }}/commit/${{github.sha}}
-            *Repo Action URL:*
-            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
-            *Message:*
+            Branch:
+            `${{ github.ref_name }}`
+            Commit:
+            [Commit Link](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            Repo Action URL:
+            [Commit Link](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            Message:
             Deploy docker compose
-            *Image:*
-            ${{ env.DOCKER_IMAGE }}:latest
+            Image:
+            `${{ env.DOCKER_IMAGE }}:latest`
