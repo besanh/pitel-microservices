@@ -10,7 +10,7 @@ on:
 
 jobs:
   notify:
-    runs-on: cicd-main-01
+    runs-on: ubuntu-latest
     steps:
       - name: send telegram message on push
         uses: appleboy/telegram-action@master
