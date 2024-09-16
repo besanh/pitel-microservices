@@ -301,6 +301,7 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 	hits := body.Hits.Hits
 	respScrollId = body.ScrollId
 	entries = make([]*model.MessageAttachmentsDetails, 0)
+	urlRegex := regexp.MustCompile(`https?://[^\s]+`)
 
 	// attachment hits
 	for _, messageHit := range hits {
@@ -320,7 +321,15 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 				log.Error(err)
 				return
 			}
+			if attachmentHit.AttType == "link" {
+				urls := urlRegex.FindAllString(messageEntry.Content, -1)
+				// use url from content instead
+				if len(urls) > 0 && len(urls[0]) > 0 {
+					entry.Payload.Url = urls[0]
+				}
+			}
 			entry.MessageId = messageEntry.MessageId
+			entry.MessageContent = messageEntry.Content
 			entry.SendTime = time.UnixMilli(messageEntry.SendTimestamp)
 			entries = append(entries, entry)
 		}
@@ -328,12 +337,25 @@ func (repo *MessageES) GetMessageMediasWithScroll(ctx context.Context, tenantId,
 
 	if filter.AttachmentType == "link" || filter.AttachmentType == "" {
 		// Find all URLs in the content
-		urlRegex := regexp.MustCompile(`https?://[^\s]+`)
 		for _, messageHit := range hits {
 			messageEntry := &model.Message{}
 			if err = util.ParseAnyToAny(messageHit.Source, messageEntry); err != nil {
 				log.Error(err)
 				return
+			}
+			// skip if attachment is a link
+			isLinkEmbeddedMessage := false
+			for _, attachmentHit := range messageEntry.Attachments {
+				if attachmentHit == nil {
+					continue
+				}
+				if attachmentHit.AttType == "link" {
+					isLinkEmbeddedMessage = true
+					break
+				}
+			}
+			if isLinkEmbeddedMessage {
+				continue
 			}
 
 			urls := urlRegex.FindAllString(messageEntry.Content, -1)
