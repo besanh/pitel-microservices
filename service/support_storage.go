@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"mime/multipart"
@@ -36,5 +37,24 @@ func uploadImageToStorageShareInfo(c context.Context, file *multipart.FileHeader
 
 	url = API_DOC + "/bss-message/v1/share-info/image/" + input.Path
 
+	return
+}
+
+func uploadFileToStorage(c context.Context, buffer *bytes.Buffer, prefix, fileName string) (url string, err error) {
+	metaData := storage.NewStoreInput(buffer.Bytes(), fileName)
+	isSuccess, err := storage.Instance.Store(c, *metaData)
+	if err != nil || !isSuccess {
+		log.Error(err)
+		return
+	}
+
+	input := storage.NewRetrieveInput(fileName)
+	_, err = storage.Instance.Retrieve(c, *input)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	url = API_DOC + prefix + input.Path
 	return
 }

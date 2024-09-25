@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/elastic/go-elasticsearch/esapi"
+	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
 	"github.com/tel4vn/fins-microservices/model"
@@ -82,6 +83,28 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		}
 		filters = append(filters, nested)
 	}
+	if len(filter.OaIds) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("oa_id", util.ParseToAnyArray(filter.OaIds)...))
+	}
+	if len(filter.StartTime) > 0 {
+		timeLayout := "2006-01-02 15:04:05"
+		startTime, err := time.Parse(timeLayout, filter.StartTime)
+		if err != nil {
+			log.Error(err)
+			return 0, nil, err
+		}
+		if len(filter.EndTime) > 0 {
+			endTime, err := time.Parse(timeLayout, filter.EndTime)
+			if err != nil {
+				log.Error(err)
+				return 0, nil, err
+			}
+			filters = append(filters, elasticsearch.RangeQuery("created_at", startTime, endTime))
+		} else {
+			filters = append(filters, elasticsearch.RangeQuery("created_at", startTime, nil))
+		}
+	}
+
 	if filter.IsDone.Valid {
 		bq := map[string]any{
 			"bool": map[string]any{

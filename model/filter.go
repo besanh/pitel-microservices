@@ -65,6 +65,11 @@ type ConversationFilter struct {
 	ConversationType       []string     `json:"conversation_type"`
 	OaName                 string       `json:"oa_name"`
 	LabelIds               []string     `json:"label_ids"`
+
+	// reports
+	StartTime string   `json:"start_time"`
+	EndTime   string   `json:"end_time"`
+	OaIds     []string `json:"oa_ids"`
 }
 
 type AllocateUserFilter struct {
@@ -107,6 +112,12 @@ type MessageFilter struct {
 	// nested attachments query
 	AttachmentType string `json:"attachment_type"` // image/audio/video/file/link/sticker/gif/reacted/unreacted
 	SearchKeyword  string `json:"search_keyword"`
+
+	// reports
+	StartTime         string `json:"start_time"`
+	EndTime           string `json:"end_time"`
+	UnitUuid          string `json:"-"`
+	IsSortedAscending bool   `json:"-"`
 }
 
 type ConnectionQueueFilter struct {

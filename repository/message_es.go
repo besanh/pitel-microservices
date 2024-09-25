@@ -52,6 +52,30 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 	if len(filter.ExternalMessageId) > 0 {
 		filters = append(filters, elasticsearch.TermsQuery("external_message_id", util.ParseToAnyArray([]string{filter.ExternalMessageId})...))
 	}
+	if len(filter.Direction) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("direction", util.ParseToAnyArray([]string{filter.Direction})...))
+	}
+	if len(filter.SupporterId) > 0 {
+		filters = append(filters, elasticsearch.TermsQuery("supporter_id", util.ParseToAnyArray([]string{filter.SupporterId, ""})...))
+	}
+	if len(filter.StartTime) > 0 {
+		timeLayout := "2006-01-02 15:04:05"
+		startTime, err := time.Parse(timeLayout, filter.StartTime)
+		if err != nil {
+			log.Error(err)
+			return 0, nil, err
+		}
+		if len(filter.EndTime) > 0 {
+			endTime, err := time.Parse(timeLayout, filter.EndTime)
+			if err != nil {
+				log.Error(err)
+				return 0, nil, err
+			}
+			filters = append(filters, elasticsearch.RangeQuery("send_time", startTime, endTime))
+		} else {
+			filters = append(filters, elasticsearch.RangeQuery("send_time", startTime, nil))
+		}
+	}
 
 	boolQuery := map[string]any{
 		"bool": map[string]any{
@@ -65,7 +89,7 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 		"_source": true,
 		"query":   boolQuery,
 		"sort": []any{
-			elasticsearch.Order("send_time", false),
+			elasticsearch.Order("send_time", filter.IsSortedAscending),
 		},
 	}
 	buf, err := elasticsearch.EncodeAny(searchSource)
