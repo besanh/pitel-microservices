@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/shaj13/go-guardian/v2/auth"
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/model"
 )
 
 type GoAuthInfo interface {

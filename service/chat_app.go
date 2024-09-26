@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/repository"
 )
 
 type (

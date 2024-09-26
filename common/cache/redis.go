@@ -8,12 +8,13 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/util"
 )
 
 type (
 	IRedisCache interface {
+		Keys(pattern string) ([]string, error)
 		Set(key string, value any, ttl time.Duration) error
 		SetTTL(key string, value any, t time.Duration) (string, error)
 		Get(key string) any
@@ -40,6 +41,7 @@ type (
 		SMembers(ctx context.Context, key string) ([]string, error)
 		SADD(ctx context.Context, key string, value ...any) error
 		SRANDMEMBER(ctx context.Context, key string, count int64) ([]string, error)
+		SISMEMBER(ctx context.Context, key string, value string) (bool, error)
 		ZADD(ctx context.Context, key string, score float64, v string) error
 		ZRangeByScore(ctx context.Context, key string, min, max float64, count int) ([]string, error)
 		ZRem(ctx context.Context, key string, value ...any) error
@@ -65,6 +67,13 @@ func NewRedisCache(client *redis.Client) IRedisCache {
 const (
 	REDIS_KEEP_TTL = redis.KeepTTL
 )
+
+func (r *RedisCache) Keys(pattern string) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	ret, err := r.client.Keys(ctx, pattern).Result()
+	return ret, err
+}
 
 func (r *RedisCache) Set(key string, value any, ttl time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -270,6 +279,11 @@ func (s *RedisCache) SCARD(ctx context.Context, key string) (int64, error) {
 func (s *RedisCache) SRANDMEMBER(ctx context.Context, key string, count int64) ([]string, error) {
 	value, err := s.client.SRandMemberN(ctx, key, count).Result()
 	return value, err
+}
+
+func (s *RedisCache) SISMEMBER(ctx context.Context, key string, value string) (bool, error) {
+	exists, err := s.client.SIsMember(ctx, key, value).Result()
+	return exists, err
 }
 
 func (c *RedisCache) ZADD(ctx context.Context, key string, score float64, v string) error {

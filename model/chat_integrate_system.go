@@ -4,7 +4,7 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/tel4vn/fins-microservices/common/variables"
+	"github.com/tel4vn/pitel-microservices/common/variables"
 	"github.com/uptrace/bun"
 )
 

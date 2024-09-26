@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/log"
 )
 
 func TestParseInt(t *testing.T) {

@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/queue"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/variables"
+	"github.com/tel4vn/pitel-microservices/internal/queue"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/repository"
 )
 
 func GenerateConversationId(appId, oaId, conversationId string) (newConversationId string) {
@@ -60,6 +61,11 @@ func GetManageQueueUser(ctx context.Context, queueId string) (manageQueueUser *m
 func RoundRobinUserOnline(ctx context.Context, tenantId, externalConversationId string, queueUsers *[]model.ChatQueueUser) (userLive *Subscriber, err error) {
 	userLives := []Subscriber{}
 	subscribers, err := cache.RCache.HGetAll(BSS_SUBSCRIBERS)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	subscribers, err = filterSubscribersByStatuses(tenantId, subscribers, variables.USER_STATUS_ONLINE)
 	if err != nil {
 		log.Error(err)
 		return
@@ -372,6 +378,20 @@ func countOnlineSubscribers(tenantId string, subscribers map[string]string, queu
 		}
 		if slices.Contains(levels, s.Level) && CheckInLive(*queueUsers, s.Id) && s.TenantId == tenantId {
 			result++
+		}
+	}
+	return
+}
+
+func filterSubscribersByStatuses(tenantId string, subscribers map[string]string, statuses ...string) (result map[string]string, err error) {
+	result = subscribers
+	for key, item := range subscribers {
+		s := Subscriber{}
+		if err = json.Unmarshal([]byte(item), &s); err != nil {
+			return
+		}
+		if !slices.Contains(statuses, s.Status) || s.TenantId != tenantId {
+			delete(result, key)
 		}
 	}
 	return

@@ -62,6 +62,9 @@ type ConversationFilter struct {
 	IsDone                 sql.NullBool `json:"is_done"`
 	Major                  sql.NullBool `json:"major"`
 	Following              sql.NullBool `json:"following"`
+	ConversationType       []string     `json:"conversation_type"`
+	OaName                 string       `json:"oa_name"`
+	LabelIds               []string     `json:"label_ids"`
 }
 
 type AllocateUserFilter struct {
@@ -239,4 +242,11 @@ type ConversationMediaFilter struct {
 	MediaType              string `json:"media_type"`
 	MediaName              string `json:"media_name"`
 	SendTimestamp          string `json:"send_timestamp"`
+}
+
+type ConversationNotesListFilter struct {
+	TenantId       string `json:"tenant_id"`
+	ConversationId string `json:"conversation_id"`
+	AppId          string `json:"app_id"`
+	OaId           string `json:"oa_id"`
 }

@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
-	"github.com/tel4vn/fins-microservices/common/util"
-	pb "github.com/tel4vn/fins-microservices/gen/proto/conversation"
-	"github.com/tel4vn/fins-microservices/middleware/auth"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/service"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/response"
+	"github.com/tel4vn/pitel-microservices/common/util"
+	pb "github.com/tel4vn/pitel-microservices/gen/proto/conversation"
+	"github.com/tel4vn/pitel-microservices/middleware/auth"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -48,14 +48,18 @@ func (g *GRPCConversation) GetConversations(ctx context.Context, request *pb.Get
 	}
 
 	filter := model.ConversationFilter{
-		AppId:          util.ParseQueryArray(request.GetAppId()),
-		ConversationId: util.ParseQueryArray(request.GetConversationId()),
-		Username:       request.GetUsername(),
-		PhoneNumber:    request.GetPhoneNumber(),
-		Email:          request.GetEmail(),
-		IsDone:         isDone,
-		Major:          major,
-		Following:      following,
+		AppId:            util.ParseQueryArray(request.GetAppId()),
+		ConversationId:   util.ParseQueryArray(request.GetConversationId()),
+		Username:         request.GetUsername(),
+		PhoneNumber:      request.GetPhoneNumber(),
+		Email:            request.GetEmail(),
+		IsDone:           isDone,
+		Major:            major,
+		Following:        following,
+		ConversationType: util.ParseQueryArray(request.GetConversationType()),
+		OaName:           request.GetOaName(),
+		LabelIds:         util.ParseQueryArray(request.GetLabelIds()),
+		Insensitive:      request.GetInsensitive(),
 	}
 
 	total, responseData, err := service.ConversationService.GetConversations(ctx, user, filter, limit, offset)
@@ -112,14 +116,18 @@ func (g *GRPCConversation) GetConversationsWithScrollAPI(ctx context.Context, re
 	}
 
 	filter := model.ConversationFilter{
-		AppId:          util.ParseQueryArray(request.GetAppId()),
-		ConversationId: util.ParseQueryArray(request.GetConversationId()),
-		Username:       request.GetUsername(),
-		PhoneNumber:    request.GetPhoneNumber(),
-		Email:          request.GetEmail(),
-		IsDone:         isDone,
-		Major:          major,
-		Following:      following,
+		AppId:            util.ParseQueryArray(request.GetAppId()),
+		ConversationId:   util.ParseQueryArray(request.GetConversationId()),
+		Username:         request.GetUsername(),
+		PhoneNumber:      request.GetPhoneNumber(),
+		Email:            request.GetEmail(),
+		IsDone:           isDone,
+		Major:            major,
+		Following:        following,
+		ConversationType: util.ParseQueryArray(request.GetConversationType()),
+		OaName:           request.GetOaName(),
+		LabelIds:         util.ParseQueryArray(request.GetLabelIds()),
+		Insensitive:      request.GetInsensitive(),
 	}
 
 	total, data, respScrollId, err := service.ConversationService.GetConversationsWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())
@@ -177,14 +185,18 @@ func (g *GRPCConversation) GetConversationsByManager(ctx context.Context, reques
 	}
 
 	filter := model.ConversationFilter{
-		AppId:          util.ParseQueryArray(request.GetAppId()),
-		ConversationId: util.ParseQueryArray(request.GetConversationId()),
-		Username:       request.GetUsername(),
-		PhoneNumber:    request.GetPhoneNumber(),
-		Email:          request.GetEmail(),
-		IsDone:         isDone,
-		Major:          major,
-		Following:      following,
+		AppId:            util.ParseQueryArray(request.GetAppId()),
+		ConversationId:   util.ParseQueryArray(request.GetConversationId()),
+		Username:         request.GetUsername(),
+		PhoneNumber:      request.GetPhoneNumber(),
+		Email:            request.GetEmail(),
+		IsDone:           isDone,
+		Major:            major,
+		Following:        following,
+		ConversationType: util.ParseQueryArray(request.GetConversationType()),
+		OaName:           request.GetOaName(),
+		LabelIds:         util.ParseQueryArray(request.GetLabelIds()),
+		Insensitive:      request.GetInsensitive(),
 	}
 
 	total, data, err := service.ConversationService.GetConversationsByHighLevel(ctx, user, filter, limit, offset)
@@ -252,14 +264,18 @@ func (g *GRPCConversation) GetConversationsByManagerWithScrollAPI(ctx context.Co
 	}
 
 	filter := model.ConversationFilter{
-		AppId:          util.ParseQueryArray(request.GetAppId()),
-		ConversationId: util.ParseQueryArray(request.GetConversationId()),
-		Username:       request.GetUsername(),
-		PhoneNumber:    request.GetPhoneNumber(),
-		Email:          request.GetEmail(),
-		IsDone:         isDone,
-		Major:          major,
-		Following:      following,
+		AppId:            util.ParseQueryArray(request.GetAppId()),
+		ConversationId:   util.ParseQueryArray(request.GetConversationId()),
+		Username:         request.GetUsername(),
+		PhoneNumber:      request.GetPhoneNumber(),
+		Email:            request.GetEmail(),
+		IsDone:           isDone,
+		Major:            major,
+		Following:        following,
+		ConversationType: util.ParseQueryArray(request.GetConversationType()),
+		OaName:           request.GetOaName(),
+		LabelIds:         util.ParseQueryArray(request.GetLabelIds()),
+		Insensitive:      request.GetInsensitive(),
 	}
 
 	total, data, respScrollId, err := service.ConversationService.GetConversationsByHighLevelWithScrollAPI(ctx, user, filter, limit, request.GetScrollId())

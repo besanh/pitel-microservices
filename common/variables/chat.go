@@ -87,6 +87,9 @@ var (
 		"conversation_remove_labels":      "conversation_remove_labels",
 		"conversation_user_put_major":     "conversation_user_put_major",
 		"conversation_user_put_following": "conversation_user_put_following",
+		"conversation_note_created":       "conversation_note_created",
+		"conversation_note_updated":       "conversation_note_updated",
+		"conversation_note_removed":       "conversation_note_removed",
 	}
 
 	STATUS_CONVERSATION []string = []string{
@@ -121,4 +124,18 @@ var (
 		"major":     "conversation_user_put_major",
 		"following": "conversation_user_put_following",
 	}
+
+	EVENT_USER_STATUS map[string]string = map[string]string{
+		"user_status_updated": "user_status_updated",
+	}
+
+	USER_STATUSES []string = []string{
+		USER_STATUS_ONLINE,
+		USER_STATUS_OFFLINE,
+	}
+)
+
+const (
+	USER_STATUS_ONLINE  string = "active"
+	USER_STATUS_OFFLINE string = "inactive"
 )

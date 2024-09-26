@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
-	"github.com/tel4vn/fins-microservices/common/util"
-	"github.com/tel4vn/fins-microservices/common/variables"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/response"
+	"github.com/tel4vn/pitel-microservices/common/util"
+	"github.com/tel4vn/pitel-microservices/common/variables"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/repository"
 	"golang.org/x/exp/slices"
 )
 
@@ -336,14 +336,14 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 		return
 	} else if len(conversationExist.ConversationId) < 1 {
 		err = errors.New("conversation " + conversationId + " not found")
-		log.Error(err.Error())
+		log.Error(err)
 		return
 	}
 
 	if status != "reopen" {
 		if conversationExist.IsDone {
 			err = errors.New("conversation " + conversationId + " is done")
-			log.Error(err.Error())
+			log.Error(err)
 			return
 		}
 	}
@@ -366,7 +366,7 @@ func (s *Conversation) UpdateStatusConversation(ctx context.Context, authUser *m
 	}
 	if len(*allocateUser) < 1 {
 		err = errors.New("conversation " + conversationId + " not found with active user")
-		log.Error(err.Error())
+		log.Error(err)
 		return
 	}
 

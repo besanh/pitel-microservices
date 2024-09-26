@@ -25,8 +25,8 @@ type ChatIntegrateSystemClient interface {
 	GetChatIntegrateSystems(ctx context.Context, in *GetChatIntegrateSystemRequest, opts ...grpc.CallOption) (*GetChatIntegrateSystemResponse, error)
 	PostChatIntegrateSystem(ctx context.Context, in *PostChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error)
 	GetChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*GetChatIntegrateSystemByIdResponse, error)
-	UpdateChatIntegrateSystemById(ctx context.Context, in *PutChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error)
-	DeleteChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error)
+	UpdateChatIntegrateSystemById(ctx context.Context, in *PutChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PutChatIntegrateSystemResponse, error)
+	DeleteChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*DeleteChatIntegrateSystemResponse, error)
 }
 
 type chatIntegrateSystemClient struct {
@@ -64,8 +64,8 @@ func (c *chatIntegrateSystemClient) GetChatIntegrateSystemById(ctx context.Conte
 	return out, nil
 }
 
-func (c *chatIntegrateSystemClient) UpdateChatIntegrateSystemById(ctx context.Context, in *PutChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error) {
-	out := new(PostChatIntegrateSystemResponse)
+func (c *chatIntegrateSystemClient) UpdateChatIntegrateSystemById(ctx context.Context, in *PutChatIntegrateSystemRequest, opts ...grpc.CallOption) (*PutChatIntegrateSystemResponse, error) {
+	out := new(PutChatIntegrateSystemResponse)
 	err := c.cc.Invoke(ctx, "/proto.chatIntegrateSystem.ChatIntegrateSystem/UpdateChatIntegrateSystemById", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -73,8 +73,8 @@ func (c *chatIntegrateSystemClient) UpdateChatIntegrateSystemById(ctx context.Co
 	return out, nil
 }
 
-func (c *chatIntegrateSystemClient) DeleteChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*PostChatIntegrateSystemResponse, error) {
-	out := new(PostChatIntegrateSystemResponse)
+func (c *chatIntegrateSystemClient) DeleteChatIntegrateSystemById(ctx context.Context, in *GetChatIntegrateSystemByIdRequest, opts ...grpc.CallOption) (*DeleteChatIntegrateSystemResponse, error) {
+	out := new(DeleteChatIntegrateSystemResponse)
 	err := c.cc.Invoke(ctx, "/proto.chatIntegrateSystem.ChatIntegrateSystem/DeleteChatIntegrateSystemById", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -89,8 +89,8 @@ type ChatIntegrateSystemServer interface {
 	GetChatIntegrateSystems(context.Context, *GetChatIntegrateSystemRequest) (*GetChatIntegrateSystemResponse, error)
 	PostChatIntegrateSystem(context.Context, *PostChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error)
 	GetChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*GetChatIntegrateSystemByIdResponse, error)
-	UpdateChatIntegrateSystemById(context.Context, *PutChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error)
-	DeleteChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*PostChatIntegrateSystemResponse, error)
+	UpdateChatIntegrateSystemById(context.Context, *PutChatIntegrateSystemRequest) (*PutChatIntegrateSystemResponse, error)
+	DeleteChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*DeleteChatIntegrateSystemResponse, error)
 }
 
 // UnimplementedChatIntegrateSystemServer should be embedded to have forward compatible implementations.
@@ -106,10 +106,10 @@ func (UnimplementedChatIntegrateSystemServer) PostChatIntegrateSystem(context.Co
 func (UnimplementedChatIntegrateSystemServer) GetChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*GetChatIntegrateSystemByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChatIntegrateSystemById not implemented")
 }
-func (UnimplementedChatIntegrateSystemServer) UpdateChatIntegrateSystemById(context.Context, *PutChatIntegrateSystemRequest) (*PostChatIntegrateSystemResponse, error) {
+func (UnimplementedChatIntegrateSystemServer) UpdateChatIntegrateSystemById(context.Context, *PutChatIntegrateSystemRequest) (*PutChatIntegrateSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateChatIntegrateSystemById not implemented")
 }
-func (UnimplementedChatIntegrateSystemServer) DeleteChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*PostChatIntegrateSystemResponse, error) {
+func (UnimplementedChatIntegrateSystemServer) DeleteChatIntegrateSystemById(context.Context, *GetChatIntegrateSystemByIdRequest) (*DeleteChatIntegrateSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteChatIntegrateSystemById not implemented")
 }
 

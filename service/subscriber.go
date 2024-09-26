@@ -5,9 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/variables"
+	"github.com/tel4vn/pitel-microservices/model"
 )
 
 type (
@@ -43,6 +44,7 @@ func (s *SubscriberService) AddSubscriber(ctx context.Context, authUser *model.A
 	subscriber.RoleId = authUser.RoleId
 	subscriber.ApiUrl = authUser.ApiUrl
 	subscriber.SubscribeAt = time.Now()
+	s.SetStatusForSubscriber(subscriber, authUser.UserId)
 
 	WsSubscribers.AddSubscriber(ctx, subscriber)
 	go func() {
@@ -81,4 +83,15 @@ func (s *SubscriberService) GetSubscribers() []Subscriber {
 		subscribers = append(subscribers, *s)
 	}
 	return subscribers
+}
+
+func (s *SubscriberService) SetStatusForSubscriber(subscriber *Subscriber, id string) {
+	subscriberExist, err := s.GetSubscriber(id)
+	if err != nil || subscriberExist == nil {
+		// not found subscriber, set default to online
+		subscriber.Status = variables.USER_STATUS_ONLINE
+		return
+	}
+	// keep old user's setting for status
+	subscriber.Status = subscriberExist.Status
 }

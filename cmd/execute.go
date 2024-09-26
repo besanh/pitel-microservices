@@ -6,24 +6,24 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
-	"github.com/tel4vn/fins-microservices/common/env"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/elasticsearch"
-	"github.com/tel4vn/fins-microservices/internal/goauth"
-	"github.com/tel4vn/fins-microservices/internal/queue"
-	"github.com/tel4vn/fins-microservices/internal/rabbitmq"
-	"github.com/tel4vn/fins-microservices/internal/redis"
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
-	authMdw "github.com/tel4vn/fins-microservices/middleware/auth"
-	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/common/env"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/internal/elasticsearch"
+	"github.com/tel4vn/pitel-microservices/internal/goauth"
+	"github.com/tel4vn/pitel-microservices/internal/queue"
+	"github.com/tel4vn/pitel-microservices/internal/rabbitmq"
+	streamclient "github.com/tel4vn/pitel-microservices/internal/rabbitmq/stream-client"
+	"github.com/tel4vn/pitel-microservices/internal/redis"
+	"github.com/tel4vn/pitel-microservices/internal/sqlclient"
+	authMdw "github.com/tel4vn/pitel-microservices/middleware/auth"
+	"github.com/tel4vn/pitel-microservices/repository"
 )
 
 type Config struct {
-	Port       string
-	gRPCPort   string
-	AAA_Adress string
-	LogLevel   string
-	LogFile    string
+	Port     string
+	gRPCPort string
+	LogLevel string
+	LogFile  string
 }
 
 var config Config
@@ -81,7 +81,7 @@ func init() {
 
 	// RabbitMQ
 	rabbitmqconfig := rabbitmq.Config{
-		Uri:                  env.GetStringENV("RMQ_HOST", "amqp://guest:guest@localhost:5672/"),
+		Uri:                  env.GetStringENV("RABBITMQ_HOST", "amqp://guest:guest@localhost:5672/"),
 		ChannelNotifyTimeout: 10 * time.Second,
 		Reconnect: struct {
 			Interval   time.Duration
@@ -93,11 +93,17 @@ func init() {
 	}
 
 	rabbitmq.RabbitConnector = rabbitmq.New(rabbitmqconfig)
-	rabbitmq.RabbitConnector.RoutingKey = env.GetStringENV("RABBITMQ_ROUTING_KEY", "bss-chat")
-	rabbitmq.RabbitConnector.ExchangeName = env.GetStringENV("RABBITMQ_EXCHANGE_NAME", "bss-message")
+	rabbitmq.RabbitConnector.RoutingKey = env.GetStringENV("RABBITMQ_ROUTING_KEY", "pitel.es-writer")
+	rabbitmq.RabbitConnector.ExchangeName = env.GetStringENV("RABBITMQ_EXCHANGE_NAME", "pitel.events")
 	if err := rabbitmq.RabbitConnector.Ping(); err != nil {
 		panic(err)
 	}
+	streamclient.RabbitMQStreamClient = streamclient.NewStreamClient(streamclient.Config{
+		Host: env.GetStringENV("RABBITMQ_STREAM_HOST", "localhost"),
+		Port: env.GetIntENV("RABBITMQ_PORT", 5552),
+		User: env.GetStringENV("RABBITMQ_USER", "guest"),
+		Pass: env.GetStringENV("RABBITMQ_PASS", "guest"),
+	})
 
 	esCfg := elasticsearch.Config{
 		Username:              env.GetStringENV("ES_USERNAME", "elastic"),

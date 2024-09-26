@@ -10,8 +10,8 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/tel4vn/fins-microservices/common/env"
-	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/env"
+	"github.com/tel4vn/pitel-microservices/common/log"
 )
 
 type S3Config struct {

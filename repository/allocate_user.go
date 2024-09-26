@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
-	"github.com/tel4vn/fins-microservices/model"
+	"github.com/tel4vn/pitel-microservices/internal/sqlclient"
+	"github.com/tel4vn/pitel-microservices/model"
 	"github.com/uptrace/bun"
 )
 

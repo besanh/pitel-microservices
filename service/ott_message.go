@@ -11,14 +11,17 @@ import (
 	"github.com/adjust/rmq/v5"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
-	"github.com/tel4vn/fins-microservices/common/util"
-	"github.com/tel4vn/fins-microservices/common/variables"
-	"github.com/tel4vn/fins-microservices/internal/queue"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/repository"
+	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/amqp"
+	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/stream"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/response"
+	"github.com/tel4vn/pitel-microservices/common/util"
+	"github.com/tel4vn/pitel-microservices/common/variables"
+	"github.com/tel4vn/pitel-microservices/internal/queue"
+	streamclient "github.com/tel4vn/pitel-microservices/internal/rabbitmq/stream-client"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/repository"
 	"golang.org/x/exp/slices"
 )
 
@@ -27,10 +30,17 @@ type (
 		GetOttMessage(ctx context.Context, data model.OttMessage) (int, any)
 		GetCodeChallenge(ctx context.Context, authUser *model.AuthUser, appId string) (int, any)
 		PostShareInfoEvent(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (int, any)
+		InitRabbitMQRequest()
 	}
 	OttMessage struct {
 		NumConsumer int
+		TotalErr    int
 		Users       map[string]chan []model.User
+	}
+
+	Payload struct {
+		Conversation *model.Conversation `json:"conversation"`
+		Message      *model.Message      `json:"message"`
 	}
 )
 
@@ -38,7 +48,8 @@ var OttMessageService IOttMessage
 
 func NewOttMessage() IOttMessage {
 	s := &OttMessage{}
-	s.InitQueueRequest()
+	s.InitRedisPubSubQueueRequest()
+	// s.InitRabbitMQRequest()
 	return s
 }
 
@@ -476,7 +487,7 @@ func (s *OttMessage) PostShareInfoEvent(ctx context.Context, authUser *model.Aut
 	return response.OKResponse()
 }
 
-func (s *OttMessage) InitQueueRequest() {
+func (s *OttMessage) InitRedisPubSubQueueRequest() {
 	isExistConversationQueue := queue.RMQ.Server.IsHasQueue(BSS_CHAT_CONVERSATION_QUEUE_NAME)
 	if isExistConversationQueue {
 		queue.RMQ.Server.RemoveQueue(BSS_CHAT_CONVERSATION_QUEUE_NAME)
@@ -498,6 +509,116 @@ func (s *OttMessage) InitQueueRequest() {
 	if err := queue.RMQ.Server.AddQueue(BSS_CHAT_MESSAGE_QUEUE_NAME, s.handleEsMessageQueue, 1); err != nil {
 		log.Error(err)
 	}
+}
+
+func (s *OttMessage) InitRabbitMQRequest() {
+	rabbitMqEnv, err := streamclient.RabbitMQStreamClient.NewEnvironment()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	consumerName := uuid.NewString()
+	isExistStream, err := rabbitMqEnv.StreamExists(RABBITMQ_STREAM_NAME)
+	if err != nil {
+		log.Fatal(err)
+	} else if !isExistStream && len(RABBITMQ_STREAM_NAME) > 0 {
+		rabbitMqEnv.DeclareStream(RABBITMQ_STREAM_NAME, stream.NewStreamOptions())
+	} else if len(RABBITMQ_STREAM_NAME) == 0 {
+		log.Fatal("stream name is empty")
+	}
+
+	consumer, err := rabbitMqEnv.NewConsumer(RABBITMQ_STREAM_NAME, s.handleEsConversationRabbitMQ, stream.NewConsumerOptions().
+		SetConsumerName(consumerName).
+		SetOffset(stream.OffsetSpecification{}.Last()). // start consuming from the beginning
+		SetCRCCheck(false))
+	if err != nil {
+		log.Fatal(err)
+	} else if consumer == nil {
+		log.Fatal("consumer is nil")
+	}
+	// channelClose := consumer.NotifyClose()
+	defer func() {
+		if err := consumer.Close(); err != nil {
+			log.Errorf("close consumer error: %v", err)
+		}
+	}()
+	// event := <-channelClose
+	// log.Errorf("Consumer: %s closed on the stream: %s, reason: %s", event.Name, event.StreamName, event.Reason)
+	// log.Infof("Recreating consumer: %s | Error count: %d", consumerName, s.TotalErr)
+	// if err := consumer.Close(); err != nil {
+	// 	log.Errorf("close consumer error: %v", err)
+	// }
+
+	s.TotalErr++
+}
+
+func (s *OttMessage) handleEsConversationRabbitMQ(ctx stream.ConsumerContext, req *amqp.Message) {
+	log.Debugf("received request from rabbitmq: %s", req.GetData())
+	var payload Payload
+	if err := json.Unmarshal(req.GetData(), &payload); err != nil {
+		log.Error(err)
+		return
+	}
+
+	done := make(chan struct{})
+
+	ctxDb, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	go func() {
+		defer func() {
+			close(done)
+		}()
+		tmpBytes, err := json.Marshal(payload.Conversation)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		esDoc := map[string]any{}
+		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+		if err := repository.ESRepo.UpdateDocById(ctxDb, ES_INDEX_CONVERSATION, payload.Conversation.AppId, payload.Conversation.ConversationId, esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+		if err := cache.RCache.Del([]string{CONVERSATION + "_" + payload.Conversation.ConversationId}); err != nil {
+			log.Error(err)
+			return
+		}
+
+		if payload.Message != nil {
+			s.handleEsMessageRabbitMQ(*payload.Message)
+		}
+	}()
+}
+
+func (s *OttMessage) handleEsMessageRabbitMQ(message model.Message) {
+	log.Debugf("received message from rabbitmq: %s", message)
+
+	done := make(chan struct{})
+
+	ctxDb, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	go func() {
+		defer func() {
+			close(done)
+		}()
+		tmpBytes, err := json.Marshal(message)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		esDoc := map[string]any{}
+		if err := json.Unmarshal(tmpBytes, &esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+		if err := repository.ESRepo.UpdateDocById(ctxDb, ES_INDEX_MESSAGE, message.AppId, message.MessageId, esDoc); err != nil {
+			log.Error(err)
+			return
+		}
+	}()
 }
 
 func (s *OttMessage) handleEsConversationQueue(d rmq.Delivery) {

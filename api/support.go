@@ -9,14 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coder/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/middleware/auth"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/service"
-	"nhooyr.io/websocket"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/middleware/auth"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/service"
 )
 
 const (
@@ -90,7 +90,7 @@ func RequestAAA(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (result *
 	body := map[string]string{
 		"token": bssAuthRequest.Token,
 	}
-	// https://api.dev.fins.vn/aaa/v1/token/verify
+
 	client := resty.New()
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
@@ -192,15 +192,15 @@ func RequestAuthen(ctx *gin.Context, bssAuthRequest model.BssAuthRequest) (resul
 	return result, nil
 }
 
-func WriteTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg []byte) error {
+func WriteTimeout(ctx context.Context, timeout time.Duration, c *websocket.Conn, msg []byte) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	err := c.Write(ctx, websocket.MessageText, msg)
-	if err != nil {
-		return fmt.Errorf("failed to write message: %w", err)
+	if err = c.Write(ctx, websocket.MessageText, msg); err != nil {
+		err = fmt.Errorf("failed to write message: %w", err)
+		return
 	}
-	return nil
+	return
 }
 
 func AuthMiddlewareNew(c *gin.Context) (result *model.ChatResponse) {

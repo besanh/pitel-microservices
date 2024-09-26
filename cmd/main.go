@@ -6,16 +6,16 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/spf13/cobra"
-	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/env"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/minio"
-	"github.com/tel4vn/fins-microservices/internal/redis"
-	"github.com/tel4vn/fins-microservices/internal/sqlclient"
-	"github.com/tel4vn/fins-microservices/internal/storage"
-	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/server"
-	"github.com/tel4vn/fins-microservices/service"
+	"github.com/tel4vn/pitel-microservices/common/cache"
+	"github.com/tel4vn/pitel-microservices/common/env"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/internal/minio"
+	"github.com/tel4vn/pitel-microservices/internal/redis"
+	"github.com/tel4vn/pitel-microservices/internal/sqlclient"
+	"github.com/tel4vn/pitel-microservices/internal/storage"
+	"github.com/tel4vn/pitel-microservices/repository"
+	"github.com/tel4vn/pitel-microservices/server"
+	"github.com/tel4vn/pitel-microservices/service"
 )
 
 var cmdMain = &cobra.Command{
@@ -45,31 +45,10 @@ func RunMainService() {
 	repository.InitColumn(ctx, repository.DBConn)
 
 	// Init services
-	service.SECRET_KEY_SUPERADMIN = env.GetStringENV("SECRET_KEY_SUPERADMIN", "RnXyO4178f2gvXV8bbSgVf3ipcO7PR5y6jLATrfvHcmEbVWjgwgm2dl8GE3EPEG7KFqHzOznCNBbe3aiNWykfT32lw0RM8ThRTCD")
-	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
-	service.ES_INDEX_MESSAGE = env.GetStringENV("ES_INDEX_MESSAGE", "pitel_bss_message")
-	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
-	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
-	service.OTT_VERSION = env.GetStringENV("OTT_VERSION", "v1")
-	service.API_SHARE_INFO_HOST = env.GetStringENV("API_SHARE_INFO_HOST", "")
-	service.API_DOC = env.GetStringENV("API_DOC", "")
-	service.ENABLE_PUBLISH_ADMIN = env.GetBoolENV("ENABLE_PUBLISH_ADMIN", false)
-	service.ENABLE_CHAT_AUTO_SCRIPT_REPLY = env.GetBoolENV("ENABLE_CHAT_AUTO_SCRIPT_REPLY", false)
-	service.ENABLE_CHAT_POLICY_SETTINGS = env.GetBoolENV("ENABLE_CHAT_POLICY_SETTINGS", false)
-	service.AAA_HOST = env.GetStringENV("AAA_HOST", "https://aaa.dev.fins.vn")
 	service.InitServices()
 
 	// Init storage
 	storage.InitStorage()
-
-	// Store to service
-	minio.MinIOClient = minio.NewClient(minio.Config{
-		Endpoint:        env.GetStringENV("STORAGE_ENDPOINT", ""),
-		AccessKeyID:     env.GetStringENV("STORAGE_BUCKET_NAME", ""),
-		SecretAccessKey: env.GetStringENV("STORAGE_ACCESS_KEY", ""),
-		Region:          env.GetStringENV("STORAGE_SECRET_KEY", ""),
-		UseSSL:          true,
-	})
 
 	initConfigService()
 
@@ -79,6 +58,27 @@ func RunMainService() {
 }
 
 func initConfigService() {
+	service.SECRET_KEY_SUPERADMIN = env.GetStringENV("SECRET_KEY_SUPERADMIN", "RnXyO4178f2gvXV8bbSgVf3ipcO7PR5y6jLATrfvHcmEbVWjgwgm2dl8GE3EPEG7KFqHzOznCNBbe3aiNWykfT32lw0RM8ThRTCD")
+	service.MapDBConn = make(map[string]sqlclient.ISqlClientConn, 0)
+
+	// ES
+	service.ES_INDEX_MESSAGE = env.GetStringENV("ES_INDEX_MESSAGE", "pitel_bss_message")
+	service.ES_INDEX_CONVERSATION = env.GetStringENV("ES_INDEX_CONVERSATION", "pitel_bss_conversation")
+
+	// RabbitMQ
+	service.RABBITMQ_STREAM_NAME = env.GetStringENV("RABBITMQ_STREAM_NAME", "pitel.chat-event")
+
+	// OTT
+	service.OTT_URL = env.GetStringENV("OTT_DOMAIN", "")
+	service.OTT_VERSION = env.GetStringENV("OTT_VERSION", "v1")
+	service.API_SHARE_INFO_HOST = env.GetStringENV("API_SHARE_INFO_HOST", "")
+	service.API_DOC = env.GetStringENV("API_DOC", "")
+
+	// Chat
+	service.ENABLE_PUBLISH_ADMIN = env.GetBoolENV("ENABLE_PUBLISH_ADMIN", false)
+	service.ENABLE_CHAT_AUTO_SCRIPT_REPLY = env.GetBoolENV("ENABLE_CHAT_AUTO_SCRIPT_REPLY", false)
+	service.ENABLE_CHAT_POLICY_SETTINGS = env.GetBoolENV("ENABLE_CHAT_POLICY_SETTINGS", false)
+
 	service.S3_ENDPOINT = env.GetStringENV("STORAGE_ENDPOINT", "")
 	service.S3_BUCKET_NAME = env.GetStringENV("STORAGE_BUCKET_NAME", "")
 	service.S3_ACCESS_KEY = env.GetStringENV("STORAGE_ACCESS_KEY", "")
@@ -106,6 +106,15 @@ func initConfigService() {
 	service.SMTP_PASSWORD = env.GetStringENV("SMTP_PASSWORD", "")
 	service.SMTP_INFORM = env.GetBoolENV("SMTP_INFORM", false)
 	service.ENABLE_NOTIFY_EMAIL = env.GetBoolENV("ENABLE_NOTIFY_EMAIL", false)
+
+	// Store to service
+	minio.MinIOClient = minio.NewClient(minio.Config{
+		Endpoint:        env.GetStringENV("STORAGE_ENDPOINT", ""),
+		AccessKeyID:     env.GetStringENV("STORAGE_BUCKET_NAME", ""),
+		SecretAccessKey: env.GetStringENV("STORAGE_ACCESS_KEY", ""),
+		Region:          env.GetStringENV("STORAGE_SECRET_KEY", ""),
+		UseSSL:          true,
+	})
 
 	if service.ENABLE_NOTIFY_EMAIL {
 		log.Info("init scheduler for expire token")

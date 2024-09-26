@@ -5,8 +5,8 @@ import (
 	"io"
 	"mime/multipart"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/internal/storage"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/internal/storage"
 )
 
 func uploadImageToStorageShareInfo(c context.Context, file *multipart.FileHeader) (url string, err error) {

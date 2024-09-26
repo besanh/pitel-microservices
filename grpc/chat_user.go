@@ -3,12 +3,14 @@ package grpc
 import (
 	"context"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
-	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_user"
-	"github.com/tel4vn/fins-microservices/middleware/auth"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/service"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/response"
+	"github.com/tel4vn/pitel-microservices/common/variables"
+	pb "github.com/tel4vn/pitel-microservices/gen/proto/chat_user"
+	"github.com/tel4vn/pitel-microservices/middleware/auth"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/service"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -61,5 +63,45 @@ func (g *GRPCChatUser) PostChatUser(ctx context.Context, request *pb.PostChatUse
 		Id:      id,
 	}
 
+	return
+}
+
+func (g *GRPCChatUser) UpdateChatUserStatusById(ctx context.Context, request *pb.PutChatUserStatusRequest) (result *pb.PutChatUserResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+	if !slices.Contains(variables.USER_STATUSES, request.GetStatus()) {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid status: %v", request.GetStatus())
+	}
+
+	err = service.ChatUserService.UpdateChatUserStatusById(ctx, user, request.GetStatus())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result = &pb.PutChatUserResponse{
+		Code:    "OK",
+		Message: "ok",
+	}
+	return
+}
+
+func (g *GRPCChatUser) GetChatUserStatusById(ctx context.Context, request *pb.GetChatUserStatusRequest) (result *pb.GetChatUserResponse, err error) {
+	user, ok := auth.GetUserFromContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
+	}
+
+	userStatus, err := service.ChatUserService.GetChatUserStatusById(ctx, user)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	result = &pb.GetChatUserResponse{
+		Code:    "OK",
+		Message: "ok",
+		Status:  userStatus,
+	}
 	return
 }

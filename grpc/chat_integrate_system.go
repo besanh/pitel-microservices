@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"strconv"
 
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/response"
-	"github.com/tel4vn/fins-microservices/common/util"
-	pb "github.com/tel4vn/fins-microservices/gen/proto/chat_integrate_system"
-	"github.com/tel4vn/fins-microservices/middleware/auth"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/service"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/response"
+	"github.com/tel4vn/pitel-microservices/common/util"
+	pb "github.com/tel4vn/pitel-microservices/gen/proto/chat_integrate_system"
+	"github.com/tel4vn/pitel-microservices/middleware/auth"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -182,7 +182,7 @@ func (g *GRPCChatIntegrateSystem) GetChatIntegrateSystemById(ctx context.Context
 	return
 }
 
-func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, req *pb.PutChatIntegrateSystemRequest) (result *pb.PostChatIntegrateSystemResponse, err error) {
+func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Context, req *pb.PutChatIntegrateSystemRequest) (result *pb.PutChatIntegrateSystemResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -214,21 +214,21 @@ func (g *GRPCChatIntegrateSystem) UpdateChatIntegrateSystemById(ctx context.Cont
 	err = service.ChatIntegrateSystemService.UpdateChatIntegrateSystemById(ctx, authUser, req.GetId(), &payload)
 	if err != nil {
 		log.Error(err)
-		result = &pb.PostChatIntegrateSystemResponse{
+		result = &pb.PutChatIntegrateSystemResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_PUT_FAILED].Code,
 			Message: err.Error(),
 		}
 		return result, nil
 	}
 
-	result = &pb.PostChatIntegrateSystemResponse{
+	result = &pb.PutChatIntegrateSystemResponse{
 		Code:    "OK",
 		Message: "ok",
 	}
 	return
 }
 
-func (g *GRPCChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Context, req *pb.GetChatIntegrateSystemByIdRequest) (result *pb.PostChatIntegrateSystemResponse, err error) {
+func (g *GRPCChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Context, req *pb.GetChatIntegrateSystemByIdRequest) (result *pb.DeleteChatIntegrateSystemResponse, err error) {
 	authUser, ok := auth.GetUserFromContext(ctx)
 	if !ok {
 		return nil, status.Errorf(codes.Unauthenticated, response.ERR_TOKEN_IS_INVALID)
@@ -237,14 +237,14 @@ func (g *GRPCChatIntegrateSystem) DeleteChatIntegrateSystemById(ctx context.Cont
 	err = service.ChatIntegrateSystemService.DeleteChatIntegrateSystemById(ctx, authUser, req.GetId())
 	if err != nil {
 		log.Error(err)
-		result = &pb.PostChatIntegrateSystemResponse{
+		result = &pb.DeleteChatIntegrateSystemResponse{
 			Code:    response.MAP_ERR_RESPONSE[response.ERR_DELETE_FAILED].Code,
 			Message: err.Error(),
 		}
 		return result, nil
 	}
 
-	result = &pb.PostChatIntegrateSystemResponse{
+	result = &pb.DeleteChatIntegrateSystemResponse{
 		Code:    "OK",
 		Message: "ok",
 	}

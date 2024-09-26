@@ -12,11 +12,11 @@ import (
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 	"github.com/shaj13/libcache"
 	_ "github.com/shaj13/libcache/fifo"
-	"github.com/tel4vn/fins-microservices/common/log"
-	"github.com/tel4vn/fins-microservices/common/util"
-	"github.com/tel4vn/fins-microservices/internal/goauth"
-	"github.com/tel4vn/fins-microservices/model"
-	"github.com/tel4vn/fins-microservices/service"
+	"github.com/tel4vn/pitel-microservices/common/log"
+	"github.com/tel4vn/pitel-microservices/common/util"
+	"github.com/tel4vn/pitel-microservices/internal/goauth"
+	"github.com/tel4vn/pitel-microservices/model"
+	"github.com/tel4vn/pitel-microservices/service"
 )
 
 var cacheObj libcache.Cache
