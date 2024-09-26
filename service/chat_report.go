@@ -35,17 +35,7 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 	receivingTimesConversation := make(map[string][]time.Time)
 	previousDirection := make(map[string]string)
 	filter.IsSortedAscending = true // sort messages from oldest to newest
-
-	chatIntegrateSystem, err := GetChatIntegrateSystem(ctx, authUser)
-	if err != nil {
-		return
-	}
-
-	usersInfo, errTmp := GetUsersCrm(chatIntegrateSystem.InfoSystem.ApiGetUserUrl, token)
-	if errTmp != nil {
-		log.Error(errTmp)
-	}
-	usersList := usersMapListFromArray(usersInfo)
+	userIds := make([]string, 0)
 
 	for offsetLogs := 0; limit == -1 || offsetLogs < limit; offsetLogs += batchSize {
 		totalMessages, messages, errTmp := repository.MessageESRepo.GetMessages(ctx, authUser.TenantId, ES_INDEX_MESSAGE, filter, batchSize, offsetLogs)
@@ -62,9 +52,6 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 			if len(message.ConversationId) < 1 {
 				continue
 			}
-			if len(filter.UnitUuid) > 0 && usersList[message.SupporterId] != nil && usersList[message.SupporterId].UnitUuid != filter.UnitUuid {
-				continue
-			}
 
 			userReport, ok := userWorkMetrics[message.SupporterId]
 			if !ok {
@@ -76,6 +63,9 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 					ConversationExists: make(map[string]bool),
 				}
 				userWorkMetrics[message.SupporterId] = userReport
+				if len(message.SupporterId) > 0 {
+					userIds = append(userIds, message.SupporterId)
+				}
 			}
 
 			if _, ok := receivingTimesConversation[message.ConversationId]; !ok {
@@ -119,8 +109,22 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 		}
 	}
 
+	chatIntegrateSystem, err := GetChatIntegrateSystem(ctx, authUser)
+	if err != nil {
+		return
+	}
+
+	usersInfo, errTmp := GetUsersCrm(chatIntegrateSystem.InfoSystem.ApiGetUserUrl, token, userIds)
+	if errTmp != nil {
+		log.Error(errTmp)
+	}
+	usersList := usersMapListFromArray(usersInfo)
+
 	for _, report := range userWorkMetrics {
 		if len(report.UserId) < 1 {
+			continue
+		}
+		if len(filter.UnitUuid) > 0 && usersList[report.UserId] != nil && usersList[report.UserId].UnitUuid != filter.UnitUuid {
 			continue
 		}
 

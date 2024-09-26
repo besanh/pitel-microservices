@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
-	"github.com/tel4vn/fins-microservices/service/common"
 )
 
 func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, tenantId, userId, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatWorkReport) (err error) {
@@ -79,13 +79,13 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 
 	var buf *bytes.Buffer
 	if fileType == "xlsx" {
-		buf, err = common.HandleExcelStreamWriter(headers, rows)
+		buf, err = util.HandleExcelStreamWriter(headers, rows)
 		if err != nil {
 			log.Error(err)
 			return
 		}
 	} else if fileType == "csv" {
-		buf, err = common.HandleCSVStreamWriter(exportName, headers, rows)
+		buf, err = util.HandleCSVStreamWriter(exportName, headers, rows)
 		if err != nil {
 			log.Error(err)
 			return
@@ -147,13 +147,13 @@ func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId,
 
 	var buf *bytes.Buffer
 	if fileType == "xlsx" {
-		buf, err = common.HandleExcelStreamWriter(headers, rows)
+		buf, err = util.HandleExcelStreamWriter(headers, rows)
 		if err != nil {
 			log.Error(err)
 			return
 		}
 	} else if fileType == "csv" {
-		buf, err = common.HandleCSVStreamWriter(exportName, headers, rows)
+		buf, err = util.HandleCSVStreamWriter(exportName, headers, rows)
 		if err != nil {
 			log.Error(err)
 			return
@@ -199,13 +199,16 @@ func GetChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser) (chat
 	return
 }
 
-func GetUsersCrm(apiUrl, token string) (result []model.AuthUserInfo, err error) {
+func GetUsersCrm(apiUrl, token string, userIds []string) (result []model.AuthUserInfo, err error) {
 	client := resty.New()
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Authorization", "Bearer "+token).
 		SetQueryParam("limit", "-1").
 		SetQueryParam("offset", "0").
+		SetQueryParamsFromValues(url.Values{
+			"user_uuid": userIds,
+		}).
 		Get(apiUrl)
 	if err != nil {
 		return
