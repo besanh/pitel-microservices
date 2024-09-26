@@ -13,6 +13,7 @@ type ExportMap struct {
 	Type             string `json:"type"`
 	Folder           string `json:"folder"`
 	Url              string `json:"url"`
+	Expiry           int    `json:"expiry"`
 }
 
 func (ex *ExportMap) ToJSON() string {

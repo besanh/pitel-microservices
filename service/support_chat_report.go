@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
+	"github.com/tel4vn/fins-microservices/common/constant"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
@@ -24,19 +25,19 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 		"Nhân viên hỗ trợ",
 		"Tổng",
 		"Facebook.Hỗ trợ (lượt)",
-		"Facebook.Thời gian tiếp nhận.Nhanh nhất",
-		"Facebook.Thời gian tiếp nhận.Chậm nhất",
-		"Facebook.Thời gian tiếp nhận.Trung bình",
-		"Facebook.Thời gian chờ phản hổi.Nhanh nhất",
-		"Facebook.Thời gian chờ phản hổi.Chậm nhất",
-		"Facebook.Thời gian chờ phản hổi.Trung bình",
+		"Facebook.Thời gian tiếp nhận.Nhanh nhất (s)",
+		"Facebook.Thời gian tiếp nhận.Chậm nhất (s)",
+		"Facebook.Thời gian tiếp nhận.Trung bình (s)",
+		"Facebook.Thời gian chờ phản hổi.Nhanh nhất (s)",
+		"Facebook.Thời gian chờ phản hổi.Chậm nhất (s)",
+		"Facebook.Thời gian chờ phản hổi.Trung bình (s)",
 		"Zalo.Hỗ trợ (lượt)",
-		"Zalo.Thời gian tiếp nhận.Nhanh nhất",
-		"Zalo.Thời gian tiếp nhận.Chậm nhất",
-		"Zalo.Thời gian tiếp nhận.Trung bình",
-		"Zalo.Thời gian chờ phản hổi.Nhanh nhất",
-		"Zalo.Thời gian chờ phản hổi.Chậm nhất",
-		"Zalo.Thời gian chờ phản hổi.Trung bình",
+		"Zalo.Thời gian tiếp nhận.Nhanh nhất (s)",
+		"Zalo.Thời gian tiếp nhận.Chậm nhất (s)",
+		"Zalo.Thời gian tiếp nhận.Trung bình (s)",
+		"Zalo.Thời gian chờ phản hổi.Nhanh nhất (s)",
+		"Zalo.Thời gian chờ phản hổi.Chậm nhất (s)",
+		"Zalo.Thời gian chờ phản hổi.Trung bình (s)",
 	)
 	rows := make([][]string, 0)
 	limitPerPart := 50
@@ -52,19 +53,19 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 				userFullName,
 				strconv.Itoa(report.Total),
 				strconv.Itoa(report.Facebook.TotalChannels),
-				strconv.Itoa(report.Facebook.ReceivingTime.Fastest),
-				strconv.Itoa(report.Facebook.ReceivingTime.Slowest),
-				strconv.Itoa(report.Facebook.ReceivingTime.Average),
-				strconv.Itoa(report.Facebook.ReplyingTime.Fastest),
-				strconv.Itoa(report.Facebook.ReplyingTime.Slowest),
-				strconv.Itoa(report.Facebook.ReplyingTime.Average),
+				strconv.FormatFloat(float64(report.Facebook.ReceivingTime.Fastest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Facebook.ReceivingTime.Slowest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Facebook.ReceivingTime.Average)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Facebook.ReplyingTime.Fastest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Facebook.ReplyingTime.Slowest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Facebook.ReplyingTime.Average)/1000.0, 'f', 3, 64),
 				strconv.Itoa(report.Zalo.TotalChannels),
-				strconv.Itoa(report.Zalo.ReceivingTime.Fastest),
-				strconv.Itoa(report.Zalo.ReceivingTime.Slowest),
-				strconv.Itoa(report.Zalo.ReceivingTime.Average),
-				strconv.Itoa(report.Zalo.ReplyingTime.Fastest),
-				strconv.Itoa(report.Zalo.ReplyingTime.Slowest),
-				strconv.Itoa(report.Zalo.ReplyingTime.Average),
+				strconv.FormatFloat(float64(report.Zalo.ReceivingTime.Fastest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Zalo.ReceivingTime.Slowest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Zalo.ReceivingTime.Average)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Zalo.ReplyingTime.Fastest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Zalo.ReplyingTime.Slowest)/1000.0, 'f', 3, 64),
+				strconv.FormatFloat(float64(report.Zalo.ReplyingTime.Average)/1000.0, 'f', 3, 64),
 			)
 			rows = append(rows, row)
 		}
@@ -97,6 +98,7 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 	}
 
 	exportMap.Url = url
+	exportMap.Expiry = int(constant.OBJECT_EXPIRE_TIME.Milliseconds())
 	exportMap.ExportTimeFinish = util.TimeToString(time.Now())
 	exportMap.TotalRows = len(*chatReport)
 	exportMap.Status = "Done"
@@ -164,6 +166,7 @@ func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId,
 	}
 
 	exportMap.Url = url
+	exportMap.Expiry = int(constant.OBJECT_EXPIRE_TIME.Milliseconds())
 	exportMap.ExportTimeFinish = util.TimeToString(time.Now())
 	exportMap.TotalRows = len(*chatReport)
 	exportMap.Status = "Done"
