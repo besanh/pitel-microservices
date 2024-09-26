@@ -11,9 +11,10 @@ import "buf/validate/validate.proto";
 
 message WorkReport {
   string user_id = 1;
-  int32 total = 2;
-  ChannelWorkPerformance facebook = 3;
-  ChannelWorkPerformance zalo = 4;
+  string user_fullname = 2;
+  int32 total = 3;
+  ChannelWorkPerformance facebook = 4;
+  ChannelWorkPerformance zalo = 5;
 }
 
 message ChannelWorkPerformance {

@@ -6,7 +6,8 @@ import (
 )
 
 type ChatWorkReport struct {
-	UserId             string                        `json:"user_id"` // user id or users full name
+	UserId             string                        `json:"user_id"`
+	UserFullname       string                        `json:"user_fullname"`
 	Total              int                           `json:"total"`
 	Facebook           ChannelWorkPerformanceMetrics `json:"facebook"`
 	Zalo               ChannelWorkPerformanceMetrics `json:"zalo"`

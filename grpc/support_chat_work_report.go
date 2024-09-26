@@ -9,8 +9,9 @@ func convertChatWorkReportToPbChatWorkReport(data *[]model.ChatWorkReport) (resu
 	result = make([]*pb.WorkReport, 0)
 	for _, report := range *data {
 		tmp := &pb.WorkReport{
-			UserId: report.UserId,
-			Total:  int32(report.Total),
+			UserId:       report.UserId,
+			UserFullname: report.UserFullname,
+			Total:        int32(report.Total),
 			Facebook: &pb.ChannelWorkPerformance{
 				TotalChannels: int32(report.Facebook.TotalChannels),
 				ReceivingTime: &pb.PerformanceMetrics{

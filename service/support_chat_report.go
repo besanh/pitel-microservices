@@ -43,9 +43,13 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 
 	for offset := 0; offset < len(*chatReport); offset += limitPerPart {
 		for _, report := range *chatReport {
+			userFullName := report.UserId
+			if len(report.UserFullname) > 0 {
+				userFullName = report.UserFullname
+			}
 			row := make([]string, 0)
 			row = append(row,
-				report.UserId,
+				userFullName,
 				strconv.Itoa(report.Total),
 				strconv.Itoa(report.Facebook.TotalChannels),
 				strconv.Itoa(report.Facebook.ReceivingTime.Fastest),
@@ -197,8 +201,8 @@ func GetUsersCrm(apiUrl, token string) (result []model.AuthUserInfo, err error) 
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Authorization", "Bearer "+token).
-		SetPathParam("limit", "-1").
-		SetPathParam("offset", "0").
+		SetQueryParam("limit", "-1").
+		SetQueryParam("offset", "0").
 		Get(apiUrl)
 	if err != nil {
 		return

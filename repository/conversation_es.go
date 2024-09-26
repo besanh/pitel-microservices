@@ -87,7 +87,7 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		filters = append(filters, elasticsearch.TermsQuery("oa_id", util.ParseToAnyArray(filter.OaIds)...))
 	}
 	if len(filter.StartTime) > 0 {
-		timeLayout := "2006-01-02 15:04:05"
+		timeLayout := "2006-01-02T15:04:05 07:00"
 		startTime, err := time.Parse(timeLayout, filter.StartTime)
 		if err != nil {
 			log.Error(err)

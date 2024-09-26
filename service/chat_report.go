@@ -41,10 +41,9 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 		return
 	}
 
-	usersInfo, err := GetUsersCrm(chatIntegrateSystem.InfoSystem.ApiGetUserUrl, token)
-	if err != nil {
-		log.Error(err)
-		return
+	usersInfo, errTmp := GetUsersCrm(chatIntegrateSystem.InfoSystem.ApiGetUserUrl, token)
+	if errTmp != nil {
+		log.Error(errTmp)
 	}
 	usersList := usersMapListFromArray(usersInfo)
 
@@ -61,6 +60,9 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 
 		for _, message := range *messages {
 			if len(message.ConversationId) < 1 {
+				continue
+			}
+			if len(filter.UnitUuid) > 0 && usersList[message.SupporterId] != nil && usersList[message.SupporterId].UnitUuid != filter.UnitUuid {
 				continue
 			}
 
@@ -121,13 +123,10 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 		if len(report.UserId) < 1 {
 			continue
 		}
-		if len(filter.UnitUuid) > 0 && usersList[report.UserId].UnitUuid != filter.UnitUuid {
-			continue
-		}
 
 		// fill user's full name
 		if usersList[report.UserId] != nil {
-			report.UserId = usersList[report.UserId].FirstName
+			report.UserFullname = usersList[report.UserId].FirstName
 		}
 		report.Total = report.Facebook.TotalChannels + report.Zalo.TotalChannels
 		report.Facebook.ReceivingTime.CalculateMetrics()

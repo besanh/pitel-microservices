@@ -59,7 +59,7 @@ func (m *MessageES) GetMessages(ctx context.Context, tenantId, index string, fil
 		filters = append(filters, elasticsearch.TermsQuery("supporter_id", util.ParseToAnyArray([]string{filter.SupporterId, ""})...))
 	}
 	if len(filter.StartTime) > 0 {
-		timeLayout := "2006-01-02 15:04:05"
+		timeLayout := "2006-01-02T15:04:05 07:00"
 		startTime, err := time.Parse(timeLayout, filter.StartTime)
 		if err != nil {
 			log.Error(err)
