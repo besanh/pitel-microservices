@@ -49,7 +49,7 @@ var OttMessageService IOttMessage
 func NewOttMessage() IOttMessage {
 	s := &OttMessage{}
 	s.InitRedisPubSubQueueRequest()
-	s.InitRabbitMQRequest()
+	//s.InitRabbitMQRequest()
 	return s
 }
 
