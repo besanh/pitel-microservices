@@ -227,28 +227,35 @@ func (c *ChatReport) ExportWorkReports(ctx context.Context, authUser *model.Auth
 		Url:              "",
 	}
 
-	// get report data
-	_, workReport, err := c.GetChatWorkReports(ctx, authUser, filter, -1, 0, token)
-	if err != nil {
-		return
-	}
+	ct, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	go func() {
+		defer cancel()
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error(err)
+			}
+		}()
+		// get report data
+		_, workReport, err := c.GetChatWorkReports(ct, authUser, filter, -1, 0, token)
+		if err != nil {
+			panic(err)
+		}
 
-	// generate excel file
-	if err = c.generateExportUsersWorkPerformance(ctx, authUser.TenantId, authUser.UserId, exportName, fileType, exportMap, workReport); err != nil {
-		log.Error(err)
-		return
-	}
+		// generate excel file
+		if err = c.generateExportUsersWorkPerformance(ct, authUser.TenantId, authUser.UserId, exportName, fileType, exportMap, workReport); err != nil {
+			panic(err)
+		}
 
-	chatIntegrateSystem, err := GetChatIntegrateSystem(ctx, authUser)
-	if err != nil {
-		return
-	}
+		chatIntegrateSystem, err := GetChatIntegrateSystem(ct, authUser)
+		if err != nil {
+			panic(err)
+		}
 
-	// send to crm to ack this exported file
-	if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
-		log.Error(err)
-		return
-	}
+		// send to crm to ack this exported file
+		if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
+			panic(err)
+		}
+	}()
 
 	return
 }
@@ -269,28 +276,35 @@ func (c *ChatReport) ExportGeneralReports(ctx context.Context, authUser *model.A
 		Url:              "",
 	}
 
-	// get report data
-	_, workReport, err := c.GetChatGeneralReports(ctx, authUser, filter, -1, 0, token)
-	if err != nil {
-		return
-	}
+	ct, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	go func() {
+		defer cancel()
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error(err)
+			}
+		}()
+		// get report data
+		_, workReport, err := c.GetChatGeneralReports(ct, authUser, filter, -1, 0, token)
+		if err != nil {
+			panic(err)
+		}
 
-	// generate excel file
-	if err = c.generateExportGeneralMetrics(ctx, authUser.TenantId, authUser.UserId, exportName, fileType, exportMap, workReport); err != nil {
-		log.Error(err)
-		return
-	}
+		// generate excel file
+		if err = c.generateExportGeneralMetrics(ct, authUser.TenantId, authUser.UserId, exportName, fileType, exportMap, workReport); err != nil {
+			panic(err)
+		}
 
-	chatIntegrateSystem, err := GetChatIntegrateSystem(ctx, authUser)
-	if err != nil {
-		return
-	}
+		chatIntegrateSystem, err := GetChatIntegrateSystem(ct, authUser)
+		if err != nil {
+			panic(err)
+		}
 
-	// send to crm to ack this exported file
-	if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
-		log.Error(err)
-		return
-	}
+		// send to crm to ack this exported file
+		if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
+			panic(err)
+		}
+	}()
 
 	return
 }
