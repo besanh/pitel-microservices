@@ -114,7 +114,7 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 		return
 	}
 
-	usersInfo, errTmp := GetUsersCrm(chatIntegrateSystem.InfoSystem.ApiGetUserUrl, token, userIds)
+	usersInfo, errTmp := GetUsersCrm(chatIntegrateSystem.InfoSystem.ApiGetUserUrl, token, userIds, filter.UnitUuid)
 	if errTmp != nil {
 		log.Error(errTmp)
 	}
@@ -124,8 +124,11 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 		if len(report.UserId) < 1 {
 			continue
 		}
-		if len(filter.UnitUuid) > 0 && usersList[report.UserId] != nil && usersList[report.UserId].UnitUuid != filter.UnitUuid {
-			continue
+		if len(filter.UnitUuid) > 0 {
+			// if user id ain't in this list users -> they ain't in this unit. So we need to filter out them
+			if _, ok := usersList[report.UserId]; !ok {
+				continue
+			}
 		}
 
 		// fill user's full name

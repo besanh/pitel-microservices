@@ -115,6 +115,7 @@ func (g *GRPCChatReport) ExportWorkPerformanceReportByUser(ctx context.Context, 
 		StartTime:   request.GetStartTime(),
 		EndTime:     request.GetEndTime(),
 		SupporterId: request.GetUserId(),
+		UnitUuid:    request.GetUnitUuid(),
 	}
 	if !slices.Contains([]string{"xlsx", "csv"}, request.GetFileType()) {
 		return nil, status.Errorf(codes.InvalidArgument, "file type not supported")

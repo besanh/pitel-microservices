@@ -196,17 +196,20 @@ func GetChatIntegrateSystem(ctx context.Context, authUser *model.AuthUser) (chat
 	return
 }
 
-func GetUsersCrm(apiUrl, token string, userIds []string) (result []model.AuthUserInfo, err error) {
+func GetUsersCrm(apiUrl, token string, userIds []string, unitUuid string) (result []model.AuthUserInfo, err error) {
 	client := resty.New()
-	res, err := client.R().
+	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Authorization", "Bearer "+token).
 		SetQueryParam("limit", "-1").
 		SetQueryParam("offset", "0").
-		SetQueryParamsFromValues(url.Values{
+		SetQueryParam("unit_uuid", unitUuid)
+	if len(unitUuid) < 1 {
+		request.SetQueryParamsFromValues(url.Values{
 			"user_uuid": userIds,
-		}).
-		Get(apiUrl)
+		})
+	}
+	res, err := request.Get(apiUrl)
 	if err != nil {
 		return
 	}

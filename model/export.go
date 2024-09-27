@@ -1,7 +1,5 @@
 package model
 
-import "encoding/json"
-
 type ExportMap struct {
 	Name             string `json:"name"`
 	ExportTime       string `json:"export_time"`
@@ -14,9 +12,4 @@ type ExportMap struct {
 	Folder           string `json:"folder"`
 	Url              string `json:"url"`
 	Expiry           int    `json:"expiry"`
-}
-
-func (ex *ExportMap) ToJSON() string {
-	b, _ := json.Marshal(ex)
-	return string(b)
 }
