@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package proto.report;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message WorkReport {
+  string user_id = 1;
+  string user_fullname = 2;
+  int32 total = 3;
+  ChannelWorkPerformance facebook = 4;
+  ChannelWorkPerformance zalo = 5;
+}
+
+message ChannelWorkPerformance {
+  int32 total_channels = 1;
+  PerformanceMetrics receiving_time = 2;
+  PerformanceMetrics replying_time = 3;
+}
+
+message PerformanceMetrics {
+  int32 fastest = 1;
+  int32 average = 2;
+  int32 slowest = 3;
+}
+
+message GeneralReport {
+  string channel = 1;
+  string oa_name = 2;
+  int32 total_conversations = 3;
+  QuantityRatio fresh = 4;
+  QuantityRatio processing = 5;
+  QuantityRatio resolved = 6;
+}
+
+message QuantityRatio {
+  int32 quantity = 1;
+  int32 percentage = 2;
+}
+
+// get chat report work performance
+message GetWorkPerformanceReportByUserRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string start_time = 3;
+  string end_time = 4;
+  string unit_uuid = 5;
+  string user_id = 6;
+}
+
+message GetWorkPerformanceReportByUserResponse {
+  string code = 1;
+  string message = 2;
+  repeated WorkReport data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get chat general report
+message GetMultichannelPerformanceReportRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string start_time = 3;
+  string end_time = 4;
+  string channel = 5;
+  string oa_id = 6;
+}
+
+message GetMultichannelPerformanceReportResponse {
+  string code = 1;
+  string message = 2;
+  repeated GeneralReport data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// export work performance
+message ExportWorkPerformanceReportByUserRequest {
+  string start_time = 1;
+  string end_time = 2;
+  string unit_uuid = 3;
+  string user_id = 4;
+  string file_type = 5;
+}
+
+message ExportWorkPerformanceReportByUserResponse {
+  string code = 1;
+  string message = 2;
+  string file_name = 3;
+}
+
+// export general chat metrics
+message ExportMultichannelPerformanceReportRequest {
+  string start_time = 1;
+  string end_time = 2;
+  string channel = 3;
+  string oa_id = 4;
+  string file_type = 5;
+}
+
+message ExportMultichannelPerformanceReportResponse {
+  string code = 1;
+  string message = 2;
+  string file_name = 3;
+}
+
+service ChatReportService {
+  rpc GetWorkPerformanceReportByUser(GetWorkPerformanceReportByUserRequest) returns (GetWorkPerformanceReportByUserResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/report/work"
+    };
+  };
+
+  rpc GetMultichannelPerformanceReport(GetMultichannelPerformanceReportRequest) returns (GetMultichannelPerformanceReportResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/report/general"
+    };
+  };
+
+  rpc ExportWorkPerformanceReportByUser(ExportWorkPerformanceReportByUserRequest) returns (ExportWorkPerformanceReportByUserResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/report/export/work"
+      body : "*"
+    };
+  };
+
+  rpc ExportMultichannelPerformanceReport(ExportMultichannelPerformanceReportRequest) returns (ExportMultichannelPerformanceReportResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/report/export/general"
+      body : "*"
+    };
+  };
+}
