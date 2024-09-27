@@ -6,7 +6,6 @@ import (
 	"io"
 	"mime/multipart"
 
-	"github.com/tel4vn/fins-microservices/common/constant"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/internal/storage"
 )
@@ -43,14 +42,14 @@ func uploadImageToStorageShareInfo(c context.Context, file *multipart.FileHeader
 
 func uploadFileToStorage(c context.Context, buffer *bytes.Buffer, prefix, fileName string) (url string, err error) {
 	metaData := storage.NewStoreInput(buffer.Bytes(), fileName)
-	isSuccess, err := storage.Instance.PresignedStore(c, *metaData, constant.OBJECT_EXPIRE_TIME)
+	isSuccess, err := storage.Instance.Store(c, *metaData)
 	if err != nil || !isSuccess {
 		log.Error(err)
 		return
 	}
 
 	input := storage.NewRetrieveInput(fileName)
-	url, err = storage.Instance.PresignedRetrieve(c, *input, constant.OBJECT_EXPIRE_TIME)
+	_, err = storage.Instance.Retrieve(c, *input)
 	if err != nil {
 		log.Error(err)
 		return

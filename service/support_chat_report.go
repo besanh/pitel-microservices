@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/tel4vn/fins-microservices/common/cache"
-	"github.com/tel4vn/fins-microservices/common/constant"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/model"
@@ -91,14 +90,13 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 			return
 		}
 	}
-	url, err := uploadFileToStorage(ctx, buf, "/bss-message/v1/share-info/image/", exportName)
+	fileUrl, err := uploadFileToStorage(ctx, buf, "/bss-message/v1/share-info/image/", exportName)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	exportMap.Url = url
-	exportMap.Expiry = int(constant.OBJECT_EXPIRE_TIME.Milliseconds())
+	exportMap.Url = fileUrl
 	exportMap.ExportTimeFinish = util.TimeToString(time.Now())
 	exportMap.TotalRows = len(*chatReport)
 	exportMap.Status = "Done"
@@ -159,14 +157,13 @@ func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId,
 			return
 		}
 	}
-	url, err := uploadFileToStorage(ctx, buf, "/bss-message/v1/share-info/image/", exportName)
+	fileUrl, err := uploadFileToStorage(ctx, buf, "/bss-message/v1/share-info/image/", exportName)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
-	exportMap.Url = url
-	exportMap.Expiry = int(constant.OBJECT_EXPIRE_TIME.Milliseconds())
+	exportMap.Url = fileUrl
 	exportMap.ExportTimeFinish = util.TimeToString(time.Now())
 	exportMap.TotalRows = len(*chatReport)
 	exportMap.Status = "Done"
