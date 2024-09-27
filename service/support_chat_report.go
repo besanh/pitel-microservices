@@ -213,7 +213,7 @@ func GetUsersCrm(apiUrl, token string, userIds []string, unitUuid string) (resul
 	if err != nil {
 		return
 	}
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
+	if res.IsError() {
 		err = fmt.Errorf("unexpected status code: %d", res.StatusCode())
 		return
 	}
@@ -247,7 +247,7 @@ func SendExportedFileMetadataToCrm(apiUrl, token string, exportMap *model.Export
 	if err != nil {
 		return
 	}
-	if res.StatusCode() < 200 || res.StatusCode() >= 300 {
+	if res.IsError() {
 		return fmt.Errorf("unexpected status code: %d", res.StatusCode())
 	}
 

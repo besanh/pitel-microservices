@@ -217,7 +217,7 @@ func (s *S3Storage) PresignedStore(ctx context.Context, input StoreInput, expiry
 				log.Error(err)
 				return false, err
 			}
-			if res.StatusCode() < 200 || res.StatusCode() > 299 {
+			if res.IsError() {
 				err = fmt.Errorf("failed to upload object ")
 				log.Error(err)
 				return false, err
@@ -244,7 +244,7 @@ func (s *S3Storage) PresignedStore(ctx context.Context, input StoreInput, expiry
 			log.Error(err)
 			return
 		}
-		if res.StatusCode() < 200 || res.StatusCode() > 299 {
+		if res.IsError() {
 			err = fmt.Errorf("failed to upload object ")
 			log.Error(err)
 			return
