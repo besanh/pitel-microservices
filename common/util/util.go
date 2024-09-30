@@ -177,7 +177,7 @@ func ContainKeywords(content string, keywords []string) bool {
 	return false
 }
 
-func HandleExcelStreamWriter(headers []string, rows [][]string) (buffer *bytes.Buffer, err error) {
+func HandleExcelStreamWriter(headers [][]string, rows [][]string, mergedColumns ...string) (buffer *bytes.Buffer, err error) {
 	excelFile := excelize.NewFile()
 	SHEET1 := "Sheet1"
 	index := 1
@@ -194,23 +194,39 @@ func HandleExcelStreamWriter(headers []string, rows [][]string) (buffer *bytes.B
 			{Type: "right", Color: "000000", Style: 1},
 		},
 		Fill:      excelize.Fill{Type: "pattern", Color: []string{"#FCD5B4"}, Pattern: 1},
-		Alignment: &excelize.Alignment{WrapText: true},
+		Alignment: &excelize.Alignment{WrapText: true, Horizontal: "center", Vertical: "center"},
 	})
 
-	// write headers row
-	cell, _ := excelize.CoordinatesToCellName(1, index)
-	values := []any{}
-	for _, header := range headers {
-		values = append(values, excelize.Cell{
-			Value:   header,
-			StyleID: styleID,
-		})
-	}
-	if err = streamWriter.SetRow(cell, values); err != nil {
+	if err = streamWriter.SetColWidth(1, 16, 12); err != nil {
 		log.Error(err)
 		return
 	}
-	index++
+	// write headers row
+	for _, header := range headers {
+		cell, _ := excelize.CoordinatesToCellName(1, index)
+		values := make([]any, 0)
+		for _, cellValue := range header {
+			values = append(values, excelize.Cell{
+				Value:   cellValue,
+				StyleID: styleID,
+			})
+		}
+
+		if err = streamWriter.SetRow(cell, values); err != nil {
+			log.Error(err)
+			return
+		}
+		index++
+	}
+
+	// merge columns
+	for i := 0; i+1 < len(mergedColumns); i += 2 {
+		if err = streamWriter.MergeCell(mergedColumns[i], mergedColumns[i+1]); err != nil {
+			log.Error(err)
+			return
+		}
+	}
+
 	styleID, _ = excelFile.NewStyle(&excelize.Style{
 		Border: []excelize.Border{
 			{Type: "left", Color: "000000", Style: 1},
@@ -249,7 +265,7 @@ func HandleExcelStreamWriter(headers []string, rows [][]string) (buffer *bytes.B
 	return
 }
 
-func HandleCSVStreamWriter(fileName string, headers []string, rows [][]string) (buffer *bytes.Buffer, err error) {
+func HandleCSVStreamWriter(fileName string, headers [][]string, rows [][]string, mergedColumns ...string) (buffer *bytes.Buffer, err error) {
 	// Create a temporary file to store the CSV content
 	tmpFile, err := os.CreateTemp("", fileName)
 	if err != nil {
@@ -266,9 +282,11 @@ func HandleCSVStreamWriter(fileName string, headers []string, rows [][]string) (
 		return
 	}
 
-	if err = w.Write(headers); err != nil {
-		log.Error(err)
-		return
+	for _, header := range headers {
+		if err = w.Write(header); err != nil {
+			log.Error(err)
+			return
+		}
 	}
 
 	for _, row := range rows {

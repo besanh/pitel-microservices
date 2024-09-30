@@ -91,6 +91,8 @@ var (
 	ENABLE_CHAT_AUTO_SCRIPT_REPLY bool   = false
 	ENABLE_CHAT_POLICY_SETTINGS   bool   = false
 	CONVERSATION_NOTES_LIST_LIMIT int    = 1000
+	API_PUSH_NOTIFICATION         string = ""
+	API_PUSH_NOTIFICATION_SECRET  string = ""
 
 	// Storage
 	S3_ENDPOINT    string = ""

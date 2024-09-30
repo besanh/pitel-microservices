@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -320,4 +321,20 @@ func renameFields(data any) (any, error) {
 	}
 
 	return dataMap, nil
+}
+
+func SendPushNotification(payload model.NotifyPayload) (err error) {
+	res, err := resty.New().SetTimeout(10*time.Second).R().
+		SetHeader("Content-Type", "application/json").
+		SetAuthToken(API_PUSH_NOTIFICATION_SECRET).
+		SetBody(payload).
+		Post(API_PUSH_NOTIFICATION)
+	if err != nil {
+		return
+	}
+	if res.IsError() {
+		err = fmt.Errorf("error %v, status code %d, err %v", res.Error(), res.StatusCode(), err)
+		return
+	}
+	return
 }

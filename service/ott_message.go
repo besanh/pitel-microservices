@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -231,6 +232,26 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 						if err = InsertMessage(ctx, data.TenantId, ES_INDEX_MESSAGE, data.AppId, docId, message); err != nil {
 							log.Error(err)
 							continue
+						}
+
+						// send notification to agent
+						if user.AuthUser != nil && len(user.AuthUser.UserId) > 0 {
+							payload := model.NotifyPayload{
+								Detail: map[string]string{
+									"message_id":               message.MessageId,
+									"conversation_id":          message.ConversationId,
+									"external_conversation_id": message.ExternalConversationId,
+									"content":                  message.Content[:200],
+									"created_at":               time.Now().Format(time.RFC3339),
+								},
+								DeviceId: fmt.Sprintf("%s@%s", user.AuthUser.UserId, user.AuthUser.TenantId),
+								Message:  fmt.Sprintf("Received new message from %s", message.UserAppname),
+								Title:    "Received new message",
+								Type:     "notify",
+							}
+							if err = SendPushNotification(payload); err != nil {
+								log.Error(err)
+							}
 						}
 					}
 
