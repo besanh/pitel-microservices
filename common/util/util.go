@@ -177,6 +177,14 @@ func ContainKeywords(content string, keywords []string) bool {
 	return false
 }
 
+func SliceToMap[T comparable](slice []T) map[T]bool {
+	set := make(map[T]bool)
+	for _, v := range slice {
+		set[v] = true
+	}
+	return set
+}
+
 func HandleExcelStreamWriter(headers [][]string, rows [][]string, mergedColumns ...string) (buffer *bytes.Buffer, err error) {
 	excelFile := excelize.NewFile()
 	SHEET1 := "Sheet1"

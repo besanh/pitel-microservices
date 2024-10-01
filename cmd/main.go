@@ -118,13 +118,13 @@ func initConfigService() {
 		UseSSL:          true,
 	})
 
+	s1 := gocron.NewScheduler(time.Local)
+	s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
 	if service.ENABLE_NOTIFY_EMAIL {
 		log.Info("init scheduler for expire token")
-		s1 := gocron.NewScheduler(time.Local)
-		s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
 		s1.Every(1).Hour().Do(service.NewChatEmail().HandleJobExpireToken)
-		// TODO: job notify
-		s1.StartAsync()
-		defer s1.Clear()
 	}
+	s1.Every(1).Hour().Do(service.NewMessage().HandleNotifyUsersOnMissedMessages)
+	s1.StartAsync()
+	defer s1.Clear()
 }

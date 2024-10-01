@@ -6,12 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/tel4vn/fins-microservices/common/cache"
 	"github.com/tel4vn/fins-microservices/common/log"
+	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
 	"github.com/tel4vn/fins-microservices/model"
 	"github.com/tel4vn/fins-microservices/repository"
@@ -27,6 +30,8 @@ type (
 		ShareInfo(ctx context.Context, authUser *model.AuthUser, data model.ShareInfo) (result model.OttCodeChallenge, err error)
 		GetMessageMediasWithScrollAPI(ctx context.Context, authUser *model.AuthUser, filter model.MessageFilter, limit int, scrollId string) (total int, messages []*model.MessageAttachmentsDetails, respScrollId string, err error)
 		PostTicketToMessage(ctx context.Context, authUser *model.AuthUser, data model.MessagePostTicket) (err error)
+
+		HandleNotifyUsersOnMissedMessages()
 	}
 	Message struct{}
 )
@@ -192,6 +197,12 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 		Conversation: conversation,
 	}
 	if err = PublishPutConversationToChatQueue(ctx, conversationQueue); err != nil {
+		log.Error(err)
+		return
+	}
+
+	// remove this conversation from list notified user missing reply
+	if err = cache.RCache.SREM(ctx, CHAT_NOTIFIED_USERS_MISSED_MESSAGES, conversation.ConversationId); err != nil {
 		log.Error(err)
 		return
 	}
@@ -426,4 +437,94 @@ func (s *Message) PostTicketToMessage(ctx context.Context, authUser *model.AuthU
 		return
 	}
 	return
+}
+
+func (s *Message) HandleNotifyUsersOnMissedMessages() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	conversationIds := make([]string, 0)
+	conversationIdsRaw, err := cache.RCache.SMembers(ctx, CHAT_NOTIFIED_USERS_MISSED_MESSAGES)
+	if err != nil && !errors.Is(err, redis.Nil) {
+		log.Error(err)
+		return
+	}
+	for _, raw := range conversationIdsRaw {
+		// Unquote each raw string
+		parsedString, err := strconv.Unquote(raw)
+		if err != nil {
+			fmt.Println("Error parsing string:", err)
+			continue
+		}
+		conversationIds = append(conversationIds, parsedString)
+	}
+	conversationNotified := util.SliceToMap(conversationIds)
+	conversationNotifying := make([]string, 0)
+
+	_, missedReplyMessages, err := repository.MessageESRepo.GetMessagesWaitingReply(ctx, ES_INDEX_MESSAGE, 10000)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	errLogs := make([]error, 0)
+	oneDayAgo := time.Now().Add(-24 * time.Hour)
+	for _, message := range *missedReplyMessages {
+		if conversationNotified[message.ConversationId] {
+			// already send notify
+			continue
+		}
+		if message.SendTime.After(oneDayAgo) {
+			// not met x time user hasn't replied
+			continue
+		}
+
+		filter := model.AllocateUserFilter{
+			TenantId:       message.TenantId,
+			ConversationId: message.ConversationId,
+		}
+		_, allocatedUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+		if err != nil {
+			errLogs = append(errLogs, err)
+			continue
+		} else if allocatedUser == nil || len(*allocatedUser) != 1 {
+			errLogs = append(errLogs, fmt.Errorf("not found allocated user in conversation %s", message.ConversationId))
+			continue
+		}
+
+		payload := model.NotifyPayload{
+			Detail: map[string]string{
+				"message_id":               message.MessageId,
+				"conversation_id":          message.ConversationId,
+				"external_conversation_id": message.ExternalConversationId,
+				"content":                  message.Content,
+				"user_app_name":            message.UserAppname,
+				"avatar":                   message.Avatar,
+				"send_time":                message.SendTime.Format(time.RFC3339),
+				"created_at":               time.Now().Format(time.RFC3339),
+			},
+			DeviceId: fmt.Sprintf("%s@%s", (*allocatedUser)[0].UserId, (*allocatedUser)[0].TenantId),
+			Message:  fmt.Sprintf("Message from %s is waiting for a reply", message.UserAppname),
+			Title:    "A conversation has been waiting for your reply",
+			Type:     "notify",
+		}
+		if err = SendPushNotification(payload); err != nil {
+			errLogs = append(errLogs, err)
+			continue
+		}
+
+		conversationNotifying = append(conversationNotifying, message.ConversationId)
+	}
+	if len(errLogs) > 0 {
+		log.Error(errLogs)
+	} else {
+		log.Info("notified users on missed messages successfully")
+	}
+
+	if len(conversationNotifying) > 0 {
+		if err = cache.RCache.SADD(ctx, CHAT_NOTIFIED_USERS_MISSED_MESSAGES, util.ParseToAnyArray(conversationNotifying)...); err != nil {
+			log.Error(err)
+			return
+		}
+	}
 }
