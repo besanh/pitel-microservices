@@ -249,14 +249,13 @@ func (c *ChatReport) ExportWorkReports(ctx context.Context, authUser *model.Auth
 			panic(err)
 		}
 
-		//chatIntegrateSystem, err := GetChatIntegrateSystem(ct, authUser)
-		//if err != nil {
-		//	panic(err)
-		//}
+		chatIntegrateSystem, err := GetChatIntegrateSystem(ct, authUser)
+		if err != nil {
+			panic(err)
+		}
 
 		// send to crm to ack this exported file
-		if err = SendExportedFileMetadataToCrm("http://localhost:8008", "36ec1fc16507469499500c544e86106f-N2Y0NDA5YzktNzdhNy00YmM0LWI2YWMtMmM1M2E4MDAzMTli", exportMap); err != nil {
-			//if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
+		if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
 			panic(err)
 		}
 	}()
@@ -299,14 +298,13 @@ func (c *ChatReport) ExportGeneralReports(ctx context.Context, authUser *model.A
 			panic(err)
 		}
 
-		//chatIntegrateSystem, err := GetChatIntegrateSystem(ct, authUser)
-		//if err != nil {
-		//	panic(err)
-		//}
+		chatIntegrateSystem, err := GetChatIntegrateSystem(ct, authUser)
+		if err != nil {
+			panic(err)
+		}
 
 		// send to crm to ack this exported file
-		if err = SendExportedFileMetadataToCrm("http://localhost:8008", "36ec1fc16507469499500c544e86106f-N2Y0NDA5YzktNzdhNy00YmM0LWI2YWMtMmM1M2E4MDAzMTli", exportMap); err != nil {
-			//if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
+		if err = SendExportedFileMetadataToCrm(chatIntegrateSystem.InfoSystem.ApiUrl, token, exportMap); err != nil {
 			panic(err)
 		}
 	}()
