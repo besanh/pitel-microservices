@@ -246,6 +246,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 									"avatar":                   message.Avatar,
 									"send_time":                message.SendTime.Format(time.RFC3339),
 									"created_at":               time.Now().Format(time.RFC3339),
+									"notify_type":              "received_message",
 								},
 								DeviceId: fmt.Sprintf("%s@%s", user.AuthUser.UserId, user.AuthUser.TenantId),
 								Message:  message.Content,

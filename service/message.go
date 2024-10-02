@@ -525,6 +525,7 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 				"avatar":                   message.Avatar,
 				"send_time":                message.SendTime.Format(time.RFC3339),
 				"created_at":               time.Now().Format(time.RFC3339),
+				"notify_type":              "missed_message",
 			},
 			DeviceId: fmt.Sprintf("%s@%s", allocatedUsers[message.ConversationId].UserId, allocatedUsers[message.ConversationId].TenantId),
 			Message:  message.Content,
