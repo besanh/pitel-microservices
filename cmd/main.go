@@ -125,7 +125,7 @@ func initConfigService() {
 		log.Info("init scheduler for expire token")
 		s1.Every(1).Hour().Do(service.NewChatEmail().HandleJobExpireToken)
 	}
-	s1.Every(1).Hour().Do(service.NewMessage().HandleNotifyUsersOnMissedMessages)
+	s1.Every(10).Minutes().Do(service.NewMessage().HandleNotifyUsersOnMissedMessages)
 	s1.StartAsync()
 	defer s1.Clear()
 }

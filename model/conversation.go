@@ -114,6 +114,9 @@ type ElasticsearchChatResponse struct {
 			Sort    []string `json:"sort"`
 		} `json:"hits"`
 	} `json:"hits"`
+}
+
+type ElasticsearchAggregationChatResponse struct {
 	Aggregations struct {
 		Conversations struct {
 			Buckets []struct {

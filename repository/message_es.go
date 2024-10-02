@@ -22,7 +22,7 @@ type (
 		GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error)
 		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.Message, respScrollId string, err error)
 		GetMessageMediasWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.MessageAttachmentsDetails, respScrollId string, err error)
-		GetMessagesWaitingReply(ctx context.Context, index string, conversationsLimit int) (total int, messages *[]model.Message, err error)
+		GetMessagesWaitingReply(ctx context.Context, index string, conversationsLimit int) (messages *[]model.Message, err error)
 	}
 	MessageES struct {
 		ESGenericRepo[model.Message]
@@ -512,7 +512,7 @@ func filterMediaTypes(attachmentType string) []any {
 	return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
 }
 
-func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, conversationsLimit int) (total int, messages *[]model.Message, err error) {
+func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, conversationsLimit int) (messages *[]model.Message, err error) {
 	searchSource := map[string]any{
 		"size": 0,
 		"aggs": map[string]any{
@@ -535,6 +535,7 @@ func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, c
 							"_source": map[string]any{"includes": "*"},
 						},
 					},
+					// script to fetch last message of all conversations where the last message's direction is 'receive'
 					"direction_flag": map[string]any{
 						"max": map[string]any{
 							"script": map[string]any{
@@ -565,7 +566,6 @@ func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, c
 		client.Search.WithContext(ctx),
 		client.Search.WithIndex(index),
 		client.Search.WithBody(&buf),
-		client.Search.WithTrackTotalHits(true),
 		client.Search.WithPretty(),
 	)
 	if err != nil {
@@ -590,8 +590,7 @@ func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, c
 
 	defer res.Body.Close()
 
-	body := model.ElasticsearchChatResponse{}
-
+	body := model.ElasticsearchAggregationChatResponse{}
 	if err = json.NewDecoder(res.Body).Decode(&body); err != nil {
 		return
 	}
@@ -610,5 +609,5 @@ func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, c
 		result = append(result, data)
 	}
 
-	return len(result), &result, nil
+	return &result, nil
 }

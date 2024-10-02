@@ -19,65 +19,62 @@ import (
 )
 
 func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, tenantId, userId, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatWorkReport) (err error) {
-	headers1 := make([]string, 0)
-	headers2 := make([]string, 0)
-	headers3 := make([]string, 0)
-	headers1 = append(headers1,
-		"Nhân viên hỗ trợ",
-		"Tổng",
-		"Facebook",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"Zalo",
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-	)
-	headers2 = append(headers2,
-		"",
-		"",
-		"Hỗ trợ (lượt)",
-		"Thời gian tiếp nhận",
-		"",
-		"",
-		"Thời gian chờ phản hổi",
-		"",
-		"",
-		"Hỗ trợ (lượt)",
-		"Thời gian tiếp nhận",
-		"",
-		"",
-		"Thời gian chờ phản hổi",
-		"",
-		"",
-	)
-	headers3 = append(headers3,
-		"",
-		"",
-		"",
-		"Nhanh nhất",
-		"Chậm nhất",
-		"Trung bình",
-		"Nhanh nhất",
-		"Chậm nhất",
-		"Trung bình",
-		"",
-		"Nhanh nhất",
-		"Chậm nhất",
-		"Trung bình",
-		"Nhanh nhất",
-		"Chậm nhất",
-		"Trung bình",
-	)
-	headers := make([][]string, 0)
-	headers = append(headers, headers1, headers2, headers3)
+	headers := [][]string{
+		{
+			"Nhân viên hỗ trợ",
+			"Tổng",
+			"Facebook",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"Zalo",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+		},
+		{
+			"",
+			"",
+			"Hỗ trợ (lượt)",
+			"Thời gian tiếp nhận",
+			"",
+			"",
+			"Thời gian chờ phản hổi",
+			"",
+			"",
+			"Hỗ trợ (lượt)",
+			"Thời gian tiếp nhận",
+			"",
+			"",
+			"Thời gian chờ phản hổi",
+			"",
+			"",
+		},
+		{
+			"",
+			"",
+			"",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+			"",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+		},
+	}
 	rows := make([][]string, 0)
 	limitPerPart := 50
 
@@ -146,32 +143,30 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 }
 
 func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId, userId, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatGeneralReport) (err error) {
-	headers := make([][]string, 0)
-	headers1 := make([]string, 0)
-	headers2 := make([]string, 0)
-	headers1 = append(headers1,
-		"Kênh",
-		"Tên trang",
-		"Tổng hội thoại",
-		"Mới",
-		"",
-		"Đang xử lý",
-		"",
-		"Đã xử lý",
-		"",
-	)
-	headers2 = append(headers2,
-		"",
-		"",
-		"",
-		"Số lượng",
-		"Tỷ trọng",
-		"Số lượng",
-		"Tỷ trọng",
-		"Số lượng",
-		"Tỷ trọng",
-	)
-	headers = append(headers, headers1, headers2)
+	headers := [][]string{
+		{
+			"Kênh",
+			"Tên trang",
+			"Tổng hội thoại",
+			"Mới",
+			"",
+			"Đang xử lý",
+			"",
+			"Đã xử lý",
+			"",
+		},
+		{
+			"",
+			"",
+			"",
+			"Số lượng",
+			"Tỷ trọng",
+			"Số lượng",
+			"Tỷ trọng",
+			"Số lượng",
+			"Tỷ trọng",
+		},
+	}
 	rows := make([][]string, 0)
 	limitPerPart := 50
 

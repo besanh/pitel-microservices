@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -456,7 +457,7 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 		// Unquote each raw string
 		parsedString, err := strconv.Unquote(raw)
 		if err != nil {
-			fmt.Println("Error parsing string:", err)
+			log.Error(err)
 			continue
 		}
 		conversationIds = append(conversationIds, parsedString)
@@ -464,17 +465,33 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 	conversationNotified := util.SliceToMap(conversationIds)
 	conversationNotifying := make([]string, 0)
 
-	_, missedReplyMessages, err := repository.MessageESRepo.GetMessagesWaitingReply(ctx, ES_INDEX_MESSAGE, 10000)
+	missedReplyMessages, err := repository.MessageESRepo.GetMessagesWaitingReply(ctx, ES_INDEX_MESSAGE, 500)
 	if err != nil {
 		log.Error(err)
 		return
 	}
+	var notificationChan = make(chan model.NotifyPayload, 100)
+	var wg sync.WaitGroup
 
-	errLogs := make([]error, 0)
+	// background worker send push notification
+	go func() {
+		defer wg.Done()
+		for payload := range notificationChan {
+			if err = SendPushNotification(payload); err != nil {
+				log.Error(err)
+				return
+			}
+			conversationNotifying = append(conversationNotifying, payload.Detail["conversation_id"])
+		}
+	}()
+
+	// Increase the waitgroup counter for the goroutine
+	wg.Add(1)
+	allocatedUsers := make(map[string]model.AllocateUser)
 	oneDayAgo := time.Now().Add(-24 * time.Hour)
 	for _, message := range *missedReplyMessages {
 		if conversationNotified[message.ConversationId] {
-			// already send notify
+			// already sent notification
 			continue
 		}
 		if message.SendTime.After(oneDayAgo) {
@@ -482,17 +499,20 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 			continue
 		}
 
-		filter := model.AllocateUserFilter{
-			TenantId:       message.TenantId,
-			ConversationId: message.ConversationId,
-		}
-		_, allocatedUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
-		if err != nil {
-			errLogs = append(errLogs, err)
-			continue
-		} else if allocatedUser == nil || len(*allocatedUser) != 1 {
-			errLogs = append(errLogs, fmt.Errorf("not found allocated user in conversation %s", message.ConversationId))
-			continue
+		if _, ok := allocatedUsers[message.ConversationId]; !ok {
+			filter := model.AllocateUserFilter{
+				TenantId:       message.TenantId,
+				ConversationId: message.ConversationId,
+			}
+			_, allocatedUser, err := repository.AllocateUserRepo.GetAllocateUsers(ctx, repository.DBConn, filter, 1, 0)
+			if err != nil {
+				log.Error(err)
+				continue
+			} else if allocatedUser == nil || len(*allocatedUser) != 1 {
+				log.Error(fmt.Errorf("not found allocated user in conversation %s", message.ConversationId))
+				continue
+			}
+			allocatedUsers[message.ConversationId] = (*allocatedUser)[0]
 		}
 
 		payload := model.NotifyPayload{
@@ -506,23 +526,20 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 				"send_time":                message.SendTime.Format(time.RFC3339),
 				"created_at":               time.Now().Format(time.RFC3339),
 			},
-			DeviceId: fmt.Sprintf("%s@%s", (*allocatedUser)[0].UserId, (*allocatedUser)[0].TenantId),
-			Message:  fmt.Sprintf("Message from %s is waiting for a reply", message.UserAppname),
-			Title:    "A conversation has been waiting for your reply",
+			DeviceId: fmt.Sprintf("%s@%s", allocatedUsers[message.ConversationId].UserId, allocatedUsers[message.ConversationId].TenantId),
+			Message:  message.Content,
+			Title:    fmt.Sprintf("Message from %s is waiting for your reply", message.UserAppname),
 			Type:     "notify",
 		}
-		if err = SendPushNotification(payload); err != nil {
-			errLogs = append(errLogs, err)
-			continue
-		}
+		notificationChan <- payload
+	}
+	log.Info("notified users on missed messages successfully")
 
-		conversationNotifying = append(conversationNotifying, message.ConversationId)
-	}
-	if len(errLogs) > 0 {
-		log.Error(errLogs)
-	} else {
-		log.Info("notified users on missed messages successfully")
-	}
+	// Close the channel after all payloads have been sent
+	close(notificationChan)
+
+	// Wait for the worker to finish processing all notifications
+	wg.Wait()
 
 	if len(conversationNotifying) > 0 {
 		if err = cache.RCache.SADD(ctx, CHAT_NOTIFIED_USERS_MISSED_MESSAGES, util.ParseToAnyArray(conversationNotifying)...); err != nil {

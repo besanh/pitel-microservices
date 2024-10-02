@@ -248,8 +248,8 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 									"created_at":               time.Now().Format(time.RFC3339),
 								},
 								DeviceId: fmt.Sprintf("%s@%s", user.AuthUser.UserId, user.AuthUser.TenantId),
-								Message:  fmt.Sprintf("Received new message from %s", message.UserAppname),
-								Title:    "Received new message",
+								Message:  message.Content,
+								Title:    fmt.Sprintf("Received new message from %s", message.UserAppname),
 								Type:     "notify",
 							}
 							if err = SendPushNotification(payload); err != nil {
