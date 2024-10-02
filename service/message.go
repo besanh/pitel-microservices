@@ -444,7 +444,7 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 	if !ENABLE_NOTIFY_CHAT {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	conversationIds := make([]string, 0)
