@@ -6,6 +6,9 @@ const (
 	// Version
 	VERSION      string = "1"
 	VERSION_NAME string = "Chat(BSS)"
+
+	NOTIFY_TYPE_MISSED_MESSAGE   string = "missed_message"
+	NOTIFY_TYPE_RECEIVED_MESSAGE string = "received_message"
 )
 
 var (

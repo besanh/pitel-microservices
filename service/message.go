@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/tel4vn/fins-microservices/common/cache"
+	"github.com/tel4vn/fins-microservices/common/constant"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/util"
 	"github.com/tel4vn/fins-microservices/common/variables"
@@ -525,6 +526,7 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 				"avatar":                   message.Avatar,
 				"send_time":                message.SendTime.Format(time.RFC3339),
 				"created_at":               time.Now().Format(time.RFC3339),
+				"notify_type":              constant.NOTIFY_TYPE_MISSED_MESSAGE,
 			},
 			DeviceId: fmt.Sprintf("%s@%s", allocatedUsers[message.ConversationId].UserId, allocatedUsers[message.ConversationId].TenantId),
 			Message:  message.Content,

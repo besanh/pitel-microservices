@@ -15,6 +15,7 @@ import (
 	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/amqp"
 	"github.com/rabbitmq/rabbitmq-stream-go-client/pkg/stream"
 	"github.com/tel4vn/fins-microservices/common/cache"
+	"github.com/tel4vn/fins-microservices/common/constant"
 	"github.com/tel4vn/fins-microservices/common/log"
 	"github.com/tel4vn/fins-microservices/common/response"
 	"github.com/tel4vn/fins-microservices/common/util"
@@ -246,6 +247,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 									"avatar":                   message.Avatar,
 									"send_time":                message.SendTime.Format(time.RFC3339),
 									"created_at":               time.Now().Format(time.RFC3339),
+									"notify_type":              constant.NOTIFY_TYPE_RECEIVED_MESSAGE,
 								},
 								DeviceId: fmt.Sprintf("%s@%s", user.AuthUser.UserId, user.AuthUser.TenantId),
 								Message:  message.Content,
