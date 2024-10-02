@@ -324,6 +324,9 @@ func renameFields(data any) (any, error) {
 }
 
 func SendPushNotification(payload model.NotifyPayload) (err error) {
+	if !ENABLE_NOTIFY_CHAT {
+		return
+	}
 	res, err := resty.New().SetTimeout(10*time.Second).R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(API_PUSH_NOTIFICATION_SECRET).

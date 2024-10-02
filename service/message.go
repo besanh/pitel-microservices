@@ -440,6 +440,9 @@ func (s *Message) PostTicketToMessage(ctx context.Context, authUser *model.AuthU
 }
 
 func (s *Message) HandleNotifyUsersOnMissedMessages() {
+	if !ENABLE_NOTIFY_CHAT {
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
