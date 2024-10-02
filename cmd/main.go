@@ -78,6 +78,9 @@ func initConfigService() {
 	service.ENABLE_PUBLISH_ADMIN = env.GetBoolENV("ENABLE_PUBLISH_ADMIN", false)
 	service.ENABLE_CHAT_AUTO_SCRIPT_REPLY = env.GetBoolENV("ENABLE_CHAT_AUTO_SCRIPT_REPLY", false)
 	service.ENABLE_CHAT_POLICY_SETTINGS = env.GetBoolENV("ENABLE_CHAT_POLICY_SETTINGS", false)
+	service.ENABLE_NOTIFY_CHAT = env.GetBoolENV("ENABLE_NOTIFY_CHAT", false)
+	service.API_PUSH_NOTIFICATION = env.GetStringENV("API_PUSH_NOTIFICATION", "")
+	service.API_PUSH_NOTIFICATION_SECRET = env.GetStringENV("API_PUSH_NOTIFICATION_SECRET", "")
 
 	service.S3_ENDPOINT = env.GetStringENV("STORAGE_ENDPOINT", "")
 	service.S3_BUCKET_NAME = env.GetStringENV("STORAGE_BUCKET_NAME", "")
@@ -116,12 +119,13 @@ func initConfigService() {
 		UseSSL:          true,
 	})
 
+	s1 := gocron.NewScheduler(time.Local)
+	s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
 	if service.ENABLE_NOTIFY_EMAIL {
 		log.Info("init scheduler for expire token")
-		s1 := gocron.NewScheduler(time.Local)
-		s1.SetMaxConcurrentJobs(1, gocron.RescheduleMode)
 		s1.Every(1).Hour().Do(service.NewChatEmail().HandleJobExpireToken)
-		s1.StartAsync()
-		defer s1.Clear()
 	}
+	s1.Every(10).Minutes().Do(service.NewMessage().HandleNotifyUsersOnMissedMessages)
+	s1.StartAsync()
+	defer s1.Clear()
 }

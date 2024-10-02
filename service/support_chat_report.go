@@ -19,25 +19,62 @@ import (
 )
 
 func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, tenantId, userId, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatWorkReport) (err error) {
-	headers := make([]string, 0)
-	headers = append(headers,
-		"Nhân viên hỗ trợ",
-		"Tổng",
-		"Facebook.Hỗ trợ (lượt)",
-		"Facebook.Thời gian tiếp nhận.Nhanh nhất (s)",
-		"Facebook.Thời gian tiếp nhận.Chậm nhất (s)",
-		"Facebook.Thời gian tiếp nhận.Trung bình (s)",
-		"Facebook.Thời gian chờ phản hổi.Nhanh nhất (s)",
-		"Facebook.Thời gian chờ phản hổi.Chậm nhất (s)",
-		"Facebook.Thời gian chờ phản hổi.Trung bình (s)",
-		"Zalo.Hỗ trợ (lượt)",
-		"Zalo.Thời gian tiếp nhận.Nhanh nhất (s)",
-		"Zalo.Thời gian tiếp nhận.Chậm nhất (s)",
-		"Zalo.Thời gian tiếp nhận.Trung bình (s)",
-		"Zalo.Thời gian chờ phản hổi.Nhanh nhất (s)",
-		"Zalo.Thời gian chờ phản hổi.Chậm nhất (s)",
-		"Zalo.Thời gian chờ phản hổi.Trung bình (s)",
-	)
+	headers := [][]string{
+		{
+			"Nhân viên hỗ trợ",
+			"Tổng",
+			"Facebook",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"Zalo",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
+		},
+		{
+			"",
+			"",
+			"Hỗ trợ (lượt)",
+			"Thời gian tiếp nhận",
+			"",
+			"",
+			"Thời gian chờ phản hổi",
+			"",
+			"",
+			"Hỗ trợ (lượt)",
+			"Thời gian tiếp nhận",
+			"",
+			"",
+			"Thời gian chờ phản hổi",
+			"",
+			"",
+		},
+		{
+			"",
+			"",
+			"",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+			"",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+			"Nhanh nhất",
+			"Chậm nhất",
+			"Trung bình",
+		},
+	}
 	rows := make([][]string, 0)
 	limitPerPart := 50
 
@@ -52,19 +89,19 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 				userFullName,
 				strconv.Itoa(report.Total),
 				strconv.Itoa(report.Facebook.TotalChannels),
-				strconv.FormatFloat(float64(report.Facebook.ReceivingTime.Fastest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Facebook.ReceivingTime.Slowest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Facebook.ReceivingTime.Average)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Facebook.ReplyingTime.Fastest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Facebook.ReplyingTime.Slowest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Facebook.ReplyingTime.Average)/1000.0, 'f', 3, 64),
+				util.ConvertMillisToTimeString(report.Facebook.ReceivingTime.Fastest),
+				util.ConvertMillisToTimeString(report.Facebook.ReceivingTime.Slowest),
+				util.ConvertMillisToTimeString(report.Facebook.ReceivingTime.Average),
+				util.ConvertMillisToTimeString(report.Facebook.ReplyingTime.Fastest),
+				util.ConvertMillisToTimeString(report.Facebook.ReplyingTime.Slowest),
+				util.ConvertMillisToTimeString(report.Facebook.ReplyingTime.Average),
 				strconv.Itoa(report.Zalo.TotalChannels),
-				strconv.FormatFloat(float64(report.Zalo.ReceivingTime.Fastest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Zalo.ReceivingTime.Slowest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Zalo.ReceivingTime.Average)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Zalo.ReplyingTime.Fastest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Zalo.ReplyingTime.Slowest)/1000.0, 'f', 3, 64),
-				strconv.FormatFloat(float64(report.Zalo.ReplyingTime.Average)/1000.0, 'f', 3, 64),
+				util.ConvertMillisToTimeString(report.Zalo.ReceivingTime.Fastest),
+				util.ConvertMillisToTimeString(report.Zalo.ReceivingTime.Slowest),
+				util.ConvertMillisToTimeString(report.Zalo.ReceivingTime.Average),
+				util.ConvertMillisToTimeString(report.Zalo.ReplyingTime.Fastest),
+				util.ConvertMillisToTimeString(report.Zalo.ReplyingTime.Slowest),
+				util.ConvertMillisToTimeString(report.Zalo.ReplyingTime.Average),
 			)
 			rows = append(rows, row)
 		}
@@ -78,13 +115,15 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 
 	var buf *bytes.Buffer
 	if fileType == "xlsx" {
-		buf, err = util.HandleExcelStreamWriter(headers, rows)
+		buf, err = util.HandleExcelStreamWriter(headers, rows, "A1", "A3", "B1", "B3", "C1", "I1", "J1", "P1",
+			"C2", "C3", "D2", "F2", "G2", "I2", "J2", "J3", "K2", "M2", "N2", "P2")
 		if err != nil {
 			log.Error(err)
 			return
 		}
 	} else if fileType == "csv" {
-		buf, err = util.HandleCSVStreamWriter(exportName, headers, rows)
+		buf, err = util.HandleCSVStreamWriter(exportName, headers, rows, "A1", "A3", "B1", "B3", "C1", "I1", "J1", "P1",
+			"C2", "C3", "D2", "F2", "G2", "I2", "J2", "J3", "K2", "M2", "N2", "P2")
 		if err != nil {
 			log.Error(err)
 			return
@@ -104,18 +143,30 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 }
 
 func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId, userId, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatGeneralReport) (err error) {
-	headers := make([]string, 0)
-	headers = append(headers,
-		"Kênh",
-		"Tên trang",
-		"Tổng hội thoại",
-		"Mới.Số lượng",
-		"Mới.Tỷ trọng",
-		"Đang xử lý.Số lượng",
-		"Đang xử lý.Tỷ trọng",
-		"Đã xử lý.Số lượng",
-		"Đã xử lý.Tỷ trọng",
-	)
+	headers := [][]string{
+		{
+			"Kênh",
+			"Tên trang",
+			"Tổng hội thoại",
+			"Mới",
+			"",
+			"Đang xử lý",
+			"",
+			"Đã xử lý",
+			"",
+		},
+		{
+			"",
+			"",
+			"",
+			"Số lượng",
+			"Tỷ trọng",
+			"Số lượng",
+			"Tỷ trọng",
+			"Số lượng",
+			"Tỷ trọng",
+		},
+	}
 	rows := make([][]string, 0)
 	limitPerPart := 50
 
@@ -127,11 +178,11 @@ func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId,
 				report.OaName,
 				strconv.Itoa(report.TotalConversations),
 				strconv.Itoa(report.Fresh.Quantity),
-				fmt.Sprintf("%.2f%%", float64(report.Fresh.Percent)/100),
+				fmt.Sprintf("%.2f%%", float64(report.Fresh.Percent)),
 				strconv.Itoa(report.Processing.Quantity),
-				fmt.Sprintf("%.2f%%", float64(report.Processing.Percent)/100),
+				fmt.Sprintf("%.2f%%", float64(report.Processing.Percent)),
 				strconv.Itoa(report.Resolved.Quantity),
-				fmt.Sprintf("%.2f%%", float64(report.Resolved.Percent)/100),
+				fmt.Sprintf("%.2f%%", float64(report.Resolved.Percent)),
 			)
 			rows = append(rows, row)
 		}
@@ -145,13 +196,13 @@ func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId,
 
 	var buf *bytes.Buffer
 	if fileType == "xlsx" {
-		buf, err = util.HandleExcelStreamWriter(headers, rows)
+		buf, err = util.HandleExcelStreamWriter(headers, rows, "A1", "A2", "B1", "B2", "C1", "C2", "D1", "E1", "F1", "G1", "H1", "I1")
 		if err != nil {
 			log.Error(err)
 			return
 		}
 	} else if fileType == "csv" {
-		buf, err = util.HandleCSVStreamWriter(exportName, headers, rows)
+		buf, err = util.HandleCSVStreamWriter(exportName, headers, rows, "A1", "A2", "B1", "B2", "C1", "C2", "D1", "E1", "F1", "G1", "H1", "I1")
 		if err != nil {
 			log.Error(err)
 			return

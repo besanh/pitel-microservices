@@ -22,6 +22,7 @@ type (
 		GetMessageById(ctx context.Context, tenantId, index, id string) (*model.Message, error)
 		SearchWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.Message, respScrollId string, err error)
 		GetMessageMediasWithScroll(ctx context.Context, tenantId, index string, filter model.MessageFilter, limit int, scrollId string, scrollDurations ...time.Duration) (total int, entries []*model.MessageAttachmentsDetails, respScrollId string, err error)
+		GetMessagesWaitingReply(ctx context.Context, index string, conversationsLimit int) (messages *[]model.Message, err error)
 	}
 	MessageES struct {
 		ESGenericRepo[model.Message]
@@ -509,4 +510,104 @@ func filterMediaTypes(attachmentType string) []any {
 		args = []string{"image", "audio", "video", "sticker", "gif", "reacted", "unreacted"}
 	}
 	return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
+}
+
+func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, conversationsLimit int) (messages *[]model.Message, err error) {
+	searchSource := map[string]any{
+		"size": 0,
+		"aggs": map[string]any{
+			"conversations": map[string]any{
+				"terms": map[string]any{
+					"field": "conversation_id",
+					"size":  conversationsLimit,
+				},
+				"aggs": map[string]any{
+					"latest_message": map[string]any{
+						"top_hits": map[string]any{
+							"sort": []map[string]any{
+								{
+									"send_time": map[string]string{
+										"order": "desc",
+									},
+								},
+							},
+							"size":    1,
+							"_source": map[string]any{"includes": "*"},
+						},
+					},
+					// script to fetch last message of all conversations where the last message's direction is 'receive'
+					"direction_flag": map[string]any{
+						"max": map[string]any{
+							"script": map[string]any{
+								"source": "doc['direction'].value == 'send' ? 1 : 0",
+								"lang":   "painless",
+							},
+						},
+					},
+					"filter_missed_replies": map[string]any{
+						"bucket_selector": map[string]any{
+							"buckets_path": map[string]string{
+								"directionFlag": "direction_flag",
+							},
+							"script": "params.directionFlag == 0",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	buf, err := elasticsearch.EncodeAny(searchSource)
+	if err != nil {
+		return
+	}
+	client := ESClient.GetClient()
+	res, err := client.Search(
+		client.Search.WithContext(ctx),
+		client.Search.WithIndex(index),
+		client.Search.WithBody(&buf),
+		client.Search.WithPretty(),
+	)
+	if err != nil {
+		return
+	}
+
+	// handle res error
+	if res.IsError() {
+		var e map[string]any
+		if err = json.NewDecoder(res.Body).Decode(&e); err != nil {
+			return
+		} else {
+			// Print the response status and error information.
+			err = fmt.Errorf("[%s] %s: %s",
+				res.Status(),
+				e["error"].(map[string]any)["type"],
+				e["error"].(map[string]any)["reason"],
+			)
+			return
+		}
+	}
+
+	defer res.Body.Close()
+
+	body := model.ElasticsearchAggregationChatResponse{}
+	if err = json.NewDecoder(res.Body).Decode(&body); err != nil {
+		return
+	}
+	result := make([]model.Message, 0)
+	// mapping
+	for _, bodyHits := range body.Aggregations.Conversations.Buckets {
+		if len(bodyHits.LatestMessage.Hits.Hits) != 1 {
+			continue
+		}
+
+		data := model.Message{}
+		if err = util.ParseAnyToAny(bodyHits.LatestMessage.Hits.Hits[0].Source, &data); err != nil {
+			log.Error(err)
+			continue
+		}
+		result = append(result, data)
+	}
+
+	return &result, nil
 }
