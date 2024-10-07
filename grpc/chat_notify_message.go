@@ -95,12 +95,8 @@ func (g *GRPCChatNotifyMessage) GetNotifyMessageById(ctx context.Context, reques
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	tmp := &pb.ChatNotifyMessageData{}
-	tmp.CreatedAt = &timestamppb.Timestamp{
-		Seconds: data.CreatedAt.Unix(),
-	}
-	tmp.UpdatedAt = &timestamppb.Timestamp{
-		Seconds: data.UpdatedAt.Unix(),
-	}
+	tmp.CreatedAt = timestamppb.New(data.CreatedAt)
+	tmp.UpdatedAt = timestamppb.New(data.UpdatedAt)
 	if err = util.ParseAnyToAny(data, tmp); err != nil {
 		log.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())

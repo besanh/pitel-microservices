@@ -21,24 +21,6 @@ type (
 	}
 )
 
-func (repo *ChatNotifyMessage) GetChatNotifyMessageById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (result *model.ChatNotifyMessage, err error) {
-	result = &model.ChatNotifyMessage{}
-	err = db.GetDB().NewSelect().
-		Model(result).
-		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Column("connection_name", "connection_type", "oa_info")
-		}).
-		Where("cnm.id = ?", id).
-		Limit(1).
-		Scan(ctx)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	} else if err != nil {
-		return
-	}
-	return
-}
-
 var ChatNotifyMessageRepo IChatNotifyMessage
 
 func NewChatNotifyMessage() IChatNotifyMessage {
@@ -74,4 +56,22 @@ func (repo *ChatNotifyMessage) GetChatNotifyMessages(ctx context.Context, db sql
 	}
 
 	return total, entries, nil
+}
+
+func (repo *ChatNotifyMessage) GetChatNotifyMessageById(ctx context.Context, db sqlclient.ISqlClientConn, id string) (result *model.ChatNotifyMessage, err error) {
+	result = &model.ChatNotifyMessage{}
+	err = db.GetDB().NewSelect().
+		Model(result).
+		Relation("ConnectionApp", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Column("connection_name", "connection_type", "oa_info")
+		}).
+		Where("cnm.id = ?", id).
+		Limit(1).
+		Scan(ctx)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	} else if err != nil {
+		return
+	}
+	return
 }
