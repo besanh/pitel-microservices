@@ -75,6 +75,11 @@ func (s *ChatNotifyMessage) InsertChatNotifyMessage(ctx context.Context, authUse
 	chatNotifyMessage.MessageNotifyAfter = request.MessageNotifyAfter
 	chatNotifyMessage.NotifyType = request.NotifyType
 	chatNotifyMessage.ReceiverType = request.ReceiverType
+	if connectionApp.ConnectionType == "facebook" {
+		chatNotifyMessage.OaId = connectionApp.OaInfo.Facebook[0].OaId
+	} else if connectionApp.ConnectionType == "zalo" {
+		chatNotifyMessage.OaId = connectionApp.OaInfo.Zalo[0].OaId
+	}
 
 	if err = repository.ChatNotifyMessageRepo.Insert(ctx, repository.DBConn, chatNotifyMessage); err != nil {
 		log.Error(err)
@@ -133,6 +138,11 @@ func (s *ChatNotifyMessage) UpdateChatNotifyMessageById(ctx context.Context, aut
 	chatNotifyMessageExist.MessageNotifyAfter = request.MessageNotifyAfter
 	chatNotifyMessageExist.NotifyType = request.NotifyType
 	chatNotifyMessageExist.ReceiverType = request.ReceiverType
+	if connectionApp.ConnectionType == "facebook" {
+		chatNotifyMessageExist.OaId = connectionApp.OaInfo.Facebook[0].OaId
+	} else if connectionApp.ConnectionType == "zalo" {
+		chatNotifyMessageExist.OaId = connectionApp.OaInfo.Zalo[0].OaId
+	}
 
 	if err = repository.ChatNotifyMessageRepo.Update(ctx, repository.DBConn, *chatNotifyMessageExist); err != nil {
 		log.Error(err)

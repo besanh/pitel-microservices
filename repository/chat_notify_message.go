@@ -58,6 +58,9 @@ func (repo *ChatNotifyMessage) GetChatNotifyMessages(ctx context.Context, db sql
 	if len(filter.ConnectionId) > 0 {
 		query.Where("cnm.connection_id = ?", filter.ConnectionId)
 	}
+	if len(filter.OaId) > 0 {
+		query.Where("cnm.oa_id = ?", filter.OaId)
+	}
 	if len(filter.NotifyType) > 0 {
 		query.Where("cnm.notify_type IN (?)", bun.In(filter.NotifyType))
 	}

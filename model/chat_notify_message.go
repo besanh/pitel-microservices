@@ -18,6 +18,7 @@ type ChatNotifyMessage struct {
 	ConnectionApp      *ChatConnectionApp `json:"connection_app" bun:"rel:belongs-to,join:connection_id=id"`
 	MessageNotifyAfter int                `json:"message_notify_after" bun:"message_notify_after,type:integer"`
 	ReceiverType       string             `json:"receiver_type" bun:"receiver_type,type:text"`
+	OaId               string             `json:"oa_id" bun:"oa_id,type:text"`
 }
 
 type ChatNotifyMessageRequest struct {

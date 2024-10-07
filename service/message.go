@@ -204,7 +204,7 @@ func (s *Message) SendMessageToOTT(ctx context.Context, authUser *model.AuthUser
 	}
 
 	// remove this conversation from list notified user missing reply
-	if err = cache.RCache.SREM(ctx, CHAT_NOTIFIED_USERS_MISSED_MESSAGES, conversation.ConversationId); err != nil {
+	if err = cache.RCache.SREM(ctx, CHAT_NOTIFIED_USERS_MISSED_MESSAGES, fmt.Sprintf(`"%s"`, conversation.ConversationId)); err != nil {
 		log.Error(err)
 		return
 	}
@@ -489,13 +489,34 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 	// Increase the waitgroup counter for the goroutine
 	wg.Add(1)
 	allocatedUsers := make(map[string]model.AllocateUser)
-	oneDayAgo := time.Now().Add(-24 * time.Hour)
+	notifyMessages := make(map[string]model.ChatNotifyMessage)
+	chatQueueUsersData := make(map[string]*[]model.ChatQueueUser)
+	chatManageQueueUserId := make(map[string]string)
 	for _, message := range *missedReplyMessages {
 		if conversationNotified[message.ConversationId] {
 			// already sent notification
 			continue
 		}
-		if message.SendTime.After(oneDayAgo) {
+
+		if _, ok := notifyMessages[message.ConversationId]; !ok {
+			filter := model.ChatNotifyMessageFilter{
+				TenantId:   message.TenantId,
+				OaId:       message.OaId,
+				NotifyType: []string{"not_replied"},
+			}
+			_, notifyMessageConfig, err := repository.ChatNotifyMessageRepo.GetChatNotifyMessages(ctx, repository.DBConn, filter, 1, 0)
+			if err != nil {
+				log.Error(err)
+				continue
+			} else if notifyMessageConfig == nil || len(*notifyMessageConfig) != 1 {
+				// not found config setting for notify message after x time
+				continue
+			}
+			notifyMessages[message.ConversationId] = (*notifyMessageConfig)[0]
+		}
+
+		referenceTime := time.Now().Add(-time.Duration(notifyMessages[message.ConversationId].MessageNotifyAfter) * time.Second)
+		if message.SendTime.After(referenceTime) {
 			// not met x time user hasn't replied
 			continue
 		}
@@ -533,9 +554,57 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 			Title:    fmt.Sprintf("Message from %s is waiting for your reply", message.UserAppname),
 			Type:     "notify",
 		}
-		notificationChan <- payload
+
+		queueId := allocatedUsers[message.ConversationId].QueueId
+		switch notifyMessages[message.ConversationId].ReceiverType {
+		case "users_in_queue":
+			if _, ok := chatQueueUsersData[queueId]; !ok {
+				filter := model.ChatQueueUserFilter{
+					QueueId:  []string{queueId},
+					TenantId: message.TenantId,
+				}
+				_, chatQueueUsers, err := repository.ChatQueueUserRepo.GetChatQueueUsers(ctx, repository.DBConn, filter, -1, 0)
+				if err != nil {
+					log.Error(err)
+					continue
+				} else if chatQueueUsers == nil || len(*chatQueueUsers) < 1 {
+					log.Error(fmt.Errorf("not found chat queue users in conversation %s", message.ConversationId))
+					continue
+				}
+				chatQueueUsersData[queueId] = chatQueueUsers
+			}
+
+			for _, queueUser := range *chatQueueUsersData[queueId] {
+				payload.DeviceId = fmt.Sprintf("%s@%s", queueUser.UserId, queueUser.TenantId)
+				notificationChan <- payload
+			}
+		case "user_executor":
+			notificationChan <- payload
+		case "manager_user":
+			if _, ok := chatManageQueueUserId[queueId]; !ok {
+				filter := model.ChatManageQueueUserFilter{
+					QueueId:  queueId,
+					TenantId: message.TenantId,
+				}
+				_, manageQueueUser, err := repository.ManageQueueRepo.GetManageQueues(ctx, repository.DBConn, filter, 1, 0)
+				if err != nil {
+					log.Error(err)
+					continue
+				} else if manageQueueUser == nil || len(*manageQueueUser) != 1 {
+					log.Error(fmt.Errorf("not found manager user in conversation %s", message.ConversationId))
+					continue
+				}
+				chatManageQueueUserId[queueId] = (*manageQueueUser)[0].UserId
+			}
+
+			payload.DeviceId = fmt.Sprintf("%s@%s", chatManageQueueUserId[queueId], chatManageQueueUserId[queueId])
+			notificationChan <- payload
+		default:
+			log.Errorf("invalid receiver type %v, id %v", notifyMessages[message.ConversationId].ReceiverType, notifyMessages[message.ConversationId].Id)
+			continue
+		}
 	}
-	log.Info("notified users on missed messages successfully")
+	log.Infof("notified users on missed messages successfully, total %v", len(conversationNotifying))
 
 	// Close the channel after all payloads have been sent
 	close(notificationChan)
