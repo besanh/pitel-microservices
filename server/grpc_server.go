@@ -28,6 +28,7 @@ import (
 	pbChatLabel "github.com/tel4vn/fins-microservices/gen/proto/chat_label"
 	pbChatManageQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_manage_queue"
 	pbChatMessageSample "github.com/tel4vn/fins-microservices/gen/proto/chat_message_sample"
+	pbChatNotifyMessage "github.com/tel4vn/fins-microservices/gen/proto/chat_notify_message"
 	pbChatPolicySetting "github.com/tel4vn/fins-microservices/gen/proto/chat_policy_setting"
 	pbChatQueue "github.com/tel4vn/fins-microservices/gen/proto/chat_queue"
 	pbChatQueueUser "github.com/tel4vn/fins-microservices/gen/proto/chat_queue_user"
@@ -109,6 +110,7 @@ func NewGRPCServer(port string) {
 	pbShareInfo.RegisterShareInfoServiceServer(grpcServer, grpcService.NewGRPCShareInfo())
 	pbNotesList.RegisterNotesListServiceServer(grpcServer, grpcService.NewGRPCNotesList())
 	pbChatReport.RegisterChatReportServiceServer(grpcServer, grpcService.NewGRPCChatReport())
+	pbChatNotifyMessage.RegisterNotifyMessageServiceServer(grpcServer, grpcService.NewGRPCChatNotifyMessage())
 
 	// Register reflection service on gRPC server
 	reflection.Register(grpcServer)
@@ -220,6 +222,9 @@ func NewGRPCServer(port string) {
 		log.Fatal(err)
 	}
 	if err = pbChatReport.RegisterChatReportServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
+		log.Fatal(err)
+	}
+	if err = pbChatNotifyMessage.RegisterNotifyMessageServiceHandlerFromEndpoint(context.Background(), mux, "localhost:"+port, opts); err != nil {
 		log.Fatal(err)
 	}
 

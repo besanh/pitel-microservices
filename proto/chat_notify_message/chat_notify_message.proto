@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package proto.chatNotifyMessage;
+
+option go_package = "github.com/tel4vn/fins-microservices/gen/proto/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+import "buf/validate/validate.proto";
+
+message ChatNotifyMessageData {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  string tenant_id = 4;
+  string notify_type = 5;
+  string connection_id = 6;
+  ChatConnectionAppData connection_app = 7;
+  int32 message_notify_after = 8;
+  string receiver_type = 9;
+}
+
+message ChatConnectionAppData {
+  string id = 1;
+  string tenant_id = 2;
+  string connection_name = 3;
+  string connection_type = 4;
+  string chat_app_id = 5;
+  string status = 6;
+  string connection_queue_id = 7;
+  OaInfo oa_info = 8;
+}
+
+message ZaloInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string status = 4;
+  int32 created_timestamp = 5;
+  int32 updated_timestamp = 6;
+}
+
+message FacebookInfo {
+  string app_id = 1;
+  string oa_id = 2;
+  string oa_name = 3;
+  string status = 4;
+  int32 created_timestamp = 5;
+  int32 updated_timestamp = 6;
+}
+
+message OaInfo {
+  repeated ZaloInfo zalo = 1;
+  repeated FacebookInfo facebook = 2;
+}
+
+// get chat notify messages
+message GetNotifyMessagesRequest {
+  string tenant_id = 1;
+  string connection_id = 2;
+  repeated string notify_type = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+}
+
+message GetNotifyMessagesResponse {
+  string code = 1;
+  string message = 2;
+  repeated ChatNotifyMessageData data = 3;
+  int32 total = 4;
+  int32 limit = 5;
+  int32 offset = 6;
+}
+
+// get notify message by id
+message GetNotifyMessageByIdRequest { string id = 1; }
+
+message GetNotifyMessageByIdResponse {
+  string code = 1;
+  string message = 2;
+  ChatNotifyMessageData data = 3;
+}
+
+// create notify message
+message PostNotifyMessageRequest {
+  string connection_id = 1;
+  string notify_type = 2;
+  int32 message_notify_after = 3;
+  string receiver_type = 4;
+}
+
+message PostNotifyMessageResponse {
+  string code = 1;
+  string message = 2;
+  string id = 3;
+}
+
+// update notify message by id
+message PutNotifyMessageRequest {
+  string id = 1;
+  string connection_id = 2;
+  string notify_type = 3;
+  int32 message_notify_after = 4;
+  string receiver_type = 5;
+}
+
+message PutNotifyMessageResponse {
+  string code = 1;
+  string message = 2;
+}
+
+// delete notify message by id
+message DeleteNotifyMessageRequest { string id = 1; }
+
+message DeleteNotifyMessageResponse {
+  string code = 1;
+  string message = 2;
+}
+
+service NotifyMessageService {
+  rpc GetNotifyMessages(GetNotifyMessagesRequest) returns (GetNotifyMessagesResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-notify-message"
+    };
+  };
+
+  rpc GetNotifyMessageById(GetNotifyMessageByIdRequest) returns (GetNotifyMessageByIdResponse) {
+    option (google.api.http) = {
+      get : "/bss-chat/v1/chat-notify-message/{id}"
+    };
+  };
+
+  rpc InsertNotifyMessage(PostNotifyMessageRequest) returns (PostNotifyMessageResponse) {
+    option (google.api.http) = {
+      post : "/bss-chat/v1/chat-notify-message"
+      body : "*"
+    };
+  };
+
+  rpc UpdateNotifyMessageById(PutNotifyMessageRequest) returns (PutNotifyMessageResponse) {
+    option (google.api.http) = {
+      put : "/bss-chat/v1/chat-notify-message/{id}"
+      body : "*"
+    };
+  };
+
+  rpc DeleteNotifyMessageById(DeleteNotifyMessageRequest) returns (DeleteNotifyMessageResponse) {
+    option (google.api.http) = {
+      delete : "/bss-chat/v1/chat-notify-message/{id}"
+    };
+  };
+}
