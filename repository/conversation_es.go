@@ -172,8 +172,8 @@ func (repo *ConversationES) GetConversations(ctx context.Context, tenantId, inde
 		"_source": true,
 		"query":   boolQuery,
 		"sort": []any{
-			elasticsearch.Order("updated_at", false),
 			elasticsearch.Order("created_at", false),
+			elasticsearch.Order("updated_at", false),
 		},
 	}
 	buf, err := elasticsearch.EncodeAny(searchSource)
@@ -253,8 +253,8 @@ func (repo *ConversationES) GetConversationById(ctx context.Context, tenantId, i
 		"_source": true,
 		"query":   boolQuery,
 		"sort": []any{
-			elasticsearch.Order("updated_at", false),
 			elasticsearch.Order("created_at", false),
+			elasticsearch.Order("updated_at", false),
 		},
 	}
 	buf, err := elasticsearch.EncodeAny(searchSource)
@@ -448,8 +448,8 @@ func (repo *ConversationES) searchWithScroll(ctx context.Context, tenantId, inde
 		"_source": true,
 		"size":    0,
 		"sort": []any{
-			elasticsearch.Order("updated_at", false),
 			elasticsearch.Order("created_at", false),
+			elasticsearch.Order("updated_at", false),
 		},
 	}
 	if size > 0 {
