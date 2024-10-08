@@ -42,6 +42,7 @@ func InitServices() {
 	ShareInfoService = NewShareInfo()
 	NotesListService = NewNotesList()
 	ChatReportService = NewChatReport()
+	ChatNotifyMessageService = NewChatNotifyMessage()
 }
 
 // MAP TENANT_ID SQL_CONN

@@ -92,6 +92,7 @@ func (s *OttMessage) UpSertConversation(ctx context.Context, connectionId, conve
 	}
 
 	if !isExisted {
+		conversation.UpdatedAt = time.Now().Format(time.RFC3339)
 		err = InsertConversation(ctx, conversationId, connectionId, conversation)
 		if err != nil {
 			// log.Error(err) // remove for duplicating

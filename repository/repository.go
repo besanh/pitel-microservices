@@ -45,6 +45,7 @@ func InitRepositories() {
 	ChatTenantRepo = NewChatTenant()
 	ChatConnectionPipelineRepo = NewConnectionPipeline()
 	NotesListRepo = NewNotesList()
+	ChatNotifyMessageRepo = NewChatNotifyMessage()
 }
 
 func InitRepositoriesES() {
@@ -130,6 +131,9 @@ func InitTables(ctx context.Context, dbConn sqlclient.ISqlClientConn) {
 		log.Error(err)
 	}
 	if err := CreateTable(ctx, dbConn, (*model.NotesList)(nil)); err != nil {
+		log.Error(err)
+	}
+	if err := CreateTable(ctx, dbConn, (*model.ChatNotifyMessage)(nil)); err != nil {
 		log.Error(err)
 	}
 

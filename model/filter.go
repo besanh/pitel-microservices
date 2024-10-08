@@ -261,3 +261,10 @@ type ConversationNotesListFilter struct {
 	AppId          string `json:"app_id"`
 	OaId           string `json:"oa_id"`
 }
+
+type ChatNotifyMessageFilter struct {
+	TenantId     string   `json:"tenant_id"`
+	ConnectionId string   `json:"connection_id"`
+	NotifyType   []string `json:"notify_type"`
+	OaId         string   `json:"oa_id"`
+}

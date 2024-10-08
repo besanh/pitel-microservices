@@ -133,6 +133,9 @@ var (
 		USER_STATUS_ONLINE,
 		USER_STATUS_OFFLINE,
 	}
+
+	CHAT_NOTIFY_MESSAGE_TYPE          []string = []string{"new_message", "not_replied"}
+	CHAT_NOTIFY_MESSAGE_RECEIVER_TYPE []string = []string{"users_in_queue", "user_executor", "manager_user"}
 )
 
 const (
