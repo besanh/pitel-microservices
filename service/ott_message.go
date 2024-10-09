@@ -252,7 +252,7 @@ func (s *OttMessage) GetOttMessage(ctx context.Context, data model.OttMessage) (
 								DeviceId: fmt.Sprintf("%s@%s", user.AuthUser.UserId, user.AuthUser.TenantId),
 								Message:  message.Content,
 								Title:    fmt.Sprintf("Received new message from %s", message.UserAppname),
-								Type:     "notify",
+								Type:     "chat",
 							}
 							if err = SendPushNotification(payload); err != nil {
 								log.Error(err)
