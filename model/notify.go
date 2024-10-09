@@ -5,5 +5,5 @@ type NotifyPayload struct {
 	DeviceId string            `json:"device_id"` // user@tenant
 	Message  string            `json:"message"`
 	Title    string            `json:"title"`
-	Type     string            `json:"type"` // notify, warning
+	Type     string            `json:"type"` // notify, chat, warning
 }

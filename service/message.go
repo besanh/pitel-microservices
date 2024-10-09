@@ -552,7 +552,7 @@ func (s *Message) HandleNotifyUsersOnMissedMessages() {
 			DeviceId: fmt.Sprintf("%s@%s", allocatedUsers[message.ConversationId].UserId, allocatedUsers[message.ConversationId].TenantId),
 			Message:  message.Content,
 			Title:    fmt.Sprintf("Message from %s is waiting for your reply", message.UserAppname),
-			Type:     "notify",
+			Type:     "chat",
 		}
 
 		queueId := allocatedUsers[message.ConversationId].QueueId
