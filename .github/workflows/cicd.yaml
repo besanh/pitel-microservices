@@ -117,20 +117,19 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
           message: |
-            *Repository:*
-            ${{ github.repository }} [link](https://github.com/${{ github.repository }})
-            *Branch:*
-            ${{ github.ref_name }}
-            *Commit:*
-            https://github.com/${{ github.repository }}/commit/${{github.sha}}
-            *Repo Action URL:*
-            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
-            *Message:*
-            Push Image to Docker Hub via GitHub Actions
-            *Image:*
-            ${{ env.DOCKER_IMAGE }}:${{ env.BRANCH_TAG }}-latest
+            Repository:
+              ${{ github.repository }} [link](https://github.com/${{ github.repository }})
+            Branch:
+              ${{ github.ref_name }}
+            Commit:
+              https://github.com/${{ github.repository }}/commit/${{github.sha}}
+            Repo Action URL:
+              https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
+            Message:
+              Push Image to Docker Hub via GitHub Actions
+            Image:
+              ${{ env.DOCKER_IMAGE }}:${{ env.BRANCH_TAG }}-latest
 
   branch_build_deploy:
     runs-on: fins-dev-cloud
@@ -147,17 +146,16 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
-          format: markdown
           message: |
-            *Repository:*
-            ${{ github.repository }} [link](https://github.com/${{ github.repository }})
-            *Branch:*
-            ${{ github.ref_name }}
-            *Commit:*
-            https://github.com/${{ github.repository }}/commit/${{github.sha}}
-            *Repo Action URL:*
-            https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
-            *Message:*
-            Deploy docker compose
-            *Image:*
-            ${{ env.DOCKER_IMAGE }}:latest
+            Repository:
+              ${{ github.repository }} [link](https://github.com/${{ github.repository }})
+            Branch:
+              ${{ github.ref_name }}
+            Commit:
+              https://github.com/${{ github.repository }}/commit/${{github.sha}}
+            Repo Action URL:
+              https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}
+            Message:
+              Deploy docker compose
+            Image:
+              ${{ env.DOCKER_IMAGE }}:latest
