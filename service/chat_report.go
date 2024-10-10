@@ -245,7 +245,7 @@ func (c *ChatReport) ExportWorkReports(ctx context.Context, authUser *model.Auth
 		}
 
 		// generate excel file
-		if err = c.generateExportUsersWorkPerformance(ct, authUser.TenantId, authUser.UserId, exportName, fileType, exportMap, workReport); err != nil {
+		if err = c.generateExportUsersWorkPerformance(ct, exportName, fileType, exportMap, workReport); err != nil {
 			panic(err)
 		}
 
@@ -294,7 +294,7 @@ func (c *ChatReport) ExportGeneralReports(ctx context.Context, authUser *model.A
 		}
 
 		// generate excel file
-		if err = c.generateExportGeneralMetrics(ct, authUser.TenantId, authUser.UserId, exportName, fileType, exportMap, workReport); err != nil {
+		if err = c.generateExportGeneralMetrics(ct, exportName, fileType, exportMap, workReport); err != nil {
 			panic(err)
 		}
 

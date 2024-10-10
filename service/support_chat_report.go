@@ -18,7 +18,7 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
-func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, tenantId, userId, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatWorkReport) (err error) {
+func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatWorkReport) (err error) {
 	headers := [][]string{
 		{
 			"Nhân viên hỗ trợ",
@@ -142,7 +142,7 @@ func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, ten
 	return
 }
 
-func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, tenantId, userId, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatGeneralReport) (err error) {
+func (c *ChatReport) generateExportGeneralMetrics(ctx context.Context, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatGeneralReport) (err error) {
 	headers := [][]string{
 		{
 			"Kênh",
