@@ -18,6 +18,24 @@ import (
 	"github.com/tel4vn/fins-microservices/repository"
 )
 
+// collect user's replying message metrics
+func handleCollectUserChatReplyMetrics(message model.Message, previousDirection map[string]string, channelMetrics *model.ChannelWorkPerformanceMetrics, receivingTimes []time.Time, receivingTimesConversation map[string][]time.Time) {
+	if message.Direction == "send" && previousDirection[message.ConversationId] == "receive" {
+		if len(receivingTimesConversation[message.ConversationId]) == 1 {
+			channelMetrics.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+		}
+		channelMetrics.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+	} else if message.Direction == "send" && previousDirection[message.ConversationId] == "send" {
+		if len(channelMetrics.ReceivingTime.Timestamps) < 1 {
+			channelMetrics.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+		}
+		if len(channelMetrics.ReplyingTime.Timestamps) < len(receivingTimes) {
+			// not to add too much reply time metrics
+			channelMetrics.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+		}
+	}
+}
+
 func (c *ChatReport) generateExportUsersWorkPerformance(ctx context.Context, exportName, fileType string, exportMap *model.ExportMap, chatReport *[]model.ChatWorkReport) (err error) {
 	headers := [][]string{
 		{

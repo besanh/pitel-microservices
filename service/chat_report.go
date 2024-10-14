@@ -83,38 +83,14 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 					userReport.ConversationExists[message.ConversationId] = true
 				}
 
-				// user's replying message
-				receivingTimes := receivingTimesConversation[message.ConversationId]
-				if message.Direction == "send" && previousDirection[message.ConversationId] == "receive" {
-					userReport.Facebook.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					if len(receivingTimesConversation[message.ConversationId]) == 1 {
-						userReport.Facebook.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					}
-				} else if message.Direction == "send" && previousDirection[message.ConversationId] == "send" {
-					userReport.Facebook.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					if len(userReport.Facebook.ReceivingTime.Timestamps) < 1 {
-						userReport.Facebook.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					}
-				}
+				handleCollectUserChatReplyMetrics(message, previousDirection, &userReport.Facebook, receivingTimesConversation[message.ConversationId], receivingTimesConversation)
 			case "zalo":
 				if _, ok := userReport.ConversationExists[message.ConversationId]; !ok {
 					userReport.Zalo.TotalChannels++
 					userReport.ConversationExists[message.ConversationId] = true
 				}
 
-				// user's replying message
-				receivingTimes := receivingTimesConversation[message.ConversationId]
-				if message.Direction == "send" && previousDirection[message.ConversationId] == "receive" {
-					userReport.Zalo.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					if len(receivingTimesConversation[message.ConversationId]) == 1 {
-						userReport.Zalo.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					}
-				} else if message.Direction == "send" && previousDirection[message.ConversationId] == "send" {
-					userReport.Zalo.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					if len(userReport.Zalo.ReceivingTime.Timestamps) < 1 {
-						userReport.Zalo.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
-					}
-				}
+				handleCollectUserChatReplyMetrics(message, previousDirection, &userReport.Zalo, receivingTimesConversation[message.ConversationId], receivingTimesConversation)
 			}
 
 			previousDirection[message.ConversationId] = message.Direction
