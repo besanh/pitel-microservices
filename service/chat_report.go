@@ -71,6 +71,10 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 			if _, ok := receivingTimesConversation[message.ConversationId]; !ok {
 				receivingTimesConversation[message.ConversationId] = []time.Time{message.SendTime}
 			}
+			// customer's message timestamp that's waiting for a reply
+			if message.Direction == "receive" && previousDirection[message.ConversationId] == "send" {
+				receivingTimesConversation[message.ConversationId] = append(receivingTimesConversation[message.ConversationId], message.SendTime)
+			}
 
 			switch message.MessageType {
 			case "facebook":
@@ -79,12 +83,16 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 					userReport.ConversationExists[message.ConversationId] = true
 				}
 
-				if message.Direction == "receive" && previousDirection[message.ConversationId] == "send" {
-					receivingTimesConversation[message.ConversationId] = append(receivingTimesConversation[message.ConversationId], message.SendTime)
-				} else if message.Direction == "send" && previousDirection[message.ConversationId] == "receive" {
-					receivingTimes := receivingTimesConversation[message.ConversationId]
+				// user's replying message
+				receivingTimes := receivingTimesConversation[message.ConversationId]
+				if message.Direction == "send" && previousDirection[message.ConversationId] == "receive" {
 					userReport.Facebook.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
 					if len(receivingTimesConversation[message.ConversationId]) == 1 {
+						userReport.Facebook.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+					}
+				} else if message.Direction == "send" && previousDirection[message.ConversationId] == "send" {
+					userReport.Facebook.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+					if len(userReport.Facebook.ReceivingTime.Timestamps) < 1 {
 						userReport.Facebook.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
 					}
 				}
@@ -94,12 +102,16 @@ func (c *ChatReport) GetChatWorkReports(ctx context.Context, authUser *model.Aut
 					userReport.ConversationExists[message.ConversationId] = true
 				}
 
-				if message.Direction == "receive" && previousDirection[message.ConversationId] == "send" {
-					receivingTimesConversation[message.ConversationId] = append(receivingTimesConversation[message.ConversationId], message.SendTime)
-				} else if message.Direction == "send" && previousDirection[message.ConversationId] == "receive" {
-					receivingTimes := receivingTimesConversation[message.ConversationId]
+				// user's replying message
+				receivingTimes := receivingTimesConversation[message.ConversationId]
+				if message.Direction == "send" && previousDirection[message.ConversationId] == "receive" {
 					userReport.Zalo.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
 					if len(receivingTimesConversation[message.ConversationId]) == 1 {
+						userReport.Zalo.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+					}
+				} else if message.Direction == "send" && previousDirection[message.ConversationId] == "send" {
+					userReport.Zalo.ReplyingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
+					if len(userReport.Zalo.ReceivingTime.Timestamps) < 1 {
 						userReport.Zalo.ReceivingTime.AddTimestamp(message.SendTime.Sub(receivingTimes[len(receivingTimes)-1]))
 					}
 				}

@@ -16,8 +16,8 @@ type ChatWorkReport struct {
 
 type ChannelWorkPerformanceMetrics struct {
 	TotalChannels int                `json:"total_channels"`
-	ReceivingTime PerformanceMetrics `json:"receiving_time"`
-	ReplyingTime  PerformanceMetrics `json:"replying_time"`
+	ReceivingTime PerformanceMetrics `json:"receiving_time"` // metrics of the time between first time user response
+	ReplyingTime  PerformanceMetrics `json:"replying_time"`  // metrics of the time between each time user replies
 }
 
 type ChatGeneralReport struct {
