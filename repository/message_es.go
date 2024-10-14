@@ -512,6 +512,7 @@ func filterMediaTypes(attachmentType string) []any {
 	return []any{elasticsearch.TermsQuery("attachments.att_type", util.ParseToAnyArray(args)...)}
 }
 
+// Get all the messages with the latest message is a received message
 func (m *MessageES) GetMessagesWaitingReply(ctx context.Context, index string, conversationsLimit int) (messages *[]model.Message, err error) {
 	searchSource := map[string]any{
 		"size": 0,
